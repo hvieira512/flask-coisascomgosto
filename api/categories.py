@@ -1,10 +1,9 @@
 from flask import Blueprint, jsonify, request
 
 from .utils import (
-    execute_query,
+    execute,
     fetch_all,
     fetch_one,
-    validate_json_fields,
 )
 
 bp = Blueprint("category", __name__)
@@ -30,21 +29,24 @@ def get_category(id):
 
 @bp.route("/category", methods=["POST"])
 def create_category():
+    def validate(data):
+        for item in data:
+            print(item)
+
     data = request.get_json()
 
-    err = validate_json_fields(data, {"name": str})
+    validate(data)
 
-    if err:
-        return err
+    category = data["category"]
 
-    name = data["name"]
-
-    if fetch_one("SELECT 1 FROM categories WHERE name=?", (name)):
+    if fetch_one("SELECT 1 FROM categories WHERE name=?", (category)):
         return jsonify({"error": "This category already exists!"}), 400
 
-    execute_query("INSERT INTO categories (name) VALUES (?)", (name))
+    execute("INSERT INTO categories (name) VALUES (?)", (category))
 
-    inserted = fetch_one("SELECT 1 FROM categories WHERE name=? ORDER BY DESC", (name))
+    inserted = fetch_one(
+        "SELECT 1 FROM categories WHERE name=? ORDER BY DESC", (category)
+    )
 
     inserted_id, inserted_name = inserted
 
@@ -75,7 +77,7 @@ def update_category(id):
     if fetch_one("SELECT 1 FROM categories WHERE id<>? AND name=?", (id, name)):
         return jsonify({"error": f"Category {name} already exists."}), 400
 
-    execute_query("UPDATE categories SET name = ? WHERE id=?", (name, id))
+    execute("UPDATE categories SET name = ? WHERE id=?", (name, id))
 
     return jsonify(
         {
@@ -94,7 +96,7 @@ def disable_category(id):
     if category is None:
         return jsonify({"error": "Invalid category"}), 404
 
-    execute_query("UPDATE categories SET enabled=0 WHERE id=?", (id))
+    execute("UPDATE categories SET enabled=0 WHERE id=?", (id))
 
     return jsonify(
         {
