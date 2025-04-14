@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS products (
     category_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    price REAL NOT NULL,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 

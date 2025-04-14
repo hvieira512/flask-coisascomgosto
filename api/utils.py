@@ -41,3 +41,12 @@ def execute_many(query, params=()):
         cur = conn.executemany(query, params)
         conn.commit()
         return cur.lastrowid
+
+
+def build_update_query(
+    table: str, data: dict, where_clause: str, where_values: tuple
+) -> tuple[str, tuple]:
+    set_clause = ", ".join([f"{key} = ?" for key in data])
+    query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
+    values = tuple(data.values()) + where_values
+    return query, values
