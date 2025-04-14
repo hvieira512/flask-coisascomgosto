@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Página Inicial{% endblock %}
+
+{% block head %}
+<link href="{{ url_for('static', filename='css/home.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+{% include 'components/home/navbar.html' %}
+
+<main>
+    <header id="welcome" class="container"></header>
+    <section id="products" class="container"></section>
+</main>
+
+{% include 'components/home/footer.html' %}
+
+{% endblock %}
