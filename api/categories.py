@@ -30,12 +30,12 @@ def get_category_by_id(id: int):
     return None
 
 
-def name_exists(name: str) -> bool:
+def category_name_exists(name: str) -> bool:
     query = "SELECT * FROM categories WHERE name=?"
     return fetch_one(query, (name,)) is not None
 
 
-def name_taken(name: str, id: int) -> bool:
+def category_name_taken(name: str, id: int) -> bool:
     query = "SELECT * FROM categories WHERE id<>? AND name=?"
     return fetch_one(query, (id, name)) is not None
 
@@ -68,7 +68,7 @@ def create_category():
 
     name = data["name"]
 
-    if name_exists(name):
+    if category_name_exists(name):
         return jsonify({"error": "Category already exists."}), 409
 
     id = execute("INSERT INTO categories (name) VALUES (?)", (name,))
@@ -100,10 +100,10 @@ def update_category(id: int):
         "| current category id:",
         id,
         "| name_taken:",
-        name_taken(name, id),
+        category_name_taken(name, id),
     )
 
-    if name_taken(name, id):
+    if category_name_taken(name, id):
         return jsonify({"error": "Category name already exists."}), 409
 
     execute("UPDATE categories SET name=? WHERE id=?", (name, id))
