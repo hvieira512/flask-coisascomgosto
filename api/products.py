@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from api.categories import category_id_exists
+from api.categories import get_category_by_id
 
 from .utils import (
     build_update_query,
@@ -50,14 +50,26 @@ def validate_json(data):
     return None
 
 
-def product_exists_id(id: int) -> bool:
-    category = fetch_one("SELECT COUNT(*) FROM products WHERE id=?", (id,))
-    return category[0] > 0
+def get_product_by_id(id: int):
+    product = fetch_one("SELECT * FROM products WHERE id = ?", (id,))
+    if product:
+        return dict(product)
+    return None
 
 
-def product_exists_name(name: str) -> bool:
-    category = fetch_one("SELECT COUNT(*) FROM products WHERE name=?", (name,))
-    return category[0] > 0
+def product_id_exists(id: int) -> bool:
+    query = "SELECT COUNT(*) FROM products WHERE id=?"
+    return fetch_one(query, (id,)) is not None
+
+
+def product_name_exists(name: str) -> bool:
+    query = "SELECT COUNT(*) FROM products WHERE name=?"
+    return fetch_one(query, (name,)) is not None
+
+
+def product_name_taken(name: str, id: int) -> bool:
+    query = "SELECT COUNT(*) FROM products WHERE name=? AND id<>? "
+    return fetch_one(query, (name, id))
 
 
 # ----------------
@@ -74,7 +86,7 @@ def get_products():
 
 @bp.route("/<int:id>", methods=["GET"])
 def get_product(id: int):
-    product = fetch_one("SELECT * FROM products WHERE id = ?", (id,))
+    product = get_product_by_id(id)
 
     if not product:
         return jsonify({"error": "Product not found"}), 404
@@ -93,10 +105,10 @@ def create_product():
     name = data["name"]
     description = data.get("description")
 
-    if not category_id_exists(data["category"]):
+    if not get_category_by_id(category):
         return jsonify({"error": "Invalid category."}), 409
 
-    if product_exists_name(data["name"]):
+    if product_name_exists(data["name"]):
         return jsonify({"error": "Product already exists."}), 409
 
     try:
@@ -116,30 +128,33 @@ def update_product(id: int):
     if error:
         return error
 
-    if not product_exists_id(id):
+    name = data["name"]
+
+    if not product_id_exists(id):
         return jsonify({"error": "Product not found."}), 404
 
-    if product_exists_name(data["name"]):
+    if product_name_taken(name, id):
         return jsonify({"error": "Product name already exists."}), 409
 
     try:
         query, values = build_update_query("products", data, "id = ?", (id,))
         execute(query, values)
-        updated = fetch_one("SELECT * FROM products WHERE id = ?", (id,))
-        return jsonify({"message": "Product updated", "product": dict(updated)})
+
+        return jsonify({"message": "Product updated", "product": get_product_by_id(id)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @bp.route("/<int:id>", methods=["DELETE"])
 def delete_category(id: int):
-    if not product_exists_id(id):
+    if not product_id_exists(id):
         return jsonify({"error": "Invalid product."})
-
-    deleted = fetch_one("SELECT * FROM products WHERE id=?", (id,))
 
     try:
         execute("DELETE FROM products WHERE id=?", (id,))
-        return jsonify({"message": f"Product {id} deleted.", "product": dict(deleted)})
+
+        return jsonify(
+            {"message": f"Product {id} deleted.", "product": get_product_by_id(id)}
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
