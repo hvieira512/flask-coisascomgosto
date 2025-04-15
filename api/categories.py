@@ -20,13 +20,24 @@ def validate_json(data):
             }
         ), 400
 
-
-def category_id_exists(id: int) -> bool:
-    return fetch_one("SELECT 1 FROM categories WHERE id=?", (id,)) is not None
+    return None
 
 
-def category_name_exists(name: str) -> bool:
-    return fetch_one("SELECT 1 FROM categories WHERE name=?", (name,)) is not None
+def get_category_by_id(id: int):
+    category = fetch_one("SELECT * FROM categories WHERE id = ?", (id,))
+    if category:
+        return dict(category)
+    return None
+
+
+def name_exists(name: str) -> bool:
+    query = "SELECT * FROM categories WHERE name=?"
+    return fetch_one(query, (name,)) is not None
+
+
+def name_taken(name: str, id: int) -> bool:
+    query = "SELECT * FROM categories WHERE id<>? AND name=?"
+    return fetch_one(query, (id, name)) is not None
 
 
 # ----------------
@@ -34,21 +45,18 @@ def category_name_exists(name: str) -> bool:
 # ----------------
 
 
-@bp.route("/", methods=["GET"])
+@bp.route("/")
 def get_categories():
     categories = fetch_all("SELECT * FROM categories")
-
     return jsonify([dict(category) for category in categories])
 
 
-@bp.route("/<int:id>", methods=["GET"])
+@bp.route("/<int:id>")
 def get_category(id: int):
-    category = fetch_one("SELECT * FROM categories WHERE id = ?", (id,))
-
+    category = get_category_by_id(id)
     if not category:
         return jsonify({"error": "Category not found"}), 404
-
-    return jsonify(dict(category))
+    return jsonify(category)
 
 
 @bp.route("/", methods=["POST"])
@@ -60,39 +68,56 @@ def create_category():
 
     name = data["name"]
 
-    if category_name_exists(name):
+    if name_exists(name):
         return jsonify({"error": "Category already exists."}), 409
 
-    try:
-        id = execute("INSERT INTO categories (name) VALUES (?)", (name,))
-        return jsonify({"id": id, "name": name}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    id = execute("INSERT INTO categories (name) VALUES (?)", (name,))
+    if not id:
+        return jsonify({"error": "Failed to create category."}), 500
+
+    category = get_category_by_id(id)
+    return jsonify(
+        {"message": "Category created successfully", "category": category}
+    ), 201
 
 
 @bp.route("/<int:id>", methods=["PUT"])
 def update_category(id: int):
-    data = request.get_json()
-    validate_json(data)
+    category = get_category_by_id(id)
+    if not category:
+        return jsonify({"error": "Category not found"}), 404
 
-    if not category_id_exists(id):
-        return jsonify({"error": "Invalid category."})
+    data = request.get_json()
+    error = validate_json(data)
+    if error:
+        return error
 
     name = data.get("name")
 
-    execute("UPDATE categories SET name = ? WHERE id = ?", (name, id))
-    updated = fetch_one("SELECT * FROM categories WHERE id = ?", (id,))
+    print(
+        "name:",
+        name,
+        "| current category id:",
+        id,
+        "| name_taken:",
+        name_taken(name, id),
+    )
 
-    return jsonify({"message": "Category updated", "category": dict(updated)})
+    if name_taken(name, id):
+        return jsonify({"error": "Category name already exists."}), 409
+
+    execute("UPDATE categories SET name=? WHERE id=?", (name, id))
+
+    updated_category = get_category_by_id(id)
+    return jsonify({"message": "Category updated", "category": updated_category})
 
 
 @bp.route("/<int:id>", methods=["DELETE"])
 def delete_category(id: int):
-    if not category_id_exists(id):
-        return jsonify({"error": "Invalid category"})
-
-    deleted = fetch_one("SELECT * FROM categories WHERE id=?", (id))
+    category = get_category_by_id(id)
+    if not category:
+        return jsonify({"error": "Category not found"}), 404
 
     execute("DELETE FROM categories WHERE id = ?", (id,))
+    return jsonify({"message": "Category deleted", "category": category})
 
-    return jsonify({"message": f"Category {id} deleted.", "category": dict(deleted)})
