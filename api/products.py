@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from api.categories import category_exists_id
+from api.categories import category_id_exists
 
 from .utils import (
     build_update_query,
@@ -93,7 +93,7 @@ def create_product():
     name = data["name"]
     description = data.get("description")
 
-    if not category_exists_id(data["category"]):
+    if not category_id_exists(data["category"]):
         return jsonify({"error": "Invalid category."}), 409
 
     if product_exists_name(data["name"]):
@@ -143,4 +143,3 @@ def delete_category(id: int):
         return jsonify({"message": f"Product {id} deleted.", "product": dict(deleted)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-

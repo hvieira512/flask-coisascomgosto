@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from .utils import build_insert_query, fetch_all, fetch_one, execute
+from .utils import fetch_all, fetch_one, execute
 
 bp = Blueprint("categories", __name__)
 
@@ -21,14 +21,12 @@ def validate_json(data):
         ), 400
 
 
-def category_exists_id(id: int) -> bool:
-    category = fetch_one("SELECT COUNT(*) FROM categories WHERE id=?", (id,))
-    return category[0] > 0
+def category_id_exists(id: int) -> bool:
+    return fetch_one("SELECT 1 FROM categories WHERE id=?", (id,)) is not None
 
 
-def category_exists_name(name: str) -> bool:
-    category = fetch_one("SELECT COUNT(*) FROM categories WHERE name=?", (name,))
-    return category[0] > 0
+def category_name_exists(name: str) -> bool:
+    return fetch_one("SELECT 1 FROM categories WHERE name=?", (name,)) is not None
 
 
 # ----------------
@@ -62,7 +60,7 @@ def create_category():
 
     name = data["name"]
 
-    if category_exists_name(name):
+    if category_name_exists(name):
         return jsonify({"error": "Category already exists."}), 409
 
     try:
@@ -77,7 +75,7 @@ def update_category(id: int):
     data = request.get_json()
     validate_json(data)
 
-    if not category_exists_id(id):
+    if not category_id_exists(id):
         return jsonify({"error": "Invalid category."})
 
     name = data.get("name")
@@ -90,7 +88,7 @@ def update_category(id: int):
 
 @bp.route("/<int:id>", methods=["DELETE"])
 def delete_category(id: int):
-    if not category_exists_id(id):
+    if not category_id_exists(id):
         return jsonify({"error": "Invalid category"})
 
     deleted = fetch_one("SELECT * FROM categories WHERE id=?", (id))
