@@ -1,40 +1,71 @@
-<footer class="bg-light p-5 container-lg d-flex flex-column gap-3 rounded-3">
-    <div class="d-flex justify-content-between flex-wrap">
-        <div class="d-flex flex-column gap-3">
-            <h4>Ready to get started?</h4>
-            <button class="btn btn-primary">
+<footer class="bg-light p-5 container-lg rounded-3">
+    <div class="row gy-4 align-items-start justify-content-between">
+        <!-- Call to Action -->
+        <div class="col-md-4">
+            <h4 class="mb-3">Ready to get started?</h4>
+            <button class="btn btn-primary d-inline-flex align-items-center gap-2">
                 <span>Download</span>
                 <i class="fa-solid fa-arrow-right"></i>
             </button>
         </div>
-        <ul class="d-flex flex-column gap-3">
-            <li>Lorem.</li>
-            <li><a href="#">Lorem.</a></li>
-            <li><a href="#">Lorem.</a></li>
-            <li><a href="#">Lorem.</a></li>
-        </ul>
-        <ul class="d-flex flex-column gap-3">
-            <li>Lorem.</li>
-            <li><a href="#">Lorem.</a></li>
-            <li><a href="#">Lorem.</a></li>
-            <li><a href="#">Lorem.</a></li>
-        </ul>
-        <ul class="d-flex flex-column gap-3">
-            <li>Lorem.</li>
-            <li><a href="#">Lorem.</a></li>
-            <li><a href="#">Lorem.</a></li>
-            <li><a href="#">Lorem.</a></li>
-        </ul>
-    </div>
-    <div class="d-flex align-items-center justify-content-between">
-        <div id="footer__terms" class="d-flex gap-3">
-            <a href="#">Terms & Conditions</a>
-            <a href="#">Privacy Policy</a>
+
+        <!-- Footer Links Column 1 -->
+        <div class="col-6 col-md-2">
+            <h6 class="text-uppercase fw-bold mb-3">Company</h6>
+            <ul class="list-unstyled d-flex flex-column gap-2">
+                <li><a href="#" class="text-decoration-none text-muted">About</a></li>
+                <li><a href="#" class="text-decoration-none text-muted">Careers</a></li>
+                <li><a href="#" class="text-decoration-none text-muted">Contact</a></li>
+            </ul>
         </div>
-        <div id="footer__socials" class="d-flex gap-3 align-items-center">
-            <button class="btn btn-primary"><i class="fa-brands fa-facebook"></i></button>
-            <button class="btn btn-primary"><i class="fa-brands fa-instagram"></i></button>
-            <button class="btn btn-primary"><i class="fa-brands fa-whatsapp"></i></button>
+
+        <!-- Footer Links Column 2 -->
+        <div class="col-6 col-md-2">
+            <h6 class="text-uppercase fw-bold mb-3">Product</h6>
+            <ul class="list-unstyled d-flex flex-column gap-2">
+                <li><a href="#" class="text-decoration-none text-muted">Features</a></li>
+                <li><a href="#" class="text-decoration-none text-muted">Pricing</a></li>
+                <li><a href="#" class="text-decoration-none text-muted">FAQs</a></li>
+            </ul>
+        </div>
+
+        <!-- Footer Links Column 3 -->
+        <div class="col-6 col-md-2">
+            <h6 class="text-uppercase fw-bold mb-3">Resources</h6>
+            <ul class="list-unstyled d-flex flex-column gap-2">
+                <li><a href="#" class="text-decoration-none text-muted">Blog</a></li>
+                <li><a href="#" class="text-decoration-none text-muted">Support</a></li>
+                <li><a href="#" class="text-decoration-none text-muted">Community</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+        <!-- Terms -->
+        <div class="d-flex gap-3 flex-wrap">
+            <a href="#" class="text-decoration-none text-muted small">Terms & Conditions</a>
+            <a href="#" class="text-decoration-none text-muted small">Privacy Policy</a>
+        </div>
+
+        <!-- Social Icons -->
+        <div class="d-flex gap-2">
+            <a href="#"
+                class="btn btn-outline-secondary d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 40px; height: 40px;">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="#"
+                class="btn btn-outline-secondary d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 40px; height: 40px;">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="#"
+                class="btn btn-outline-secondary d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 40px; height: 40px;">
+                <i class="fa-brands fa-whatsapp"></i>
+            </a>
         </div>
     </div>
 </footer>

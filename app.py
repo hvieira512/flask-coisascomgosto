@@ -5,7 +5,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from api import api_bp
-from api.utils import init_db
+from api.utils import init_db, print_routes
 from web import web_bp
 
 app = Flask(__name__)
@@ -16,6 +16,9 @@ app.register_blueprint(api_bp)
 app.register_blueprint(web_bp)
 
 init_db()
+
+print_routes("api", app)
+print_routes("web", app)
 
 
 @app.context_processor
