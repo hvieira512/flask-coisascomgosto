@@ -77,7 +77,7 @@ def product_name_taken(name: str, id: int) -> bool:
 # ----------------
 
 
-@bp.route("/", methods=["GET"])
+@bp.route("", methods=["GET"])
 def get_products():
     products = fetch_all("SELECT * FROM products")
 
@@ -94,7 +94,7 @@ def get_product(id: int):
     return jsonify(dict(product))
 
 
-@bp.route("/", methods=["POST"])
+@bp.route("", methods=["POST"])
 def create_product():
     data = request.get_json()
     error = validate_json(data)

@@ -45,7 +45,7 @@ def category_name_taken(name: str, id: int) -> bool:
 # ----------------
 
 
-@bp.route("/")
+@bp.route("")
 def get_categories():
     categories = fetch_all("SELECT * FROM categories")
     return jsonify([dict(category) for category in categories])
@@ -59,7 +59,7 @@ def get_category(id: int):
     return jsonify(category)
 
 
-@bp.route("/", methods=["POST"])
+@bp.route("", methods=["POST"])
 def create_category():
     data = request.get_json()
     error = validate_json(data)
@@ -120,4 +120,3 @@ def delete_category(id: int):
 
     execute("DELETE FROM categories WHERE id = ?", (id,))
     return jsonify({"message": "Category deleted", "category": category})
-

@@ -83,7 +83,7 @@ def validate_json(data):
 # ----------------
 
 
-@bp.route("/")
+@bp.route("")
 def get_users():
     rows = fetch_all("SELECT id, username, email, created_at, is_admin FROM users")
 
