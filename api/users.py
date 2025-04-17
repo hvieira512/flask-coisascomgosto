@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
-from werkzeug.security import generate_password_hash
 
-from api.utils import execute, fetch_all, fetch_one, format_datetime, is_email_valid
+from api.utils import execute, fetch_all, fetch_one, format_datetime
 
 
 bp = Blueprint("user", __name__)
@@ -25,6 +24,13 @@ def get_user_by_id(id: int):
             "created_at": format_datetime(user["created_at"]),
             "is_admin": bool(user["is_admin"]),
         }
+    return None
+
+
+def get_user_by_username(username: str):
+    user = fetch_one("SELECT * FROM users WHERE username = ?", (username,))
+    if user:
+        return dict(user)
     return None
 
 
@@ -103,46 +109,6 @@ def get_user(id):
         return jsonify({"error": "User not found"}), 404
 
     return jsonify(user)
-
-
-@bp.route("/", methods=["POST"])
-def create_user():
-    data = request.get_json()
-    error = validate_json(data)
-    if error:
-        return error
-
-    username = data.get("username")
-    email = data.get("email")
-    password = data.get("password")
-
-    if username_exists(username):
-        return jsonify({"error": "This username is already taken."}), 409
-
-    if email_exists(email):
-        return jsonify({"error": "This email is already taken."}), 409
-
-    if not is_email_valid(email):
-        return jsonify({"error": "Invalid email."}), 400
-
-    hashed_password = generate_password_hash(password)
-
-    id = execute(
-        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-        (username, email, hashed_password),
-    )
-
-    if not id:
-        return jsonify({"error": "Failed to create user."}), 500
-
-    user = get_user_by_id(id)
-
-    return jsonify(
-        {
-            "message": "User created successfully",
-            "user": user,
-        }
-    ), 201
 
 
 @bp.route("/<int:id>", methods=["PUT"])
