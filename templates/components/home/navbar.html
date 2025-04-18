@@ -8,23 +8,39 @@
 
     <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
         <ul class="navbar-nav gap-3 text-center">
-            <li class="nav-item"><a class="nav-link" href="#">Inicio</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Início</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">Sobre Nos</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Sobre Nós</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Contactos</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('web.auth.auth') }}">Entrar</a></li>
+            {% if "username" not in session %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('web.auth.home') }}">Entrar</a></li>
+            {% else %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('web.dashboard.home') }}">Dashboard</a></li>
+            {% endif %}
 
             <li class="nav-item d-lg-none d-flex justify-content-center align-items-center gap-5">
-                <a href="#" class="nav-link"><i class="fa-brands fa-facebook"></i></a>
-                <a href="#" class="nav-link"><i class="fa-brands fa-whatsapp"></i></a>
-                <a href="#" class="nav-link"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://www.facebook.com/coisascomgosto.vianadocastelo/" class="nav-link" target="_blank">
+                    <i class="fa-brands fa-facebook"></i>
+                </a>
+                <a href="https://wa.me/+939320334" class="nav-link" target="_blank">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </a>
+                <a href="https://www.instagram.com/coisascomgostovc/" class="nav-link" target="_blank">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
             </li>
         </ul>
     </div>
 
     <div class="d-none d-lg-flex gap-3">
-        <a href="#" class="nav-link"><i class="fa-brands fa-facebook"></i></a>
-        <a href="#" class="nav-link"><i class="fa-brands fa-whatsapp"></i></a>
-        <a href="#" class="nav-link"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://www.facebook.com/coisascomgosto.vianadocastelo/" class="nav-link" target="_blank">
+            <i class="fa-brands fa-facebook"></i>
+        </a>
+        <a href="https://wa.me/+939320334" class="nav-link" target="_blank">
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+        <a href="https://www.instagram.com/coisascomgostovc/" class="nav-link" target="_blank">
+            <i class="fa-brands fa-instagram"></i>
+        </a>
     </div>
 </nav>

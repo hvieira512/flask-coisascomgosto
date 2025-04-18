@@ -21,7 +21,7 @@ form.addEventListener('submit', async (e) => {
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier: username, password: "fake" })
+            body: JSON.stringify({ username, password: "fake" })
         });
         removeLoading(container);
 
@@ -48,7 +48,7 @@ form.addEventListener('submit', async (e) => {
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier: username, password })
+            body: JSON.stringify({ username, password })
         });
         removeLoading(container);
 
@@ -62,8 +62,8 @@ form.addEventListener('submit', async (e) => {
     }
 
     if (mode === "register") {
+        const username = document.querySelector("#usernameField")?.value;
         const email = document.querySelector("#emailField")?.value.trim();
-        const department = document.querySelector("#departmentsField")?.value;
         const password = document.querySelector("#passwordField")?.value.trim();
         const confirm = document.querySelector("#confirmPasswordField")?.value.trim();
 
@@ -76,7 +76,7 @@ form.addEventListener('submit', async (e) => {
         const res = await fetch(API.auth.register, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, department })
+            body: JSON.stringify({ username, email, password })
         });
         removeLoading(container);
 
@@ -89,7 +89,7 @@ form.addEventListener('submit', async (e) => {
         const login_res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier: email, password })
+            body: JSON.stringify({ username, password })
         });
 
         if (!login_res.ok) {
@@ -119,10 +119,10 @@ async function renderRegisterForm(username) {
     `;
 
     appendInput({ icon: 'fa-at', type: 'email', id: 'emailField', name: 'email', placeholder: 'E-mail' });
-    document.querySelector("#emailField").value = `${username}@borgwarner.com`;
-
     appendInput({ icon: 'fa-lock', type: 'password', id: 'passwordField', name: 'password', placeholder: 'Password' });
     appendInput({ icon: 'fa-lock', type: 'password', id: 'confirmPasswordField', name: 'confirmPassword', placeholder: 'Confirmar Password' });
+
+    document.querySelector("#emailField").focus();
 }
 
 function appendInput({ icon, type, id, name, placeholder }) {

@@ -7,6 +7,7 @@
     <title>CoisasComGosto</title>
     <link href="{{ url_for('static', filename='img/logo.png') }}" rel="icon" type="image/ico">
     <link href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='toastr/toastr.min.css') }}" rel="stylesheet" />
     <script src="{{ url_for('static', filename='fontawesome/a38dd6e785.js') }}" crossorigin="anonymous"></script>
     {% block head %}{% endblock %}
 </head>
@@ -15,6 +16,8 @@
     {% block content %}{% endblock %}
 
     <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='jquery/jquery-3.6.0.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='toastr/toastr.min.js') }}" type="text/javascript"></script>
     {% block scripts %}{% endblock %}
 </body>
 
