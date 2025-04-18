@@ -86,9 +86,13 @@ def login():
 
     user = get_user_by_username(data["username"])
 
-    if not user or not check_password_hash(user["password"], data["password"]):
+    if not user:
         return jsonify({"error": "Invalid login."}), 404
 
+    if not check_password_hash(user["password"], data["password"]):
+        return jsonify({"error": "Invalid login."}), 401
+
+    # Session handling after successful login
     session["id"] = user["id"]
     session["username"] = user["username"]
     session["is_admin"] = user["is_admin"]
