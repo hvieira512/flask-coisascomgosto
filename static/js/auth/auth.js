@@ -1,73 +1,142 @@
-import { API, postData } from "../core/api.js";
+import { API } from "../core/api.js";
+import { removeLoading, renderLoading } from "../core/utils.js";
 
-const form = document.getElementById("auth-form");
-const usernameInput = document.getElementById("username");
-const passwordWrapper = document.getElementById("password-wrapper");
-const passwordInput = document.getElementById("password");
-const submitBtn = document.getElementById("submit-btn");
-const title = document.getElementById("form-title");
+const container = "#auth-container";
 
-let mode = "login";
+const submitBtn = document.querySelector("#submitBtn");
+const usernameField = document.querySelector("#usernameField");
+const formHeader = document.querySelector("#form-header");
+const form = document.querySelector("#auth-form");
 
-usernameInput.addEventListener("keydown", async (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        const username = usernameInput.value.trim();
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        if (!username) {
-            alert("Username is required.");
+    const mode = submitBtn.dataset.mode || "check";
+
+    const username = usernameField.value.trim();
+    if (!username) return;
+
+    if (mode === "check") {
+        renderLoading(container);
+        const res = await fetch(API.auth.login, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: username, password: "fake" })
+        });
+        removeLoading(container);
+
+        switch (res.status) {
+            case 401:
+                submitBtn.dataset.mode = "login";
+                renderLoginForm(username);
+                break;
+            case 404:
+                submitBtn.dataset.mode = "register";
+                await renderRegisterForm(username);
+                break;
+            default:
+                console.error("Unexpected response:", res);
+                break;
+        }
+    }
+
+    if (mode === "login") {
+        const password = document.querySelector("#passwordField")?.value.trim();
+        if (!password) return;
+
+        renderLoading(container);
+        const res = await fetch(API.auth.login, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: username, password })
+        });
+        removeLoading(container);
+
+        if (!res.ok) {
+            const data = await res.json();
+            toastr.error(data.error || "Login falhou");
+        }
+
+        toastr.success("Login realizado com sucesso.")
+        window.location.href = "/dashboard";
+    }
+
+    if (mode === "register") {
+        const email = document.querySelector("#emailField")?.value.trim();
+        const department = document.querySelector("#departmentsField")?.value;
+        const password = document.querySelector("#passwordField")?.value.trim();
+        const confirm = document.querySelector("#confirmPasswordField")?.value.trim();
+
+        if (!password || password !== confirm) {
+            toastr.error("As passwords não coincidem.");
             return;
         }
 
-        try {
-            await postData(API.auth.login, { username, password: "fake" });
-            mode = "login";
-            title.textContent = "Login";
-        } catch (err) {
-            if (err.message === "Invalid login.") {
-                // If login fails, consider it as login
-                mode = "login";
-                title.textContent = "Login";
-            } else {
-                // If error occurs, assume it's a registration case
-                mode = "register";
-                title.textContent = "Register";
-            }
+        renderLoading(container);
+        const res = await fetch(API.auth.register, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, department })
+        });
+        removeLoading(container);
+
+        if (!res.ok) {
+            const data = await res.json();
+            toastr.error(data.error || "Registo falhou.");
+            return;
         }
 
-        showPassword();
+        const login_res = await fetch(API.auth.login, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: email, password })
+        });
+
+        if (!login_res.ok) {
+            const data = await login_res.json();
+            toastr.error(data.error || "Login falhou.");
+            return;
+        }
+
+        toastr.success("Login realizado com sucesso.");
+        window.location.href = "/dashboard";
     }
 });
 
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-        alert("Username and password are required.");
-        return;
-    }
-
-    try {
-        const endpoint = mode === "login" ? API.auth.login : API.auth.register;
-        const data = { username, password };
-
-        if (mode === "register") {
-            data.email = `${username}@placeholder.com`; // Dummy email for registration
-        }
-
-        const res = await postData(endpoint, data);
-        console.error(res);
-        window.location.href = "/dashboard"; // Redirect to the dashboard or another protected page
-    } catch (err) {
-        alert(err.message);
-    }
-});
-
-function showPassword() {
-    passwordWrapper.classList.remove("d-none");  // Correcting classList to classList
-    submitBtn.classList.remove("d-none");  // Correcting classList to classList
-    passwordInput.focus();
+function renderLoginForm(username) {
+    formHeader.innerHTML = `
+        <h1 class="h2 mb-0">Olá, ${username}!</h1>
+        <p class="text-dark">Introduz a tua password para entrar.</p>
+    `;
+    appendInput({ icon: 'fa-lock', type: 'password', id: 'passwordField', name: 'password', placeholder: 'Password' });
+    document.querySelector("#passwordField").focus();
 }
 
+async function renderRegisterForm(username) {
+    formHeader.innerHTML = `
+        <h1 class="h2 mb-0">Olá, ${username}!</h1>
+        <p class="text-dark">Define a tua palavra-passe para continuares.</p>
+    `;
+
+    appendInput({ icon: 'fa-at', type: 'email', id: 'emailField', name: 'email', placeholder: 'E-mail' });
+    document.querySelector("#emailField").value = `${username}@borgwarner.com`;
+
+    appendInput({ icon: 'fa-lock', type: 'password', id: 'passwordField', name: 'password', placeholder: 'Password' });
+    appendInput({ icon: 'fa-lock', type: 'password', id: 'confirmPasswordField', name: 'confirmPassword', placeholder: 'Confirmar Password' });
+}
+
+function appendInput({ icon, type, id, name, placeholder }) {
+    if (document.querySelector(`#${id}`)) return;
+
+    const group = document.createElement("div");
+    group.className = "input-group";
+
+    group.innerHTML = `
+        <span class="input-group-text p-3 rounded-start">
+            <i class="fa-solid ${icon}"></i>
+        </span>
+        <input type="${type}" class="form-control rounded-end p-3" placeholder="${placeholder}" name="${name}" id="${id}" required />
+    `;
+
+    submitBtn.parentNode.insertBefore(group, submitBtn);
+}
