@@ -1,15 +1,5 @@
-body {
-    background-color: #f8f9fa;
-}
-
 #dashboard-wrapper {
     min-height: 94vh;
-}
-
-#sidebar .nav-link:hover,
-#mobileSidebar .nav-link:hover {
-    background-color: #f1f1f1;
-    border-radius: 0.5rem;
 }
 
 #mobileSidebar .fa-solid,
