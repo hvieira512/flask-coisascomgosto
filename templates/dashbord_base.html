@@ -1,3 +1,12 @@
+{%
+
+set tabs = [
+{'icon': 'fa-house', 'label': 'Início', 'endpoint': 'web.dashboard.home'},
+{'icon': 'fa-box', 'label': 'Produtos', 'endpoint': 'web.dashboard.products'},
+{'icon': 'fa-chart-line', 'label': 'Dados', 'endpoint': 'web.dashboard.stats'}
+]
+
+%}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +25,7 @@
 <body>
 
     <div class="container-fluid p-4 bg-light min-vh-100">
-        <div id="dashboard-wrapper" class="bg-white rounded-4 shadow-sm overflow-hidden">
+        <div id="dashboard-wrapper" class="bg-white rounded-4 shadow overflow-hidden d-flex flex-column">
             <!-- Top Navbar -->
             <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-2 py-3">
                 <div class="container-fluid">
@@ -24,7 +33,7 @@
                     <a class="navbar-brand fw-bold" href="#">CoisasComGosto</a>
 
                     <!-- Right side controls -->
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="d-none d-lg-flex align-items-center gap-3">
 
                         <!-- Notification -->
                         <div class="dropdown">
@@ -48,45 +57,100 @@
                                 <i class="fa-solid fa-user me-2"></i> {{ session["username"] }}
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="#">Perfil</a></li>
-                                <li><a class="dropdown-item" href="#">Definições</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('web.dashboard.profile') }}">
+                                        <i class="fa-solid fa-address-card me-2"></i>
+                                        <span>Perfil</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('web.dashboard.settings') }}">
+                                        <i class="fa-solid fa-gear me-2"></i>
+                                        <span>Definições</span>
+                                    </a>
+                                </li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item text-danger" href="#">Sair</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('web.logout') }}">
+                                        <i class="fa-solid fa-right-from-bracket me-2"></i>
+                                        <span>Sair</span>
+                                    </a>
+                                </li>
                             </ul>
                         </div>
 
-                        <!-- Sidebar toggle (burger) -->
-                        <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle">
-                            <i class="fa-solid fa-bars"></i>
-                        </button>
+
+                    </div>
+                    <!-- Sidebar toggle (burger) -->
+                    <button class="btn btn-outline-secondary d-lg-none ms-auto me-2" id="sidebarToggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+
+                    <!-- Mobile Only: Notification + User -->
+                    <div class="d-flex d-lg-none align-items-center gap-3 ms-2">
+                        <!-- Notification -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary position-relative" id="notifDropdownMobile"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-bell"></i>
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdownMobile">
+                                <li><a class="dropdown-item" href="#">Notificação 1</a></li>
+                                <li><a class="dropdown-item" href="#">Notificação 2</a></li>
+                                <li><a class="dropdown-item" href="#">Notificação 3</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- User -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                                id="userDropdownMobile" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownMobile">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('web.dashboard.profile') }}">
+                                        <i class="fa-solid fa-address-card me-2"></i>
+                                        <span>Perfil</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('web.dashboard.settings') }}">
+                                        <i class="fa-solid fa-gear me-2"></i>
+                                        <span>Definições</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('web.logout') }}">
+                                        <i class="fa-solid fa-right-from-bracket me-2"></i>
+                                        <span>Sair</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </nav>
 
-            <div class="row g-0">
+            <div class="row g-0 flex-grow-1">
                 <!-- Sidebar -->
                 <div id="sidebar" class="col-lg-2 bg-white border-end px-2 py-3 d-none d-lg-block">
                     <ul class="nav flex-column">
+                        {% for tab in tabs %}
                         <li class="nav-item">
-                            <a class="nav-link text-dark py-3" href="{{ url_for('web.dashboard.home') }}">
-                                <i class="fa-solid fa-house me-2"></i>
-                                <span>Início</span>
+                            <a class="nav-link text-dark py-3" href="{{ url_for(tab.endpoint) }}">
+                                <i class="fa-solid {{ tab.icon }} me-2"></i>
+                                <span>{{ tab.label }}</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark py-3" href="{{ url_for('web.dashboard.products') }}">
-                                <i class="fa-solid fa-box me-2"></i>
-                                <span>Produtos</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark py-3" href="{{ url_for('web.dashboard.stats') }}">
-                                <i class="fa-solid fa-chart-line me-2"></i>
-                                <span>Dados</span>
-                            </a>
-                        </li>
+                        {% endfor %}
                     </ul>
                 </div>
 
@@ -106,24 +170,14 @@
             <button class="btn-close" id="closeSidebar"></button>
         </div>
         <ul class="nav flex-column">
+            {% for tab in tabs %}
             <li class="nav-item">
-                <a class="nav-link text-dark py-3" href="{{ url_for('web.dashboard.home') }}">
-                    <i class="fa-solid fa-house me-2"></i>
-                    <span>Início</span>
+                <a class="nav-link text-dark py-3" href="{{ url_for(tab.endpoint) }}">
+                    <i class="fa-solid {{ tab.icon }} me-2"></i>
+                    <span>{{ tab.label }}</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link text-dark py-3" href="{{ url_for('web.dashboard.products') }}">
-                    <i class="fa-solid fa-box me-2"></i>
-                    <span>Produtos</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-dark py-3" href="{{ url_for('web.dashboard.stats') }}">
-                    <i class="fa-solid fa-chart-line me-2"></i>
-                    <span>Dados</span>
-                </a>
-            </li>
+            {% endfor %}
         </ul>
     </div>
 
