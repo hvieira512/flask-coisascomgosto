@@ -3,22 +3,14 @@ const overlay = document.querySelector("#overlay");
 const mobileSidebar = document.querySelector("#mobileSidebar");
 const closeSidebar = document.querySelector("#closeSidebar");
 
-const showSidebar = () => {
-    mobileSidebar.classList.remove("d-none");
-    mobileSidebar.classList.add("d-block");
+const toggleSidebar = (show) => {
+    mobileSidebar.classList.toggle("d-none", !show);
+    mobileSidebar.classList.toggle("d-block", show);
 
-    overlay.classList.remove("d-none");
-    overlay.classList.add("d-block");
-}
+    overlay.classList.toggle("d-none", !show);
+    overlay.classList.toggle("d-block", show);
+};
 
-const hideSidebar = () => {
-    mobileSidebar.classList.remove("d-block");
-    mobileSidebar.classList.add("d-none");
-
-    overlay.classList.remove("d-block");
-    overlay.classList.add("d-none");
-}
-
-toggle.addEventListener("click", showSidebar);
-closeSidebar.addEventListener("click", hideSidebar);
-overlay.addEventListener("click", hideSidebar);
+toggle.addEventListener("click", () => toggleSidebar(true));
+closeSidebar.addEventListener("click", () => toggleSidebar(false));
+overlay.addEventListener("click", () => toggleSidebar(false));
