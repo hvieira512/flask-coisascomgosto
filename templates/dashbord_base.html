@@ -1,12 +1,11 @@
-{%
-
-set tabs = [
+{% set tabs = [
 {'icon': 'fa-house', 'label': 'Início', 'endpoint': 'web.dashboard.home'},
 {'icon': 'fa-box', 'label': 'Produtos', 'endpoint': 'web.dashboard.products'},
 {'icon': 'fa-chart-line', 'label': 'Dados', 'endpoint': 'web.dashboard.stats'}
-]
+] %}
 
-%}
+{% set notifications = ["Notificação 1", "Notificação 2", "Notificação 3"] %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -99,9 +98,9 @@ set tabs = [
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdownMobile">
-                                <li><a class="dropdown-item" href="#">Notificação 1</a></li>
-                                <li><a class="dropdown-item" href="#">Notificação 2</a></li>
-                                <li><a class="dropdown-item" href="#">Notificação 3</a></li>
+                                {% for notification in notifications %}
+                                <li><a class="dropdown-item" href="#">{{ notification }}</a></li>
+                                {% endfor %}
                             </ul>
                         </div>
 
