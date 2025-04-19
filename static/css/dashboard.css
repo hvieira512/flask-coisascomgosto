@@ -11,3 +11,8 @@ body {
     background-color: #f1f1f1;
     border-radius: 0.5rem;
 }
+
+#mobileSidebar .fa-solid,
+#sidebar .fa-solid {
+    min-width: 20px;
+}
