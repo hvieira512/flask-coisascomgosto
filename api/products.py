@@ -79,7 +79,11 @@ def product_name_taken(name: str, id: int) -> bool:
 
 @bp.route("", methods=["GET"])
 def get_products():
-    products = fetch_all("SELECT * FROM products")
+    products = fetch_all("""
+        SELECT products.*, categories.name AS category_name
+        FROM products
+        JOIN categories ON products.category_id = categories.id;
+    """)
 
     return jsonify([dict(product) for product in products])
 
