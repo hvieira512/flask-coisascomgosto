@@ -138,9 +138,10 @@
                 </div>
             </nav>
 
-            <div class="row g-0 flex-grow-1">
+            <div class="d-flex flex-grow-1 min-vh-100">
                 <!-- Sidebar -->
-                <div id="sidebar" class="col-lg-2 bg-white border-end px-2 py-3 d-none d-lg-block">
+                <div id="sidebar" class="bg-white border-end px-2 py-3 d-none d-lg-block"
+                    style="flex: 0 0 auto; min-width: 250px;">
                     <ul class="nav flex-column">
                         {% for tab in tabs %}
                         <li class="nav-item">
@@ -154,7 +155,7 @@
                 </div>
 
                 <!-- Main content -->
-                <div class="col p-4" id="main-content">
+                <div id="main-content" class="flex-grow-1 p-4 d-flex flex-column gap-3">
                     {% block content %}{% endblock %}
                 </div>
             </div>

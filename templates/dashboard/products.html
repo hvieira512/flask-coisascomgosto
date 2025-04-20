@@ -1,8 +1,48 @@
 {% extends 'dashbord_base.html' %}
 
+{% block head %}
+<link href="{{ url_for('static', filename='css/dashboard/products.html') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
+<h1 class="h3">Produtos</h1>
 
-<h2 class="mb-3">Bem-vindo 👋</h2>
-<p>Aqui poderás gerir todos os produtos.</p>
+<div id="product-list" class="d-flex flex-wrap gap-3"></div>
 
+{% with 
+    modal_id="newProductModal", 
+    modal_title="Novo Produto",
+    modal_footer="
+        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
+    " %} {% include 'components/dashboard/modal.html' %}
+{% endwith %}
+
+{% with 
+    modal_id="editProductModal", 
+    modal_title="Editar Produto",
+    modal_footer="
+        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
+    " %} {% include 'components/dashboard/modal.html' %}
+{% endwith %}
+
+{% with 
+    modal_id="deleteProductModal", 
+    modal_title="Apagar Produto",
+    modal_footer="
+        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
+    " %} {% include 'components/dashboard/modal.html' %}
+{% endwith %}
+
+{% with 
+    modal_id="viewProductModal", 
+    modal_title="Ver Produto",
+    modal_footer="
+        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
+    " %} {% include 'components/dashboard/modal.html' %}
+{% endwith %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/dashboard/products/main.js') }}"></script>
 {% endblock %}

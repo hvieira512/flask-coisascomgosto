@@ -1,0 +1,5 @@
+.product-card {
+    width: 100%;
+    max-width: 260px;
+    flex: 1 1 240px;
+}
