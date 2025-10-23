@@ -1,5 +1,5 @@
 <nav
-    class="navbar container-lg navbar-expand-lg px-3 d-flex container-fluid justify-content-between align-items-center">
+    class="navbar navbar-expand-lg px-3 d-flex justify-content-between align-items-center bg-white">
     <a class="navbar-brand fw-bold fs-4" href="#">CoisasComGosto</a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -12,6 +12,7 @@
             <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Sobre Nós</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Contactos</a></li>
+
             {% if "username" not in session %}
             <li class="nav-item"><a class="nav-link" href="{{ url_for('web.auth.home') }}">Entrar</a></li>
             {% else %}
