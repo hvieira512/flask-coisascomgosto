@@ -2,8 +2,8 @@ from datetime import date
 
 from flask import Flask
 
-from api import api_bp
-from api.utils import init_db, print_routes
+from api import api
+from api.utils import init_db
 from config import Config
 from extensions import cors, mail
 from web import web_bp
@@ -13,16 +13,20 @@ app.config.from_object(Config)
 
 cors.init_app(app)
 mail.init_app(app)
+api.init_app(app)
 
-app.register_blueprint(api_bp)
 app.register_blueprint(web_bp)
 
 app.jinja_env.globals["year"] = date.today().strftime("%Y")
 
-init_db()
 
-print_routes("api", app)
-print_routes("web", app)
+@app.cli.command("init-db")
+def init_db_command():
+    """Initialize the database."""
+    init_db()
+
+
+print(app.url_map)
 
 
 if __name__ == "__main__":

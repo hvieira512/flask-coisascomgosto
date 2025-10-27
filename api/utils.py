@@ -1,6 +1,7 @@
-from datetime import datetime
 import re
-from sqlite3 import Connection, Cursor, connect, Row
+from contextlib import contextmanager
+from datetime import datetime
+from sqlite3 import Row, connect
 
 from flask import Flask
 
@@ -15,40 +16,40 @@ def init_db():
         print("Database initialized.")
 
 
-def get_db_connection() -> tuple[Connection, Cursor]:
+@contextmanager
+def get_db_connection():
     conn = connect(DB_PATH)
     conn.row_factory = Row
     cursor = conn.cursor()
-    return conn, cursor
+    try:
+        yield conn, cursor
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def format_datetime(dt):
     """Helper function to format datetime as DD/MM/YYYY HH:MM"""
-    if not dt:
-        return None
-
-    if isinstance(dt, str):
-        try:
-            dt = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            return dt
-
-    return dt.strftime("%d/%m/%Y %H:%M")
+    return datetime.strftime(dt, "%d/%m/%Y %H:%M") if dt else None
 
 
 def format_date(dt):
+    """Helper function to format datetime as DD/MM/YYYY"""
     return datetime.strftime(dt, "%d/%m/%Y") if dt else None
 
 
-def is_email_valid(email):
-    """Function that validates an email"""
-    regex = re.compile(
-        r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+"
-    )
-    if re.fullmatch(regex, email):
-        return True
-    else:
-        return False
+EMAIL_REGEX = re.compile(
+    r"([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+"
+)
+
+
+def is_email_valid(email: str) -> bool:
+    """Validate an email address using a regex."""
+    return bool(EMAIL_REGEX.fullmatch(email))
 
 
 def print_routes(prefix: str, app: Flask):

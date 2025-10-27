@@ -1,4 +1,15 @@
 from sqlite3 import Cursor
+from typing import Tuple
+
+
+def build_category_filters(args: dict) -> Tuple[str, list]:
+    where_clauses, params = [], []
+
+    if search := (args.get("q") or "").strip():
+        where_clauses.append("name LIKE ?")
+        params.append(f"%{search}%")
+
+    return (f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""), params
 
 
 def fetch_category_by_id(cursor: Cursor, category_id: int) -> dict | None:
