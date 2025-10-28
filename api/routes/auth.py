@@ -5,7 +5,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from api.helpers.users import (
     email_exists,
     fetch_user_by_id,
-    fetch_user_by_username,
     username_exists,
 )
 from api.models.auth import login_model, register_model

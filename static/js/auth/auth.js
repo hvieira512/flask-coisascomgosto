@@ -8,7 +8,7 @@ const usernameField = document.querySelector("#usernameField");
 const formHeader = document.querySelector("#form-header");
 const form = document.querySelector("#auth-form");
 
-form.addEventListener('submit', async (e) => {
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const mode = submitBtn.dataset.mode || "check";
@@ -21,7 +21,7 @@ form.addEventListener('submit', async (e) => {
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password: "fake" })
+            body: JSON.stringify({ username, password: "fake" }),
         });
         removeLoading(container);
 
@@ -48,7 +48,7 @@ form.addEventListener('submit', async (e) => {
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password }),
         });
         removeLoading(container);
 
@@ -57,7 +57,7 @@ form.addEventListener('submit', async (e) => {
             toastr.error(data.error || "Login falhou");
         }
 
-        toastr.success("Login realizado com sucesso.")
+        toastr.success("Login realizado com sucesso.");
         window.location.href = "/dashboard";
     }
 
@@ -65,7 +65,9 @@ form.addEventListener('submit', async (e) => {
         const username = document.querySelector("#usernameField")?.value;
         const email = document.querySelector("#emailField")?.value.trim();
         const password = document.querySelector("#passwordField")?.value.trim();
-        const confirm = document.querySelector("#confirmPasswordField")?.value.trim();
+        const confirm = document
+            .querySelector("#confirmPasswordField")
+            ?.value.trim();
 
         if (!password || password !== confirm) {
             toastr.error("As passwords não coincidem.");
@@ -76,7 +78,7 @@ form.addEventListener('submit', async (e) => {
         const res = await fetch(API.auth.register, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password }),
         });
         removeLoading(container);
 
@@ -89,7 +91,7 @@ form.addEventListener('submit', async (e) => {
         const login_res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password }),
         });
 
         if (!login_res.ok) {
@@ -108,7 +110,13 @@ function renderLoginForm(username) {
         <h1 class="h2 mb-0">Olá, ${username}!</h1>
         <p class="text-dark">Introduz a tua password para entrar.</p>
     `;
-    appendInput({ icon: 'fa-lock', type: 'password', id: 'passwordField', name: 'password', placeholder: 'Password' });
+    appendInput({
+        icon: "fa-lock",
+        type: "password",
+        id: "passwordField",
+        name: "password",
+        placeholder: "Password",
+    });
     document.querySelector("#passwordField").focus();
 }
 
@@ -118,9 +126,27 @@ async function renderRegisterForm(username) {
         <p class="text-dark">Define a tua palavra-passe para continuares.</p>
     `;
 
-    appendInput({ icon: 'fa-at', type: 'email', id: 'emailField', name: 'email', placeholder: 'E-mail' });
-    appendInput({ icon: 'fa-lock', type: 'password', id: 'passwordField', name: 'password', placeholder: 'Password' });
-    appendInput({ icon: 'fa-lock', type: 'password', id: 'confirmPasswordField', name: 'confirmPassword', placeholder: 'Confirmar Password' });
+    appendInput({
+        icon: "fa-at",
+        type: "email",
+        id: "emailField",
+        name: "email",
+        placeholder: "E-mail",
+    });
+    appendInput({
+        icon: "fa-lock",
+        type: "password",
+        id: "passwordField",
+        name: "password",
+        placeholder: "Password",
+    });
+    appendInput({
+        icon: "fa-lock",
+        type: "password",
+        id: "confirmPasswordField",
+        name: "confirmPassword",
+        placeholder: "Confirmar Password",
+    });
 
     document.querySelector("#emailField").focus();
 }
