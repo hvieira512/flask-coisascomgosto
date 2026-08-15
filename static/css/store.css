@@ -464,6 +464,48 @@ a.card:hover {
     cursor: pointer;
 }
 
+/* No-photo placeholder. --ph-color / --ph-wash / --ph-circle are set inline
+   per product by placeholder.js. */
+.product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--ph-wash, var(--ccg-blue-50));
+    /* Declares the query container, or the cqw sizing below silently resolves
+       against the viewport. */
+    container-type: inline-size;
+}
+
+.product-placeholder-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--ph-circle, var(--ccg-blue-100));
+    color: var(--ph-color, var(--ccg-blue-500));
+    font-size: clamp(1rem, 8cqw, 2.4rem);
+}
+
+.product-placeholder i {
+    font-size: 1.6em;
+    line-height: 1;
+}
+
+/* The gallery stage is not square, so let the placeholder fill it. */
+.product-placeholder--stage {
+    height: 100%;
+    aspect-ratio: auto;
+}
+
+.product-placeholder--stage .product-placeholder-circle {
+    width: 26%;
+    max-width: 160px;
+}
+
 /* Bulma's .grid uses auto-fit, which collapses empty tracks and stretches a
    single result across the row. auto-fill keeps them. */
 #product-grid {

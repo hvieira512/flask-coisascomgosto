@@ -129,3 +129,37 @@ class TestPlaceholderScriptIsLoaded:
 
         html = client.get("/dashboard/products").get_data(as_text=True)
         assert "js/store/placeholder.js" in html
+
+
+class TestPlaceholderStyles:
+    """The tile is styled entirely in CSS, so losing the rules leaves a valid
+    page that renders a bare icon in the corner — invisible to every other test.
+    A comment-stripping regex deleted exactly this block once."""
+
+    def _store_css(self):
+        import pathlib
+
+        return pathlib.Path("static/css/store.css").read_text()
+
+    def test_placeholder_rules_exist(self):
+        css = self._store_css()
+        for selector in [".product-placeholder {",
+                         ".product-placeholder-circle {",
+                         ".product-placeholder i {",
+                         ".product-placeholder--stage {"]:
+            assert selector in css, selector
+
+    def test_tile_centres_its_circle(self):
+        """display:block would put the icon in the top-left corner."""
+        css = self._store_css()
+        block = css.split(".product-placeholder {")[1].split("}")[0]
+        assert "display: flex" in block
+        assert "align-items: center" in block
+        assert "justify-content: center" in block
+
+    def test_tile_declares_a_query_container(self):
+        """The circle sizes with cqw, which resolves against the viewport
+        unless the tile declares container-type."""
+        css = self._store_css()
+        block = css.split(".product-placeholder {")[1].split("}")[0]
+        assert "container-type: inline-size" in block
