@@ -1,35 +1,12 @@
+"""Validation and formatting helpers.
+
+Database access lives in api/db.py; table queries live in api/repositories/.
+"""
+
 import re
-from contextlib import contextmanager
 from datetime import datetime
-from sqlite3 import Row, connect
 
 from flask import Flask
-
-DB_PATH = "db/coisascomgosto.db"
-
-
-def init_db():
-    with open("db/schema.sql") as f:
-        conn = connect(DB_PATH)
-        conn.executescript(f.read())
-        conn.close()
-        print("Database initialized.")
-
-
-@contextmanager
-def get_db_connection():
-    conn = connect(DB_PATH)
-    conn.row_factory = Row
-    cursor = conn.cursor()
-    try:
-        yield conn, cursor
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        cursor.close()
-        conn.close()
 
 
 def format_datetime(dt):
