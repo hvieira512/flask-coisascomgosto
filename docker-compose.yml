@@ -1,0 +1,94 @@
+# Development stack: MySQL plus the Flask app.
+#
+#   cp .env.example .env               settings for both compose and the app
+#   docker compose up --build          start both
+#   docker compose exec web flask init-db   (re)create the schema
+#   docker compose run --rm test       run the suite against a real MySQL
+#
+# Every service reads .env. Values listed under `environment:` override it, and
+# are only there for settings that must differ inside a container — the
+# database host, and the test schema.
+#
+# The app waits for MySQL itself (api.db.wait_for_mysql) as well as depending on
+# the healthcheck, because `flask init-db` and the test runner start outside the
+# normal `up` ordering.
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # MySQL's own bootstrap variable names happen to match ours, so the
+      # image creates exactly the database and user the app expects.
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      # Exposed so DataGrip can connect to the same database the app uses.
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Runs only when the data directory is first created. Grants the app user
+      # rights over `*_test` schemas so `pytest` works with ordinary developer
+      # credentials rather than root.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot",
+             "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # .env says 127.0.0.1, which is right for a Flask process on the host.
+      # Inside the network the database is the `db` service.
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+    ports:
+      - "${WEB_PORT:-5000}:5000"
+    volumes:
+      # Live reload: with FLASK_DEBUG=1 the dev server watches these files, so
+      # editing on the host restarts the app without a rebuild. Harmless in
+      # production mode, where gunicorn simply never re-reads them.
+      - ./api:/app/api
+      - ./web:/app/web
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./db/schema.sql:/app/db/schema.sql
+      - ./app.py:/app/app.py
+      - ./config.py:/app/config.py
+      - ./extensions.py:/app/extensions.py
+
+  # Same image, same MySQL server, throwaway schema. Kept as a profile so it
+  # never starts as part of a plain `docker compose up`.
+  test:
+    build:
+      context: .
+      args:
+        # pytest is not in the runtime image; this layer adds it.
+        INSTALL_DEV: "true"
+    profiles: ["test"]
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      # root, because the suite creates and drops its own schema per run.
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: coisascomgosto_test
+      # The reloader would fight the test runner.
+      FLASK_DEBUG: "0"
+    entrypoint: ["pytest", "-q"]
+
+volumes:
+  mysql_data:
