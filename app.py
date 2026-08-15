@@ -1,32 +1,37 @@
-from datetime import date
+"""Application entrypoint.
+
+Deliberately thin: it wires the pieces together and owns nothing else. Anything
+with behaviour lives where it belongs —
+
+    api/            the REST API, its models and repositories
+    web/            the rendered site: routes, template filters, error pages
+    config.py       settings, read from the environment and .env
+"""
 
 from flask import Flask
 
 from api import api
-from api.utils import init_db
+from api.db import init_db
 from config import Config
-from extensions import cors, mail
-from web import web_bp
+from extensions import cors, jwt, mail
+from web import register_web
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 cors.init_app(app)
 mail.init_app(app)
+jwt.init_app(app)
 api.init_app(app)
 
-app.register_blueprint(web_bp)
-
-app.jinja_env.globals["year"] = date.today().strftime("%Y")
+# Blueprints, template filters and error handlers.
+register_web(app)
 
 
 @app.cli.command("init-db")
 def init_db_command():
-    """Initialize the database."""
+    """Create the database and (re)create every table."""
     init_db()
-
-
-print(app.url_map)
 
 
 if __name__ == "__main__":
