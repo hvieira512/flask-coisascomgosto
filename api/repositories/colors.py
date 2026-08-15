@@ -1,8 +1,4 @@
-"""Data access for the colors table.
-
-A colour is a single named swatch. Colours are combined into colour sets, which
-are what a product's variants actually reference.
-"""
+"""Data access for the colors table."""
 
 from __future__ import annotations
 
@@ -12,19 +8,13 @@ from pymysql.cursors import DictCursor
 
 
 class ColorRepository:
-    """All SQL touching the colors table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self, *, search: Optional[str] = None, limit: int, offset: int
     ) -> list[dict]:
-        """Return a page of colours, optionally fuzzy-matched on name."""
         where, params = self._filter(search)
         self._cursor.execute(
             f"SELECT id, name, hex FROM colors {where} ORDER BY id LIMIT %s OFFSET %s",
@@ -33,13 +23,11 @@ class ColorRepository:
         return [dict(row) for row in self._cursor.fetchall()]
 
     def count(self, *, search: Optional[str] = None) -> int:
-        """Count colours matching the same filter as `list`."""
         where, params = self._filter(search)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM colors {where}", params)
         return self._cursor.fetchone()["total"]
 
     def get(self, color_id: int) -> Optional[dict]:
-        """Return a colour by ID, or None if not found."""
         self._cursor.execute(
             "SELECT id, name, hex FROM colors WHERE id = %s", (color_id,)
         )
@@ -47,7 +35,6 @@ class ColorRepository:
         return dict(row) if row else None
 
     def exists(self, color_id: int) -> bool:
-        """Check whether a colour exists by ID."""
         self._cursor.execute("SELECT 1 FROM colors WHERE id = %s", (color_id,))
         return self._cursor.fetchone() is not None
 
@@ -76,19 +63,13 @@ class ColorRepository:
             )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(self, *, name: str, hex: Optional[str] = None) -> int:
-        """Insert a colour and return its new ID."""
         self._cursor.execute(
             "INSERT INTO colors (name, hex) VALUES (%s, %s)", (name, hex)
         )
         return self._cursor.lastrowid
 
     def update(self, color_id: int, *, name: str, hex: Optional[str] = None) -> None:
-        """Overwrite a colour's fields."""
         self._cursor.execute(
             "UPDATE colors SET name = %s, hex = %s WHERE id = %s", (name, hex, color_id)
         )
@@ -102,10 +83,6 @@ class ColorRepository:
             "DELETE FROM color_set_colors WHERE color_id = %s", (color_id,)
         )
         self._cursor.execute("DELETE FROM colors WHERE id = %s", (color_id,))
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def _filter(search: Optional[str]) -> Tuple[str, list]:

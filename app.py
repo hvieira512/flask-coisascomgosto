@@ -1,13 +1,3 @@
-"""Application entrypoint.
-
-Deliberately thin: it wires the pieces together and owns nothing else. Anything
-with behaviour lives where it belongs —
-
-    api/            the REST API, its models and repositories
-    web/            the rendered site: routes, template filters, error pages
-    config.py       settings, read from the environment and .env
-"""
-
 from flask import Flask
 
 from api import api
@@ -23,8 +13,6 @@ cors.init_app(app)
 mail.init_app(app)
 jwt.init_app(app)
 api.init_app(app)
-
-# Blueprints, template filters and error handlers.
 register_web(app)
 
 

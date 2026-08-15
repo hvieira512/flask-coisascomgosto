@@ -1,19 +1,11 @@
-"""JWT helpers shared by the protected namespaces.
-
-The API authenticates with bearer tokens: POST /api/auth/login returns a
-short-lived access token plus a long-lived refresh token, and
-POST /api/auth/refresh exchanges the refresh token for a fresh access token.
-
-Swagger's "Authorize" button is wired to the same header, so protected
-endpoints can be tried from /api/docs.
-"""
+"""Bearer-token helpers shared by the protected namespaces."""
 
 from functools import wraps
 
 from flask_jwt_extended import get_jwt, jwt_required
 from flask_restx import abort
 
-# Advertised on the Api object so /api/docs renders an Authorize button.
+# Renders the Authorize button in /api/docs.
 AUTHORIZATIONS = {
     "Bearer": {
         "type": "apiKey",
@@ -33,12 +25,6 @@ PROTECTED_DOC = {
 
 
 def token_required(view):
-    """Require a valid access token.
-
-    Thin wrapper over flask-jwt-extended's jwt_required so route modules do
-    not each have to repeat the import and the Swagger annotation.
-    """
-
     @wraps(view)
     @jwt_required()
     def wrapped(*args, **kwargs):
@@ -48,8 +34,6 @@ def token_required(view):
 
 
 def admin_required(view):
-    """Require a valid access token belonging to an administrator."""
-
     @wraps(view)
     @jwt_required()
     def wrapped(*args, **kwargs):

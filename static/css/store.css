@@ -1,18 +1,5 @@
-/*
- * Storefront — only what Bulma does not provide.
- *
- * Layout, spacing, cards, grids, typography scale and colour all come from
- * Bulma (retinted in theme.css). What remains here falls into three groups:
- *
- *   1. Components Bulma has no equivalent for — the image gallery and the
- *      no-photo placeholder.
- *   2. Overrides that undo a Bulma default we do not want (the .menu item
- *      backgrounds in the filter sidebar).
- *   3. A handful of properties Bulma has no helper for: letter-spacing,
- *      reading measure, aspect-ratio, object-fit and hover transitions.
- *
- * If something here could be a Bulma class, it is a bug. Delete it.
- */
+/* Storefront — only what Bulma does not provide.
+ * If something here could be a Bulma class, it is a bug. Delete it. */
 
 body {
     display: flex;
@@ -23,10 +10,6 @@ body {
 main {
     flex: 1 0 auto;
 }
-
-/* ----------------------------------------------------------------
-   1. The few missing utilities
-   ---------------------------------------------------------------- */
 
 /* Bulma has is-uppercase and is-size-7 but no letter-spacing helper. */
 .eyebrow {
@@ -51,10 +34,6 @@ main {
     letter-spacing: -.035em;
     line-height: 1.08;
 }
-
-/* ----------------------------------------------------------------
-   2. Branding details Bulma cannot express
-   ---------------------------------------------------------------- */
 
 /* Bulma caps navbar images at 1.75rem, which renders the logo as a speck —
    but 2.4rem pushed the bar to 86px. 2rem keeps it legible at ~64px. */
@@ -131,7 +110,6 @@ main {
     transition: color .2s ease;
 }
 
-
 .hero-scroll:hover {
     color: var(--ccg-blue-700);
 }
@@ -162,10 +140,8 @@ main {
     }
 }
 
-/* A rule above each step; Bulma has no border helper. */
-/* An <ol> so the three steps read as an ordered process, but the step number is
-   rendered as a styled eyebrow ("01"), so the browser's own decimal marker has
-   to go — otherwise every step shows the number twice, as "1. 01". */
+/* The step number is rendered as an eyebrow ("01"), so the browser's own
+   marker would show it twice: "1. 01". */
 .craft-step {
     border-top: 2px solid var(--ccg-blue-200);
     list-style: none;
@@ -221,9 +197,6 @@ a.card:hover {
     transform: translateY(-3px);
 }
 
-/* A product type on the landing page: icon, name, and a way into the catalog
-   filtered to that type. The icon disc echoes the no-photo placeholder tile, so
-   a type reads the same here as it does on a product that has no picture. */
 .type-card {
     color: inherit;
     display: block;
@@ -245,16 +218,8 @@ a.card:hover {
     background: var(--ccg-blue-100);
 }
 
-/* ----------------------------------------------------------------
-   Timeline — no Bulma equivalent
-   ----------------------------------------------------------------
-   Horizontal rail on desktop, dragged or stepped with the arrow buttons. The
-   connecting line is each entry's top border, so the entries themselves draw
-   a continuous rule across the row. Vertical and centred below tablet.
-
-   The rail sits inside the normal .container: an earlier full-bleed version
-   added its own padding on top of the section's, pushing it 72px right of the
-   header it belongs to. */
+/* Timeline. The connecting line is each entry's top border, so the entries
+   draw a continuous rule across the row. */
 
 .timeline-shell {
     position: relative;
@@ -264,10 +229,8 @@ a.card:hover {
     display: flex;
     list-style: none;
     margin: 0;
-    /* overflow-x: auto forces overflow-y to auto as well, so the scrollport
-       clips anything above the entries. The markers straddle the top rule and
-       reach 7px above it plus a 4px halo, so the rail reserves 12px of padding
-       for them; without it every circle loses its top half. */
+    /* overflow-x: auto forces overflow-y too, so the scrollport clips the
+       markers above the rule. 12px = 7px of overhang + the 4px halo. */
     padding: 12px 0 0;
     overflow-x: auto;
     /* Mandatory, not proximity: after a drag an entry always lands flush with
@@ -282,10 +245,8 @@ a.card:hover {
     display: none;
 }
 
-/* Each edge fades whenever there is content past it: entering content dissolves
-   instead of being sliced off mid-glyph, and the arrow button floating over that
-   edge never lands on top of legible text. The two classes are toggled
-   independently by the script, so all four combinations are spelled out. */
+/* Fades the edge that has content past it, so entering content dissolves and
+   the arrow never sits on legible text. */
 .timeline.has-fade-start {
     mask-image: linear-gradient(to right, transparent 0, #000 3rem);
 }
@@ -320,10 +281,8 @@ a.card:hover {
     scroll-snap-align: start;
 }
 
-/* Without this the only snap points are entry starts. When the rail overflows
-   by less than one entry — four events on a wide screen — the end of the rail
-   is not a snap point, so it snaps back to 0 and the last entry can never be
-   fully revealed. */
+/* Entry starts are otherwise the only snap points, so a rail overflowing by
+   less than one entry snaps back to 0 and the last entry is unreachable. */
 .timeline-entry:last-child {
     scroll-snap-align: end;
 }
@@ -471,10 +430,6 @@ a.card:hover {
     }
 }
 
-/* ----------------------------------------------------------------
-   3. Catalog: undoing Bulma's .menu defaults
-   ---------------------------------------------------------------- */
-
 .filters-panel {
     position: sticky;
     top: 1.5rem;
@@ -509,10 +464,8 @@ a.card:hover {
     cursor: pointer;
 }
 
-/* Bulma's .grid lays out with repeat(auto-fit, ...), which collapses the empty
-   tracks — so a filter matching a single product stretches that one card across
-   the whole row. auto-fill keeps the tracks at their share instead. Bulma has no
-   modifier for this, which is the only reason the rule is here. */
+/* Bulma's .grid uses auto-fit, which collapses empty tracks and stretches a
+   single result across the row. auto-fill keeps them. */
 #product-grid {
     grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
 }
@@ -554,56 +507,6 @@ a.card:hover {
     overflow: hidden;
 }
 
-/* ----------------------------------------------------------------
-   4. No-photo placeholder — no Bulma equivalent
-   ----------------------------------------------------------------
-   The three custom properties are set inline per product by placeholder.js
-   and the Jinja macro: --ph-color (full), --ph-wash (tile), --ph-circle. */
-
-.product-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    background: var(--ph-wash, var(--ccg-blue-50));
-    /* Declares the query container so the icon's cqw sizing below measures
-       the tile. Without this, cqw silently resolves against the viewport. */
-    container-type: inline-size;
-}
-
-.product-placeholder-circle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34%;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    background: var(--ph-circle, var(--ccg-blue-100));
-    color: var(--ph-color, var(--ccg-blue-500));
-    font-size: clamp(1rem, 8cqw, 2.4rem);
-}
-
-.product-placeholder i {
-    font-size: 1.6em;
-    line-height: 1;
-}
-
-/* The gallery stage is not square, so let the placeholder fill it. */
-.product-placeholder--stage {
-    height: 100%;
-    aspect-ratio: auto;
-}
-
-.product-placeholder--stage .product-placeholder-circle {
-    width: 26%;
-    max-width: 160px;
-}
-
-/* ----------------------------------------------------------------
-   5. Product detail panel
-   ---------------------------------------------------------------- */
-
 /* A definition list of the piece's facts: label left, value right. */
 .spec-list {
     border-top: 1px solid var(--bulma-border);
@@ -627,10 +530,6 @@ a.card:hover {
     font-weight: 500;
     text-align: right;
 }
-
-/* ----------------------------------------------------------------
-   6. Product gallery — no Bulma equivalent
-   ---------------------------------------------------------------- */
 
 :root {
     /* Trimmed from 520px: the right column carries ~430px of content, and a
@@ -823,10 +722,6 @@ a.card:hover {
     background: var(--ccg-blue-800);
     color: #fff;
 }
-
-/* ----------------------------------------------------------------
-   7. Responsive — only what Bulma's own breakpoints miss
-   ---------------------------------------------------------------- */
 
 @media screen and (max-width: 1023px) {
     .media-photo {

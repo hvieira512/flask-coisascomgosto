@@ -1,24 +1,15 @@
 /*
- * Coisas com Gosto — design tokens.
+ * Design tokens. Loaded after bulma.min.css so it can retint Bulma through its
+ * own HSL variables — no Sass rebuild.
  *
- * Loaded immediately after bulma.min.css so it can retheme Bulma through its
- * own CSS variables. Bulma 1.x derives every colour from HSL triplets, so
- * setting the primary and scheme hues here recolours buttons, links, tags,
- * borders and backgrounds without recompiling any Sass.
- *
- * The blue is sampled from the logo: #4472C4 = hsl(218, 52%, 52%).
- * The neutrals are warmed (hue 35) so the page reads as paper rather than
- * screen-grey — it has to sit next to photographs of wood and cloth.
+ * Blue is sampled from the logo: #4472C4 = hsl(218, 52%, 52%).
  */
 
 :root {
-    /* The palette is a single light one. data-theme="light" on <html> stops
-       Bulma's own prefers-color-scheme: dark block from repainting components
-       near-black; this tells the browser to keep native widgets, scrollbars and
-       form controls light to match. */
+    /* Pairs with data-theme="light" on <html>, which stops Bulma's own
+       prefers-color-scheme: dark block repainting everything near-black. */
     color-scheme: light;
 
-    /* ---- brand ramp, all from the logo blue's hue + saturation ---- */
     --ccg-blue-50: #EFF3FA;
     --ccg-blue-100: #DCE4F3;
     --ccg-blue-200: #B9CAE8;
@@ -31,22 +22,16 @@
     --ccg-blue-800: #1F3864;
     --ccg-blue-900: #162745;
 
-    /* ---- warm paper neutrals ---- */
     --ccg-paper: #FAF8F5;
     --ccg-paper-deep: #F3EFE8;
     --ccg-surface: #FFFFFF;
     --ccg-line: #E7E1D7;
     --ccg-line-soft: #F0EBE3;
 
-    /* ---- ink ---- */
     --ccg-ink: #26221D;
     --ccg-ink-soft: #6E675E;
     --ccg-ink-faint: #9C9489;
 
-    /* ---- rhythm ----
-       One spacing scale so sections breathe consistently. The large steps
-       are deliberately generous: the previous layout felt cluttered because
-       every section used the same 3rem gap. */
     --space-xs: .5rem;
     --space-sm: 1rem;
     --space-md: 2rem;
@@ -59,22 +44,15 @@
     --radius: 10px;
     --radius-lg: 16px;
 
-    /* ================================================================
-       Bulma retheme
-       ================================================================ */
-
-    /* Primary = the logo blue. Everything Bulma derives (hover, light,
-       dark, invert) follows automatically from these three. */
+    /* Bulma retheme: everything it derives follows from these. */
     --bulma-primary-h: 218deg;
     --bulma-primary-s: 52%;
     --bulma-primary-l: 52%;
 
-    /* Links match the brand rather than Bulma's default indigo. */
     --bulma-link-h: 218deg;
     --bulma-link-s: 52%;
     --bulma-link-l: 42%;
 
-    /* Warm the whole neutral scheme. */
     --bulma-scheme-h: 35;
     --bulma-scheme-s: 22%;
 
@@ -101,8 +79,6 @@
     --bulma-card-radius: var(--radius);
 }
 
-/* Anchor links (the hero invitation, the navbar Contactos link) glide
-   instead of jumping. */
 html {
     scroll-behavior: smooth;
 }
@@ -113,7 +89,6 @@ html {
     }
 }
 
-/* Headings carry the brand navy and tighter tracking; body stays warm ink. */
 .title,
 h1,
 h2,
@@ -127,7 +102,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Bulma's default button is quite loud; soften the neutral one to match paper. */
 .button {
     border-radius: var(--radius);
 }

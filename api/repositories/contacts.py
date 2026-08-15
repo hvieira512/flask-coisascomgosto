@@ -18,14 +18,9 @@ _COLUMNS = "id, address, email, whatsapp, maps_url, facebook_url, instagram_url"
 
 
 class ContactRepository:
-    """All SQL touching the contacts table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
-
-    # ----------------
-    # Queries
-    # ----------------
 
     def get(self) -> Optional[dict]:
         """Return the contact details, or None if the row is missing."""
@@ -34,10 +29,6 @@ class ContactRepository:
         )
         row = self._cursor.fetchone()
         return self._to_dict(row) if row else None
-
-    # ----------------
-    # Mutations
-    # ----------------
 
     def update(
         self,
@@ -71,10 +62,6 @@ class ContactRepository:
                 instagram_url,
             ),
         )
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def whatsapp_url(number: Optional[str]) -> Optional[str]:

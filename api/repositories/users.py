@@ -12,17 +12,11 @@ _PUBLIC_COLUMNS = "id, username, email, created_at, is_admin"
 
 
 class UserRepository:
-    """All SQL touching the users table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(self, *, limit: int, offset: int) -> list[dict]:
-        """Return a page of users, newest last."""
         self._cursor.execute(
             f"SELECT {_PUBLIC_COLUMNS} FROM users ORDER BY id LIMIT %s OFFSET %s",
             (limit, offset),
@@ -30,19 +24,16 @@ class UserRepository:
         return [self._to_dict(row) for row in self._cursor.fetchall()]
 
     def count(self) -> int:
-        """Total number of users."""
         self._cursor.execute("SELECT COUNT(*) AS total FROM users")
         return self._cursor.fetchone()["total"]
 
     def get(self, user_id: int) -> Optional[dict]:
-        """Return a user by ID, or None if not found."""
         self._cursor.execute(
             f"SELECT {_PUBLIC_COLUMNS} FROM users WHERE id = %s", (user_id,)
         )
         return self._to_dict(self._cursor.fetchone())
 
     def get_by_username(self, username: str) -> Optional[dict]:
-        """Return a user by username, or None if not found."""
         self._cursor.execute(
             f"SELECT {_PUBLIC_COLUMNS} FROM users WHERE username = %s", (username,)
         )
@@ -65,23 +56,16 @@ class UserRepository:
         return user
 
     def exists(self, user_id: int) -> bool:
-        """Check whether a user exists by ID."""
         self._cursor.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
         return self._cursor.fetchone() is not None
 
     def username_exists(self, username: str) -> bool:
-        """Check whether a username is taken."""
         self._cursor.execute("SELECT 1 FROM users WHERE username = %s", (username,))
         return self._cursor.fetchone() is not None
 
     def email_exists(self, email: str) -> bool:
-        """Check whether an email is taken."""
         self._cursor.execute("SELECT 1 FROM users WHERE email = %s", (email,))
         return self._cursor.fetchone() is not None
-
-    # ----------------
-    # Mutations
-    # ----------------
 
     def create(
         self,
@@ -97,10 +81,6 @@ class UserRepository:
             (username, email, password_hash, bool(is_admin)),
         )
         return self._cursor.lastrowid
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def _to_dict(row) -> Optional[dict]:

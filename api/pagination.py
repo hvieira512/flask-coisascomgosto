@@ -1,7 +1,4 @@
-"""Pagination: parsing request args and building the response envelope.
-
-This is an HTTP concern, not data access, so it sits outside the repositories.
-"""
+"""Request-arg parsing and the pagination response envelope."""
 
 from werkzeug.exceptions import BadRequest
 
@@ -24,18 +21,13 @@ def _positive_int(args, key: str, default: int) -> int:
 
 
 def get_pagination_params(args) -> tuple[int, int, int]:
-    """Extract (page, limit, offset) from request args.
-
-    Raises BadRequest (400) on non-numeric or non-positive values, and clamps
-    limit to MAX_LIMIT so a single request cannot ask for the whole table.
-    """
+    """(page, limit, offset), 400 on bad input, limit clamped to MAX_LIMIT."""
     page = _positive_int(args, "page", DEFAULT_PAGE)
     limit = min(_positive_int(args, "limit", DEFAULT_LIMIT), MAX_LIMIT)
     return page, limit, (page - 1) * limit
 
 
 def make_pagination(total: int, page: int, limit: int) -> dict:
-    """Build the pagination block for a list response."""
     return {
         "total": total,
         "page": page,

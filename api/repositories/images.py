@@ -16,14 +16,9 @@ _COLUMNS = "id, product_id, variant_id, url, alt, position"
 
 
 class ProductImageRepository:
-    """All SQL touching the product_images table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
-
-    # ----------------
-    # Queries
-    # ----------------
 
     def list_for_product(
         self, product_id: int, *, variant_id: Optional[int] = None
@@ -57,7 +52,6 @@ class ProductImageRepository:
         return [dict(row) for row in self._cursor.fetchall()]
 
     def get(self, image_id: int) -> Optional[dict]:
-        """Return an image by ID, or None if not found."""
         self._cursor.execute(
             f"SELECT {_COLUMNS} FROM product_images WHERE id = %s", (image_id,)
         )
@@ -72,10 +66,6 @@ class ProductImageRepository:
         )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(
         self,
         *,
@@ -85,7 +75,6 @@ class ProductImageRepository:
         variant_id: Optional[int] = None,
         position: int = 0,
     ) -> int:
-        """Insert an image and return its new ID."""
         self._cursor.execute(
             "INSERT INTO product_images (product_id, variant_id, url, alt, position) "
             "VALUES (%s, %s, %s, %s, %s)",
@@ -102,7 +91,6 @@ class ProductImageRepository:
         variant_id: Optional[int] = None,
         position: int = 0,
     ) -> None:
-        """Overwrite an image's fields."""
         self._cursor.execute(
             "UPDATE product_images SET url = %s, alt = %s, variant_id = %s, "
             "position = %s WHERE id = %s",
@@ -110,7 +98,6 @@ class ProductImageRepository:
         )
 
     def delete(self, image_id: int) -> None:
-        """Delete an image."""
         self._cursor.execute("DELETE FROM product_images WHERE id = %s", (image_id,))
 
     # ----------------

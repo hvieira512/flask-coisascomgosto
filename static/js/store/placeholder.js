@@ -1,23 +1,11 @@
-/**
- * Placeholder tile for products that have no photograph yet.
- *
- * Rather than a grey box, it borrows the product's own identity: a pale wash of
- * its first variant colour, and a Font Awesome icon for its product type sitting
- * in a paler circle. The icon itself is drawn in the full colour so it reads
- * against the wash.
- *
- * The Jinja macro in templates/store/components/placeholder.html renders the
- * same thing server-side; keep the two in step.
- */
+// No-photo tile: a wash of the product's own colour behind its type icon.
+// The keyword table is mirrored by the `type_icon` filter in web/filters.py.
 window.ProductPlaceholder = (function () {
     /** Brand blue, used when a product has no colour of its own. */
     const DEFAULT_COLOR = "#4472C4";
     const DEFAULT_ICON = "fa-gift";
 
-    /**
-     * Guess an icon from the type name when the type has none set.
-     * Owners can override any of this by setting `icon` on the product type.
-     */
+    // First match wins.
     const KEYWORD_ICONS = [
         [/cora[çc][ãa]o|heart/i, "fa-heart"],
         [/moldura|quadro|frame|foto/i, "fa-image"],
@@ -34,23 +22,17 @@ window.ProductPlaceholder = (function () {
         const type = product.type;
         if (type?.icon) return type.icon;
 
-        // A sub-type inherits its parent's icon; the API already resolves that,
-        // but fall back to matching either name here too.
         const names = [type?.name, type?.parent?.name].filter(Boolean).join(" ");
         const match = KEYWORD_ICONS.find(([pattern]) => pattern.test(names));
         return match ? match[1] : DEFAULT_ICON;
     }
 
-    /** The product's identifying colour: the first colour of its first variant. */
     function colorFor(product) {
         const variant = (product.variants || [])[0];
         return variant?.color_set?.colors?.[0]?.hex || DEFAULT_COLOR;
     }
 
-    /**
-     * Turn #RRGGBB into an rgba() string.
-     * Non-hex values are returned untouched so a named colour still works.
-     */
+    // Non-hex values pass through so a named colour still works.
     function tint(hex, alpha) {
         const match = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
         if (!match) return hex;
@@ -62,7 +44,6 @@ window.ProductPlaceholder = (function () {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    /** Markup for the tile. `extraClass` lets callers match their own sizing. */
     function markup(product, extraClass = "") {
         const color = colorFor(product);
         const icon = iconFor(product);

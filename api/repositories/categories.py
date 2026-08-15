@@ -8,19 +8,13 @@ from pymysql.cursors import DictCursor
 
 
 class CategoryRepository:
-    """All SQL touching the categories table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self, *, search: Optional[str] = None, limit: int, offset: int
     ) -> list[dict]:
-        """Return a page of categories, optionally fuzzy-matched on name."""
         where, params = self._filter(search)
         self._cursor.execute(
             f"SELECT id, name FROM categories {where} ORDER BY id LIMIT %s OFFSET %s",
@@ -29,13 +23,11 @@ class CategoryRepository:
         return [dict(row) for row in self._cursor.fetchall()]
 
     def count(self, *, search: Optional[str] = None) -> int:
-        """Count categories matching the same filter as `list`."""
         where, params = self._filter(search)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM categories {where}", params)
         return self._cursor.fetchone()["total"]
 
     def get(self, category_id: int) -> Optional[dict]:
-        """Return a category by ID, or None if not found."""
         self._cursor.execute(
             "SELECT id, name FROM categories WHERE id = %s", (category_id,)
         )
@@ -43,7 +35,6 @@ class CategoryRepository:
         return dict(row) if row else None
 
     def exists(self, category_id: int) -> bool:
-        """Check whether a category exists by ID."""
         self._cursor.execute("SELECT 1 FROM categories WHERE id = %s", (category_id,))
         return self._cursor.fetchone() is not None
 
@@ -58,12 +49,7 @@ class CategoryRepository:
             )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(self, name: str) -> int:
-        """Insert a category and return its new ID."""
         self._cursor.execute("INSERT INTO categories (name) VALUES (%s)", (name,))
         return self._cursor.lastrowid
 
@@ -92,10 +78,6 @@ class CategoryRepository:
             products.delete(product_id)
 
         self._cursor.execute("DELETE FROM categories WHERE id = %s", (category_id,))
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def _filter(search: Optional[str]) -> Tuple[str, list]:

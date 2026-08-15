@@ -26,14 +26,9 @@ _SELECT = """
 
 
 class ProductVariantRepository:
-    """All SQL touching the product_variants table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
-
-    # ----------------
-    # Queries
-    # ----------------
 
     def list_for_product(self, product_id: int) -> list[dict]:
         """Return every variant of a product, colours included."""
@@ -46,7 +41,6 @@ class ProductVariantRepository:
         return variants
 
     def get(self, variant_id: int) -> Optional[dict]:
-        """Return a variant by ID, or None if not found."""
         self._cursor.execute(f"{_SELECT} WHERE v.id = %s", (variant_id,))
         row = self._cursor.fetchone()
         if not row:
@@ -76,10 +70,6 @@ class ProductVariantRepository:
         )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(self, *, product_id: int, color_set_id: int) -> int:
         """Attach a colour set to a product and return the new variant ID."""
         self._cursor.execute(
@@ -96,10 +86,6 @@ class ProductVariantRepository:
         self._cursor.execute(
             "DELETE FROM product_variants WHERE id = %s", (variant_id,)
         )
-
-    # ----------------
-    # Internals
-    # ----------------
 
     def _attach_colors(self, variants: list[dict]) -> None:
         """Fill in each variant's colour-set colours in one query."""

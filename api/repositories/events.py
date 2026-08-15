@@ -1,8 +1,4 @@
-"""Data access for the events table.
-
-An event is a fair, market or show the workshop took part in. They drive the
-timeline on the landing page, which reads newest first.
-"""
+"""Data access for the events table."""
 
 from __future__ import annotations
 
@@ -15,19 +11,13 @@ _COLUMNS = "id, name, location, description, starts_on, ends_on, url"
 
 
 class EventRepository:
-    """All SQL touching the events table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self, *, search: Optional[str] = None, limit: int, offset: int
     ) -> list[dict]:
-        """Return a page of events, most recent first."""
         where, params = self._filter(search)
         self._cursor.execute(
             f"SELECT {_COLUMNS} FROM events {where} "
@@ -37,13 +27,11 @@ class EventRepository:
         return [self._to_dict(row) for row in self._cursor.fetchall()]
 
     def count(self, *, search: Optional[str] = None) -> int:
-        """Count events matching the same filter as `list`."""
         where, params = self._filter(search)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM events {where}", params)
         return self._cursor.fetchone()["total"]
 
     def get(self, event_id: int) -> Optional[dict]:
-        """Return an event by ID, or None if not found."""
         self._cursor.execute(
             f"SELECT {_COLUMNS} FROM events WHERE id = %s", (event_id,)
         )
@@ -51,13 +39,8 @@ class EventRepository:
         return self._to_dict(row) if row else None
 
     def exists(self, event_id: int) -> bool:
-        """Check whether an event exists by ID."""
         self._cursor.execute("SELECT 1 FROM events WHERE id = %s", (event_id,))
         return self._cursor.fetchone() is not None
-
-    # ----------------
-    # Mutations
-    # ----------------
 
     def create(
         self,
@@ -69,7 +52,6 @@ class EventRepository:
         ends_on: Optional[str] = None,
         url: Optional[str] = None,
     ) -> int:
-        """Insert an event and return its new ID."""
         self._cursor.execute(
             "INSERT INTO events (name, location, description, starts_on, ends_on, url) "
             "VALUES (%s, %s, %s, %s, %s, %s)",
@@ -88,7 +70,6 @@ class EventRepository:
         ends_on: Optional[str] = None,
         url: Optional[str] = None,
     ) -> None:
-        """Overwrite an event's fields."""
         self._cursor.execute(
             "UPDATE events SET name = %s, location = %s, description = %s, "
             "starts_on = %s, ends_on = %s, url = %s WHERE id = %s",
@@ -96,12 +77,7 @@ class EventRepository:
         )
 
     def delete(self, event_id: int) -> None:
-        """Delete an event."""
         self._cursor.execute("DELETE FROM events WHERE id = %s", (event_id,))
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def _filter(search: Optional[str]) -> Tuple[str, list]:

@@ -1,9 +1,4 @@
-"""Data access for the sizes table.
-
-Sizes are a small controlled vocabulary (S / M / L, seeded by the schema).
-A product may name one of them as its default size and/or list the sizes it is
-actually available in.
-"""
+"""Data access for the sizes table."""
 
 from __future__ import annotations
 
@@ -13,19 +8,13 @@ from pymysql.cursors import DictCursor
 
 
 class SizeRepository:
-    """All SQL touching the sizes table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self, *, search: Optional[str] = None, limit: int, offset: int
     ) -> list[dict]:
-        """Return a page of sizes ordered by display position."""
         where, params = self._filter(search)
         self._cursor.execute(
             f"SELECT id, name, position FROM sizes {where} "
@@ -35,13 +24,11 @@ class SizeRepository:
         return [dict(row) for row in self._cursor.fetchall()]
 
     def count(self, *, search: Optional[str] = None) -> int:
-        """Count sizes matching the same filter as `list`."""
         where, params = self._filter(search)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM sizes {where}", params)
         return self._cursor.fetchone()["total"]
 
     def get(self, size_id: int) -> Optional[dict]:
-        """Return a size by ID, or None if not found."""
         self._cursor.execute(
             "SELECT id, name, position FROM sizes WHERE id = %s", (size_id,)
         )
@@ -49,7 +36,6 @@ class SizeRepository:
         return dict(row) if row else None
 
     def exists(self, size_id: int) -> bool:
-        """Check whether a size exists by ID."""
         self._cursor.execute("SELECT 1 FROM sizes WHERE id = %s", (size_id,))
         return self._cursor.fetchone() is not None
 
@@ -74,19 +60,13 @@ class SizeRepository:
             )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(self, *, name: str, position: int = 0) -> int:
-        """Insert a size and return its new ID."""
         self._cursor.execute(
             "INSERT INTO sizes (name, position) VALUES (%s, %s)", (name, position)
         )
         return self._cursor.lastrowid
 
     def update(self, size_id: int, *, name: str, position: int = 0) -> None:
-        """Overwrite a size's fields."""
         self._cursor.execute(
             "UPDATE sizes SET name = %s, position = %s WHERE id = %s",
             (name, position, size_id),
@@ -106,10 +86,6 @@ class SizeRepository:
             (size_id,),
         )
         self._cursor.execute("DELETE FROM sizes WHERE id = %s", (size_id,))
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def _filter(search: Optional[str]) -> Tuple[str, list]:

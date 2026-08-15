@@ -1,9 +1,4 @@
-"""Data access for the products table.
-
-A product always has a category. It may additionally belong to a collection,
-declare a default size, list the sizes it is available in, and carry variants —
-one per colour set it is offered in.
-"""
+"""Data access for the products table."""
 
 from __future__ import annotations
 
@@ -50,10 +45,6 @@ class ProductRepository:
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self,
         *,
@@ -64,7 +55,6 @@ class ProductRepository:
         limit: int,
         offset: int,
     ) -> list[dict]:
-        """Return a page of products with sizes and variants resolved."""
         where, params = self._filter(search, collection_id, category_id, type_id)
         self._cursor.execute(
             f"{_SELECT} {where} ORDER BY p.id LIMIT %s OFFSET %s",
@@ -84,7 +74,6 @@ class ProductRepository:
         category_id: Optional[int] = None,
         type_id: Optional[int] = None,
     ) -> int:
-        """Count products matching the same filter as `list`."""
         where, params = self._filter(search, collection_id, category_id, type_id)
         self._cursor.execute(f"SELECT COUNT(*) AS total {_FROM} {where}", params)
         return self._cursor.fetchone()["total"]
@@ -103,7 +92,6 @@ class ProductRepository:
         return product
 
     def exists(self, product_id: int) -> bool:
-        """Check whether a product exists by ID."""
         self._cursor.execute("SELECT 1 FROM products WHERE id = %s", (product_id,))
         return self._cursor.fetchone() is not None
 
@@ -118,10 +106,6 @@ class ProductRepository:
             )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(
         self,
         *,
@@ -132,7 +116,6 @@ class ProductRepository:
         collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> int:
-        """Insert a product and return its new ID."""
         self._cursor.execute(
             "INSERT INTO products "
             "(category_id, type_id, collection_id, default_size_id, name, description) "
@@ -215,10 +198,6 @@ class ProductRepository:
                 "INSERT INTO product_sizes (product_id, size_id) VALUES (%s, %s)",
                 (product_id, size_id),
             )
-
-    # ----------------
-    # Internals
-    # ----------------
 
     def _attach_sizes(self, products: list[dict]) -> None:
         """Populate `sizes` for a whole page in one query."""

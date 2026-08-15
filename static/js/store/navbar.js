@@ -1,7 +1,4 @@
-/**
- * Bulma ships the burger markup but no JavaScript, so the mobile menu toggle
- * has to be wired manually.
- */
+// Bulma ships the burger markup but no JavaScript.
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-navbar-burger]").forEach((burger) => {
         burger.addEventListener("click", () => {

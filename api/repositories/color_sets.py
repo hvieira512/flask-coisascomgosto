@@ -1,10 +1,4 @@
-"""Data access for colour sets.
-
-A colour set is a named combination of colours ("White and Green") that normally
-belongs to a collection. Products reference colour sets through their variants,
-so a "caixa redonda" in white/green and red/white is one product with two
-variants pointing at two colour sets.
-"""
+"""Data access for colour sets."""
 
 from __future__ import annotations
 
@@ -29,10 +23,6 @@ class ColorSetRepository:
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self,
         *,
@@ -54,7 +44,6 @@ class ColorSetRepository:
     def count(
         self, *, search: Optional[str] = None, collection_id: Optional[int] = None
     ) -> int:
-        """Count colour sets matching the same filter as `list`."""
         where, params = self._filter(search, collection_id)
         self._cursor.execute(
             "SELECT COUNT(*) AS total FROM color_sets cs "
@@ -76,7 +65,6 @@ class ColorSetRepository:
         return result
 
     def exists(self, color_set_id: int) -> bool:
-        """Check whether a colour set exists by ID."""
         self._cursor.execute("SELECT 1 FROM color_sets WHERE id = %s", (color_set_id,))
         return self._cursor.fetchone() is not None
 
@@ -100,10 +88,6 @@ class ColorSetRepository:
             params.append(exclude_id)
         self._cursor.execute(sql, params)
         return self._cursor.fetchone() is not None
-
-    # ----------------
-    # Mutations
-    # ----------------
 
     def create(
         self, *, name: str, collection_id: Optional[int], color_ids: list[int]
@@ -153,10 +137,6 @@ class ColorSetRepository:
             "DELETE FROM color_set_colors WHERE color_set_id = %s", (color_set_id,)
         )
         self._cursor.execute("DELETE FROM color_sets WHERE id = %s", (color_set_id,))
-
-    # ----------------
-    # Internals
-    # ----------------
 
     def _replace_colors(self, color_set_id: int, color_ids: list[int]) -> None:
         """Reset a set's colours to exactly `color_ids`, preserving order."""

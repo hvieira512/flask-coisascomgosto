@@ -1,8 +1,4 @@
-"""Data access for the collections table.
-
-A collection is a themed grouping such as "Barra da Saia". It owns the colour
-sets that its products draw their variants from.
-"""
+"""Data access for the collections table."""
 
 from __future__ import annotations
 
@@ -12,19 +8,13 @@ from pymysql.cursors import DictCursor
 
 
 class CollectionRepository:
-    """All SQL touching the collections table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
 
-    # ----------------
-    # Queries
-    # ----------------
-
     def list(
         self, *, search: Optional[str] = None, limit: int, offset: int
     ) -> list[dict]:
-        """Return a page of collections, optionally fuzzy-matched on name."""
         where, params = self._filter(search)
         self._cursor.execute(
             f"SELECT id, name, description FROM collections {where} "
@@ -34,13 +24,11 @@ class CollectionRepository:
         return [dict(row) for row in self._cursor.fetchall()]
 
     def count(self, *, search: Optional[str] = None) -> int:
-        """Count collections matching the same filter as `list`."""
         where, params = self._filter(search)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM collections {where}", params)
         return self._cursor.fetchone()["total"]
 
     def get(self, collection_id: int) -> Optional[dict]:
-        """Return a collection by ID, or None if not found."""
         self._cursor.execute(
             "SELECT id, name, description FROM collections WHERE id = %s",
             (collection_id,),
@@ -49,7 +37,6 @@ class CollectionRepository:
         return dict(row) if row else None
 
     def exists(self, collection_id: int) -> bool:
-        """Check whether a collection exists by ID."""
         self._cursor.execute(
             "SELECT 1 FROM collections WHERE id = %s", (collection_id,)
         )
@@ -66,12 +53,7 @@ class CollectionRepository:
             )
         return self._cursor.fetchone() is not None
 
-    # ----------------
-    # Mutations
-    # ----------------
-
     def create(self, *, name: str, description: Optional[str] = None) -> int:
-        """Insert a collection and return its new ID."""
         self._cursor.execute(
             "INSERT INTO collections (name, description) VALUES (%s, %s)",
             (name, description),
@@ -81,7 +63,6 @@ class CollectionRepository:
     def update(
         self, collection_id: int, *, name: str, description: Optional[str] = None
     ) -> None:
-        """Overwrite a collection's fields."""
         self._cursor.execute(
             "UPDATE collections SET name = %s, description = %s WHERE id = %s",
             (name, description, collection_id),
@@ -101,10 +82,6 @@ class CollectionRepository:
             (collection_id,),
         )
         self._cursor.execute("DELETE FROM collections WHERE id = %s", (collection_id,))
-
-    # ----------------
-    # Internals
-    # ----------------
 
     @staticmethod
     def _filter(search: Optional[str]) -> Tuple[str, list]:

@@ -1,28 +1,8 @@
-{# The single Contacts section, at the foot of the landing page.
-
-   Everything comes from the contacts table via the inject_contact context
-   processor. Cards are only rendered for details that are actually set.
-
-   Order matters: where to find us (morada, e-mail) first, then the social
-   channels.
-
-   Each card shows an icon and a label only — the value itself carries no
-   meaning a visitor needs before clicking, and five wrapping handles made the
-   row noisy. The value stays in the markup as the link's accessible name via
-   is-sr-only, so a screen reader still announces "E-mail, geral@..." rather
-   than a bare label.
-
-   Layout is Bulma's smart grid: .grid auto-fills with a 15rem minimum
-   (is-col-min-10), which is what the hand-written minmax() used to do.
-
-   The cards carry mb-0 because Bulma gives .card:not(:last-child) a 1.5rem
-   bottom margin for stacked cards in flow. In a grid the row gap already does
-   that job, and the margin inflates the row track — leaving dead space under
-   the last row and stretching the final card past its siblings. #}
 {% macro contact_card(icon, label, value, href=None, external=False) -%}
 {%- set tag = 'a' if href else 'div' -%}
-{#- is-flex-direction-row because Bulma's .card is a flex column: without it the
-    label drops onto its own line under the icon. -#}
+{#- mb-0 and is-flex-direction-row undo Bulma .card defaults: a stacking
+    margin that inflates the grid row, and a flex column that would drop the
+    label under the icon. -#}
 <{{ tag }} class="cell card p-5 mb-0 is-flex is-flex-direction-row is-align-items-center"
     {%- if href %} href="{{ href }}"{% endif %}
     {%- if external %} target="_blank" rel="noopener"{% endif %}>
@@ -32,8 +12,7 @@
 </{{ tag }}>
 {%- endmacro %}
 
-{# pb-6, not the section's own is-medium bottom padding: this is the last
-   section before the footer, so the full 6rem left the page trailing off. #}
+{# pb-6: the section's own 6rem left the page trailing off above the footer. #}
 <section class="section is-medium pb-6 has-background-light" id="contacts">
     <div class="container">
         <header class="mb-6">
@@ -46,7 +25,6 @@
         </header>
 
         <div class="grid is-col-min-10">
-            {# ---- where we are ---- #}
             {% if contact.address %}
             {{ contact_card('store/components/icon-pin.svg', 'Morada',
                             contact.address, contact.maps_url, external=true) }}
@@ -57,7 +35,6 @@
                             contact.email, 'mailto:' ~ contact.email) }}
             {% endif %}
 
-            {# ---- social channels ---- #}
             {% if contact.whatsapp_url %}
             {{ contact_card('store/components/icon-whatsapp.svg', 'WhatsApp',
                             contact.whatsapp, contact.whatsapp_url, external=true) }}

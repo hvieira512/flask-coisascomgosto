@@ -22,14 +22,9 @@ class NestingTooDeepError(ValueError):
 
 
 class ProductTypeRepository:
-    """All SQL touching the product_types table lives here."""
 
     def __init__(self, cursor: DictCursor):
         self._cursor = cursor
-
-    # ----------------
-    # Queries
-    # ----------------
 
     def list(
         self,
@@ -62,7 +57,6 @@ class ProductTypeRepository:
         parent_id: Optional[int] = None,
         roots_only: bool = False,
     ) -> int:
-        """Count types matching the same filter as `list`."""
         where, params = self._filter(search, parent_id, roots_only)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM product_types {where}", params)
         return self._cursor.fetchone()["total"]
@@ -82,7 +76,6 @@ class ProductTypeRepository:
         return result
 
     def exists(self, type_id: int) -> bool:
-        """Check whether a type exists by ID."""
         self._cursor.execute("SELECT 1 FROM product_types WHERE id = %s", (type_id,))
         return self._cursor.fetchone() is not None
 
@@ -110,10 +103,6 @@ class ProductTypeRepository:
             params.append(exclude_id)
         self._cursor.execute(sql, params)
         return self._cursor.fetchone() is not None
-
-    # ----------------
-    # Mutations
-    # ----------------
 
     def create(
         self,
@@ -200,10 +189,6 @@ class ProductTypeRepository:
         self._cursor.execute(
             f"DELETE FROM product_types WHERE id IN ({placeholders})", ids
         )
-
-    # ----------------
-    # Internals
-    # ----------------
 
     def _attach_children(self, types: list[dict]) -> None:
         """Populate `sub_types` for a whole page in one query."""

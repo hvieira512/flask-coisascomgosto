@@ -1,9 +1,4 @@
-"""Jinja filters used by the rendered pages.
-
-These are presentation concerns — how a date range reads in Portuguese, which
-icon stands in for a product type — so they live with the web layer rather than
-in the application entrypoint. `register` is called once from web/__init__.py.
-"""
+"""Jinja filters for the rendered pages."""
 
 import re
 from datetime import date
@@ -15,12 +10,8 @@ _MONTHS_PT = [
 
 DEFAULT_TYPE_ICON = "fa-gift"
 
-# Guesses a Font Awesome icon from a product type's name, for types whose owner
-# has not set `icon` explicitly. Ordered: the first pattern to match wins, so
-# the more specific shapes come before the generic containers.
-#
-# static/js/store/placeholder.js carries the same table for client-rendered
-# tiles — keep the two in step.
+# First match wins, so specific shapes precede generic containers.
+# static/js/store/placeholder.js carries the same table — keep them in step.
 _TYPE_ICONS = [
     (re.compile(r"cora[çc][ãa]o|heart", re.I), "fa-heart"),
     (re.compile(r"moldura|quadro|frame|foto", re.I), "fa-image"),
@@ -35,12 +26,8 @@ _TYPE_ICONS = [
 
 
 def type_icon(product_type):
-    """Return the Font Awesome class for a product type.
-
-    An explicit `icon` on the type always wins. Otherwise the type's own name is
-    matched against the keyword table, then its parent's — a sub-type like
-    "Coracao pendurado" should fall back to the heart its parent carries.
-    """
+    """An explicit icon wins; otherwise guess from the type's name, then its
+    parent's, so a sub-type inherits the shape."""
     if not product_type:
         return DEFAULT_TYPE_ICON
 
@@ -58,11 +45,10 @@ def type_icon(product_type):
 
 
 def event_dates(starts_on, ends_on=None):
-    """Format an event's date range in Portuguese for the timeline.
+    """"12 - 20 de Agosto de 2025", collapsing whatever the ends share.
 
-    Collapses the shared parts of a range: same month gives "12 - 20 de Agosto
-    de 2025", a month boundary keeps both months, and an unparseable value
-    falls back to the raw string rather than breaking the page.
+    An unparseable value falls back to the raw string rather than breaking the
+    page.
     """
 
     def parse(value):
@@ -93,7 +79,6 @@ def event_dates(starts_on, ends_on=None):
 
 
 def register(app):
-    """Attach the filters and template globals to an application."""
     app.jinja_env.filters["type_icon"] = type_icon
     app.jinja_env.filters["event_dates"] = event_dates
     app.jinja_env.globals["year"] = date.today().strftime("%Y")
