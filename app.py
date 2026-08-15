@@ -2,11 +2,9 @@ from flask import Flask
 
 from api import api
 from api.db import init_db
-from config import Config, check_production_secrets
+from config import Config
 from extensions import cors, jwt, mail
 from web import register_web
-
-check_production_secrets()
 
 app = Flask(__name__)
 app.config.from_object(Config)

@@ -1,7 +1,4 @@
-"""MySQL connection handling and schema initialisation.
-
-Connection settings come from config.database_config().
-"""
+"""MySQL connection handling and schema initialisation."""
 
 import re
 import time
@@ -10,14 +7,22 @@ from pathlib import Path
 import pymysql
 from pymysql.cursors import DictCursor
 
-from config import database_config, database_name
+from config import Config
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_PATH = PROJECT_ROOT / "db" / "schema.sql"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "db" / "schema.sql"
 
 
-def connect(*, database: bool = True):
-    return pymysql.connect(cursorclass=DictCursor, **database_config(database=database))
+def connect(*, database=True):
+    return pymysql.connect(
+        host=Config.MYSQL_HOST,
+        port=Config.MYSQL_PORT,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DATABASE if database else None,
+        charset="utf8mb4",
+        cursorclass=DictCursor,
+        autocommit=False,
+    )
 
 
 class _Connection:
@@ -45,19 +50,15 @@ def get_db_connection():
     return _Connection()
 
 
-def _statements(schema: str):
+def _statements(schema):
     # Line comments are stripped first: a semicolon inside one would otherwise
     # cut a statement in half.
-    without_comments = re.sub(r"--[^\n]*", "", schema)
-    return [s.strip() for s in without_comments.split(";") if s.strip()]
+    return [s.strip() for s in re.sub(r"--[^\n]*", "", schema).split(";") if s.strip()]
 
 
-def wait_for_mysql(timeout: int = 60) -> None:
-    """Block until the server accepts connections.
-
-    The compose healthcheck only covers `docker compose up`; init-db and the
-    test runner start outside that ordering.
-    """
+def wait_for_mysql(timeout=60):
+    """The compose healthcheck only covers `docker compose up`; init-db and the
+    test runner start outside that ordering."""
     deadline = time.time() + timeout
     last_error = None
 
@@ -72,16 +73,15 @@ def wait_for_mysql(timeout: int = 60) -> None:
     raise RuntimeError(f"MySQL not reachable after {timeout}s: {last_error}")
 
 
-def init_db() -> None:
+def init_db():
     """(Re)create the database and every table, dropping what is there."""
     wait_for_mysql()
 
-    database = database_name()
     conn = connect(database=False)
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                f"CREATE DATABASE IF NOT EXISTS `{database}` "
+                f"CREATE DATABASE IF NOT EXISTS `{Config.MYSQL_DATABASE}` "
                 "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             )
         conn.commit()
@@ -97,4 +97,4 @@ def init_db() -> None:
     finally:
         conn.close()
 
-    print(f"Database initialized: {database}")
+    print(f"Database initialized: {Config.MYSQL_DATABASE}")

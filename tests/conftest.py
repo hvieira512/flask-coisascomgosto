@@ -1,47 +1,27 @@
 """Shared fixtures.
 
-The suite runs against a real MySQL server — the same engine the application
-ships on — so dialect-specific SQL is actually exercised rather than assumed.
-
-Isolation is per test: the schema is created once for the session, then every
-table is truncated and the schema seeds replayed before each test. TRUNCATE
-also resets AUTO_INCREMENT, so IDs start at 1 in every test. That is far
-cheaper than dropping and recreating fourteen tables 349 times.
-
-The connection settings come from MYSQL_HOST/PORT/USER/PASSWORD. The database
-NAME is forced to a test schema below: init_db() drops every table, and a
-mistyped variable must never be able to point that at the real database.
+The suite runs against a real MySQL server, so dialect-specific SQL is actually
+exercised. The schema is created once per session, then every table is
+truncated and the seeds replayed before each test — which also resets
+AUTO_INCREMENT, so IDs start at 1 every time.
 """
 
 import os
 
 import pytest
+from dotenv import load_dotenv
 
-TEST_DATABASE_SUFFIX = "_test"
-
-
-def _force_test_database():
-    """Point MYSQL_DATABASE at a test schema, whatever the environment says.
-
-    This is a safety interlock, not a convenience: the session fixture calls
-    init_db(), which DROPs every table. Refusing to run against a database
-    whose name does not end in `_test` means a stray environment variable
-    cannot destroy real data.
-    """
-    from config import database_name
-
-    name = database_name()
-    if not name.endswith(TEST_DATABASE_SUFFIX):
-        name = f"{name}{TEST_DATABASE_SUFFIX}"
-    os.environ["MYSQL_DATABASE"] = name
-    return name
+# Before anything imports config, which reads MYSQL_DATABASE at import time.
+# init_db() drops every table, so a stray environment variable must never be
+# able to point the suite at the real database.
+load_dotenv()
+_name = os.environ.get("MYSQL_DATABASE", "coisascomgosto")
+if not _name.endswith("_test"):
+    os.environ["MYSQL_DATABASE"] = f"{_name}_test"
 
 
 @pytest.fixture(scope="session")
 def database():
-    """Create the test schema once for the whole session."""
-    _force_test_database()
-
     from api.db import init_db
 
     init_db()
