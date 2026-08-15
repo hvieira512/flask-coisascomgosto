@@ -1,48 +1,23 @@
-"""MySQL connection handling and schema initialisation."""
+"""MySQL connection handling and schema initialisation.
 
-import os
+Connection settings come from config.database_config().
+"""
+
 import re
 import time
 from pathlib import Path
 
 import pymysql
-from dotenv import load_dotenv
 from pymysql.cursors import DictCursor
 
-# Also loaded in config.py: the test bootstrap and `flask init-db` reach this
-# module without importing config. The call is idempotent.
-load_dotenv()
+from config import database_config, database_name
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = PROJECT_ROOT / "db" / "schema.sql"
 
-DEFAULTS = {
-    "host": "127.0.0.1",
-    "port": "3306",
-    "user": "coisascomgosto",
-    "password": "coisascomgosto",
-    "database": "coisascomgosto",
-}
-
-
-def get_db_config(*, database: bool = True) -> dict:
-    """`database=False` connects before the schema exists."""
-    config = {
-        "host": os.environ.get("MYSQL_HOST", DEFAULTS["host"]),
-        "port": int(os.environ.get("MYSQL_PORT", DEFAULTS["port"])),
-        "user": os.environ.get("MYSQL_USER", DEFAULTS["user"]),
-        "password": os.environ.get("MYSQL_PASSWORD", DEFAULTS["password"]),
-        "charset": "utf8mb4",
-        "cursorclass": DictCursor,
-        "autocommit": False,
-    }
-    if database:
-        config["database"] = os.environ.get("MYSQL_DATABASE", DEFAULTS["database"])
-    return config
-
 
 def connect(*, database: bool = True):
-    return pymysql.connect(**get_db_config(database=database))
+    return pymysql.connect(cursorclass=DictCursor, **database_config(database=database))
 
 
 class _Connection:
@@ -101,7 +76,7 @@ def init_db() -> None:
     """(Re)create the database and every table, dropping what is there."""
     wait_for_mysql()
 
-    database = os.environ.get("MYSQL_DATABASE", DEFAULTS["database"])
+    database = database_name()
     conn = connect(database=False)
     try:
         with conn.cursor() as cursor:

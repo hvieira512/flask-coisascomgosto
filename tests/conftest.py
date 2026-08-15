@@ -28,7 +28,9 @@ def _force_test_database():
     whose name does not end in `_test` means a stray environment variable
     cannot destroy real data.
     """
-    name = os.environ.get("MYSQL_DATABASE", "coisascomgosto")
+    from config import database_name
+
+    name = database_name()
     if not name.endswith(TEST_DATABASE_SUFFIX):
         name = f"{name}{TEST_DATABASE_SUFFIX}"
     os.environ["MYSQL_DATABASE"] = name
