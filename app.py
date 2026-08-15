@@ -22,5 +22,13 @@ def init_db_command():
     init_db()
 
 
+@app.cli.command("seed")
+def seed_command():
+    """Fill the catalog with development data."""
+    from db.seed import seed
+
+    seed()
+
+
 if __name__ == "__main__":
     app.run()
