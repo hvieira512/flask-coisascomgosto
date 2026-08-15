@@ -1,0 +1,103 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Produto{% endblock %}
+
+{#
+  Product detail.
+
+  Left: the gallery. Right: an information panel that earns its space —
+  description, colours, sizes, a specification list and a way to get in touch.
+  There is no cart in this shop, so the call to action is a WhatsApp message
+  pre-filled with the piece's name.
+#}
+
+{% block content %}
+<section class="section">
+<div class="container">
+
+<nav class="breadcrumb is-small mb-5" aria-label="breadcrumbs">
+    <ul>
+        <li><a href="{{ url_for('web.store.products') }}">Catálogo</a></li>
+        <li class="is-active"><a href="#" aria-current="page" id="crumb-name">…</a></li>
+    </ul>
+</nav>
+
+<div id="product-detail" class="columns is-variable is-8" data-product-id="{{ product_id }}">
+
+    {# ---------------- Gallery: vertical thumbnail rail + previewer -------- #}
+    <div class="column is-7">
+        <div class="gallery">
+            <div class="gallery-rail">
+                <button class="rail-scroll" data-rail-up type="button" aria-label="Imagens anteriores">▲</button>
+                <ul class="rail-track" id="thumb-rail"></ul>
+                <button class="rail-scroll" data-rail-down type="button" aria-label="Imagens seguintes">▼</button>
+            </div>
+
+            <figure class="gallery-stage" id="gallery-stage">
+                <img id="stage-image" src="" alt="">
+
+                <button class="stage-arrow stage-arrow-left" data-prev type="button" aria-label="Imagem anterior">
+                    &#8249;
+                </button>
+                <button class="stage-arrow stage-arrow-right" data-next type="button" aria-label="Imagem seguinte">
+                    &#8250;
+                </button>
+
+                <span class="stage-counter" id="stage-counter"></span>
+            </figure>
+        </div>
+
+        <p id="gallery-empty" class="notification is-light has-text-centered mt-3" hidden>
+            Este produto ainda não tem imagens.
+        </p>
+    </div>
+
+    {# ---------------- Information panel ---------------------------------- #}
+    <div class="column is-5">
+        <h1 class="title is-3 is-spaced" id="product-name">…</h1>
+        <p class="subtitle is-6 has-text-grey" id="product-description"></p>
+
+        <div class="product-panel">
+            <div class="mb-5" id="variants-block" hidden>
+                <p class="eyebrow mb-3">Cores</p>
+                <div class="variant-options" id="variant-options"></div>
+            </div>
+
+            <div class="mb-5" id="sizes-block" hidden>
+                <p class="eyebrow mb-3">Tamanhos</p>
+                <div class="buttons are-small" id="size-options"></div>
+            </div>
+
+            {# Specification list — the facts a buyer asks for. #}
+            <dl class="spec-list" id="product-meta"></dl>
+
+            {% if contact.whatsapp_url %}
+            <div class="mt-5">
+                <a class="button is-dark is-fullwidth" id="enquiry-link"
+                   href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
+                    <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
+                    <span>Pedir informações</span>
+                </a>
+                <p class="is-size-7 has-text-grey mt-3">
+                    Cada peça é feita e pintada à mão, por isso não há duas
+                    exactamente iguais. Fale connosco para encomendas ou
+                    personalizações.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="detail-error" class="notification is-danger is-light" hidden>
+    Produto não encontrado.
+</div>
+
+</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/store/gallery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/store/product.js') }}"></script>
+{% endblock %}

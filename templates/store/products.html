@@ -1,0 +1,87 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Catálogo{% endblock %}
+
+{% block content %}
+{# base.html renders <main> bare so the landing page can supply full-bleed
+   sections; inner pages provide their own section/container. #}
+<section class="section">
+<div class="container">
+<div class="columns is-variable is-6">
+
+    {# ---------------- Filter sidebar ---------------- #}
+    <aside class="column is-one-quarter">
+        <div class="filters-panel">
+            <div class="level is-mobile mb-4">
+                <div class="level-left">
+                    <h2 class="title is-5 mb-0">Filtros</h2>
+                </div>
+                <div class="level-right">
+                    <button id="clear-filters" class="button is-small is-ghost" type="button" hidden>
+                        Limpar tudo
+                    </button>
+                </div>
+            </div>
+
+            <div class="field mb-5">
+                <label class="label is-small" for="filter-search">Pesquisar</label>
+                <div class="control">
+                    <input id="filter-search" class="input is-small" type="search"
+                           placeholder="Nome do produto…" autocomplete="off">
+                </div>
+            </div>
+
+            {# Each group is populated from its API endpoint by filters.js #}
+            <nav class="menu" id="filter-groups">
+                <p class="menu-label">Categoria</p>
+                <ul class="menu-list" data-filter-group="category_id" data-endpoint="/api/categories/"
+                    data-collection-key="categories"></ul>
+
+                <p class="menu-label">Tipo</p>
+                <ul class="menu-list" data-filter-group="type_id" data-endpoint="/api/product-types/?roots_only=1"
+                    data-collection-key="product_types" data-nested="sub_types"></ul>
+
+                <p class="menu-label">Coleção</p>
+                <ul class="menu-list" data-filter-group="collection_id" data-endpoint="/api/collections/"
+                    data-collection-key="collections"></ul>
+            </nav>
+        </div>
+    </aside>
+
+    {# ---------------- Product grid ---------------- #}
+    <section class="column">
+        <div class="level is-mobile mb-3">
+            <div class="level-left">
+                <h1 class="title is-4 mb-0">Catálogo</h1>
+            </div>
+            <div class="level-right">
+                <span id="result-count" class="is-size-7 has-text-grey"></span>
+            </div>
+        </div>
+
+        {# Applied filters: one Bulma delete-tag per active filter #}
+        <div id="active-filters" class="tags mb-4" hidden></div>
+
+        <div id="product-grid" class="grid is-col-min-12"></div>
+
+        <div id="grid-empty" class="notification is-light has-text-centered" hidden>
+            Nenhum produto corresponde aos filtros escolhidos.
+        </div>
+
+        <nav id="pagination" class="pagination is-centered mt-5" role="navigation" aria-label="pagination" hidden>
+            <button class="pagination-previous" data-page-prev type="button">Anterior</button>
+            <button class="pagination-next" data-page-next type="button">Seguinte</button>
+            <ul class="pagination-list">
+                <li><span class="pagination-link is-current" id="page-indicator"></span></li>
+            </ul>
+        </nav>
+    </section>
+</div>
+</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/store/filters.js') }}"></script>
+<script src="{{ url_for('static', filename='js/store/products.js') }}"></script>
+{% endblock %}

@@ -96,6 +96,12 @@ export const API = {
     auth: {
         login: "/api/auth/login",
         register: "/api/auth/register",
+        refresh: "/api/auth/refresh",
+        me: "/api/auth/me",
         logout: "/api/auth/logout",
+    },
+    contacts: {
+        get: "/api/contacts/",
+        update: "/api/contacts/",
     },
 };

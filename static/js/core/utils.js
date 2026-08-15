@@ -6,12 +6,9 @@ export function renderLoading(el) {
     const loadingElement = document.createElement("div");
     loadingElement.classList.add("loading-overlay");
 
+    // Self-contained spinner: no framework classes, so it survives a CSS swap.
     loadingElement.innerHTML = `
-        <div class="d-flex justify-content-center align-items-center h-100">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">A carregar...</span>
-            </div>
-        </div>
+        <span class="app-spinner" role="status" aria-label="A carregar"></span>
     `;
 
     Object.assign(loadingElement.style, {

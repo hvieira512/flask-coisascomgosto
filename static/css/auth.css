@@ -1,49 +1,80 @@
-@import url("reset.css");
-@import url("colors.css");
+/*
+ * Login page: a two-panel layout with the form on the left and a photo panel
+ * on the right that collapses away on small screens.
+ */
 
-main {
-    background-image: url('../img/auth-bg.jpg') !important;
-    background-repeat: no-repeat;
+.auth-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    padding: 1.5rem;
+}
+
+.auth-wrapper {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.auth-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.5rem 2rem;
+    background: #fff;
+    border: 1px solid #ededed;
+    border-radius: 14px;
+}
+
+.auth-logo img {
+    max-height: 90px;
+    width: auto;
+}
+
+.auth-form {
+    width: 100%;
+}
+
+.auth-aside {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background-image: url("../img/auth-bg.jpg");
     background-size: cover;
-    background-position: right center;
+    background-position: center;
+    min-height: 520px;
 }
 
-.img-fluid {
-    max-width: 100px;
+/* Frosted panel so the headline stays readable over the photo. */
+.auth-glass {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 2.5rem;
+    color: #fff;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .15) 0%, rgba(0, 0, 0, .55) 100%);
 }
 
-#wrapper {
-    height: calc(100vh - 5rem);
-}
-
-.glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(1rem);
-    -webkit-backdrop-filter: blur(1rem);
-}
-
-.input-group-text {
-    min-width: 60px;
-}
-
-.input-group-text>* {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-@media (max-width: 768px) {
-    #wrapper {
-        height: 100vh;
-        margin: 0;
+@media screen and (max-width: 768px) {
+    .auth-wrapper {
+        grid-template-columns: 1fr;
     }
 
-    #auth-container {
-        border-radius: 0px !important;
+    .auth-aside {
+        display: none;
     }
 
-    #auth-form {
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
+    .auth-panel {
+        border: none;
+        padding: 1.5rem 0;
     }
 }

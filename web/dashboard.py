@@ -1,3 +1,5 @@
+from functools import wraps
+
 from flask import Blueprint, redirect, render_template, session, url_for
 
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
@@ -8,14 +10,29 @@ bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 # ----------------
 
 
-def check_session():
-    if "username" not in session:
-        return redirect(url_for("web.auth.home"))
+def login_required(view):
+    """Redirect anonymous visitors to the login page."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("web.auth.home"))
+        return view(*args, **kwargs)
+
+    return wrapped
 
 
-def check_admin():
-    if session["admin"] is not True:
-        return redirect(url_for("web.dashboard.home"))
+def admin_required(view):
+    """Redirect non-admin users back to the dashboard home."""
+
+    @login_required
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session["user"].get("is_admin"):
+            return redirect(url_for("web.dashboard.home"))
+        return view(*args, **kwargs)
+
+    return wrapped
 
 
 # ----------------
@@ -24,36 +41,36 @@ def check_admin():
 
 
 @bp.route("/")
+@login_required
 def index():
-    check_session()
     return redirect(url_for("web.dashboard.home"))
 
 
 @bp.route("/home")
+@login_required
 def home():
-    check_session()
     return render_template("dashboard/home.html")
 
 
 @bp.route("/products")
+@login_required
 def products():
-    check_session()
     return render_template("dashboard/products.html")
 
 
 @bp.route("/stats")
+@login_required
 def stats():
-    check_session()
     return render_template("dashboard/stats.html")
 
 
 @bp.route("/profile")
+@login_required
 def profile():
-    check_session()
     return render_template("dashboard/profile.html")
 
 
 @bp.route("/settings")
+@login_required
 def settings():
-    check_session()
     return render_template("dashboard/settings.html")

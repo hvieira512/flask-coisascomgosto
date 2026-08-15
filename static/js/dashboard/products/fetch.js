@@ -6,40 +6,46 @@ const container = "#product-list";
 
 const renderEmptyMessage = () => {
     productList.innerHTML = `
-        <div class="text-center text-muted mt-4 w-100">
-            <p class="fs-5">Não há produtos inseridos.</p>
+        <div class="column is-full">
+            <div class="notification is-light has-text-centered">
+                Não há produtos inseridos.
+            </div>
         </div>
     `;
 };
 
 const renderProduct = (product) => {
-    console.log(product);
-    const card = document.createElement("div");
-    card.classList.add("product-card");
+    const column = document.createElement("div");
+    column.classList.add("cell");
 
-    card.innerHTML = `
-        <div class="card shadow-sm h-100" data-bs-toggle="modal" data-bs-target="#checklistNOKsModal">
-            <img src="https://placehold.co/260x160" class="card-img-top" alt="${product.name}">
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title">${product.name}</h5>
-                <p class="card-text small">${product.description}</p>
-                <p class="text-muted fw-bold small">${product.category.name}</p>
-                <div class="mt-auto d-flex justify-content-evenly">
-                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#viewProductModal">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal">
-                        <i class="fa-solid fa-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteProductModal">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
+    // Modals are opened via data-modal-target, handled by dashboard/menus.js.
+    const image = product.primary_image
+        ? `<img src="${product.primary_image.url}" alt="${product.name}">`
+        : window.ProductPlaceholder.markup(product);
+
+    column.innerHTML = `
+        <div class="card product-card">
+            <div class="card-image">${image}</div>
+            <div class="card-content">
+                <p class="title is-6 mb-1">${product.name}</p>
+                <p class="is-size-7 has-text-grey">${product.description ?? ""}</p>
+                <p class="is-size-7 has-text-weight-semibold mt-2">${product.category.name}</p>
             </div>
+            <footer class="card-footer">
+                <a class="card-footer-item" data-modal-target="viewProductModal" title="Ver">
+                    <span class="icon"><i class="fa-solid fa-eye"></i></span>
+                </a>
+                <a class="card-footer-item" data-modal-target="editProductModal" title="Editar">
+                    <span class="icon"><i class="fa-solid fa-pencil"></i></span>
+                </a>
+                <a class="card-footer-item has-text-danger" data-modal-target="deleteProductModal" title="Apagar">
+                    <span class="icon"><i class="fa-solid fa-trash"></i></span>
+                </a>
+            </footer>
         </div>
     `;
 
-    return card;
+    return column;
 };
 
 const renderProducts = (products) => {
@@ -57,13 +63,14 @@ const renderProducts = (products) => {
 export const fetchProducts = async () => {
     renderLoading(container);
     try {
-        const res = await fetch(API.products.list);
+        // authFetch refreshes the access token and retries on a 401.
+        const res = await window.Auth.authFetch(API.products.list);
         if (!res.ok) throw new Error("Failed to fetch products");
 
         const { products } = await res.json();
         renderProducts(products);
     } catch (error) {
-        toastr.error("Erro ao buscar produtos");
+        Notify.error("Erro ao buscar produtos");
         console.error("Error fetching products:", error);
     }
     removeLoading(container);

@@ -1,0 +1,868 @@
+/*
+ * Storefront — only what Bulma does not provide.
+ *
+ * Layout, spacing, cards, grids, typography scale and colour all come from
+ * Bulma (retinted in theme.css). What remains here falls into three groups:
+ *
+ *   1. Components Bulma has no equivalent for — the image gallery and the
+ *      no-photo placeholder.
+ *   2. Overrides that undo a Bulma default we do not want (the .menu item
+ *      backgrounds in the filter sidebar).
+ *   3. A handful of properties Bulma has no helper for: letter-spacing,
+ *      reading measure, aspect-ratio, object-fit and hover transitions.
+ *
+ * If something here could be a Bulma class, it is a bug. Delete it.
+ */
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+/* ----------------------------------------------------------------
+   1. The few missing utilities
+   ---------------------------------------------------------------- */
+
+/* Bulma has is-uppercase and is-size-7 but no letter-spacing helper. */
+.eyebrow {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--ccg-blue-500);
+    margin-bottom: .9rem;
+}
+
+/* Bulma has no max-width helper, and unbounded body copy is unreadable. */
+.measure {
+    max-width: 34rem;
+}
+
+.measure-narrow {
+    max-width: 30rem;
+}
+
+/* Bulma's .title tracking is fine at small sizes but loose on a display line. */
+.store-display {
+    letter-spacing: -.035em;
+    line-height: 1.08;
+}
+
+/* ----------------------------------------------------------------
+   2. Branding details Bulma cannot express
+   ---------------------------------------------------------------- */
+
+/* Bulma caps navbar images at 1.75rem, which renders the logo as a speck —
+   but 2.4rem pushed the bar to 86px. 2rem keeps it legible at ~64px. */
+.store-brand img {
+    max-height: 2rem;
+    height: 2rem;
+    width: auto;
+}
+
+/* Bulma pins .navbar-start to the left. Auto margins only centre it between
+   the brand and the end block, which are different widths — that left the
+   links 106px off-centre. Absolute positioning centres them on the bar itself. */
+@media screen and (min-width: 1024px) {
+    .store-navbar .container {
+        position: relative;
+    }
+
+    /* Anchored on both axes: setting only `left` left the 40px link block at
+       its static top, 6px above the centre of the 52px bar. */
+    .store-nav-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+    }
+
+    .store-navbar .navbar-menu {
+        justify-content: flex-end;
+    }
+}
+
+/* Nav links echo the Área Reservada button: brand blue text with a light blue
+   wash on hover, in place of Bulma's default grey-on-grey.
+
+   Scoped to .navbar-start so the brand and the button's own wrapper — both
+   also .navbar-item — do not pick up the hover wash. */
+.store-navbar .navbar-start .navbar-item {
+    color: var(--ccg-blue-800);
+    border-radius: var(--bulma-radius);
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.store-navbar .navbar-start .navbar-item:hover,
+.store-navbar .navbar-start .navbar-item:focus-visible {
+    background-color: var(--ccg-blue-50);
+    color: var(--ccg-blue-800);
+}
+
+/* The hero fills the first screen and pins the scroll cue just above the
+   fold. Bulma's .is-medium padding alone left the cue floating mid-page with
+   144px of dead space beneath it. */
+.store-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: calc(100vh - 3.25rem);
+    background:
+        radial-gradient(60rem 30rem at 50% -10%, var(--ccg-blue-50) 0%, transparent 70%),
+        var(--ccg-paper);
+}
+
+.store-hero .hero-body {
+    width: 100%;
+}
+
+.hero-scroll {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--ccg-ink-soft);
+    letter-spacing: .1em;
+    transition: color .2s ease;
+}
+
+
+.hero-scroll:hover {
+    color: var(--ccg-blue-700);
+}
+
+.hero-scroll-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--bulma-border);
+    background: var(--ccg-surface);
+    color: var(--ccg-blue-600);
+    /* A slow nudge downward, echoing the loader's breathing rhythm. */
+    animation: hero-nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes hero-nudge {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(5px);
+    }
+}
+
+/* A rule above each step; Bulma has no border helper. */
+/* An <ol> so the three steps read as an ordered process, but the step number is
+   rendered as a styled eyebrow ("01"), so the browser's own decimal marker has
+   to go — otherwise every step shows the number twice, as "1. 01". */
+.craft-step {
+    border-top: 2px solid var(--ccg-blue-200);
+    list-style: none;
+}
+
+/* Long handles like "coisascomgosto.vianadocastelo" overflow a 250px card,
+   so values wrap on any character rather than pushing the card wider. */
+#contacts .cell {
+    min-width: 0;
+}
+
+#contacts .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+#contacts .card p {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.contact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 50%;
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-600);
+}
+
+/* Bulma has no aspect-ratio or object-fit helper. */
+.media-photo {
+    display: block;
+    width: 100%;
+    height: 28rem;
+    object-fit: cover;
+    border-radius: var(--bulma-radius-large);
+}
+
+/* Cards lift slightly on hover; not a Bulma behaviour. */
+.card {
+    transition: border-color .2s ease, transform .2s ease;
+    border: 1px solid var(--bulma-border);
+}
+
+a.card:hover {
+    border-color: var(--ccg-blue-300);
+    transform: translateY(-3px);
+}
+
+/* A product type on the landing page: icon, name, and a way into the catalog
+   filtered to that type. The icon disc echoes the no-photo placeholder tile, so
+   a type reads the same here as it does on a product that has no picture. */
+.type-card {
+    color: inherit;
+    display: block;
+}
+
+.type-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-500);
+    font-size: 1.15rem;
+}
+
+.type-card:hover .type-card-icon {
+    background: var(--ccg-blue-100);
+}
+
+/* ----------------------------------------------------------------
+   Timeline — no Bulma equivalent
+   ----------------------------------------------------------------
+   Horizontal rail on desktop, dragged or stepped with the arrow buttons. The
+   connecting line is each entry's top border, so the entries themselves draw
+   a continuous rule across the row. Vertical and centred below tablet.
+
+   The rail sits inside the normal .container: an earlier full-bleed version
+   added its own padding on top of the section's, pushing it 72px right of the
+   header it belongs to. */
+
+.timeline-shell {
+    position: relative;
+}
+
+.timeline {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    /* overflow-x: auto forces overflow-y to auto as well, so the scrollport
+       clips anything above the entries. The markers straddle the top rule and
+       reach 7px above it plus a 4px halo, so the rail reserves 12px of padding
+       for them; without it every circle loses its top half. */
+    padding: 12px 0 0;
+    overflow-x: auto;
+    /* Mandatory, not proximity: after a drag an entry always lands flush with
+       the edge, so its marker is never left half-clipped. */
+    scroll-snap-type: x mandatory;
+    cursor: grab;
+    /* The drag and the arrows are the affordances; the bar only adds noise. */
+    scrollbar-width: none;
+}
+
+.timeline::-webkit-scrollbar {
+    display: none;
+}
+
+/* Each edge fades whenever there is content past it: entering content dissolves
+   instead of being sliced off mid-glyph, and the arrow button floating over that
+   edge never lands on top of legible text. The two classes are toggled
+   independently by the script, so all four combinations are spelled out. */
+.timeline.has-fade-start {
+    mask-image: linear-gradient(to right, transparent 0, #000 3rem);
+}
+
+.timeline.has-fade-end {
+    mask-image: linear-gradient(to left, transparent 0, #000 3rem);
+}
+
+.timeline.has-fade-start.has-fade-end {
+    mask-image: linear-gradient(to right,
+        transparent 0, #000 3rem,
+        #000 calc(100% - 3rem), transparent 100%);
+}
+
+.timeline.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    user-select: none;
+}
+
+.timeline:focus-visible {
+    outline: 2px solid var(--ccg-blue-300);
+    outline-offset: 4px;
+    border-radius: var(--bulma-radius);
+}
+
+.timeline-entry {
+    position: relative;
+    flex: 0 0 clamp(16rem, 24vw, 21rem);
+    padding: 1.75rem 2rem 0 0;
+    border-top: 1px solid var(--bulma-border);
+    scroll-snap-align: start;
+}
+
+/* Without this the only snap points are entry starts. When the rail overflows
+   by less than one entry — four events on a wide screen — the end of the rail
+   is not a snap point, so it snaps back to 0 and the last entry can never be
+   fully revealed. */
+.timeline-entry:last-child {
+    scroll-snap-align: end;
+}
+
+/* Sits centred on the rule that runs along the top of each entry. */
+.timeline-marker {
+    position: absolute;
+    top: -5px;
+    left: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ccg-blue-500);
+    box-shadow: 0 0 0 4px var(--ccg-paper);
+}
+
+/* The most recent event leads, so it gets the emphasis. */
+.timeline-entry:first-child .timeline-marker {
+    width: 13px;
+    height: 13px;
+    top: -7px;
+    background: var(--ccg-blue-700);
+}
+
+.timeline-date {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ccg-blue-500);
+    margin-bottom: .35rem;
+}
+
+.timeline-body a {
+    color: inherit;
+    border-bottom: 1px solid var(--ccg-blue-200);
+}
+
+.timeline-body a:hover {
+    color: var(--ccg-blue-700);
+    border-bottom-color: currentColor;
+}
+
+/* Arrow buttons for visitors who would rather not drag. Same circular
+   treatment as the product gallery's arrows, but always visible: here they
+   are a primary control, not a hover affordance. Hidden by the script when
+   the rail cannot scroll, or at either end. */
+.timeline-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--bulma-border);
+    border-radius: 50%;
+    background: var(--ccg-surface);
+    color: var(--ccg-blue-800);
+    /* Sized for a Font Awesome chevron, not a text glyph. */
+    font-size: .95rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(31, 56, 100, .1);
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.timeline-arrow:hover {
+    background: var(--ccg-blue-50);
+    border-color: var(--ccg-blue-300);
+}
+
+.timeline-arrow[hidden] {
+    display: none;
+}
+
+.timeline-arrow-left {
+    left: -1.25rem;
+}
+
+.timeline-arrow-right {
+    right: -1.25rem;
+}
+
+/* Vertical and centred on mobile: no dragging, no arrows, one entry per row.
+   The rule becomes a line down the middle, masked behind each body so it does
+   not run through the text. */
+@media screen and (max-width: 768px) {
+    .timeline {
+        position: relative;
+        flex-direction: column;
+        align-items: center;
+        /* Nothing overflows vertically here, so the desktop reserve is dropped. */
+        padding-top: 0;
+        overflow-x: visible;
+        scroll-snap-type: none;
+        cursor: auto;
+    }
+
+    .timeline::before {
+        content: "";
+        position: absolute;
+        top: .5rem;
+        bottom: .5rem;
+        left: 50%;
+        width: 1px;
+        background: var(--bulma-border);
+        transform: translateX(-50%);
+    }
+
+    .timeline-entry {
+        flex: none;
+        width: 100%;
+        max-width: 22rem;
+        padding: 0 0 2.5rem;
+        border-top: none;
+        text-align: center;
+    }
+
+    .timeline-entry:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-marker {
+        position: relative;
+        top: auto;
+        left: auto;
+        margin: 0 auto .9rem;
+    }
+
+    .timeline-entry:first-child .timeline-marker {
+        top: auto;
+    }
+
+    /* Masks the centre line behind the text. */
+    .timeline-body {
+        position: relative;
+        background: var(--ccg-paper);
+        padding: .25rem .75rem;
+    }
+
+    .timeline-arrow {
+        display: none;
+    }
+}
+
+/* ----------------------------------------------------------------
+   3. Catalog: undoing Bulma's .menu defaults
+   ---------------------------------------------------------------- */
+
+.filters-panel {
+    position: sticky;
+    top: 1.5rem;
+}
+
+/* Bulma 1.x gives menu items a solid background, which turns the sidebar into
+   a stack of white pills. Transparent keeps the filter list quiet. */
+.filters-panel .menu-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    background: transparent;
+}
+
+.filters-panel .menu-list a:hover {
+    background: var(--ccg-blue-50);
+}
+
+.filters-panel .menu-list a.is-active {
+    background: var(--ccg-blue-800);
+    color: #fff;
+}
+
+/* Sub-types sit indented under their parent type. */
+.filters-panel .menu-list ul {
+    margin-right: 0;
+    border-left: 1px solid var(--bulma-border);
+}
+
+.filter-badge {
+    cursor: pointer;
+}
+
+/* Bulma's .grid lays out with repeat(auto-fit, ...), which collapses the empty
+   tracks — so a filter matching a single product stretches that one card across
+   the whole row. auto-fill keeps the tracks at their share instead. Bulma has no
+   modifier for this, which is the only reason the rule is here. */
+#product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+}
+
+/* Catalog tiles: uniform squares whatever the source image. */
+.product-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: none;
+}
+
+/* A square image took 73% of the card and dwarfed the name. 4:3 gives the
+   text room to matter. */
+.product-card .card-image img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+/* The placeholder matches that ratio but must stay flex — display:block here
+   would strip its centring and shove the icon into the top-left corner. */
+.product-card .product-placeholder {
+    aspect-ratio: 4 / 3;
+}
+
+.product-card .card-content {
+    flex: 1 0 auto;
+}
+
+.swatch,
+.swatch-pair {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, .15);
+    display: inline-block;
+    overflow: hidden;
+}
+
+/* ----------------------------------------------------------------
+   4. No-photo placeholder — no Bulma equivalent
+   ----------------------------------------------------------------
+   The three custom properties are set inline per product by placeholder.js
+   and the Jinja macro: --ph-color (full), --ph-wash (tile), --ph-circle. */
+
+.product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--ph-wash, var(--ccg-blue-50));
+    /* Declares the query container so the icon's cqw sizing below measures
+       the tile. Without this, cqw silently resolves against the viewport. */
+    container-type: inline-size;
+}
+
+.product-placeholder-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--ph-circle, var(--ccg-blue-100));
+    color: var(--ph-color, var(--ccg-blue-500));
+    font-size: clamp(1rem, 8cqw, 2.4rem);
+}
+
+.product-placeholder i {
+    font-size: 1.6em;
+    line-height: 1;
+}
+
+/* The gallery stage is not square, so let the placeholder fill it. */
+.product-placeholder--stage {
+    height: 100%;
+    aspect-ratio: auto;
+}
+
+.product-placeholder--stage .product-placeholder-circle {
+    width: 26%;
+    max-width: 160px;
+}
+
+/* ----------------------------------------------------------------
+   5. Product detail panel
+   ---------------------------------------------------------------- */
+
+/* A definition list of the piece's facts: label left, value right. */
+.spec-list {
+    border-top: 1px solid var(--bulma-border);
+}
+
+.spec-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .7rem 0;
+    border-bottom: 1px solid var(--bulma-border);
+    font-size: .9rem;
+}
+
+.spec-row dt {
+    color: var(--ccg-ink-soft);
+}
+
+.spec-row dd {
+    color: var(--ccg-blue-900);
+    font-weight: 500;
+    text-align: right;
+}
+
+/* ----------------------------------------------------------------
+   6. Product gallery — no Bulma equivalent
+   ---------------------------------------------------------------- */
+
+:root {
+    /* Trimmed from 520px: the right column carries ~430px of content, and a
+       taller stage left the two columns visibly unbalanced. */
+    --gallery-height: 440px;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+/* Set by gallery.js when there is nothing to scroll through: a hidden rail
+   leaves column 1 empty, so the stage would drop into the narrow track. */
+.gallery--no-rail {
+    grid-template-columns: 1fr;
+}
+
+/* `display: flex` outranks the [hidden] attribute's default display:none. */
+.gallery-rail[hidden] {
+    display: none;
+}
+
+.gallery-rail {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    height: var(--gallery-height);
+}
+
+.rail-track {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    scrollbar-width: none;
+}
+
+.rail-track::-webkit-scrollbar {
+    display: none;
+}
+
+.rail-track li {
+    flex: 0 0 auto;
+}
+
+.rail-thumb {
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    border: 1px solid var(--bulma-border);
+    border-radius: var(--bulma-radius);
+    background: var(--ccg-paper-deep);
+    cursor: pointer;
+    overflow: hidden;
+    display: block;
+    transition: border-color .15s ease, opacity .15s ease;
+    opacity: .75;
+}
+
+.rail-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.rail-thumb:hover {
+    opacity: 1;
+}
+
+.rail-thumb.is-active {
+    border-color: var(--ccg-blue-500);
+    opacity: 1;
+}
+
+.rail-scroll {
+    border: 1px solid var(--bulma-border);
+    border-radius: var(--bulma-radius);
+    background: var(--ccg-surface);
+    cursor: pointer;
+    padding: .15rem 0;
+    font-size: .7rem;
+    color: var(--ccg-ink-faint);
+    line-height: 1;
+}
+
+.rail-scroll:hover {
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-700);
+}
+
+.rail-scroll[disabled] {
+    opacity: .35;
+    cursor: default;
+}
+
+.gallery-stage {
+    position: relative;
+    background: var(--ccg-paper-deep);
+    border: 1px solid var(--bulma-border);
+    border-radius: var(--bulma-radius-large);
+    overflow: hidden;
+    height: var(--gallery-height);
+}
+
+.gallery-stage img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Arrows are revealed on hover but stay reachable by keyboard. */
+.stage-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--bulma-border);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .94);
+    color: var(--ccg-blue-800);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .15s ease, background-color .15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-stage:hover .stage-arrow,
+.stage-arrow:focus-visible {
+    opacity: 1;
+}
+
+.stage-arrow:hover {
+    background: #fff;
+}
+
+.stage-arrow[disabled] {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.stage-arrow-left {
+    left: .75rem;
+}
+
+.stage-arrow-right {
+    right: .75rem;
+}
+
+.stage-counter {
+    position: absolute;
+    right: .75rem;
+    bottom: .75rem;
+    background: rgba(255, 255, 255, .92);
+    border-radius: 999px;
+    padding: .1rem .6rem;
+    font-size: .7rem;
+    color: var(--ccg-ink-soft);
+}
+
+.variant-option {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .7rem .3rem .4rem;
+    border: 1px solid var(--bulma-border);
+    border-radius: 999px;
+    background: var(--ccg-surface);
+    cursor: pointer;
+    font-size: .8rem;
+}
+
+.variant-option:hover {
+    border-color: var(--ccg-blue-300);
+}
+
+.variant-option.is-active {
+    border-color: var(--ccg-blue-800);
+    background: var(--ccg-blue-800);
+    color: #fff;
+}
+
+/* ----------------------------------------------------------------
+   7. Responsive — only what Bulma's own breakpoints miss
+   ---------------------------------------------------------------- */
+
+@media screen and (max-width: 1023px) {
+    .media-photo {
+        height: 16rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .gallery {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery-rail {
+        order: 2;
+        flex-direction: row;
+        height: auto;
+    }
+
+    .rail-track {
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    /* No hover on touch, so the arrows stay visible. */
+    .stage-arrow {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .hero-scroll-icon,
+    .card,
+    .type-card-icon {
+        animation: none;
+        transition: none;
+    }
+}

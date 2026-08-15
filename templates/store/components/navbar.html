@@ -1,0 +1,46 @@
+{# Public navbar.
+
+   Deliberately minimal: no social icons and no contact details — those live in
+   one Contacts section at the foot of the landing page.
+
+   Not .is-spaced: that adds 1rem of vertical padding on top of the logo and
+   pushes the bar to 86px. #}
+<nav class="navbar store-navbar" role="navigation" aria-label="main navigation">
+    <div class="container">
+        <div class="navbar-brand">
+            <a class="navbar-item store-brand" href="{{ url_for('web.store.home') }}">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Coisas com Gosto">
+                <span class="store-brand-name">Coisas com Gosto</span>
+            </a>
+
+            <a role="button" class="navbar-burger" data-navbar-burger aria-label="menu" aria-expanded="false"
+               data-target="store-nav">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+
+        <div id="store-nav" class="navbar-menu">
+            {# store-nav-center overrides Bulma's margin-right:auto so the link
+               group sits in the middle of the bar rather than beside the logo. #}
+            <div class="navbar-start store-nav-center">
+                <a class="navbar-item" href="{{ url_for('web.store.home') }}">Início</a>
+                <a class="navbar-item" href="{{ url_for('web.store.products') }}">Produtos</a>
+                <a class="navbar-item" href="{{ url_for('web.store.home') }}#contacts">Contactos</a>
+            </div>
+
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    {% if "user" in session %}
+                    <a class="button is-small is-dark" href="{{ url_for('web.dashboard.home') }}">Área Reservada</a>
+                    {% else %}
+                    <a class="button is-small is-light" href="{{ url_for('web.auth.home') }}">Área Reservada</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script src="{{ url_for('static', filename='js/store/navbar.js') }}"></script>

@@ -54,10 +54,15 @@ form.addEventListener("submit", async (e) => {
 
         if (!res.ok) {
             const data = await res.json();
-            toastr.error(data.error || "Login falhou");
+            Notify.error(data.message || "Login falhou");
+            return;
         }
 
-        toastr.success("Login realizado com sucesso.");
+        // Keep the bearer tokens for API calls; the session cookie the server
+        // also sets is what authenticates the rendered dashboard pages.
+        window.Auth.storeTokens(await res.json());
+
+        Notify.success("Login realizado com sucesso.");
         window.location.href = "/dashboard";
     }
 
@@ -70,7 +75,7 @@ form.addEventListener("submit", async (e) => {
             ?.value.trim();
 
         if (!password || password !== confirm) {
-            toastr.error("As passwords não coincidem.");
+            Notify.error("As passwords não coincidem.");
             return;
         }
 
@@ -84,7 +89,7 @@ form.addEventListener("submit", async (e) => {
 
         if (!res.ok) {
             const data = await res.json();
-            toastr.error(data.error || "Registo falhou.");
+            Notify.error(data.error || "Registo falhou.");
             return;
         }
 
@@ -96,19 +101,21 @@ form.addEventListener("submit", async (e) => {
 
         if (!login_res.ok) {
             const data = await login_res.json();
-            toastr.error(data.error || "Login falhou.");
+            Notify.error(data.message || "Login falhou.");
             return;
         }
 
-        toastr.success("Login realizado com sucesso.");
+        window.Auth.storeTokens(await login_res.json());
+
+        Notify.success("Login realizado com sucesso.");
         window.location.href = "/dashboard";
     }
 });
 
 function renderLoginForm(username) {
     formHeader.innerHTML = `
-        <h1 class="h2 mb-0">Olá, ${username}!</h1>
-        <p class="text-dark">Introduz a tua password para entrar.</p>
+        <h1 class="title is-4 mb-1">Olá, ${username}!</h1>
+        <p class="has-text-grey">Introduz a tua password para entrar.</p>
     `;
     appendInput({
         icon: "fa-lock",
@@ -122,8 +129,8 @@ function renderLoginForm(username) {
 
 async function renderRegisterForm(username) {
     formHeader.innerHTML = `
-        <h1 class="h2 mb-0">Olá, ${username}!</h1>
-        <p class="text-dark">Define a tua palavra-passe para continuares.</p>
+        <h1 class="title is-4 mb-1">Olá, ${username}!</h1>
+        <p class="has-text-grey">Define a tua palavra-passe para continuares.</p>
     `;
 
     appendInput({
@@ -154,15 +161,20 @@ async function renderRegisterForm(username) {
 function appendInput({ icon, type, id, name, placeholder }) {
     if (document.querySelector(`#${id}`)) return;
 
-    const group = document.createElement("div");
-    group.className = "input-group";
+    const field = document.createElement("div");
+    field.className = "field";
 
-    group.innerHTML = `
-        <span class="input-group-text p-3 rounded-start">
-            <i class="fa-solid ${icon}"></i>
-        </span>
-        <input type="${type}" class="form-control rounded-end p-3" placeholder="${placeholder}" name="${name}" id="${id}" required />
+    field.innerHTML = `
+        <div class="control has-icons-left">
+            <input type="${type}" class="input is-medium" placeholder="${placeholder}"
+                   name="${name}" id="${id}" required>
+            <span class="icon is-small is-left">
+                <i class="fa-solid ${icon}"></i>
+            </span>
+        </div>
     `;
 
-    submitBtn.parentNode.insertBefore(group, submitBtn);
+    // Insert above the submit button's field wrapper.
+    const anchor = submitBtn.closest(".field") || submitBtn;
+    anchor.parentNode.insertBefore(field, anchor);
 }

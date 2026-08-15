@@ -1,46 +1,43 @@
 {% extends 'dashbord_base.html' %}
 
+{% block title %}Produtos · Dashboard{% endblock %}
+
 {% block head %}
-<link href="{{ url_for('static', filename='css/dashboard/products.html') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/dashboard/products.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<h1 class="h3">Produtos</h1>
+<div class="level is-mobile mb-5">
+    <div class="level-left">
+        <h1 class="title is-4 mb-0">Produtos</h1>
+    </div>
+    <div class="level-right">
+        <button class="button is-dark is-small" data-modal-target="newProductModal">
+            <span class="icon"><i class="fa-solid fa-plus"></i></span>
+            <span>Novo produto</span>
+        </button>
+    </div>
+</div>
 
-<div id="product-list" class="d-flex flex-wrap gap-3"></div>
+<div id="product-list" class="grid is-col-min-12"></div>
 
-{% with 
-    modal_id="newProductModal", 
-    modal_title="Novo Produto",
-    modal_footer="
-        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
-    " %} {% include 'components/dashboard/modal.html' %}
+{% set close_button = "<button type='button' class='button' data-modal-close>Fechar</button>" %}
+
+{% with modal_id="newProductModal", modal_title="Novo Produto", modal_footer=close_button %}
+    {% include 'components/dashboard/modal.html' %}
 {% endwith %}
 
-{% with 
-    modal_id="editProductModal", 
-    modal_title="Editar Produto",
-    modal_footer="
-        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
-    " %} {% include 'components/dashboard/modal.html' %}
+{% with modal_id="editProductModal", modal_title="Editar Produto", modal_footer=close_button %}
+    {% include 'components/dashboard/modal.html' %}
 {% endwith %}
 
-{% with 
-    modal_id="deleteProductModal", 
-    modal_title="Apagar Produto",
-    modal_footer="
-        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
-    " %} {% include 'components/dashboard/modal.html' %}
+{% with modal_id="deleteProductModal", modal_title="Apagar Produto", modal_footer=close_button %}
+    {% include 'components/dashboard/modal.html' %}
 {% endwith %}
 
-{% with 
-    modal_id="viewProductModal", 
-    modal_title="Ver Produto",
-    modal_footer="
-        <button type='button' class='btn btn-outline-secondary' data-bs-dismiss='modal'>Fechar</button>
-    " %} {% include 'components/dashboard/modal.html' %}
+{% with modal_id="viewProductModal", modal_title="Ver Produto", modal_footer=close_button %}
+    {% include 'components/dashboard/modal.html' %}
 {% endwith %}
-
 {% endblock %}
 
 {% block scripts %}

@@ -1,17 +1,188 @@
-#dashboard-wrapper {
-    min-height: 94vh;
+/*
+ * Dashboard chrome. Bulma provides the navbar, menu, card and modal styling;
+ * this file adds the app shell (fixed sidebar + scrolling content) and the
+ * small-screen sidebar overlay.
+ */
+
+:root {
+    --dash-border: #ededed;
+    --dash-sidebar-width: 240px;
 }
 
-#mobileSidebar .fa-solid,
-#sidebar .fa-solid {
-    min-width: 20px;
+.dashboard-body {
+    background: #fbfbfa;
+    min-height: 100vh;
 }
 
-#sidebar .nav-link {
-    transition: background-color 0.2s ease, color 0.2s ease;
-    border-radius: 0.375rem;
+.dash-navbar {
+    border-bottom: 1px solid var(--dash-border);
+    background: #fff;
 }
 
-#sidebar .nav-link:hover {
-    background-color: #f0f0f0;
+.dash-logo {
+    max-height: 2rem;
+    height: 2rem;
+    width: auto;
+    margin-right: .5rem;
+}
+
+/* Bulma hides .navbar-menu below 1024px; the dashboard needs its controls at
+   every width, so it is forced visible and laid out horizontally. */
+.dash-navbar-menu {
+    display: flex;
+    flex-grow: 1;
+    justify-content: flex-end;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+}
+
+.dash-navbar-menu .navbar-end {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.dash-icon-button {
+    position: relative;
+}
+
+.dash-badge {
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    font-size: .6rem;
+    height: 1.1rem;
+    min-width: 1.1rem;
+    padding: 0 .3rem;
+}
+
+/* Dropdowns are opened by toggling .is-active in menus.js. */
+.navbar-item.has-dropdown .navbar-dropdown {
+    display: none;
+}
+
+.navbar-item.has-dropdown.is-active .navbar-dropdown {
+    display: block;
+}
+
+/* ----------------------------------------------------------------
+   Shell
+   ---------------------------------------------------------------- */
+
+.dash-shell {
+    display: flex;
+    align-items: flex-start;
+}
+
+.dash-sidebar {
+    flex: 0 0 var(--dash-sidebar-width);
+    width: var(--dash-sidebar-width);
+    padding: 1.5rem 1rem;
+    background: #fff;
+    border-right: 1px solid var(--dash-border);
+    min-height: calc(100vh - 3.25rem);
+}
+
+.dash-sidebar .menu-list a {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .6rem .75rem;
+    border-radius: 6px;
+    color: #363636;
+}
+
+.dash-sidebar .menu-list a:hover {
+    background: #f5f5f5;
+}
+
+.dash-sidebar .menu-list a.is-active {
+    background: #363636;
+    color: #fff;
+}
+
+.dash-main {
+    flex: 1 1 auto;
+    padding: 2rem;
+    min-width: 0;
+}
+
+.dash-burger {
+    display: none;
+}
+
+.dash-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 10, .45);
+    z-index: 30;
+}
+
+.dash-overlay.is-open {
+    display: block;
+}
+
+/* Product cards in the dashboard grid. */
+.dash-main .product-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--dash-border);
+    box-shadow: none;
+}
+
+.dash-main .product-card .card-image img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+.dash-main .product-card .card-content {
+    flex: 1 0 auto;
+}
+
+@media screen and (max-width: 1023px) {
+    .dash-burger {
+        display: inline-flex;
+    }
+
+    /* Sidebar slides in over the content instead of taking a column. */
+    .dash-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 40;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        min-height: 100vh;
+    }
+
+    .dash-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .dash-main {
+        padding: 1.25rem;
+    }
+}
+
+/* Framework-agnostic spinner used by static/js/core/utils.js. */
+.app-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--dash-border);
+    border-top-color: #363636;
+    border-radius: 50%;
+    animation: app-spin .7s linear infinite;
+}
+
+@keyframes app-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }

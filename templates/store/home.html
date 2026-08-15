@@ -1,0 +1,174 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Início{% endblock %}
+
+{#
+  Landing page — a story, in six movements:
+
+    1  Hero            who we are, in one breath
+    2  Origem          where it began
+    3  O ofício        how a piece is made
+    4  O que fazemos   the range, as a way into the catalogue
+    5  Percurso        a timeline of the fairs we have attended
+    6  Contactos       how to reach us
+
+  Layout is Bulma throughout: .hero / .section.is-medium for rhythm,
+  .columns for the split, .fixed-grid + .cell for the three-up rows, and .card
+  for the cards. Only genuinely missing pieces (eyebrow tracking, reading
+  measure, the hero wash) live in store.css.
+#}
+
+{% block content %}
+
+{# ---------------------------------------------------------------- 1. Hero #}
+<section class="hero is-medium store-hero">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <p class="eyebrow">Viana do Castelo · desde sempre à mão</p>
+
+            <h1 class="title is-1 is-spaced store-display">
+                Peças que guardam<br>a nossa terra.
+            </h1>
+
+            <p class="subtitle is-5 has-text-grey mx-auto measure-narrow">
+                Madeira e tecido trabalhados um a um, com os motivos que
+                atravessam gerações no Alto Minho.
+            </p>
+
+        </div>
+    </div>
+
+    {# Direct child of the hero: Bulma's .container is position:relative, so a
+       cue placed inside it would anchor to the container, not the hero. #}
+    <a class="hero-scroll is-flex is-flex-direction-column is-align-items-center"
+       href="#origin">
+        <span class="is-size-7 is-uppercase">Conheça a nossa história</span>
+        <span class="hero-scroll-icon mt-4" aria-hidden="true">
+            <i class="fa-solid fa-chevron-down"></i>
+        </span>
+    </a>
+</section>
+
+{# ------------------------------------------------------------- 2. Origin #}
+<section class="section is-medium" id="origin">
+    <div class="container">
+        <div class="columns is-variable is-8 is-vcentered">
+            <div class="column is-half">
+                <p class="eyebrow">Origem</p>
+                <h2 class="title is-3">Começou numa bancada pequena</h2>
+                <p class="measure">
+                    A Coisas com Gosto nasceu do gosto por trabalhar madeira em
+                    casa, ao fim do dia, em Viana do Castelo. Primeiro foram
+                    lembranças para a família. Depois pediram-nos uma, e outra,
+                    e a bancada deixou de chegar.
+                </p>
+                <p class="measure mt-4">
+                    Continuamos a fazer tudo aqui, à mão, no mesmo sítio. Nada
+                    sai da oficina sem passar por nós.
+                </p>
+            </div>
+
+            <div class="column is-half">
+                <figure class="image">
+                    <img class="media-photo" src="{{ url_for('static', filename='img/hero.webp') }}"
+                         alt="Os fundadores da Coisas com Gosto numa feira de artesanato, com uma
+                              caixa em forma de coração e uma moldura pintada à mão."
+                         loading="lazy">
+                </figure>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ----------------------------------------------------------- 3. O ofício #}
+<section class="section is-medium has-background-light">
+    <div class="container">
+        <header class="mb-6">
+            <p class="eyebrow">O ofício</p>
+            <h2 class="title is-3 measure">Cada peça passa por três mãos-cheias de tempo</h2>
+        </header>
+
+        <div class="fixed-grid has-1-cols-mobile has-3-cols-tablet">
+            <ol class="grid">
+                <li class="cell craft-step pt-5">
+                    <span class="eyebrow">01</span>
+                    <h3 class="title is-5 mb-3">Desenhar</h3>
+                    <p class="has-text-grey">
+                        Começa tudo no desenho. Pensamos a peça a partir do que
+                        ela vai servir, e é o uso que decide a forma que vai ter.
+                    </p>
+                </li>
+                <li class="cell craft-step pt-5">
+                    <span class="eyebrow">02</span>
+                    <h3 class="title is-5 mb-3">Pintar</h3>
+                    <p class="has-text-grey">
+                        As cores são dadas à mão, camada sobre camada, seguindo
+                        os padrões que herdámos dos trajes da região.
+                    </p>
+                </li>
+                <li class="cell craft-step pt-5">
+                    <span class="eyebrow">03</span>
+                    <h3 class="title is-5 mb-3">Acabar</h3>
+                    <p class="has-text-grey">
+                        Lixar, selar e montar. É aqui que se decide se leva fio
+                        para pendurar ou se fica de pé, à espera de companhia.
+                    </p>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+{# ------------------------------------------------------- 4. O que fazemos #}
+{# Each card links to the catalog pre-filtered by that type. The catalog reads
+   type_id straight off the query string on load (static/js/store/filters.js),
+   so the filter is already applied — and shown as a removable badge — by the
+   time the grid renders. #}
+{% if product_types %}
+<section class="section is-medium">
+    <div class="container">
+        <header class="mb-6">
+            <p class="eyebrow">O que fazemos</p>
+            <h2 class="title is-3 is-spaced">As peças que saem da oficina</h2>
+            <p class="subtitle is-6 has-text-grey measure">
+                Escolha uma família de peças para ver tudo o que temos dela.
+            </p>
+        </header>
+
+        <div class="fixed-grid has-1-cols-mobile has-3-cols-tablet">
+            <div class="grid">
+                {% for type in product_types %}
+                <a class="cell card p-5 mb-0 type-card"
+                   href="{{ url_for('web.store.products', type_id=type.id) }}">
+                    <span class="type-card-icon mb-4">
+                        <i class="fa-solid {{ type | type_icon }}"></i>
+                    </span>
+
+                    <h3 class="title is-5 mb-2">{{ type.name }}</h3>
+
+                    {% if type.description %}
+                    <p class="has-text-grey is-size-6">{{ type.description }}</p>
+                    {% endif %}
+
+                    {% if type.sub_types %}
+                    <p class="is-size-7 has-text-grey mt-3">
+                        {{ type.sub_types | map(attribute='name') | join(' · ') }}
+                    </p>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{# ------------------------------------------------------------ 5. Timeline #}
+{% if events %}
+{% include 'store/components/timeline.html' %}
+{% endif %}
+
+{# ----------------------------------------------------------- 6. Contacts #}
+{% include 'store/components/contacts.html' %}
+
+{% endblock %}

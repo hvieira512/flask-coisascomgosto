@@ -1,0 +1,63 @@
+{# Timeline of fairs, markets and shows the workshop has attended.
+
+   Horizontal on desktop — dragged, or stepped with the arrow buttons — and
+   vertical, centred, on mobile. Reads newest first.
+
+   The rail lives inside the normal .container so it lines up with the header
+   above it. Rendered server-side, so it works without JavaScript: the rail is
+   still a scroll container and only the arrow buttons need the script. The
+   section is omitted entirely when there are no events. #}
+<section class="section is-medium pb-6" id="events">
+    <div class="container">
+        <header class="mb-6">
+            <p class="eyebrow">Percurso</p>
+            <h2 class="title is-3 is-spaced">Onde já estivemos</h2>
+            <p class="subtitle is-6 has-text-grey measure">
+                Feiras, mercados e mostras onde levámos as nossas peças.
+            </p>
+        </header>
+
+        <div class="timeline-shell">
+            <button class="timeline-arrow timeline-arrow-left" type="button"
+                    data-timeline-prev aria-label="Eventos anteriores" hidden>
+                <span class="icon"><i class="fa-solid fa-chevron-left"></i></span>
+            </button>
+
+            <ol class="timeline" id="timeline" tabindex="0"
+                aria-label="Cronologia de eventos, arraste para o lado">
+                {% for event in events %}
+                <li class="timeline-entry">
+                    <div class="timeline-marker" aria-hidden="true"></div>
+
+                    <div class="timeline-body">
+                        <p class="timeline-date">
+                            {{ event.starts_on | event_dates(event.ends_on) }}
+                        </p>
+
+                        <h3 class="title is-6 mb-1">
+                            {% if event.url %}
+                            <a href="{{ event.url }}" target="_blank" rel="noopener">{{ event.name }}</a>
+                            {% else %}
+                            {{ event.name }}
+                            {% endif %}
+                        </h3>
+
+                        {% if event.location %}
+                        <p class="is-size-7 has-text-grey mb-2">{{ event.location }}</p>
+                        {% endif %}
+
+                        {% if event.description %}
+                        <p class="is-size-7 has-text-grey">{{ event.description }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+
+            <button class="timeline-arrow timeline-arrow-right" type="button"
+                    data-timeline-next aria-label="Eventos seguintes" hidden>
+                <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+        </div>
+    </div>
+</section>

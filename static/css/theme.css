@@ -1,0 +1,157 @@
+/*
+ * Coisas com Gosto — design tokens.
+ *
+ * Loaded immediately after bulma.min.css so it can retheme Bulma through its
+ * own CSS variables. Bulma 1.x derives every colour from HSL triplets, so
+ * setting the primary and scheme hues here recolours buttons, links, tags,
+ * borders and backgrounds without recompiling any Sass.
+ *
+ * The blue is sampled from the logo: #4472C4 = hsl(218, 52%, 52%).
+ * The neutrals are warmed (hue 35) so the page reads as paper rather than
+ * screen-grey — it has to sit next to photographs of wood and cloth.
+ */
+
+:root {
+    /* The palette is a single light one. data-theme="light" on <html> stops
+       Bulma's own prefers-color-scheme: dark block from repainting components
+       near-black; this tells the browser to keep native widgets, scrollbars and
+       form controls light to match. */
+    color-scheme: light;
+
+    /* ---- brand ramp, all from the logo blue's hue + saturation ---- */
+    --ccg-blue-50: #EFF3FA;
+    --ccg-blue-100: #DCE4F3;
+    --ccg-blue-200: #B9CAE8;
+    --ccg-blue-300: #8AA7DA;
+    --ccg-blue-400: #638ACE;
+    --ccg-blue-500: #4472C4;
+    /* the logo blue */
+    --ccg-blue-600: #335BA2;
+    --ccg-blue-700: #294A83;
+    --ccg-blue-800: #1F3864;
+    --ccg-blue-900: #162745;
+
+    /* ---- warm paper neutrals ---- */
+    --ccg-paper: #FAF8F5;
+    --ccg-paper-deep: #F3EFE8;
+    --ccg-surface: #FFFFFF;
+    --ccg-line: #E7E1D7;
+    --ccg-line-soft: #F0EBE3;
+
+    /* ---- ink ---- */
+    --ccg-ink: #26221D;
+    --ccg-ink-soft: #6E675E;
+    --ccg-ink-faint: #9C9489;
+
+    /* ---- rhythm ----
+       One spacing scale so sections breathe consistently. The large steps
+       are deliberately generous: the previous layout felt cluttered because
+       every section used the same 3rem gap. */
+    --space-xs: .5rem;
+    --space-sm: 1rem;
+    --space-md: 2rem;
+    --space-lg: 4rem;
+    --space-xl: 7rem;
+    --space-2xl: 10rem;
+
+    --measure: 34rem;
+    /* comfortable reading width, ~65 characters */
+    --radius: 10px;
+    --radius-lg: 16px;
+
+    /* ================================================================
+       Bulma retheme
+       ================================================================ */
+
+    /* Primary = the logo blue. Everything Bulma derives (hover, light,
+       dark, invert) follows automatically from these three. */
+    --bulma-primary-h: 218deg;
+    --bulma-primary-s: 52%;
+    --bulma-primary-l: 52%;
+
+    /* Links match the brand rather than Bulma's default indigo. */
+    --bulma-link-h: 218deg;
+    --bulma-link-s: 52%;
+    --bulma-link-l: 42%;
+
+    /* Warm the whole neutral scheme. */
+    --bulma-scheme-h: 35;
+    --bulma-scheme-s: 22%;
+
+    --bulma-body-background-color: var(--ccg-paper);
+    --bulma-body-color: var(--ccg-ink);
+    --bulma-body-line-height: 1.7;
+
+    --bulma-text: var(--ccg-ink);
+    --bulma-text-strong: var(--ccg-blue-900);
+    --bulma-text-weak: var(--ccg-ink-soft);
+
+    --bulma-border: var(--ccg-line);
+    --bulma-border-weak: var(--ccg-line-soft);
+
+    --bulma-radius: var(--radius);
+    --bulma-radius-large: var(--radius-lg);
+
+    --bulma-title-color: var(--ccg-blue-900);
+    --bulma-title-weight: 700;
+    --bulma-subtitle-color: var(--ccg-ink-soft);
+
+    --bulma-card-background-color: var(--ccg-surface);
+    --bulma-card-shadow: none;
+    --bulma-card-radius: var(--radius);
+}
+
+/* Anchor links (the hero invitation, the navbar Contactos link) glide
+   instead of jumping. */
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* Headings carry the brand navy and tighter tracking; body stays warm ink. */
+.title,
+h1,
+h2,
+h3 {
+    letter-spacing: -.02em;
+}
+
+body {
+    background-color: var(--ccg-paper);
+    color: var(--ccg-ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Bulma's default button is quite loud; soften the neutral one to match paper. */
+.button {
+    border-radius: var(--radius);
+}
+
+.button.is-dark {
+    background-color: var(--ccg-blue-800);
+    border-color: var(--ccg-blue-800);
+}
+
+.button.is-dark:hover {
+    background-color: var(--ccg-blue-900);
+    border-color: var(--ccg-blue-900);
+}
+
+/* Carries a border because is-light sits on both --ccg-paper and
+   --ccg-paper-deep sections; without one it vanishes on the darker band. */
+.button.is-light {
+    background-color: var(--ccg-surface);
+    border-color: var(--ccg-line);
+    color: var(--ccg-blue-800);
+}
+
+.button.is-light:hover {
+    background-color: var(--ccg-blue-50);
+    border-color: var(--ccg-blue-300);
+    color: var(--ccg-blue-800);
+}

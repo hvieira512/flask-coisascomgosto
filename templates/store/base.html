@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+{# data-theme="light" pins Bulma to its light scheme. Without it Bulma 1.x
+   switches at prefers-color-scheme: dark and repaints the navbar, cards and
+   inputs near-black, which fights the warm paper palette. #}
+<html lang="pt" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} · Coisas com Gosto</title>
+
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bulma/bulma.min.css') }}">
+    {# theme.css must follow bulma so it can override Bulma's own variables. #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/store.css') }}">
+    <script src="{{ url_for('static', filename='fontawesome/a38dd6e785.js') }}" crossorigin="anonymous"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    {% include 'components/loader.html' %}
+
+    {% include 'store/components/navbar.html' %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'store/components/footer.html' %}
+
+    <script src="{{ url_for('static', filename='js/store/loader.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/store/placeholder.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/store/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/store/timeline.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
