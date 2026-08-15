@@ -1,0 +1,212 @@
+"""Guards for the element IDs and wrappers the front-end JavaScript depends on.
+
+These exist because a template rewrite silently broke the login page: the Bulma
+migration dropped `id="form-header"` and `id="auth-container"`, and
+`document.querySelector` returned null at runtime. Nothing else in the suite
+caught it, because the server-rendered HTML was still perfectly valid — only the
+browser knew it was broken.
+
+Any test here should name the JS file that would break if the assertion fails.
+"""
+
+import re
+
+import pytest
+
+
+class TestLoginPageHooks:
+    """static/js/auth/auth.js queries these by ID."""
+
+    def test_form_header_id_exists(self, client):
+        """renderLoginForm/renderRegisterForm set formHeader.innerHTML."""
+        html = client.get("/auth").get_data(as_text=True)
+        assert 'id="form-header"' in html
+
+    def test_auth_container_id_exists(self, client):
+        """renderLoading('#auth-container') silently no-ops without it."""
+        html = client.get("/auth").get_data(as_text=True)
+        assert 'id="auth-container"' in html
+
+    def test_auth_form_and_username_field_exist(self, client):
+        html = client.get("/auth").get_data(as_text=True)
+        assert 'id="auth-form"' in html
+        assert 'id="usernameField"' in html
+        assert 'id="submitBtn"' in html
+
+    def test_auth_js_is_loaded(self, client):
+        html = client.get("/auth").get_data(as_text=True)
+        assert "js/auth/auth.js" in html
+
+    def test_token_helper_loads_before_page_modules(self, client):
+        """auth.js calls window.Auth.storeTokens, so core/auth.js must come first."""
+        html = client.get("/auth").get_data(as_text=True)
+        assert html.index("js/core/auth.js") < html.index("js/auth/auth.js")
+
+
+class TestDashboardHooks:
+    """static/js/dashboard/menus.js and products/fetch.js query these."""
+
+    def _login(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+
+    def test_sidebar_and_overlay_ids_exist(self, client, make_user):
+        self._login(client, make_user)
+        html = client.get("/dashboard/home").get_data(as_text=True)
+        assert 'id="sidebar"' in html
+        assert 'id="overlay"' in html
+        assert 'id="sidebarToggle"' in html
+
+    def test_product_list_container_exists(self, client, make_user):
+        """fetch.js renders into #product-list."""
+        self._login(client, make_user)
+        html = client.get("/dashboard/products").get_data(as_text=True)
+        assert 'id="product-list"' in html
+
+    def test_modals_use_the_data_attribute_api(self, client, make_user):
+        """menus.js opens modals via data-modal-target, not Bootstrap's data-bs-*."""
+        self._login(client, make_user)
+        html = client.get("/dashboard/products").get_data(as_text=True)
+        assert "data-modal-target" in html
+        assert "data-modal-close" in html
+        assert "data-bs-" not in html
+
+    def test_token_helper_loads_before_page_modules(self, client, make_user):
+        """fetch.js calls window.Auth.authFetch."""
+        self._login(client, make_user)
+        html = client.get("/dashboard/products").get_data(as_text=True)
+        assert html.index("js/core/auth.js") < html.index("js/dashboard/products/main.js")
+
+
+class TestStorefrontHooks:
+    """static/js/store/*.js query these."""
+
+    def test_catalog_ids_exist(self, client):
+        html = client.get("/products").get_data(as_text=True)
+        for element_id in ["product-grid", "active-filters", "filter-groups",
+                           "filter-search", "clear-filters", "pagination"]:
+            assert f'id="{element_id}"' in html, element_id
+
+    def test_product_page_gallery_ids_exist(self, client, make_product):
+        product = make_product("Caixa")
+        html = client.get(f"/products/{product['id']}").get_data(as_text=True)
+        for element_id in ["gallery-stage", "stage-image", "thumb-rail",
+                           "stage-counter", "variant-options", "size-options"]:
+            assert f'id="{element_id}"' in html, element_id
+
+
+class TestPageLayoutWrappers:
+    """Inner pages must supply their own section/container.
+
+    base.html renders <main> bare so the landing page can use full-bleed
+    sections; without a wrapper the catalog sidebar sits flush against the
+    viewport edge.
+    """
+
+    def _main_block(self, html):
+        match = re.search(r"<main[^>]*>(.*?)</main>", html, re.S)
+        assert match, "no <main> element"
+        return match.group(1)
+
+    def test_catalog_wraps_content_in_a_container(self, client):
+        body = self._main_block(client.get("/products").get_data(as_text=True))
+        assert 'class="section' in body
+        assert 'class="container' in body
+
+    def test_product_page_wraps_content_in_a_container(self, client, make_product):
+        product = make_product("Caixa")
+        body = self._main_block(
+            client.get(f"/products/{product['id']}").get_data(as_text=True)
+        )
+        assert 'class="section' in body
+        assert 'class="container' in body
+
+    def test_error_page_wraps_content_in_a_container(self, client):
+        body = self._main_block(client.get("/not-found").get_data(as_text=True))
+        # Bulma modifiers may follow the base class, e.g. "section is-medium".
+        assert 'class="section' in body
+        assert 'class="container' in body
+
+
+class TestNotifications:
+    """SweetAlert2 replaced toastr; js/core/notify.js wraps it.
+
+    toastr required jQuery, which had no other consumer in the project, so both
+    were removed. These assertions stop either creeping back and stop a page
+    calling Notify before the library that backs it has loaded.
+    """
+
+    def _dashboard(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/products").get_data(as_text=True)
+
+    def test_auth_page_loads_sweetalert2(self, client):
+        html = client.get("/auth").get_data(as_text=True)
+        assert "sweetalert2/sweetalert2.all.min.js" in html
+        assert "js/core/notify.js" in html
+
+    def test_dashboard_loads_sweetalert2(self, client, make_user):
+        html = self._dashboard(client, make_user)
+        assert "sweetalert2/sweetalert2.all.min.js" in html
+        assert "js/core/notify.js" in html
+
+    def test_notify_wrapper_loads_after_sweetalert2(self, client):
+        """notify.js reads Swal at definition time to warn if it is missing."""
+        html = client.get("/auth").get_data(as_text=True)
+        assert html.index("sweetalert2.all.min.js") < html.index("js/core/notify.js")
+
+    @pytest.mark.parametrize("path", ["/", "/products", "/nao-encontrado"])
+    def test_storefront_stays_lean(self, client, path):
+        """No public page notifies, so none should carry the 79KB library."""
+        html = client.get(path).get_data(as_text=True)
+        assert "sweetalert2" not in html
+
+    @pytest.mark.parametrize("path", ["/", "/products", "/auth"])
+    def test_toastr_and_jquery_are_gone(self, client, path):
+        html = client.get(path).get_data(as_text=True)
+        assert "toastr" not in html
+        assert "jquery" not in html.lower()
+
+    def test_dashboard_has_no_toastr_or_jquery(self, client, make_user):
+        html = self._dashboard(client, make_user)
+        assert "toastr" not in html
+        assert "jquery" not in html.lower()
+
+    def test_no_javascript_still_calls_toastr(self):
+        """The library is gone, so a stray call would be a runtime crash."""
+        import pathlib
+
+        for script in pathlib.Path("static/js").rglob("*.js"):
+            assert "toastr" not in script.read_text(), script
+
+
+class TestColorScheme:
+    """Every page must pin Bulma to its light scheme.
+
+    Bulma 1.x ships a `prefers-color-scheme: dark` block that repaints the
+    navbar, cards, inputs and borders near-black. theme.css only overrides the
+    scheme hue and saturation, not its lightness, so on a machine set to dark
+    mode that block wins and the warm paper palette is lost. `data-theme=light`
+    on <html> is declared after the media query in bulma.min.css, so it wins.
+    """
+
+    @pytest.mark.parametrize(
+        "path", ["/", "/products", "/auth", "/not-found"]
+    )
+    def test_html_pins_the_light_scheme(self, client, path):
+        html = client.get(path).get_data(as_text=True)
+        assert 'data-theme="light"' in html, f"{path} would go dark in dark mode"
+
+    def test_product_page_pins_the_light_scheme(self, client, make_product):
+        product = make_product("Caixa")
+        html = client.get(f"/products/{product['id']}").get_data(as_text=True)
+        assert 'data-theme="light"' in html
+
+    def test_dashboard_pins_the_light_scheme(self, client):
+        """The dashboard has its own base template, so it needs its own guard."""
+        with client.session_transaction() as flask_session:
+            flask_session["user"] = {"id": 1, "username": "admin", "is_admin": True}
+
+        html = client.get("/dashboard/home").get_data(as_text=True)
+        assert 'data-theme="light"' in html
