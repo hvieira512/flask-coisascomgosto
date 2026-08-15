@@ -22,6 +22,7 @@ from api.repositories import (
     ContactRepository,
     EventRepository,
     ProductRepository,
+    ProductImageRepository,
     ProductTypeRepository,
     SizeRepository,
     ProductVariantRepository,
@@ -168,6 +169,38 @@ PRODUCTS = [
      ["Preto e Dourado", "Preto e Branco"], []),
 ]
 
+
+# Photographs lifted from the page's own albums, cropped square.
+# (product, colour set or None for a product-wide fallback, file, alt)
+IMAGES = [
+    ("Caixa Redonda Filigrana", None, "caixa-redonda-dourado.jpg",
+     "Caixa redonda branca com coração de filigrana a dourado"),
+    ("Caixa Redonda Filigrana", "Azul e Branco", "caixa-redonda-azul.jpg",
+     "Três caixas redondas brancas com filigrana azul"),
+    ("Caixa Redonda Filigrana", "Preto e Branco", "caixa-preto-branco.jpg",
+     "Caixa redonda preta com filigrana branca"),
+    ("Caixa Redonda Filigrana", "Vermelho e Branco", "caixa-coracao-vermelho.jpg",
+     "Caixa vermelha em forma de coração com filigrana dourada"),
+
+    ("Caixa Redonda Manel e Maria", None, "manel-e-maria.jpg",
+     "O par do Minho em traje sobre um coração dourado"),
+
+    ("Caixa de Joias", None, "caixa-preto-dourado.jpg",
+     "Peças pretas com filigrana dourada"),
+
+    ("Moldura Oval", None, "moldura-rosa.jpg",
+     "Moldura branca de janela oval com filigrana rosa"),
+
+    ("Bastidor Bordado", None, "bastidor-nome.jpg",
+     "Bastidor bordado à mão com um nome ao centro"),
+
+    ("Coração de Natal", None, "coracao-natal-nome.jpg",
+     "Coração de Viana branco com nome escrito a dourado"),
+
+    ("Abre-cápsulas Coração", None, "abre-capsulas.jpg",
+     "Três abre-cápsulas de madeira com motivos pintados"),
+]
+
 EVENTS = [
     ("XXIV Exposição/Feira de Artesanato da Romaria d'Agonia",
      "Jardim Público, Viana do Castelo",
@@ -232,6 +265,8 @@ def seed():
 
         size_ids = {s["name"]: s["id"] for s in sizes.list(limit=50, offset=0)}
 
+        product_ids = {}
+        variant_ids = {}
         for name, type_name, collection, description, set_names, size_names in PRODUCTS:
             product_id = products.create(
                 name=name,
@@ -240,12 +275,28 @@ def seed():
                 collection_id=collection_ids[collection] if collection else None,
                 description=description,
             )
+            product_ids[name] = product_id
             for set_name in set_names:
-                variants.create(product_id=product_id, color_set_id=set_ids[set_name])
+                variant_ids[(name, set_name)] = variants.create(
+                    product_id=product_id, color_set_id=set_ids[set_name]
+                )
             if size_names:
                 products.set_sizes(
                     product_id, [size_ids[s] for s in size_names if s in size_ids]
                 )
+
+        images = ProductImageRepository(cursor)
+        position = {}
+        for product_name, set_name, filename, alt in IMAGES:
+            key = product_name
+            position[key] = position.get(key, 0) + 1
+            images.create(
+                product_id=product_ids[product_name],
+                variant_id=variant_ids.get((product_name, set_name)),
+                url=f"/static/img/products/{filename}",
+                alt=alt,
+                position=position[key],
+            )
 
         for name, location, description, starts_on, ends_on, url in EVENTS:
             events.create(
@@ -262,5 +313,5 @@ def seed():
     print(
         f"Seeded {len(PRODUCTS)} products, "
         f"{sum(1 + len(t[3]) for t in PRODUCT_TYPES)} product types, "
-        f"{len(COLOR_SETS)} colour sets, {len(EVENTS)} event."
+        f"{len(COLOR_SETS)} colour sets, {len(IMAGES)} images, {len(EVENTS)} event."
     )
