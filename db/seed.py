@@ -199,6 +199,38 @@ IMAGES = [
 
     ("Abre-cápsulas Coração", None, "abre-capsulas.jpg",
      "Três abre-cápsulas de madeira com motivos pintados"),
+    ("Caixa Lenço dos Namorados", None, "caixa-lenco-rosas.jpg",
+     "Caixa branca com as rosas do Lenço dos Namorados na tampa"),
+
+    ("Coração de Viana", None, "coracao-branco-nome.jpg",
+     "Coração de Viana branco com nome escrito a dourado"),
+    ("Coração de Viana", "Vermelho e Branco", "coracao-vermelho-nome.jpg",
+     "Coração de Viana vermelho com letras douradas"),
+
+    ("Coração de Mesa", None, "coracao-mesa-figura.jpg",
+     "Coração de pé com uma figura em traje minhoto"),
+    ("Coração de Mesa", "Branco e Dourado", "coracao-mesa-par.jpg",
+     "Coração de pé com o par do Minho e a frase quem ama fica"),
+
+    ("Moldura Filigrana", None, "moldura-branco.jpg",
+     "Moldura branca com filigrana prateada"),
+    ("Moldura Filigrana", "Preto e Dourado", "moldura-preto-dourado.jpg",
+     "Moldura preta com janela oval e filigrana dourada"),
+
+    ("Bastidor Viana é Amor", None, "bastidor-dourado.jpg",
+     "Bastidor com um coração de Viana bordado a dourado"),
+    ("Bastidor Viana é Amor", "Branco e Azul", "bastidor-azul-nome.jpg",
+     "Bastidor com coração bordado a azul e um nome"),
+
+    ("Bola de Natal", None, "bola-natal-branco.jpg",
+     "Bastidor branco com coração dourado e laço vermelho"),
+    ("Bola de Natal", "Vermelho e Branco", "bola-natal-vermelho.jpg",
+     "Três bastidores vermelhos com filigrana branca"),
+    ("Bola de Natal", None, "bola-natal-azul.jpg",
+     "Bastidor azul-escuro com coração dourado, pendurado na árvore"),
+
+    ("Coração de Natal", "Vermelho e Branco", "coracao-natal-branco.jpg",
+     "Coração de Viana branco com nome, na árvore"),
 ]
 
 EVENTS = [
