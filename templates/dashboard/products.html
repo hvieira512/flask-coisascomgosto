@@ -24,19 +24,19 @@
 {% set close_button = "<button type='button' class='button' data-modal-close>Fechar</button>" %}
 
 {% with modal_id="newProductModal", modal_title="Novo Produto", modal_footer=close_button %}
-    {% include 'components/dashboard/modal.html' %}
+    {% include 'dashboard/components/modal.html' %}
 {% endwith %}
 
 {% with modal_id="editProductModal", modal_title="Editar Produto", modal_footer=close_button %}
-    {% include 'components/dashboard/modal.html' %}
+    {% include 'dashboard/components/modal.html' %}
 {% endwith %}
 
 {% with modal_id="deleteProductModal", modal_title="Apagar Produto", modal_footer=close_button %}
-    {% include 'components/dashboard/modal.html' %}
+    {% include 'dashboard/components/modal.html' %}
 {% endwith %}
 
 {% with modal_id="viewProductModal", modal_title="Ver Produto", modal_footer=close_button %}
-    {% include 'components/dashboard/modal.html' %}
+    {% include 'dashboard/components/modal.html' %}
 {% endwith %}
 {% endblock %}
 

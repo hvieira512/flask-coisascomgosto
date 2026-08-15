@@ -6,7 +6,7 @@
 <{{ tag }} class="cell card p-5 mb-0 is-flex is-flex-direction-row is-align-items-center"
     {%- if href %} href="{{ href }}"{% endif %}
     {%- if external %} target="_blank" rel="noopener"{% endif %}>
-    <span class="contact-icon mr-3">{% include icon %}</span>
+    <span class="contact-icon mr-3"><i class="{{ icon }}"></i></span>
     <span class="eyebrow mb-0">{{ label }}</span>
     <span class="is-sr-only">{{ value }}</span>
 </{{ tag }}>
@@ -26,28 +26,28 @@
 
         <div class="grid is-col-min-10">
             {% if contact.address %}
-            {{ contact_card('store/components/icon-pin.svg', 'Morada',
+            {{ contact_card('fa-solid fa-location-dot', 'Morada',
                             contact.address, contact.maps_url, external=true) }}
             {% endif %}
 
             {% if contact.email %}
-            {{ contact_card('store/components/icon-mail.svg', 'E-mail',
+            {{ contact_card('fa-solid fa-envelope', 'E-mail',
                             contact.email, 'mailto:' ~ contact.email) }}
             {% endif %}
 
             {% if contact.whatsapp_url %}
-            {{ contact_card('store/components/icon-whatsapp.svg', 'WhatsApp',
+            {{ contact_card('fa-brands fa-whatsapp', 'WhatsApp',
                             contact.whatsapp, contact.whatsapp_url, external=true) }}
             {% endif %}
 
             {% if contact.facebook_url %}
-            {{ contact_card('store/components/icon-facebook.svg', 'Facebook',
+            {{ contact_card('fa-brands fa-facebook-f', 'Facebook',
                             'coisascomgosto.vianadocastelo', contact.facebook_url,
                             external=true) }}
             {% endif %}
 
             {% if contact.instagram_url %}
-            {{ contact_card('store/components/icon-instagram.svg', 'Instagram',
+            {{ contact_card('fa-brands fa-instagram', 'Instagram',
                             'coisascomgostovc', contact.instagram_url,
                             external=true) }}
             {% endif %}
