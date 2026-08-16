@@ -186,3 +186,180 @@
         transform: rotate(360deg);
     }
 }
+
+/* ----------------------------------------------------------------
+   Panels, stats and product management
+   ---------------------------------------------------------------- */
+
+.dashboard-body {
+    background: var(--ccg-paper);
+}
+
+.dash-navbar {
+    border-bottom: 1px solid var(--bulma-border);
+}
+
+.dash-sidebar .menu-list a {
+    border-radius: var(--bulma-radius);
+    color: var(--ccg-ink);
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.dash-sidebar .menu-list a:hover {
+    background-color: var(--ccg-blue-50);
+    color: var(--ccg-blue-800);
+}
+
+.dash-sidebar .menu-list a.is-active {
+    background-color: var(--ccg-blue-800);
+    color: #fff;
+}
+
+.dash-panel {
+    border: 1px solid var(--bulma-border);
+    height: 100%;
+}
+
+/* Stat cards on Início. */
+.dash-stat {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    color: inherit;
+}
+
+.dash-stat-icon {
+    color: var(--ccg-blue-500);
+    font-size: .9rem;
+    margin-bottom: .35rem;
+}
+
+.dash-stat-value {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ccg-blue-900);
+}
+
+.dash-stat-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ccg-ink-soft);
+}
+
+.dash-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid var(--bulma-border-weak);
+}
+
+.dash-list li:last-child {
+    border-bottom: none;
+}
+
+/* Product cards. */
+.dash-product {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--bulma-border);
+}
+
+.dash-product .card-content {
+    flex: 1 0 auto;
+}
+
+.dash-product-media img,
+.dash-product-media .product-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+.dash-product-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+}
+
+.dash-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+/* Rows inside the edit modal's colour and photograph panels. */
+.dash-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--bulma-border-weak);
+}
+
+.dash-row:last-child {
+    border-bottom: none;
+}
+
+.dash-row > :first-child {
+    margin-right: auto;
+}
+
+.dash-thumb {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: var(--bulma-radius);
+    border: 1px solid var(--bulma-border);
+}
+
+/* The read-only product view. */
+.dash-view {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1.5rem;
+}
+
+.dash-view-image,
+.dash-view .product-placeholder {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--bulma-radius-large);
+}
+
+.dash-facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .35rem 1rem;
+    font-size: .85rem;
+}
+
+.dash-facts dt {
+    color: var(--ccg-ink-soft);
+}
+
+.dash-facts dd {
+    font-weight: 500;
+}
+
+@media screen and (max-width: 768px) {
+    .dash-view {
+        grid-template-columns: 1fr;
+    }
+}

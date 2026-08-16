@@ -58,12 +58,6 @@ def products():
     return render_template("dashboard/products.html")
 
 
-@bp.route("/stats")
-@login_required
-def stats():
-    return render_template("dashboard/stats.html")
-
-
 @bp.route("/profile")
 @login_required
 def profile():

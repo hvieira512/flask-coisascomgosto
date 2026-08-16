@@ -1,8 +1,35 @@
 {% extends 'dashbord_base.html' %}
 
+{% block title %}Início · Dashboard{% endblock %}
+
 {% block content %}
+<header class="mb-5">
+    <h1 class="title is-4 mb-1">Olá{% if session.user %}, {{ session.user.username }}{% endif %}</h1>
+    <p class="subtitle is-6 has-text-grey">Um resumo do catálogo.</p>
+</header>
 
-<h2 class="mb-3">Bem-vindo 👋</h2>
-<p>Este é o seu painel de controlo.</p>
+{# Filled by js/dashboard/home.js from the API, so the numbers cannot drift
+   from what the storefront actually shows. #}
+<div class="fixed-grid has-1-cols-mobile has-2-cols-tablet has-4-cols-desktop mb-5">
+    <div class="grid" id="stat-cards"></div>
+</div>
 
+<div class="columns">
+    <div class="column is-7">
+        <div class="card p-5 dash-panel">
+            <h2 class="title is-6 mb-4">Peças sem fotografia</h2>
+            <div id="missing-photos"></div>
+        </div>
+    </div>
+    <div class="column is-5">
+        <div class="card p-5 dash-panel">
+            <h2 class="title is-6 mb-4">Próximos eventos</h2>
+            <div id="upcoming-events"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/dashboard/home.js') }}"></script>
 {% endblock %}

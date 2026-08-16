@@ -86,6 +86,30 @@ export const API = {
         create: "/api/products",
         update: (id) => `/api/products/${id}`,
         delete: (id) => `/api/products/${id}`,
+        sizes: (id) => `/api/products/${id}/sizes`,
+        variants: (id) => `/api/products/${id}/variants`,
+        variant: (id, variantId) => `/api/products/${id}/variants/${variantId}`,
+        images: (id) => `/api/products/${id}/images`,
+        image: (id, imageId) => `/api/products/${id}/images/${imageId}`,
+    },
+    productTypes: {
+        list: "/api/product-types",
+        get: (id) => `/api/product-types/${id}`,
+    },
+    collections: {
+        list: "/api/collections",
+    },
+    colorSets: {
+        list: "/api/color-sets",
+    },
+    colors: {
+        list: "/api/colors",
+    },
+    sizes: {
+        list: "/api/sizes",
+    },
+    events: {
+        list: "/api/events",
     },
     users: {
         list: "/api/users",

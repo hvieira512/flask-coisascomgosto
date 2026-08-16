@@ -64,10 +64,11 @@ class TestDashboardHooks:
         assert 'id="product-list"' in html
 
     def test_modals_use_the_data_attribute_api(self, client, make_user):
-        """menus.js opens modals via data-modal-target, not Bootstrap's data-bs-*."""
+        """Modals close via data-modal-close (menus.js) and open from
+        products/main.js, which needs the product before it can build a body.
+        Neither is Bootstrap's data-bs-*."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
-        assert "data-modal-target" in html
         assert "data-modal-close" in html
         assert "data-bs-" not in html
 
@@ -224,3 +225,41 @@ class TestColorSetBadges:
         product = make_product("Caixa")
         html = client.get(f"/products/{product['id']}").get_data(as_text=True)
         assert html.index("js/store/color-set.js") < html.index("js/store/product.js")
+
+
+class TestDashboardProducts:
+    """The products page is driven entirely by js/dashboard/products/*, which
+    queries these hooks."""
+
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/products").get_data(as_text=True)
+
+    def test_modals_and_list_container_exist(self, client, make_user):
+        html = self._page(client, make_user)
+        for element_id in ["product-list", "product-count", "new-product",
+                           "newProductModal", "editProductModal",
+                           "deleteProductModal", "viewProductModal"]:
+            assert f'id="{element_id}"' in html, element_id
+
+    def test_colour_set_helper_loads_before_the_module(self, client, make_user):
+        """The cards and the edit modal render colour-set badges."""
+        html = self._page(client, make_user)
+        assert html.index("js/store/color-set.js") < html.index("js/dashboard/products/main.js")
+
+    def test_dados_tab_is_gone(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "Dados" not in html
+        assert "dashboard/stats" not in html
+
+
+class TestDashboardHome:
+    def test_home_renders_analytics_hooks(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        html = client.get("/dashboard/home").get_data(as_text=True)
+
+        for element_id in ["stat-cards", "missing-photos", "upcoming-events"]:
+            assert f'id="{element_id}"' in html, element_id
+        assert "js/dashboard/home.js" in html
