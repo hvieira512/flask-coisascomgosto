@@ -7,11 +7,14 @@ available in, and carry one variant per colour set it is offered in.
 Sub-resources:
     /products/<id>/variants        the colour sets this product is offered in
     /products/<id>/sizes           the sizes this product is available in
+    /products/<id>/images          photographs, uploaded or referenced by path
 """
 
 from flask import request
 from flask_restx import Namespace, Resource
+from werkzeug.datastructures import FileStorage
 
+from api import uploads
 from api.db import get_db_connection
 from api.models.catalog import (
     collection_ref_model,
@@ -35,6 +38,7 @@ from api.models.products import (
     update_product_model,
 )
 from api.pagination import get_pagination_params, make_pagination
+from api.security import PROTECTED_DOC, token_required
 from api.repositories import (
     CategoryRepository,
     CollectionRepository,
@@ -137,6 +141,8 @@ class ProductList(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Referenced category, type, collection or size not found")
     @ns.response(409, "A product with that name already exists")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def post(self):
         """Create a new product."""
         data = ns.payload
@@ -181,6 +187,8 @@ class Product(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product, category, type, collection or size not found")
     @ns.response(409, "Another product already uses that name")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def put(self, product_id):
         """Update a product's own fields.
 
@@ -216,6 +224,8 @@ class Product(Resource):
     @ns.marshal_with(product_model)
     @ns.response(200, "The deleted product")
     @ns.response(404, "Product not found")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def delete(self, product_id):
         """Delete a product by ID, along with its variants and size links."""
         with get_db_connection() as (_, cursor):
@@ -253,6 +263,8 @@ class ProductVariantList(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product or colour set not found")
     @ns.response(409, "This product already has a variant in that colour set")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def post(self, product_id):
         """Offer this product in another colour set."""
         color_set_id = ns.payload["color_set_id"]
@@ -285,6 +297,8 @@ class ProductVariant(Resource):
     @ns.marshal_with(variant_model)
     @ns.response(200, "The deleted variant")
     @ns.response(404, "Product not found, or the variant is not one of its own")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def delete(self, product_id, variant_id):
         """Stop offering this product in one colour set."""
         with get_db_connection() as (_, cursor):
@@ -301,6 +315,18 @@ class ProductVariant(Resource):
             variant = variants.get(variant_id)
             variants.delete(variant_id)
             return variant, 200
+
+
+upload_parser = ns.parser()
+upload_parser.add_argument(
+    "file", location="files", type=FileStorage, required=True,
+    help="Photograph: jpg, png or webp, up to 5 MB",
+)
+upload_parser.add_argument(
+    "variant_id", location="form", type=int, required=False,
+    help="Pin the photograph to one colour set; omit for a product-wide one",
+)
+upload_parser.add_argument("alt", location="form", required=False)
 
 
 @ns.route("/<int:product_id>/images")
@@ -327,6 +353,8 @@ class ProductImageList(Resource):
     @ns.response(201, "Image added")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product not found, or the variant is not one of its own")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def post(self, product_id):
         """Add an image to a product, or to one of its variants."""
         data = ns.payload
@@ -355,6 +383,48 @@ class ProductImageList(Resource):
             return images.get(image_id), 201
 
 
+@ns.route("/<int:product_id>/images/upload")
+@ns.param("product_id", "The product identifier")
+class ProductImageUpload(Resource):
+    @ns.expect(upload_parser)
+    @ns.marshal_with(image_model, code=201)
+    @ns.response(201, "Photograph stored and attached")
+    @ns.response(400, "Missing file, unsupported format, or too large")
+    @ns.response(404, "Product not found, or the variant is not one of its own")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
+    def post(self, product_id):
+        """Upload a photograph and attach it to a product or one of its variants."""
+        args = upload_parser.parse_args()
+        variant_id = args.get("variant_id")
+
+        with get_db_connection() as (_, cursor):
+            if not ProductRepository(cursor).exists(product_id):
+                ns.abort(404, f"Product #{product_id} not found")
+
+            if variant_id is not None and not ProductVariantRepository(
+                cursor
+            ).belongs_to(variant_id, product_id):
+                ns.abort(
+                    404,
+                    f"Variant #{variant_id} does not belong to product #{product_id}",
+                )
+
+            try:
+                url = uploads.save(args["file"])
+            except uploads.UploadError as error:
+                ns.abort(400, str(error))
+
+            images = ProductImageRepository(cursor)
+            image_id = images.create(
+                product_id=product_id,
+                url=url,
+                alt=args.get("alt"),
+                variant_id=variant_id,
+            )
+            return images.get(image_id), 201
+
+
 @ns.route("/<int:product_id>/images/<int:image_id>")
 @ns.param("product_id", "The product identifier")
 @ns.param("image_id", "The image identifier")
@@ -364,6 +434,8 @@ class ProductImage(Resource):
     @ns.response(200, "Image updated")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Image or variant does not belong to this product")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def put(self, product_id, image_id):
         """Update an image's URL, alt text, position or variant."""
         data = ns.payload
@@ -398,6 +470,8 @@ class ProductImage(Resource):
     @ns.marshal_with(image_model)
     @ns.response(200, "The deleted image")
     @ns.response(404, "Image does not belong to this product")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def delete(self, product_id, image_id):
         """Remove an image from a product."""
         with get_db_connection() as (_, cursor):
@@ -411,6 +485,9 @@ class ProductImage(Resource):
 
             image = images.get(image_id)
             images.delete(image_id)
+            # Only removes the file if it was one we stored, so seeded assets
+            # and hand-written paths survive.
+            uploads.delete(image["url"])
             return image, 200
 
 
@@ -434,6 +511,8 @@ class ProductSizes(Resource):
     @ns.response(200, "The product's sizes after the replacement")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product or size not found")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def put(self, product_id):
         """Replace the set of sizes this product is available in.
 

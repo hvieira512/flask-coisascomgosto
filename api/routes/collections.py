@@ -15,6 +15,7 @@ from api.models.catalog import (
 )
 from api.models.common import pagination_model
 from api.pagination import get_pagination_params, make_pagination
+from api.security import PROTECTED_DOC, token_required
 from api.repositories import CollectionRepository
 
 ns = Namespace("collections", description="Collections operations")
@@ -58,6 +59,8 @@ class CollectionList(Resource):
     @ns.response(201, "Collection created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A collection with that name already exists")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def post(self):
         """Create a new collection."""
         data = ns.payload
@@ -96,6 +99,8 @@ class Collection(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Collection not found")
     @ns.response(409, "Another collection already uses that name")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def put(self, collection_id):
         """Update a collection by ID."""
         data = ns.payload
@@ -121,6 +126,8 @@ class Collection(Resource):
     @ns.marshal_with(collection_model)
     @ns.response(200, "The deleted collection")
     @ns.response(404, "Collection not found")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def delete(self, collection_id):
         """Delete a collection by ID.
 

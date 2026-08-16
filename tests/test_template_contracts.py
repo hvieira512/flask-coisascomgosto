@@ -17,29 +17,29 @@ import pytest
 class TestLoginPageHooks:
     """static/js/auth/auth.js queries these by ID."""
 
-    def test_form_header_id_exists(self, client):
+    def test_form_header_id_exists(self, anon_client):
         """renderLoginForm/renderRegisterForm set formHeader.innerHTML."""
-        html = client.get("/auth").get_data(as_text=True)
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert 'id="form-header"' in html
 
-    def test_auth_container_id_exists(self, client):
+    def test_auth_container_id_exists(self, anon_client):
         """renderLoading('#auth-container') silently no-ops without it."""
-        html = client.get("/auth").get_data(as_text=True)
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert 'id="auth-container"' in html
 
-    def test_auth_form_and_username_field_exist(self, client):
-        html = client.get("/auth").get_data(as_text=True)
+    def test_auth_form_and_username_field_exist(self, anon_client):
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert 'id="auth-form"' in html
         assert 'id="usernameField"' in html
         assert 'id="submitBtn"' in html
 
-    def test_auth_js_is_loaded(self, client):
-        html = client.get("/auth").get_data(as_text=True)
+    def test_auth_js_is_loaded(self, anon_client):
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert "js/auth/auth.js" in html
 
-    def test_token_helper_loads_before_page_modules(self, client):
+    def test_token_helper_loads_before_page_modules(self, anon_client):
         """auth.js calls window.Auth.storeTokens, so core/auth.js must come first."""
-        html = client.get("/auth").get_data(as_text=True)
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert html.index("js/core/auth.js") < html.index("js/auth/auth.js")
 
 
@@ -142,8 +142,8 @@ class TestNotifications:
         client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
         return client.get("/dashboard/products").get_data(as_text=True)
 
-    def test_auth_page_loads_sweetalert2(self, client):
-        html = client.get("/auth").get_data(as_text=True)
+    def test_auth_page_loads_sweetalert2(self, anon_client):
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert "sweetalert2/sweetalert2.all.min.js" in html
         assert "js/core/notify.js" in html
 
@@ -152,9 +152,9 @@ class TestNotifications:
         assert "sweetalert2/sweetalert2.all.min.js" in html
         assert "js/core/notify.js" in html
 
-    def test_notify_wrapper_loads_after_sweetalert2(self, client):
+    def test_notify_wrapper_loads_after_sweetalert2(self, anon_client):
         """notify.js reads Swal at definition time to warn if it is missing."""
-        html = client.get("/auth").get_data(as_text=True)
+        html = anon_client.get("/auth").get_data(as_text=True)
         assert html.index("sweetalert2.all.min.js") < html.index("js/core/notify.js")
 
     @pytest.mark.parametrize("path", ["/", "/products", "/nao-encontrado"])
@@ -195,8 +195,9 @@ class TestColorScheme:
     @pytest.mark.parametrize(
         "path", ["/", "/products", "/auth", "/not-found"]
     )
-    def test_html_pins_the_light_scheme(self, client, path):
-        html = client.get(path).get_data(as_text=True)
+    def test_html_pins_the_light_scheme(self, anon_client, path):
+        """Anonymous: /auth redirects a signed-in visitor to the dashboard."""
+        html = anon_client.get(path).get_data(as_text=True)
         assert 'data-theme="light"' in html, f"{path} would go dark in dark mode"
 
     def test_product_page_pins_the_light_scheme(self, client, make_product):

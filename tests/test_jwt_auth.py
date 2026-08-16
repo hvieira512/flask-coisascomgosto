@@ -32,10 +32,10 @@ class TestTokenIssuing:
         ).get_json()
         assert body["user"]["username"] == "alice"
 
-    def test_bad_password_issues_no_token(self, client, make_user):
+    def test_bad_password_issues_no_token(self, anon_client, make_user):
         make_user("alice", password="Passw0rd!")
 
-        response = client.post(
+        response = anon_client.post(
             "/api/auth/login", json={"username": "alice", "password": "wrong"}
         )
         assert response.status_code == 401
@@ -53,27 +53,27 @@ class TestTokenIssuing:
 
 class TestGuards:
     @pytest.mark.parametrize("method,path", GUARDED)
-    def test_without_a_token_returns_401(self, client, method, path):
-        assert getattr(client, method)(path).status_code == 401
+    def test_without_a_token_returns_401(self, anon_client, method, path):
+        assert getattr(anon_client, method)(path).status_code == 401
 
     @pytest.mark.parametrize("method,path", GUARDED)
     def test_with_a_token_is_allowed(self, auth_client, method, path):
         assert getattr(auth_client, method)(path).status_code != 401
 
-    def test_garbage_token_returns_422(self, client):
-        response = client.get(
+    def test_garbage_token_returns_422(self, anon_client):
+        response = anon_client.get(
             "/api/users/", headers={"Authorization": "Bearer not-a-jwt"}
         )
         assert response.status_code in (401, 422)
 
-    def test_missing_bearer_prefix_returns_401(self, client, tokens):
-        response = client.get(
+    def test_missing_bearer_prefix_returns_401(self, anon_client, tokens):
+        response = anon_client.get(
             "/api/users/", headers={"Authorization": tokens["access_token"]}
         )
         assert response.status_code in (401, 422)
 
-    def test_contacts_put_is_guarded(self, client):
-        assert client.put("/api/contacts/", json={"email": "x@y.z"}).status_code == 401
+    def test_contacts_put_is_guarded(self, anon_client):
+        assert anon_client.put("/api/contacts/", json={"email": "x@y.z"}).status_code == 401
 
     def test_catalog_reads_stay_public(self, client):
         """Guarding users and contacts must not lock the storefront out."""
@@ -102,25 +102,25 @@ class TestRefreshFlow:
         )
         assert response.status_code == 200
 
-    def test_an_access_token_cannot_be_used_to_refresh(self, client, tokens):
+    def test_an_access_token_cannot_be_used_to_refresh(self, anon_client, tokens):
         """Only a refresh token may hit /auth/refresh."""
-        response = client.post(
+        response = anon_client.post(
             "/api/auth/refresh",
             headers={"Authorization": f"Bearer {tokens['access_token']}"},
         )
         assert response.status_code in (401, 422)
 
-    def test_refresh_without_a_token_returns_401(self, client):
-        assert client.post("/api/auth/refresh").status_code == 401
+    def test_refresh_without_a_token_returns_401(self, anon_client):
+        assert anon_client.post("/api/auth/refresh").status_code == 401
 
     def test_expired_access_token_is_rejected_then_refreshed(
-        self, app, client, make_user
+        self, app, anon_client, make_user
     ):
         """The whole point of the refresh flow, end to end."""
         from flask_jwt_extended import create_access_token
 
         make_user("alice", password="Passw0rd!")
-        tokens = client.post(
+        tokens = anon_client.post(
             "/api/auth/login", json={"username": "alice", "password": "Passw0rd!"}
         ).get_json()
 
@@ -131,21 +131,21 @@ class TestRefreshFlow:
             )
 
         assert (
-            client.get(
+            anon_client.get(
                 "/api/users/", headers={"Authorization": f"Bearer {expired}"}
             ).status_code
             == 401
         )
 
-        # The refresh token is still good, so the client recovers without
+        # The refresh token is still good, so the anon_client recovers without
         # asking for the password again.
-        fresh = client.post(
+        fresh = anon_client.post(
             "/api/auth/refresh",
             headers={"Authorization": f"Bearer {tokens['refresh_token']}"},
         ).get_json()["access_token"]
 
         assert (
-            client.get(
+            anon_client.get(
                 "/api/users/", headers={"Authorization": f"Bearer {fresh}"}
             ).status_code
             == 200

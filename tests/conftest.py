@@ -65,9 +65,22 @@ def app(clean_database):
 
 
 @pytest.fixture()
-def client(app):
-    """An unauthenticated test client."""
+def anon_client(app):
+    """A client carrying no token. Use it to prove an endpoint is guarded."""
     return app.test_client()
+
+
+@pytest.fixture()
+def client(anon_client, tokens):
+    """The default client, authenticated.
+
+    Catalog writes require a bearer token, so the ordinary client carries one —
+    the same way the dashboard does. Tests that assert a guard rejects an
+    anonymous caller ask for `anon_client` instead.
+    """
+    return _AuthorizedClient(
+        anon_client, {"Authorization": f"Bearer {tokens['access_token']}"}
+    )
 
 
 class _AuthorizedClient:
@@ -82,8 +95,14 @@ class _AuthorizedClient:
         self._headers = headers
 
     def _with_auth(self, kwargs):
+        """Attach the token, unless the caller supplied its own.
+
+        The refresh endpoint needs the refresh token, not the access token, so
+        an explicit Authorization header always wins.
+        """
         headers = dict(kwargs.pop("headers", {}) or {})
-        headers.update(self._headers)
+        for name, value in self._headers.items():
+            headers.setdefault(name, value)
         kwargs["headers"] = headers
         return kwargs
 
@@ -104,11 +123,11 @@ class _AuthorizedClient:
 
 
 @pytest.fixture()
-def tokens(client, make_user):
+def tokens(anon_client, make_user):
     """Register a user and return their freshly issued token pair."""
     make_user("tokenuser", password="Passw0rd!")
 
-    response = client.post(
+    response = anon_client.post(
         "/api/auth/login", json={"username": "tokenuser", "password": "Passw0rd!"}
     )
     assert response.status_code == 200, response.get_json()
@@ -116,11 +135,9 @@ def tokens(client, make_user):
 
 
 @pytest.fixture()
-def auth_client(client, tokens):
-    """A test client authenticated with a bearer access token."""
-    return _AuthorizedClient(
-        client, {"Authorization": f"Bearer {tokens['access_token']}"}
-    )
+def auth_client(client):
+    """Kept as a name: the default client is already authenticated."""
+    return client
 
 
 @pytest.fixture()
@@ -254,9 +271,9 @@ def sizes(client):
 
 
 @pytest.fixture()
-def make_user(client):
+def make_user(anon_client):
     def _make(username="alice", email=None, password="Passw0rd!"):
-        response = client.post(
+        response = anon_client.post(
             "/api/auth/register",
             json={
                 "username": username,

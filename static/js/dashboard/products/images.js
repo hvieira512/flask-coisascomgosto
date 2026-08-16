@@ -42,11 +42,27 @@ export function imagesPanel(product) {
     return `
       <ul class="dash-rows mb-3" id="image-rows">${rows}</ul>
       <div class="field">
-        <div class="control">
+        <div class="file is-small has-name is-fullwidth">
+          <label class="file-label">
+            <input class="file-input" type="file" id="image-file"
+                   accept="image/jpeg,image/png,image/webp">
+            <span class="file-cta">
+              <span class="file-icon"><i class="fa-solid fa-upload"></i></span>
+              <span class="file-label">Escolher fotografia</span>
+            </span>
+            <span class="file-name" id="image-file-name">Nenhum ficheiro</span>
+          </label>
+        </div>
+        <p class="help">jpg, png ou webp, até 5 MB.</p>
+      </div>
+
+      <details class="mb-3">
+        <summary class="is-size-7 has-text-grey">Ou indicar um caminho existente</summary>
+        <div class="control mt-2">
           <input class="input is-small" id="image-url" placeholder="/static/img/products/nome.jpg">
         </div>
-        <p class="help">Caminho do ficheiro já colocado em static/img/products/.</p>
-      </div>
+      </details>
+
       <div class="field has-addons">
         <div class="control is-expanded">
           <div class="select is-fullwidth is-small">
@@ -61,6 +77,26 @@ export function imagesPanel(product) {
           <button class="button is-small is-dark" id="add-image">Adicionar</button>
         </div>
       </div>`;
+}
+
+/** Uploads the chosen file and attaches it in one request. */
+export async function uploadImage(productId, { file, variantId, alt }) {
+    if (!file) throw new Error("Escolha uma fotografia.");
+
+    const body = new FormData();
+    body.append("file", file);
+    if (variantId) body.append("variant_id", variantId);
+    if (alt) body.append("alt", alt);
+
+    // No Content-Type header: the browser sets the multipart boundary.
+    const res = await window.Auth.authFetch(API.products.uploadImage(productId), {
+        method: "POST",
+        body,
+    });
+    if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.message || "Não foi possível carregar a fotografia.");
+    }
 }
 
 export async function addImage(productId, { url, variantId, alt }) {

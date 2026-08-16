@@ -85,14 +85,14 @@ class TestEventGuards:
     def test_reads_are_public(self, client):
         assert client.get("/api/events/").status_code == 200
 
-    def test_writes_require_a_token(self, client):
-        assert client.post(
+    def test_writes_require_a_token(self, anon_client):
+        assert anon_client.post(
             "/api/events/", json={"name": "X", "starts_on": "2025-01-01"}
         ).status_code == 401
 
-    def test_delete_requires_a_token(self, client, make_event):
+    def test_delete_requires_a_token(self, anon_client, make_event):
         created = make_event()
-        assert client.delete(f"/api/events/{created['id']}").status_code == 401
+        assert anon_client.delete(f"/api/events/{created['id']}").status_code == 401
 
 
 class TestTimelineSection:

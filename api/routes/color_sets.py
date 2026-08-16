@@ -19,6 +19,7 @@ from api.models.catalog import (
 )
 from api.models.common import pagination_model
 from api.pagination import get_pagination_params, make_pagination
+from api.security import PROTECTED_DOC, token_required
 from api.repositories import ColorRepository, ColorSetRepository, CollectionRepository
 
 ns = Namespace("color-sets", description="Colour set operations")
@@ -84,6 +85,8 @@ class ColorSetList(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Referenced collection or colour does not exist")
     @ns.response(409, "That collection already has a set with this name")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def post(self):
         """Create a colour set from a list of colours."""
         data = ns.payload
@@ -125,6 +128,8 @@ class ColorSet(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Colour set, collection or colour not found")
     @ns.response(409, "That collection already has a set with this name")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def put(self, color_set_id):
         """Update a colour set, replacing its colours wholesale."""
         data = ns.payload
@@ -156,6 +161,8 @@ class ColorSet(Resource):
     @ns.marshal_with(color_set_model)
     @ns.response(200, "The deleted colour set")
     @ns.response(404, "Colour set not found")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def delete(self, color_set_id):
         """Delete a colour set by ID.
 

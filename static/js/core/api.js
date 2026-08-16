@@ -90,6 +90,7 @@ export const API = {
         variants: (id) => `/api/products/${id}/variants`,
         variant: (id, variantId) => `/api/products/${id}/variants/${variantId}`,
         images: (id) => `/api/products/${id}/images`,
+        uploadImage: (id) => `/api/products/${id}/images/upload`,
         image: (id, imageId) => `/api/products/${id}/images/${imageId}`,
     },
     productTypes: {

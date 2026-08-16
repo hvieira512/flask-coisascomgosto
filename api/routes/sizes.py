@@ -12,6 +12,7 @@ from api.db import get_db_connection
 from api.models.catalog import size_list_model, size_model, size_write_model
 from api.models.common import pagination_model
 from api.pagination import get_pagination_params, make_pagination
+from api.security import PROTECTED_DOC, token_required
 from api.repositories import SizeRepository
 
 ns = Namespace("sizes", description="Sizes operations")
@@ -46,6 +47,8 @@ class SizeList(Resource):
     @ns.response(201, "Size created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A size with that name already exists")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def post(self):
         """Create a new size."""
         data = ns.payload
@@ -82,6 +85,8 @@ class Size(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Size not found")
     @ns.response(409, "Another size already uses that name")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def put(self, size_id):
         """Update a size by ID."""
         data = ns.payload
@@ -102,6 +107,8 @@ class Size(Resource):
     @ns.marshal_with(size_model)
     @ns.response(200, "The deleted size")
     @ns.response(404, "Size not found")
+    @ns.doc(**PROTECTED_DOC)
+    @token_required
     def delete(self, size_id):
         """Delete a size by ID.
 

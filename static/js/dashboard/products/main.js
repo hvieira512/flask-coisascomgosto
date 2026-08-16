@@ -1,7 +1,7 @@
 import { API } from "../../core/api.js";
 import { fetchProducts } from "./fetch.js";
 import { escapeHtml, productForm, submitProductForm } from "./form.js";
-import { addImage, allImages, imagesPanel, removeImage } from "./images.js";
+import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
 import { addVariant, removeVariant, variantsPanel } from "./variants.js";
 
 const modal = (id) => document.getElementById(id);
@@ -147,16 +147,31 @@ function wireVariantPanel(product) {
 }
 
 function wireImagePanel(product) {
+    const picker = document.getElementById("image-file");
+    if (picker) {
+        picker.onchange = () => {
+            document.getElementById("image-file-name").textContent =
+                picker.files[0]?.name ?? "Nenhum ficheiro";
+        };
+    }
+
     const add = document.getElementById("add-image");
     if (add) {
         add.onclick = async (event) => {
             busy(event.currentTarget, true);
             try {
-                await addImage(product.id, {
-                    url: document.getElementById("image-url").value.trim(),
-                    variantId: document.getElementById("image-variant").value,
-                    alt: product.name,
-                });
+                const file = document.getElementById("image-file").files[0];
+                const variantId = document.getElementById("image-variant").value;
+
+                if (file) {
+                    await uploadImage(product.id, { file, variantId, alt: product.name });
+                } else {
+                    await addImage(product.id, {
+                        url: document.getElementById("image-url").value.trim(),
+                        variantId,
+                        alt: product.name,
+                    });
+                }
                 Notify.success("Fotografia adicionada.");
                 await refreshEdit(product.id);
                 document.querySelector('#edit-tabs [data-tab="images"]').click();

@@ -92,10 +92,10 @@ class TestLogin:
         assert "password" not in body
         assert "password" not in body["user"]
 
-    def test_wrong_password_returns_401(self, client, make_user):
+    def test_wrong_password_returns_401(self, anon_client, make_user):
         make_user("alice", password="Passw0rd!")
 
-        response = client.post(
+        response = anon_client.post(
             "/api/auth/login", json={"username": "alice", "password": "wrong"}
         )
         assert response.status_code == 401
@@ -128,7 +128,8 @@ class TestLogout:
         with client.session_transaction() as session:
             assert "user" not in session
 
-    def test_logout_without_a_session_is_not_an_error(self, client):
-        response = client.post("/api/auth/logout")
+    def test_logout_without_a_session_is_not_an_error(self, anon_client):
+        """Anonymous: obtaining a token also establishes a server session."""
+        response = anon_client.post("/api/auth/logout")
         assert response.status_code == 200
         assert response.get_json()["message"] == "No user logged in"
