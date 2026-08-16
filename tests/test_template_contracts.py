@@ -326,3 +326,10 @@ class TestDashboardChrome:
         html = self._page(client, make_user)
         assert "fa-bell" not in html
         assert "dash-badge" not in html
+
+    def test_navbar_uses_bulma_fixed_top(self, client, make_user):
+        """The shell relies on Bulma's own fixed navbar, which needs
+        has-navbar-fixed-top on <html> for the page padding to match."""
+        html = self._page(client, make_user)
+        assert "navbar is-fixed-top" in html
+        assert 'class="has-navbar-fixed-top"' in html

@@ -8,7 +8,7 @@
 {# data-theme="light" pins Bulma to its light scheme. Without it Bulma 1.x
    switches at prefers-color-scheme: dark and repaints the navbar, cards and
    inputs near-black, which fights the warm paper palette. #}
-<html lang="pt" data-theme="light">
+<html lang="pt" data-theme="light" class="has-navbar-fixed-top">
 
 <head>
     <meta charset="UTF-8">
@@ -26,7 +26,7 @@
 <body class="dashboard-body">
     {% include 'components/loader.html' %}
 
-    <nav class="navbar dash-navbar" role="navigation" aria-label="navegação do painel">
+    <nav class="navbar is-fixed-top dash-navbar" role="navigation" aria-label="navegação do painel">
         <div class="navbar-brand">
             <a class="navbar-item has-text-weight-bold" href="{{ url_for('web.dashboard.home') }}">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
