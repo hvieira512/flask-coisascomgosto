@@ -539,20 +539,25 @@ a.card:hover {
     flex: 1 0 auto;
 }
 
-/* A colour set is one circle per colour, tight together, so a pair reads as a
-   pair rather than as one dot cut in half. */
+/* A colour set is one circle per colour, overlapping like a stack of coins, so
+   the set reads as one object rather than as loose dots. */
 .swatch-set {
     display: inline-flex;
-    gap: 2px;
     vertical-align: middle;
 }
 
 .swatch {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, .15);
     display: block;
+}
+
+/* Each circle laps over the one before it. Later siblings paint on top without
+   needing z-index, so the overlap runs left to right. */
+.swatch + .swatch {
+    margin-left: -5px;
 }
 
 /* Wider than the gap inside a set, so neighbouring sets stay distinct. */
