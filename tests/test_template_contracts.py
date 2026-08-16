@@ -369,3 +369,13 @@ class TestColorSetBadgeMarkup:
 
     def test_label_is_wrapped_so_it_can_truncate(self):
         assert 'class="color-set-name"' in self._source()
+
+    def test_catalog_badges_are_left_aligned(self):
+        """Bulma's .tag centres its content, which gave every label a different
+        offset inside a fixed-width badge and made the circles zigzag down the
+        column."""
+        import pathlib
+
+        css = pathlib.Path("static/css/store.css").read_text()
+        block = css.split(".swatch-row .color-set-badge {")[1].split("}")[0]
+        assert "justify-content: flex-start" in block

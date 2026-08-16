@@ -598,6 +598,10 @@ a.card:hover {
 .swatch-row .color-set-badge {
     font-size: .68rem;
     gap: .3rem;
+    /* Bulma's .tag centres its content. In a fixed-width badge that gave every
+       label a different offset, so the circles zigzagged down the column
+       (insets of 10, 14, 18, 9, 21px). Left-aligned, they line up. */
+    justify-content: flex-start;
 }
 
 .swatch-row .swatch {
