@@ -546,6 +546,9 @@ a.card:hover {
     display: inline-flex;
     align-items: center;
     gap: .4rem;
+    /* Grid items refuse to shrink below their content without this, so a long
+       name would spill out of its column. */
+    min-width: 0;
     background-color: var(--cs-bg);
     border: 1px solid var(--cs-border);
     color: var(--cs-fg);
@@ -555,6 +558,14 @@ a.card:hover {
 .swatch-set {
     display: inline-flex;
     flex: none;
+}
+
+/* Truncates only where the badge is constrained — in the catalog's two-column
+   grid. The full name stays in the badge's title attribute. */
+.color-set-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .swatch {
@@ -572,10 +583,30 @@ a.card:hover {
     margin-left: -5px;
 }
 
+/* Two fixed columns rather than wrapping: a card with five colour sets used to
+   break 3 + 2 and leave a ragged edge, and neighbouring cards broke at
+   different points. A grid keeps every card's badges on the same lines. */
 .swatch-row {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .35rem;
+}
+
+/* A column is ~134px and "Vermelho e Branco" wants 152px at the badge's normal
+   size, so the catalog runs a tighter one. The product page, where there is no
+   column to fit, keeps the larger badge. */
+.swatch-row .color-set-badge {
+    font-size: .68rem;
+    gap: .3rem;
+}
+
+.swatch-row .swatch {
+    width: 11px;
+    height: 11px;
+}
+
+.swatch-row .swatch + .swatch {
+    margin-left: -4px;
 }
 
 /* A definition list of the piece's facts: label left, value right. */

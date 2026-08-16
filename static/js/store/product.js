@@ -91,7 +91,7 @@
                   <button class="tag is-rounded color-set-badge variant-option${position === 0 ? " is-active" : ""}"
                           type="button" data-variant-index="${position}"
                           style="${window.ColorSet.style(variant.color_set)}">
-                    ${window.ColorSet.dots(variant.color_set)}${escapeHtml(variant.color_set.name)}
+                    ${window.ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span>
                   </button>`;
             })
             .join("");

@@ -61,7 +61,8 @@ window.ColorSet = (function () {
     function badge(colorSet, extraClass = "") {
         if (!colorSet) return "";
         return `<span class="tag is-rounded color-set-badge ${extraClass}"
-                      style="${style(colorSet)}">${dots(colorSet)}${escapeHtml(colorSet.name)}</span>`;
+                      title="${escapeHtml(colorSet.name)}"
+                      style="${style(colorSet)}">${dots(colorSet)}<span class="color-set-name">${escapeHtml(colorSet.name)}</span></span>`;
     }
 
     return { badge, dots, style };

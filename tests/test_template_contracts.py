@@ -354,3 +354,18 @@ class TestProductGallery:
     def test_gallery_still_loads_before_the_page_module(self, client, make_product):
         html = self._page(client, make_product)
         assert html.index("js/store/gallery.js") < html.index("js/store/product.js")
+
+
+class TestColorSetBadgeMarkup:
+    def _source(self):
+        import pathlib
+
+        return pathlib.Path("static/js/store/color-set.js").read_text()
+
+    def test_badge_carries_the_full_name_as_a_title(self):
+        """The catalog constrains badges to a column, so the longest names
+        truncate; the title is what makes them readable on hover."""
+        assert 'title="${escapeHtml(colorSet.name)}"' in self._source()
+
+    def test_label_is_wrapped_so_it_can_truncate(self):
+        assert 'class="color-set-name"' in self._source()
