@@ -307,3 +307,22 @@ class TestModalFormScoping:
         source = self._module("static/js/dashboard/products/form.js")
         assert 'root.querySelector("#product-form")' in source
         assert 'document.getElementById("product-form")' not in source
+
+
+class TestDashboardChrome:
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/products").get_data(as_text=True)
+
+    def test_sidebar_links_back_to_the_storefront(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "Ver a loja" in html
+        assert "dash-sidebar-foot" in html
+
+    def test_notifications_are_gone(self, client, make_user):
+        """Nothing produced them, so the bell promised something that did not
+        exist."""
+        html = self._page(client, make_user)
+        assert "fa-bell" not in html
+        assert "dash-badge" not in html
