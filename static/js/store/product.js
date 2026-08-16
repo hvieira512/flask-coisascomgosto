@@ -87,12 +87,11 @@
         block.hidden = false;
         options.innerHTML = product.variants
             .map((variant, position) => {
-                const swatch = window.Swatches.render(variant.color_set);
-
                 return `
-                  <button class="variant-option${position === 0 ? " is-active" : ""}"
-                          type="button" data-variant-index="${position}">
-                    ${swatch}${escapeHtml(variant.color_set.name)}
+                  <button class="tag is-rounded color-set-badge variant-option${position === 0 ? " is-active" : ""}"
+                          type="button" data-variant-index="${position}"
+                          style="${window.ColorSet.style(variant.color_set)}">
+                    ${window.ColorSet.dots(variant.color_set)}${escapeHtml(variant.color_set.name)}
                   </button>`;
             })
             .join("");

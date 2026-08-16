@@ -539,18 +539,30 @@ a.card:hover {
     flex: 1 0 auto;
 }
 
-/* A colour set is one circle per colour, overlapping like a stack of coins, so
-   the set reads as one object rather than as loose dots. */
+/* A colour set reads as a rounded badge: its name, in its first colour, on a
+   pale wash of the same. The three custom properties are set inline per set by
+   js/store/color-set.js. Bulma's .tag.is-rounded supplies the pill shape. */
+.color-set-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background-color: var(--cs-bg);
+    border: 1px solid var(--cs-border);
+    color: var(--cs-fg);
+    font-weight: 500;
+}
+
 .swatch-set {
     display: inline-flex;
-    vertical-align: middle;
+    flex: none;
 }
 
 .swatch {
     width: 13px;
     height: 13px;
     border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, .15);
+    /* A white circle on a pale wash is only its outline, so the ring stays. */
+    border: 1px solid rgba(0, 0, 0, .2);
     display: block;
 }
 
@@ -560,11 +572,10 @@ a.card:hover {
     margin-left: -5px;
 }
 
-/* Wider than the gap inside a set, so neighbouring sets stay distinct. */
 .swatch-row {
     display: flex;
     flex-wrap: wrap;
-    gap: .5rem;
+    gap: .35rem;
 }
 
 /* A definition list of the piece's facts: label left, value right. */
@@ -761,25 +772,23 @@ a.card:hover {
     color: var(--ccg-ink-soft);
 }
 
+/* Colour and shape come from .color-set-badge; this adds only what makes it a
+   control rather than a label. */
 .variant-option {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    padding: .3rem .7rem .3rem .4rem;
-    border: 1px solid var(--bulma-border);
-    border-radius: 999px;
-    background: var(--ccg-surface);
     cursor: pointer;
+    padding: .35rem .85rem;
     font-size: .8rem;
 }
 
 .variant-option:hover {
-    border-color: var(--ccg-blue-300);
+    border-color: var(--cs-fg);
 }
 
+/* Selected reads as the set's own colour rather than a generic navy, so the
+   choice and the colour it stands for are the same thing. */
 .variant-option.is-active {
-    border-color: var(--ccg-blue-800);
-    background: var(--ccg-blue-800);
+    background-color: var(--cs-fg);
+    border-color: var(--cs-fg);
     color: #fff;
 }
 

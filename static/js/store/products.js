@@ -159,12 +159,12 @@
     // Grid
     // ----------------------------------------------------------------
 
-    function renderSwatches(product) {
-        const sets = product.variants
-            .map((variant) => window.Swatches.render(variant.color_set))
+    function renderColorSets(product) {
+        const badges = product.variants
+            .map((variant) => window.ColorSet.badge(variant.color_set))
             .join("");
 
-        return sets ? `<div class="swatch-row">${sets}</div>` : "";
+        return badges ? `<div class="swatch-row">${badges}</div>` : "";
     }
 
     function renderCard(product) {
@@ -185,7 +185,7 @@
               <div class="card-content">
                 <p class="title is-6 mb-1">${escapeHtml(product.name)}</p>
                 ${subtitle ? `<p class="is-size-7 has-text-grey">${subtitle}</p>` : ""}
-                ${renderSwatches(product)}
+                ${renderColorSets(product)}
               </div>
             </a>
           </div>`;
