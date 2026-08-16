@@ -3,7 +3,8 @@
  *
  * The previewer shows one image at a time. Arrows overlaid on it step to the
  * previous/next image and are revealed on hover; the thumbnail rail scrolls
- * vertically and keeps the active thumbnail in view.
+ * vertically and keeps the active thumbnail in view. Swiping steps too, and a
+ * tap opens the photographs full screen through lightbox.js.
  */
 window.StoreGallery = (function () {
     function create(root, product) {
@@ -114,8 +115,53 @@ window.StoreGallery = (function () {
         stage.addEventListener("keydown", (event) => {
             if (event.key === "ArrowLeft") show(index - 1);
             if (event.key === "ArrowRight") show(index + 1);
+            if (event.key === "Enter" || event.key === " ") openLightbox();
         });
         stage.tabIndex = 0;
+
+        // ----------------------------------------------------------------
+        // Swipe, and the fullscreen view
+        // ----------------------------------------------------------------
+
+        function openLightbox() {
+            // Deferred module, so it may not exist yet on a very early click.
+            window.StoreLightbox?.open(images, index);
+        }
+
+        /** Past this many pixels the gesture is a swipe, not a tap. */
+        const SWIPE_THRESHOLD = 40;
+        let startX = null;
+        let startY = null;
+
+        stage.addEventListener("pointerdown", (event) => {
+            startX = event.clientX;
+            startY = event.clientY;
+        });
+
+        stage.addEventListener("pointerup", (event) => {
+            if (startX === null) return;
+
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+            startX = null;
+
+            // Ignore a mostly-vertical drag: that is the page scrolling.
+            if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+                show(index + (dx < 0 ? 1 : -1));
+                return;
+            }
+
+            // A tap on the photograph opens it full screen. The arrows sit on
+            // top of the stage, so a tap on one must not also open it.
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8 &&
+                !event.target.closest("[data-prev], [data-next]")) {
+                openLightbox();
+            }
+        });
+
+        stage.addEventListener("pointercancel", () => {
+            startX = null;
+        });
 
         return { render };
     }

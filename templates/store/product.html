@@ -98,6 +98,10 @@
 {% endblock %}
 
 {% block scripts %}
+{# PhotoSwipe ships ESM only, so the lightbox is a module; it publishes
+   window.StoreLightbox for the classic scripts below. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='photoswipe/photoswipe.css') }}">
+<script type="module" src="{{ url_for('static', filename='js/store/lightbox.js') }}"></script>
 <script src="{{ url_for('static', filename='js/store/gallery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/store/color-set.js') }}"></script>
 <script src="{{ url_for('static', filename='js/store/product.js') }}"></script>

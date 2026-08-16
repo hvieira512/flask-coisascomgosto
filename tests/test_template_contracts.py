@@ -333,3 +333,24 @@ class TestDashboardChrome:
         html = self._page(client, make_user)
         assert "navbar is-fixed-top" in html
         assert 'class="has-navbar-fixed-top"' in html
+
+
+class TestProductGallery:
+    """The gallery is a classic script; PhotoSwipe ships ESM only, so the
+    lightbox is a module that publishes window.StoreLightbox for it."""
+
+    def _page(self, client, make_product):
+        product = make_product("Caixa")
+        return client.get(f"/products/{product['id']}").get_data(as_text=True)
+
+    def test_lightbox_is_loaded_as_a_module(self, client, make_product):
+        html = self._page(client, make_product)
+        assert 'type="module" src="/static/js/store/lightbox.js"' in html
+
+    def test_photoswipe_styles_are_loaded(self, client, make_product):
+        html = self._page(client, make_product)
+        assert "photoswipe/photoswipe.css" in html
+
+    def test_gallery_still_loads_before_the_page_module(self, client, make_product):
+        html = self._page(client, make_product)
+        assert html.index("js/store/gallery.js") < html.index("js/store/product.js")
