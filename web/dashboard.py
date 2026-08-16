@@ -64,6 +64,12 @@ def events():
     return render_template("dashboard/events.html")
 
 
+@bp.route("/contacts")
+@login_required
+def contacts():
+    return render_template("dashboard/contacts.html")
+
+
 @bp.route("/profile")
 @login_required
 def profile():

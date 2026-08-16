@@ -274,3 +274,62 @@ class TestErrorPages:
         response = client.get("/api/products/9999")
         assert response.status_code == 404
         assert response.content_type.startswith("application/json")
+
+
+class TestDashboardContacts:
+    """Contacts is a singleton, so the dashboard edits it in place."""
+
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/contacts").get_data(as_text=True)
+
+    def test_every_field_has_an_input(self, client, make_user):
+        html = self._page(client, make_user)
+        for name in ["address", "maps_url", "email", "whatsapp",
+                     "facebook_url", "instagram_url"]:
+            assert f'id="cf-{name}"' in html, name
+
+    def test_page_loads_its_module(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "js/dashboard/contacts.js" in html
+        assert 'id="contact-form"' in html
+
+    def test_tab_is_in_the_sidebar(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "/dashboard/contacts" in html
+        assert "Contactos" in html
+
+
+class TestContactUpdateSemantics:
+    """PUT replaces the whole row, which is what lets a detail be removed —
+    and what makes a partial payload dangerous."""
+
+    def test_omitting_a_field_clears_it(self, client):
+        client.put("/api/contacts/", json={"address": "Só morada"})
+
+        body = client.get("/api/contacts/").get_json()
+        assert body["address"] == "Só morada"
+        assert body["instagram_url"] is None
+
+    def test_sending_every_field_keeps_them_all(self, client):
+        payload = {
+            "address": "Rua de Cardielos, n. 222",
+            "email": "geral@coisascomgosto.pt",
+            "whatsapp": "939320334",
+            "maps_url": "https://maps.app.goo.gl/x",
+            "facebook_url": "https://facebook.com/x",
+            "instagram_url": "https://instagram.com/x",
+        }
+        client.put("/api/contacts/", json=payload)
+
+        body = client.get("/api/contacts/").get_json()
+        for key, value in payload.items():
+            assert body[key] == value
+
+    def test_whatsapp_url_is_derived_from_a_spaced_number(self, client):
+        """The dashboard shows this preview, so it must match the API."""
+        client.put("/api/contacts/", json={"whatsapp": "+351 939 320 334"})
+
+        assert client.get("/api/contacts/").get_json()["whatsapp_url"] == \
+            "https://wa.me/351939320334"
