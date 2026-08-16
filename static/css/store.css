@@ -539,14 +539,27 @@ a.card:hover {
     flex: 1 0 auto;
 }
 
-.swatch,
-.swatch-pair {
-    width: 14px;
-    height: 14px;
+/* A colour set is one circle per colour, tight together, so a pair reads as a
+   pair rather than as one dot cut in half. */
+.swatch-set {
+    display: inline-flex;
+    gap: 2px;
+    vertical-align: middle;
+}
+
+.swatch {
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, .15);
-    display: inline-block;
-    overflow: hidden;
+    display: block;
+}
+
+/* Wider than the gap inside a set, so neighbouring sets stay distinct. */
+.swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
 }
 
 /* A definition list of the piece's facts: label left, value right. */

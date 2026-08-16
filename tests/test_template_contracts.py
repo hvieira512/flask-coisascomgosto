@@ -210,3 +210,17 @@ class TestColorScheme:
 
         html = client.get("/dashboard/home").get_data(as_text=True)
         assert 'data-theme="light"' in html
+
+
+class TestSwatches:
+    """js/store/swatches.js renders colour sets for both the catalog cards and
+    the product page, so it has to load before either."""
+
+    def test_catalog_loads_swatches_first(self, client):
+        html = client.get("/products").get_data(as_text=True)
+        assert html.index("js/store/swatches.js") < html.index("js/store/products.js")
+
+    def test_product_page_loads_swatches_first(self, client, make_product):
+        product = make_product("Caixa")
+        html = client.get(f"/products/{product['id']}").get_data(as_text=True)
+        assert html.index("js/store/swatches.js") < html.index("js/store/product.js")

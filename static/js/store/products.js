@@ -160,27 +160,11 @@
     // ----------------------------------------------------------------
 
     function renderSwatches(product) {
-        const dots = product.variants
-            .map((variant) => {
-                const colors = variant.color_set.colors || [];
-                if (colors.length === 0) return "";
-
-                const title = escapeHtml(variant.color_set.name);
-                if (colors.length === 1) {
-                    return `<span class="swatch" title="${title}"
-                                  style="background:${escapeHtml(colors[0].hex || "#ddd")}"></span>`;
-                }
-
-                // Two-colour sets read best as a split dot.
-                const [first, second] = colors;
-                return `<span class="swatch-pair" title="${title}"
-                              style="background:linear-gradient(135deg,
-                                     ${escapeHtml(first.hex || "#ddd")} 0 50%,
-                                     ${escapeHtml(second.hex || "#bbb")} 50% 100%)"></span>`;
-            })
+        const sets = product.variants
+            .map((variant) => window.Swatches.render(variant.color_set))
             .join("");
 
-        return dots ? `<div class="swatch-row">${dots}</div>` : "";
+        return sets ? `<div class="swatch-row">${sets}</div>` : "";
     }
 
     function renderCard(product) {

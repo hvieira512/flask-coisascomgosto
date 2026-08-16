@@ -87,14 +87,7 @@
         block.hidden = false;
         options.innerHTML = product.variants
             .map((variant, position) => {
-                const colors = variant.color_set.colors || [];
-                const swatch =
-                    colors.length > 1
-                        ? `<span class="swatch-pair" style="background:linear-gradient(135deg,
-                             ${escapeHtml(colors[0].hex || "#ddd")} 0 50%,
-                             ${escapeHtml(colors[1].hex || "#bbb")} 50% 100%)"></span>`
-                        : `<span class="swatch"
-                             style="background:${escapeHtml(colors[0]?.hex || "#ddd")}"></span>`;
+                const swatch = window.Swatches.render(variant.color_set);
 
                 return `
                   <button class="variant-option${position === 0 ? " is-active" : ""}"
