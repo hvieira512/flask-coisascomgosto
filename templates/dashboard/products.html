@@ -18,6 +18,47 @@
     </div>
 </header>
 
+<div class="card dash-panel p-4 mb-5">
+    <div class="dash-filters">
+        <div class="field mb-0">
+            <label class="label is-small" for="filter-q">Pesquisar</label>
+            <input class="input is-small" id="filter-q" placeholder="Nome do produto…">
+        </div>
+
+        <div class="field mb-0">
+            <label class="label is-small" for="filter-type">Tipo</label>
+            <div class="select is-small is-fullwidth">
+                <select id="filter-type"><option value="">Todos</option></select>
+            </div>
+        </div>
+
+        <div class="field mb-0">
+            <label class="label is-small" for="filter-collection">Colecção</label>
+            <div class="select is-small is-fullwidth">
+                <select id="filter-collection"><option value="">Todas</option></select>
+            </div>
+        </div>
+
+        <div class="field mb-0">
+            <label class="label is-small" for="filter-photos">Fotografias</label>
+            <div class="select is-small is-fullwidth">
+                <select id="filter-photos">
+                    <option value="">Todas</option>
+                    <option value="none">Sem fotografia</option>
+                    <option value="some">Com fotografia</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field mb-0 dash-filters-clear">
+            <button class="button is-small is-ghost" id="filter-clear" hidden>
+                <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+                <span>Limpar</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="product-list" class="grid is-col-min-14"></div>
 
 {# Bodies and footers are rendered by js/dashboard/products/main.js, which

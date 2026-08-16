@@ -210,3 +210,55 @@ class TestDeleteProduct:
         """Regression: the message used to read 'Category #... not found'."""
         body = client.delete("/api/products/9999").get_json()
         assert "product" in body["message"].lower()
+
+
+class TestDashboardFilterQueries:
+    """The dashboard filter bar sends these; they must narrow, not error.
+
+    Filtering on photographs has no endpoint and is applied to the fetched page
+    in fetch.js, so it is deliberately absent here.
+    """
+
+    def test_search_narrows_by_name(self, client, make_product):
+        make_product("Bastidor Bordado")
+        make_product("Caixa Redonda")
+
+        body = client.get("/api/products/?q=bastidor&limit=100").get_json()
+        assert [p["name"] for p in body["products"]] == ["Bastidor Bordado"]
+
+    def test_type_filter_includes_sub_types(self, client, make_product,
+                                            make_product_type):
+        parent = make_product_type("Caixa")
+        sub = make_product_type("Caixa redonda", parent_id=parent["id"])
+        make_product("Caixa Redonda Filigrana", type_id=sub["id"])
+        make_product("Outra")
+
+        by_parent = client.get(
+            f"/api/products/?type_id={parent['id']}&limit=100").get_json()
+        assert [p["name"] for p in by_parent["products"]] == ["Caixa Redonda Filigrana"]
+
+    def test_collection_filter_narrows(self, client, make_product, make_collection):
+        collection = make_collection("Bordados")
+        make_product("Bastidor", collection_id=collection["id"])
+        make_product("Sem colecção")
+
+        body = client.get(
+            f"/api/products/?collection_id={collection['id']}&limit=100").get_json()
+        assert [p["name"] for p in body["products"]] == ["Bastidor"]
+
+    def test_filters_combine(self, client, make_product, make_collection):
+        collection = make_collection("Bordados")
+        make_product("Bastidor Bordado", collection_id=collection["id"])
+        make_product("Bastidor Viana", collection_id=collection["id"])
+
+        body = client.get(
+            f"/api/products/?collection_id={collection['id']}&q=viana&limit=100"
+        ).get_json()
+        assert [p["name"] for p in body["products"]] == ["Bastidor Viana"]
+
+    def test_no_match_is_an_empty_page_not_an_error(self, client, make_product):
+        make_product("Caixa")
+
+        response = client.get("/api/products/?q=zzzz&limit=100")
+        assert response.status_code == 200
+        assert response.get_json()["products"] == []

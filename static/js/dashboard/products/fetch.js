@@ -1,5 +1,6 @@
 import { API } from "../../core/api.js";
 import { removeLoading, renderLoading } from "../../core/utils.js";
+import { isFiltered, photoFilter, query } from "./filters.js";
 
 const productList = document.getElementById("product-list");
 const container = "#product-list";
@@ -10,12 +11,24 @@ const escapeHtml = (value) =>
     }[c]));
 
 const renderEmptyMessage = () => {
+    const filtered = isFiltered();
     productList.innerHTML = `
         <div class="cell dash-empty">
-            <span class="icon is-large has-text-grey-light"><i class="fa-solid fa-box-open fa-2x"></i></span>
-            <p class="mt-3 has-text-grey">Ainda não há produtos.</p>
+            <span class="icon is-large has-text-grey-light">
+              <i class="fa-solid ${filtered ? "fa-filter-circle-xmark" : "fa-box-open"} fa-2x"></i>
+            </span>
+            <p class="mt-3 has-text-grey">
+              ${filtered
+                  ? "Nenhum produto corresponde aos filtros."
+                  : "Ainda não há produtos."}
+            </p>
         </div>`;
 };
+
+/** Photographs live on the product and on each variant. */
+const photoCount = (product) =>
+    (product.images ?? []).length
+    + product.variants.reduce((n, v) => n + (v.images ?? []).length, 0);
 
 const renderProduct = (product) => {
     const cell = document.createElement("div");
@@ -29,9 +42,7 @@ const renderProduct = (product) => {
         .map((v) => window.ColorSet.badge(v.color_set))
         .join("");
 
-    // Variant-pinned photographs live under each variant, not on the product.
-    const photos = (product.images ?? []).length
-        + product.variants.reduce((n, v) => n + (v.images ?? []).length, 0);
+    const photos = photoCount(product);
 
     cell.innerHTML = `
         <article class="card dash-product">
@@ -80,13 +91,21 @@ const renderProducts = (products) => {
 export const fetchProducts = async () => {
     renderLoading(container);
     try {
-        // limit=100: the dashboard lists the whole catalog. The API defaults to
-        // 10, which silently hid four of fourteen products.
-        const res = await window.Auth.authFetch(`${API.products.list}?limit=100`);
+        // The query carries limit=100 plus whatever the filter bar has set.
+        // The API defaults to 10, which silently hid four of fourteen products.
+        const res = await window.Auth.authFetch(`${API.products.list}?${query()}`);
         if (!res.ok) throw new Error("Failed to fetch products");
 
         const { products } = await res.json();
-        renderProducts(products);
+
+        // No endpoint filters on photographs, so it is applied here.
+        const wanted = photoFilter();
+        const visible = wanted
+            ? products.filter((p) =>
+                  wanted === "none" ? photoCount(p) === 0 : photoCount(p) > 0)
+            : products;
+
+        renderProducts(visible);
     } catch (error) {
         Notify.error("Erro ao buscar produtos");
         console.error("Error fetching products:", error);

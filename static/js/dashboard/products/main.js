@@ -1,5 +1,6 @@
 import { API } from "../../core/api.js";
 import { fetchProducts } from "./fetch.js";
+import { mountFilters } from "./filters.js";
 import { escapeHtml, productForm, submitProductForm } from "./form.js";
 import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
 import { addVariant, removeVariant, variantsPanel } from "./variants.js";
@@ -41,7 +42,7 @@ async function openCreate() {
             const id = await submitProductForm(modal("newProductModal"));
             close("newProductModal");
             Notify.success("Produto criado.");
-            await fetchProducts();
+            await mountFilters(fetchProducts).then(fetchProducts);
             openEdit(id);   // straight on to colours and photographs
         } catch (error) {
             Notify.error(error.message);
@@ -85,7 +86,7 @@ async function openEdit(id) {
             await submitProductForm(modal("editProductModal"));
             close("editProductModal");
             Notify.success("Produto actualizado.");
-            await fetchProducts();
+            await mountFilters(fetchProducts).then(fetchProducts);
         } catch (error) {
             Notify.error(error.message);
         } finally {
@@ -110,7 +111,7 @@ function wireEditTabs() {
 
 /** Re-opens the modal on the same product so every panel sees fresh data. */
 async function refreshEdit(productId) {
-    await fetchProducts();
+    await mountFilters(fetchProducts).then(fetchProducts);
     await openEdit(productId);
 }
 
@@ -250,7 +251,7 @@ async function openDelete(id) {
             if (!res.ok) throw new Error("Não foi possível apagar.");
             close("deleteProductModal");
             Notify.success("Produto apagado.");
-            await fetchProducts();
+            await mountFilters(fetchProducts).then(fetchProducts);
         } catch (error) {
             Notify.error(error.message);
         } finally {
@@ -275,4 +276,4 @@ document.addEventListener("click", (event) => {
 
 document.getElementById("new-product")?.addEventListener("click", openCreate);
 
-fetchProducts();
+mountFilters(fetchProducts).then(fetchProducts);

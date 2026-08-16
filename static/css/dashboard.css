@@ -362,3 +362,17 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* The filter bar above the product grid. Auto-fits so it is one row on a wide
+   screen and stacks on a narrow one, without breakpoints. */
+.dash-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: .75rem;
+    align-items: end;
+}
+
+.dash-filters-clear {
+    display: flex;
+    align-items: flex-end;
+}

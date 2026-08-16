@@ -244,6 +244,12 @@ class TestDashboardProducts:
                            "deleteProductModal", "viewProductModal"]:
             assert f'id="{element_id}"' in html, element_id
 
+    def test_filter_bar_is_rendered(self, client, make_user):
+        html = self._page(client, make_user)
+        for element_id in ["filter-q", "filter-type", "filter-collection",
+                           "filter-photos", "filter-clear"]:
+            assert f'id="{element_id}"' in html, element_id
+
     def test_colour_set_helper_loads_before_the_module(self, client, make_user):
         """The cards and the edit modal render colour-set badges."""
         html = self._page(client, make_user)
