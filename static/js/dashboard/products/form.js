@@ -86,9 +86,14 @@ export async function productForm(product = null) {
     </form>`;
 }
 
-/** Reads the form, writes the product, and returns its id. */
-export async function submitProductForm() {
-    const form = document.getElementById("product-form");
+/**
+ * Reads the form, writes the product, and returns its id.
+ *
+ * `root` scopes the lookup to one modal: the create and edit modals both hold a
+ * form with the same ids, and the closed one stays in the DOM.
+ */
+export async function submitProductForm(root = document) {
+    const form = root.querySelector("#product-form");
     const id = form.dataset.productId;
     const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
 
@@ -117,7 +122,7 @@ export async function submitProductForm() {
 
     const productId = id || body.id;
 
-    const sizeIds = [...document.querySelectorAll("#pf-sizes input:checked")]
+    const sizeIds = [...root.querySelectorAll("#pf-sizes input:checked")]
         .map((input) => Number(input.value));
     await window.Auth.authFetch(API.products.sizes(productId), {
         method: "PUT",

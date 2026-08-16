@@ -111,6 +111,10 @@ export const API = {
     },
     events: {
         list: "/api/events",
+        get: (id) => `/api/events/${id}`,
+        create: "/api/events",
+        update: (id) => `/api/events/${id}`,
+        delete: (id) => `/api/events/${id}`,
     },
     users: {
         list: "/api/users",

@@ -38,7 +38,7 @@ async function openCreate() {
     document.getElementById("create-submit").onclick = async (event) => {
         busy(event.currentTarget, true);
         try {
-            const id = await submitProductForm();
+            const id = await submitProductForm(modal("newProductModal"));
             close("newProductModal");
             Notify.success("Produto criado.");
             await fetchProducts();
@@ -82,7 +82,7 @@ async function openEdit(id) {
     document.getElementById("edit-submit").onclick = async (event) => {
         busy(event.currentTarget, true);
         try {
-            await submitProductForm();
+            await submitProductForm(modal("editProductModal"));
             close("editProductModal");
             Notify.success("Produto actualizado.");
             await fetchProducts();
@@ -95,12 +95,13 @@ async function openEdit(id) {
 }
 
 function wireEditTabs() {
-    const tabs = document.getElementById("edit-tabs");
+    const root = modal("editProductModal");
+    const tabs = root.querySelector("#edit-tabs");
     tabs.querySelectorAll("li").forEach((tab) => {
         tab.onclick = () => {
             tabs.querySelectorAll("li").forEach((t) => t.classList.remove("is-active"));
             tab.classList.add("is-active");
-            document.querySelectorAll("[data-panel]").forEach((panel) => {
+            root.querySelectorAll("[data-panel]").forEach((panel) => {
                 panel.hidden = panel.dataset.panel !== tab.dataset.tab;
             });
         };

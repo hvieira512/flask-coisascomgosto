@@ -1,0 +1,50 @@
+{% extends 'dashbord_base.html' %}
+
+{% block title %}Eventos · Dashboard{% endblock %}
+
+{% block content %}
+<header class="level is-mobile mb-5">
+    <div class="level-left">
+        <div>
+            <h1 class="title is-4 mb-1">Eventos</h1>
+            <p class="subtitle is-6 has-text-grey mb-0" id="event-count">—</p>
+        </div>
+    </div>
+    <div class="level-right">
+        <button class="button is-dark" id="new-event">
+            <span class="icon"><i class="fa-solid fa-plus"></i></span>
+            <span>Novo evento</span>
+        </button>
+    </div>
+</header>
+
+<div class="card dash-panel p-0">
+    <table class="table is-fullwidth is-hoverable mb-0" id="event-table">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Local</th>
+                <th>Datas</th>
+                <th class="has-text-right">Acções</th>
+            </tr>
+        </thead>
+        <tbody id="event-rows"></tbody>
+    </table>
+</div>
+
+{% with modal_id="newEventModal", modal_title="Novo evento" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+
+{% with modal_id="editEventModal", modal_title="Editar evento" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+
+{% with modal_id="deleteEventModal", modal_title="Apagar evento" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/dashboard/events/main.js') }}"></script>
+{% endblock %}

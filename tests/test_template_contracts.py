@@ -264,3 +264,46 @@ class TestDashboardHome:
         for element_id in ["stat-cards", "missing-photos", "upcoming-events"]:
             assert f'id="{element_id}"' in html, element_id
         assert "js/dashboard/home.js" in html
+
+
+class TestDashboardEvents:
+    """The events page is driven by js/dashboard/events/main.js."""
+
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/events").get_data(as_text=True)
+
+    def test_hooks_exist(self, client, make_user):
+        html = self._page(client, make_user)
+        for element_id in ["event-rows", "event-count", "new-event",
+                           "newEventModal", "editEventModal", "deleteEventModal"]:
+            assert f'id="{element_id}"' in html, element_id
+        assert "js/dashboard/events/main.js" in html
+
+    def test_tab_is_in_the_sidebar(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "Eventos" in html
+        assert "/dashboard/events" in html
+
+
+class TestModalFormScoping:
+    """The create and edit modals render forms with the same element ids, and a
+    closed modal stays in the DOM. Reading a field by id alone found the create
+    form, so editing an event posted a new one instead of updating it."""
+
+    def _module(self, path):
+        import pathlib
+
+        return pathlib.Path(path).read_text()
+
+    def test_events_submit_scopes_to_a_modal(self):
+        source = self._module("static/js/dashboard/events/main.js")
+        assert "submitEventForm(modalId)" in source
+        assert 'modal(modalId).querySelector("#event-form")' in source
+        assert 'document.getElementById("event-form")' not in source
+
+    def test_products_submit_scopes_to_a_modal(self):
+        source = self._module("static/js/dashboard/products/form.js")
+        assert 'root.querySelector("#product-form")' in source
+        assert 'document.getElementById("product-form")' not in source
