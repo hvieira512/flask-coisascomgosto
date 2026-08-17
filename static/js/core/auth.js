@@ -34,29 +34,6 @@ window.Auth = (function () {
         localStorage.removeItem(REFRESH_KEY);
     }
 
-    function isAuthenticated() {
-        return Boolean(getAccessToken());
-    }
-
-    /** Exchange username/password for a token pair. */
-    async function login(username, password) {
-        const response = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-        });
-
-        if (!response.ok) {
-            const error = new Error("Login failed");
-            error.status = response.status;
-            throw error;
-        }
-
-        const tokens = await response.json();
-        store(tokens);
-        return tokens;
-    }
-
     /**
      * Swap the refresh token for a new access token.
      * Returns null when the refresh token is missing or itself rejected.
@@ -124,25 +101,12 @@ window.Auth = (function () {
         return response;
     }
 
-    /** Overridable hook: what to do once the refresh token is dead too. */
-    let onSessionExpired = () => {
+    function onSessionExpired() {
         clear();
         if (!window.location.pathname.startsWith("/auth")) {
             window.location.href = "/auth";
         }
-    };
+    }
 
-    return {
-        login,
-        storeTokens: store,
-        logout: clear,
-        refresh,
-        authFetch,
-        isAuthenticated,
-        getAccessToken,
-        getRefreshToken,
-        setSessionExpiredHandler(fn) {
-            onSessionExpired = fn;
-        },
-    };
+    return { storeTokens: store, logout: clear, authFetch };
 })();

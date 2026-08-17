@@ -24,10 +24,6 @@ function dateRange(event) {
     return `${format(event.starts_on)} – ${format(event.ends_on)}`;
 }
 
-// ----------------------------------------------------------------
-// List
-// ----------------------------------------------------------------
-
 async function loadEvents() {
     const res = await fetch(`${API.events.list}?limit=100`);
     if (!res.ok) {
@@ -66,10 +62,6 @@ async function loadEvents() {
     document.getElementById("event-count").textContent =
         `${events.length} ${events.length === 1 ? "evento" : "eventos"}`;
 }
-
-// ----------------------------------------------------------------
-// Form
-// ----------------------------------------------------------------
 
 function eventForm(event = null) {
     return `
@@ -155,10 +147,6 @@ async function submitEventForm(modalId) {
         throw new Error(body.message || "Não foi possível guardar.");
     }
 }
-
-// ----------------------------------------------------------------
-// Modals
-// ----------------------------------------------------------------
 
 function openForm({ id, event = null }) {
     bodyOf(id).innerHTML = eventForm(event);

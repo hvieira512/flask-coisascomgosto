@@ -5,11 +5,6 @@ from flask import Blueprint, redirect, render_template, session, url_for
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 
-# ----------------
-# Helper functions
-# ----------------
-
-
 def login_required(view):
     """Redirect anonymous visitors to the login page."""
 
@@ -20,24 +15,6 @@ def login_required(view):
         return view(*args, **kwargs)
 
     return wrapped
-
-
-def admin_required(view):
-    """Redirect non-admin users back to the dashboard home."""
-
-    @login_required
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if not session["user"].get("is_admin"):
-            return redirect(url_for("web.dashboard.home"))
-        return view(*args, **kwargs)
-
-    return wrapped
-
-
-# ----------------
-# Route handlers
-# ----------------
 
 
 @bp.route("/")
@@ -68,15 +45,3 @@ def events():
 @login_required
 def contacts():
     return render_template("dashboard/contacts.html")
-
-
-@bp.route("/profile")
-@login_required
-def profile():
-    return render_template("dashboard/profile.html")
-
-
-@bp.route("/settings")
-@login_required
-def settings():
-    return render_template("dashboard/settings.html")

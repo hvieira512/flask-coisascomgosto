@@ -149,11 +149,6 @@ def cursor(app):
         yield cur
 
 
-# ----------------
-# Data builders
-# ----------------
-
-
 @pytest.fixture()
 def make_category(client):
     def _make(name="Bebidas"):

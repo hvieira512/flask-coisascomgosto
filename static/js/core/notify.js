@@ -32,8 +32,6 @@ window.Notify = (function () {
     return {
         success: (message) => toast("success", message),
         error: (message) => toast("error", message),
-        warning: (message) => toast("warning", message),
-        info: (message) => toast("info", message),
 
         // False on cancel, Escape and backdrop dismissal alike.
         confirm: async (title, { text = "", confirmText = "Confirmar",

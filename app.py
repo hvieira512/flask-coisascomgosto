@@ -3,14 +3,12 @@ from flask import Flask
 from api import api
 from api.db import init_db
 from config import Config
-from extensions import cors, jwt, mail
+from extensions import jwt
 from web import register_web
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
-cors.init_app(app)
-mail.init_app(app)
 jwt.init_app(app)
 api.init_app(app)
 register_web(app)

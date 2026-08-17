@@ -25,10 +25,6 @@ const getProduct = async (id) => {
 
 const busy = (button, on) => button.classList.toggle("is-loading", on);
 
-// ----------------------------------------------------------------
-// Create
-// ----------------------------------------------------------------
-
 async function openCreate() {
     bodyOf("newProductModal").innerHTML = await productForm();
     footOf("newProductModal").innerHTML = `
@@ -51,10 +47,6 @@ async function openCreate() {
         }
     };
 }
-
-// ----------------------------------------------------------------
-// Edit — details, colours and photographs
-// ----------------------------------------------------------------
 
 async function openEdit(id) {
     const product = await getProduct(id);
@@ -200,10 +192,6 @@ function wireImagePanel(product) {
     });
 }
 
-// ----------------------------------------------------------------
-// View and delete
-// ----------------------------------------------------------------
-
 async function openView(id) {
     const product = await getProduct(id);
     const image = product.primary_image
@@ -259,10 +247,6 @@ async function openDelete(id) {
         }
     };
 }
-
-// ----------------------------------------------------------------
-// Wiring
-// ----------------------------------------------------------------
 
 document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-product-action]");

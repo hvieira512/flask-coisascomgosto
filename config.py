@@ -22,9 +22,3 @@ class Config:
     MYSQL_USER = os.getenv("MYSQL_USER", "coisascomgosto")
     MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "coisascomgosto")
     MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "coisascomgosto")
-
-    MAIL_SERVER = os.getenv("MAIL_SERVER")
-    MAIL_PORT = int(os.getenv("MAIL_PORT", 25))
-    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "0") == "1"
-    MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "0") == "1"
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
