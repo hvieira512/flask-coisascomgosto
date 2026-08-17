@@ -100,6 +100,10 @@ PRODUCT_TYPES = [
      [("Coração de Natal", "fa-heart", "Coração pequeno com fita."),
       ("Bola de Natal", "fa-circle", "Bola achatada em madeira.")]),
 
+    ("Presépio Minhoto", "fa-star",
+     "O presépio em traje minhoto — Manel e Maria sobre uma base recortada.",
+     []),
+
     ("Abre-cápsulas", "fa-wine-bottle",
      "Abre-cápsulas de madeira com pega decorada.", []),
 ]
@@ -113,8 +117,8 @@ PRODUCTS = [
       "Vermelho e Branco", "Azul e Branco"],
      ["S", "M", "L"]),
 
-    ("Caixa Redonda Manel e Maria", "Caixa redonda", "Filigrana",
-     "Caixa redonda com o par do Minho em traje sobre a tampa.",
+    ("Manel e Maria", "Presépio Minhoto", "Filigrana",
+     "Presépio minhoto: Manel e Maria em traje sobre um coração dourado.",
      ["Vermelho e Branco", "Preto e Branco"], ["M"]),
 
     ("Caixa de Joias", "Caixa rectangular", "Filigrana",
@@ -189,7 +193,7 @@ IMAGES = [
     ("Caixa Redonda Filigrana", "Vermelho e Branco", "caixa-coracao-vermelho.jpg",
      "Caixa vermelha em forma de coração com filigrana dourada"),
 
-    ("Caixa Redonda Manel e Maria", None, "manel-e-maria.jpg",
+    ("Manel e Maria", None, "manel-e-maria.jpg",
      "O par do Minho em traje sobre um coração dourado"),
 
     ("Caixa de Joias", "Preto e Dourado", "caixa-preto-dourado.jpg",
