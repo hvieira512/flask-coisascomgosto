@@ -2,8 +2,8 @@
  * Product detail page.
  *
  * Loads one product, renders its details, and drives the gallery. Selecting a
- * colour variant swaps the gallery to that variant's photos, falling back to
- * the product-level images when the variant has none of its own.
+ * colour shows that colour's photographs, or the placeholder in that colour when
+ * there are none of it yet.
  */
 (function () {
     const root = document.getElementById("product-detail");
@@ -14,10 +14,14 @@
     // placeholder when there are no photographs.
     let gallery;
 
+    /**
+     * A selected colour shows only its own photographs — never the product-level
+     * ones. Falling back to those made three of a piece's four colours show the
+     * same picture, so clicking a swatch looked broken rather than empty. With no
+     * colours at all, the product-level photographs are what there is.
+     */
     function imagesFor(product, variant) {
-        if (variant && variant.images && variant.images.length > 0) {
-            return variant.images;
-        }
+        if (variant) return variant.images || [];
         return product.images || [];
     }
 
@@ -75,7 +79,7 @@
             .join("");
     }
 
-    function renderVariants(product) {
+    function renderVariants(product, activeIndex) {
         const block = document.getElementById("variants-block");
         const options = document.getElementById("variant-options");
 
@@ -88,7 +92,7 @@
         options.innerHTML = product.variants
             .map((variant, position) => {
                 return `
-                  <button class="tag is-rounded color-set-badge variant-option${position === 0 ? " is-active" : ""}"
+                  <button class="tag is-rounded color-set-badge variant-option${position === activeIndex ? " is-active" : ""}"
                           type="button" data-variant-index="${position}"
                           style="${window.ColorSet.style(variant.color_set)}">
                     ${window.ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span>
@@ -105,7 +109,7 @@
             );
 
             const variant = product.variants[Number(button.dataset.variantIndex)];
-            gallery.render(imagesFor(product, variant));
+            gallery.render(imagesFor(product, variant), variant);
         });
     }
 
@@ -126,14 +130,19 @@
 
         gallery = StoreGallery.create(root, product);
 
+        // Open on the first colour that has been photographed, rather than
+        // simply the first: a piece whose opening colour has no photograph yet
+        // would otherwise greet every visitor with the placeholder while a real
+        // photograph of it sat one swatch away.
+        const variants = product.variants || [];
+        const photographed = variants.findIndex((v) => v.images?.length);
+        const activeIndex = photographed === -1 ? 0 : photographed;
+
         renderMeta(product);
-        renderVariants(product);
+        renderVariants(product, activeIndex);
         renderSizes(product);
         renderEnquiry(product);
 
-        // Open on the first variant's photos when there are any, so the page
-        // matches the pre-selected colour swatch.
-        const firstVariant = (product.variants || [])[0];
-        gallery.render(imagesFor(product, firstVariant));
+        gallery.render(imagesFor(product, variants[activeIndex]), variants[activeIndex]);
     })();
 })();

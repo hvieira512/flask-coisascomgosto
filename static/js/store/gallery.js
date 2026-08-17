@@ -42,7 +42,8 @@ window.StoreGallery = (function () {
             });
         }
 
-        function render(nextImages) {
+        /** `variant` only names which colour the empty state should be drawn in. */
+        function render(nextImages, variant = null) {
             images = nextImages || [];
             index = 0;
 
@@ -70,7 +71,9 @@ window.StoreGallery = (function () {
                 if (product) {
                     stage.insertAdjacentHTML(
                         "afterbegin",
-                        ProductPlaceholder.markup(product, "product-placeholder--stage")
+                        ProductPlaceholder.markup(
+                            product, "product-placeholder--stage", variant?.color_set
+                        )
                     );
                 }
                 return;

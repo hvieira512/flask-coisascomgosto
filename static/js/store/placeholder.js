@@ -44,10 +44,13 @@ window.ProductPlaceholder = (function () {
      * Most sets pair a light body with a darker motif ("Branco e Dourado"), and
      * the tile draws the icon in this colour over a 10% wash of it — so taking
      * the first colour painted white-on-white and the icon vanished.
+     *
+     * `colorSet` names which set to draw; without one the product's first
+     * variant stands for the piece as a whole.
      */
-    function colorFor(product) {
-        const variant = (product.variants || [])[0];
-        const colors = (variant?.color_set?.colors || [])
+    function colorFor(product, colorSet = null) {
+        const set = colorSet || (product.variants || [])[0]?.color_set;
+        const colors = (set?.colors || [])
             .map((c) => c.hex)
             .filter(Boolean);
 
@@ -72,9 +75,17 @@ window.ProductPlaceholder = (function () {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    function markup(product, extraClass = "") {
-        const color = colorFor(product);
+    /**
+     * `colorSet` tints the tile for one particular colour rather than for the
+     * piece as a whole, so that stepping through a product's colours changes the
+     * tile even where none of them has been photographed yet.
+     */
+    function markup(product, extraClass = "", colorSet = null) {
+        const color = colorFor(product, colorSet);
         const icon = iconFor(product);
+        const subject = colorSet
+            ? `${product.name} em ${colorSet.name}`
+            : product.name;
 
         return `
           <div class="product-placeholder ${extraClass}"
@@ -82,7 +93,7 @@ window.ProductPlaceholder = (function () {
                       --ph-wash:${tint(color, 0.1)};
                       --ph-circle:${tint(color, 0.18)}"
                role="img"
-               aria-label="${product.name} — sem fotografia">
+               aria-label="${subject} — sem fotografia">
             <span class="disc product-placeholder-circle">
               <i class="fa-solid ${icon}"></i>
             </span>
