@@ -23,9 +23,9 @@ export function imagesPanel(product) {
         ? images.map((img) => {
             const variant = product.variants.find((v) => v.id === img.variant_id);
             return `
-              <li class="dash-row">
+              <li class="panel-block px-0 is-gap-1">
                 <img class="dash-thumb" src="${escapeHtml(img.url)}" alt="${escapeHtml(img.alt ?? "")}">
-                <span class="is-size-7">
+                <span class="is-size-7 mr-auto">
                   ${variant
                       ? window.ColorSet.badge(variant.color_set)
                       : `<span class="tag is-light is-rounded">Todas as cores</span>`}
@@ -39,7 +39,7 @@ export function imagesPanel(product) {
         : `<li class="has-text-grey is-size-7">Sem fotografias. A loja mostra o marcador de cor.</li>`;
 
     return `
-      <ul class="dash-rows is-flex is-flex-direction-column mb-3" id="image-rows">${rows}</ul>
+      <ul class="panel is-shadowless mb-3" id="image-rows">${rows}</ul>
       <div class="field">
         <div class="file is-small has-name is-fullwidth">
           <label class="file-label">

@@ -156,23 +156,6 @@
     }
 }
 
-/* Framework-agnostic spinner used by static/js/core/utils.js. */
-.app-spinner {
-    display: inline-block;
-    width: 2rem;
-    height: 2rem;
-    border: 2px solid var(--dash-border);
-    border-top-color: var(--ccg-blue-500);
-    border-radius: 50%;
-    animation: app-spin .7s linear infinite;
-}
-
-@keyframes app-spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
 .dash-sidebar .menu-list a:hover {
     background-color: var(--ccg-blue-50);
     color: var(--ccg-blue-800);
@@ -186,27 +169,6 @@
 .dash-panel {
     border: 1px solid var(--bulma-border);
     height: 100%;
-}
-
-/* Stat cards on Início. */
-.dash-stat-value {
-    font-size: 1.9rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--ccg-blue-900);
-}
-
-.dash-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: .55rem 0;
-    border-bottom: 1px solid var(--bulma-border-weak);
-}
-
-.dash-list li:last-child {
-    border-bottom: none;
 }
 
 /* Product cards. */
@@ -232,23 +194,6 @@
 /* The only part Bulma cannot express: spanning every column of the grid. */
 .dash-empty {
     grid-column: 1 / -1;
-}
-
-/* Rows inside the edit modal's colour and photograph panels. */
-.dash-row {
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    padding: .5rem 0;
-    border-bottom: 1px solid var(--bulma-border-weak);
-}
-
-.dash-row:last-child {
-    border-bottom: none;
-}
-
-.dash-row > :first-child {
-    margin-right: auto;
 }
 
 .dash-thumb {
@@ -289,14 +234,5 @@
     .dash-view {
         grid-template-columns: 1fr;
     }
-}
-
-/* The filter bar above the product grid. Auto-fits so it is one row on a wide
-   screen and stacks on a narrow one, without breakpoints. */
-.dash-filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: .75rem;
-    align-items: end;
 }
 

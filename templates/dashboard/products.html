@@ -9,7 +9,7 @@
                     'new-product', 'Novo produto') }}
 
 <div class="card dash-panel p-4 mb-5">
-    <div class="dash-filters">
+    <div class="grid is-col-min-7 is-align-items-flex-end">
         {{ filter_field('filter-q', 'Pesquisar', placeholder='Nome do produto…') }}
         {{ filter_field('filter-type', 'Tipo', [('', 'Todos')]) }}
         {{ filter_field('filter-collection', 'Colecção', [('', 'Todas')]) }}

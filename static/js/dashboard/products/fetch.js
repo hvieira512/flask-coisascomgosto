@@ -1,9 +1,7 @@
 import { API } from "../../core/api.js";
-import { removeLoading, renderLoading } from "../../core/utils.js";
 import { isFiltered, photoFilter, query } from "./filters.js";
 
 const productList = document.getElementById("product-list");
-const container = "#product-list";
 
 const renderEmptyMessage = () => {
     const filtered = isFiltered();
@@ -83,8 +81,13 @@ const renderProducts = (products) => {
         `${products.length} ${products.length === 1 ? "produto" : "produtos"}`;
 };
 
+/** Bulma's own skeleton, one cell per card the grid is about to hold. */
+const renderSkeleton = () => {
+    productList.innerHTML = `<div class="cell skeleton-block"></div>`.repeat(6);
+};
+
 export const fetchProducts = async () => {
-    renderLoading(container);
+    renderSkeleton();
     try {
         // The query carries limit=100 plus whatever the filter bar has set.
         // The API defaults to 10, which silently hid four of fourteen products.
@@ -105,5 +108,4 @@ export const fetchProducts = async () => {
         Notify.error("Erro ao buscar produtos");
         console.error("Error fetching products:", error);
     }
-    removeLoading(container);
 };

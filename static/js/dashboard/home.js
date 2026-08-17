@@ -11,7 +11,7 @@ const statCard = ({ label, value, icon, href }) => `
     <a class="cell card p-5 mb-0 is-flex is-flex-direction-column has-text-inherit"
        href="${href}">
       <span class="icon has-text-link mb-2"><i class="fa-solid ${icon}"></i></span>
-      <span class="dash-stat-value">${value}</span>
+      <span class="title is-3 mb-2">${value}</span>
       <span class="eyebrow mb-0">${escapeHtml(label)}</span>
     </a>`;
 
@@ -42,9 +42,12 @@ async function renderMissingPhotos() {
     const missing = products.filter((p) => !p.primary_image);
 
     target.innerHTML = missing.length
-        ? `<ul class="dash-list is-flex is-flex-direction-column">${missing
-              .map((p) => `<li><a href="/products/${p.id}">${escapeHtml(p.name)}</a>
-                    <span class="tag is-light is-rounded">${escapeHtml(p.type?.name ?? "—")}</span></li>`)
+        ? `<ul class="panel is-shadowless mb-0">${missing
+              .map((p) => `
+                <li class="panel-block px-0 is-justify-content-space-between">
+                  <a href="/products/${p.id}">${escapeHtml(p.name)}</a>
+                  <span class="tag is-light is-rounded">${escapeHtml(p.type?.name ?? "—")}</span>
+                </li>`)
               .join("")}</ul>`
         : `<p class="has-text-grey">Todas as peças têm fotografia.</p>`;
 }
@@ -56,9 +59,12 @@ async function renderEvents() {
 
     const { events } = await res.json();
     target.innerHTML = events.length
-        ? `<ul class="dash-list is-flex is-flex-direction-column">${events
-              .map((e) => `<li><span>${escapeHtml(e.name)}</span>
-                    <span class="has-text-grey is-size-7">${escapeHtml(e.starts_on)}</span></li>`)
+        ? `<ul class="panel is-shadowless mb-0">${events
+              .map((e) => `
+                <li class="panel-block px-0 is-justify-content-space-between">
+                  <span>${escapeHtml(e.name)}</span>
+                  <span class="has-text-grey is-size-7">${escapeHtml(e.starts_on)}</span>
+                </li>`)
               .join("")}</ul>`
         : `<p class="has-text-grey">Sem eventos registados.</p>`;
 }

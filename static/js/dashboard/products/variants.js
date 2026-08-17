@@ -9,8 +9,8 @@ export async function variantsPanel(product) {
 
     const rows = product.variants.length
         ? product.variants.map((v) => `
-            <li class="dash-row">
-              ${window.ColorSet.badge(v.color_set)}
+            <li class="panel-block px-0 is-gap-1">
+              ${window.ColorSet.badge(v.color_set, "mr-auto")}
               <button class="button is-small is-ghost has-text-danger"
                       data-remove-variant="${v.id}" title="Remover">
                 <span class="icon"><i class="fa-solid fa-xmark"></i></span>
@@ -19,7 +19,7 @@ export async function variantsPanel(product) {
         : `<li class="has-text-grey is-size-7">Sem cores associadas.</li>`;
 
     return `
-      <ul class="dash-rows is-flex is-flex-direction-column mb-3" id="variant-rows">${rows}</ul>
+      <ul class="panel is-shadowless mb-3" id="variant-rows">${rows}</ul>
       <div class="field has-addons">
         <div class="control is-expanded">
           <div class="select is-fullwidth is-small">

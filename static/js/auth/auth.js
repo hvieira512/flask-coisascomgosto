@@ -1,7 +1,4 @@
 import { API } from "../core/api.js";
-import { removeLoading, renderLoading } from "../core/utils.js";
-
-const container = "#auth-container";
 
 const submitBtn = document.querySelector("#submitBtn");
 const usernameField = document.querySelector("#usernameField");
@@ -17,13 +14,13 @@ form.addEventListener("submit", async (e) => {
     if (!username) return;
 
     if (mode === "check") {
-        renderLoading(container);
+        submitBtn.classList.add("is-loading");
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password: "fake" }),
         });
-        removeLoading(container);
+        submitBtn.classList.remove("is-loading");
 
         switch (res.status) {
             case 401:
@@ -44,13 +41,13 @@ form.addEventListener("submit", async (e) => {
         const password = document.querySelector("#passwordField")?.value.trim();
         if (!password) return;
 
-        renderLoading(container);
+        submitBtn.classList.add("is-loading");
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
         });
-        removeLoading(container);
+        submitBtn.classList.remove("is-loading");
 
         if (!res.ok) {
             const data = await res.json();
@@ -75,13 +72,13 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        renderLoading(container);
+        submitBtn.classList.add("is-loading");
         const res = await fetch(API.auth.register, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email, password }),
         });
-        removeLoading(container);
+        submitBtn.classList.remove("is-loading");
 
         if (!res.ok) {
             const data = await res.json();
