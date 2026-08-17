@@ -1,6 +1,6 @@
 """Uploading product photographs.
 
-`client` carries a bearer token; `anon_client` does not.
+`client` is signed in; `anon_client` is not.
 """
 
 import io
@@ -11,6 +11,18 @@ import pytest
 from api import uploads
 
 JPEG_BYTES = b"\xff\xd8\xff\xe0 fake jpeg"
+
+
+@pytest.fixture(autouse=True)
+def upload_dir(tmp_path, monkeypatch):
+    """Write uploads somewhere disposable.
+
+    Without this the suite files real photographs into static/img/products/ and
+    only the two deletion tests clean up after themselves, so every run left a
+    handful of orphans behind in the repository.
+    """
+    monkeypatch.setattr(uploads, "UPLOAD_DIR", tmp_path)
+    return tmp_path
 
 
 @pytest.fixture()
