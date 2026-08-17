@@ -1,16 +1,10 @@
 import { API } from "../../core/api.js";
+import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
 
 const escapeHtml = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
     }[c]));
-
-const modal = (id) => document.getElementById(id);
-const bodyOf = (id) => modal(id).querySelector(".modal-card-body");
-const footOf = (id) => modal(id).querySelector(".modal-card-foot");
-const open = (id) => modal(id).classList.add("is-active");
-const close = (id) => modal(id).classList.remove("is-active");
-const busy = (button, on) => button.classList.toggle("is-loading", on);
 
 /** "7 – 23 Ago 2026", or a single day. */
 function dateRange(event) {
@@ -157,19 +151,13 @@ function openForm({ id, event = null }) {
         </button>`;
     open(id);
 
-    document.getElementById("event-submit").onclick = async (e) => {
-        busy(e.currentTarget, true);
-        try {
+    document.getElementById("event-submit").onclick = (e) =>
+        submitting(e.currentTarget, async () => {
             await submitEventForm(id);
             close(id);
             Notify.success(event ? "Evento actualizado." : "Evento criado.");
             await loadEvents();
-        } catch (error) {
-            Notify.error(error.message);
-        } finally {
-            busy(e.currentTarget, false);
-        }
-    };
+        });
 }
 
 const getEvent = async (id) => {
@@ -190,20 +178,14 @@ async function openDelete(id) {
         <button class="button is-danger" id="event-delete">Apagar</button>`;
     open("deleteEventModal");
 
-    document.getElementById("event-delete").onclick = async (e) => {
-        busy(e.currentTarget, true);
-        try {
+    document.getElementById("event-delete").onclick = (e) =>
+        submitting(e.currentTarget, async () => {
             const res = await window.Auth.authFetch(API.events.delete(id), { method: "DELETE" });
             if (!res.ok) throw new Error("Não foi possível apagar.");
             close("deleteEventModal");
             Notify.success("Evento apagado.");
             await loadEvents();
-        } catch (error) {
-            Notify.error(error.message);
-        } finally {
-            busy(e.currentTarget, false);
-        }
-    };
+        });
 }
 
 document.addEventListener("click", async (clicked) => {

@@ -1,29 +1,16 @@
 import { API } from "../../core/api.js";
+import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
 import { escapeHtml, productForm, submitProductForm } from "./form.js";
 import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
 import { addVariant, removeVariant, variantsPanel } from "./variants.js";
 
-const modal = (id) => document.getElementById(id);
-const bodyOf = (id) => modal(id).querySelector(".modal-card-body");
-const footOf = (id) => modal(id).querySelector(".modal-card-foot");
-
-function open(id) {
-    modal(id).classList.add("is-active");
-}
-
-function close(id) {
-    modal(id).classList.remove("is-active");
-}
-
 const getProduct = async (id) => {
     const res = await fetch(API.products.get(id));
     if (!res.ok) throw new Error("Produto não encontrado.");
     return res.json();
 };
-
-const busy = (button, on) => button.classList.toggle("is-loading", on);
 
 async function openCreate() {
     bodyOf("newProductModal").innerHTML = await productForm();
@@ -32,20 +19,14 @@ async function openCreate() {
         <button class="button is-dark" id="create-submit">Criar produto</button>`;
     open("newProductModal");
 
-    document.getElementById("create-submit").onclick = async (event) => {
-        busy(event.currentTarget, true);
-        try {
+    document.getElementById("create-submit").onclick = (event) =>
+        submitting(event.currentTarget, async () => {
             const id = await submitProductForm(modal("newProductModal"));
             close("newProductModal");
             Notify.success("Produto criado.");
             await mountFilters(fetchProducts).then(fetchProducts);
             openEdit(id);   // straight on to colours and photographs
-        } catch (error) {
-            Notify.error(error.message);
-        } finally {
-            busy(event.currentTarget, false);
-        }
-    };
+        });
 }
 
 async function openEdit(id) {
@@ -72,19 +53,13 @@ async function openEdit(id) {
     wireVariantPanel(product);
     wireImagePanel(product);
 
-    document.getElementById("edit-submit").onclick = async (event) => {
-        busy(event.currentTarget, true);
-        try {
+    document.getElementById("edit-submit").onclick = (event) =>
+        submitting(event.currentTarget, async () => {
             await submitProductForm(modal("editProductModal"));
             close("editProductModal");
             Notify.success("Produto actualizado.");
             await mountFilters(fetchProducts).then(fetchProducts);
-        } catch (error) {
-            Notify.error(error.message);
-        } finally {
-            busy(event.currentTarget, false);
-        }
-    };
+        });
 }
 
 function wireEditTabs() {
@@ -110,19 +85,13 @@ async function refreshEdit(productId) {
 function wireVariantPanel(product) {
     const add = document.getElementById("add-variant");
     if (add) {
-        add.onclick = async (event) => {
-            busy(event.currentTarget, true);
-            try {
+        add.onclick = (event) =>
+            submitting(event.currentTarget, async () => {
                 await addVariant(product.id, document.getElementById("variant-picker").value);
                 Notify.success("Cor adicionada.");
                 await refreshEdit(product.id);
                 document.querySelector('#edit-tabs [data-tab="variants"]').click();
-            } catch (error) {
-                Notify.error(error.message);
-            } finally {
-                busy(event.currentTarget, false);
-            }
-        };
+            });
     }
 
     document.querySelectorAll("[data-remove-variant]").forEach((button) => {
@@ -151,9 +120,8 @@ function wireImagePanel(product) {
 
     const add = document.getElementById("add-image");
     if (add) {
-        add.onclick = async (event) => {
-            busy(event.currentTarget, true);
-            try {
+        add.onclick = (event) =>
+            submitting(event.currentTarget, async () => {
                 const file = document.getElementById("image-file").files[0];
                 const variantId = document.getElementById("image-variant").value;
 
@@ -169,12 +137,7 @@ function wireImagePanel(product) {
                 Notify.success("Fotografia adicionada.");
                 await refreshEdit(product.id);
                 document.querySelector('#edit-tabs [data-tab="images"]').click();
-            } catch (error) {
-                Notify.error(error.message);
-            } finally {
-                busy(event.currentTarget, false);
-            }
-        };
+            });
     }
 
     document.querySelectorAll("[data-remove-image]").forEach((button) => {
@@ -232,20 +195,14 @@ async function openDelete(id) {
         <button class="button is-danger" id="delete-submit">Apagar</button>`;
     open("deleteProductModal");
 
-    document.getElementById("delete-submit").onclick = async (event) => {
-        busy(event.currentTarget, true);
-        try {
+    document.getElementById("delete-submit").onclick = (event) =>
+        submitting(event.currentTarget, async () => {
             const res = await window.Auth.authFetch(API.products.delete(id), { method: "DELETE" });
             if (!res.ok) throw new Error("Não foi possível apagar.");
             close("deleteProductModal");
             Notify.success("Produto apagado.");
             await mountFilters(fetchProducts).then(fetchProducts);
-        } catch (error) {
-            Notify.error(error.message);
-        } finally {
-            busy(event.currentTarget, false);
-        }
-    };
+        });
 }
 
 document.addEventListener("click", (event) => {

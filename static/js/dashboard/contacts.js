@@ -1,4 +1,5 @@
 import { API } from "../core/api.js";
+import { submitting } from "../core/modal.js";
 
 /**
  * The shop's contact details. A singleton — one row, edited in place, so there
@@ -61,12 +62,10 @@ async function load() {
     fill(saved);
 }
 
-async function save(event) {
+function save(event) {
     event.preventDefault();
-    const button = document.getElementById("contact-save");
-    button.classList.add("is-loading");
 
-    try {
+    return submitting(document.getElementById("contact-save"), async () => {
         // PUT replaces the whole row: a field left out is cleared, so every
         // field is always sent. Empty ones are omitted deliberately — that is
         // how a detail is removed — and the API rejects an explicit null.
@@ -89,11 +88,7 @@ async function save(event) {
         saved = await res.json();
         fill(saved);
         Notify.success("Contactos actualizados.");
-    } catch (error) {
-        Notify.error(error.message);
-    } finally {
-        button.classList.remove("is-loading");
-    }
+    });
 }
 
 document.getElementById("contact-form").addEventListener("submit", save);
