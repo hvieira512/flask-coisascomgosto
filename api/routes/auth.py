@@ -10,6 +10,8 @@ request — page loads and fetch() alike. That is the whole mechanism: there is 
 token to store, refresh or attach.
 """
 
+import re
+
 from flask import session
 from flask_restx import Namespace, Resource
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -19,9 +21,12 @@ from api.models.auth import login_model, register_model
 from api.models.users import user_model
 from api.repositories import UserRepository
 from api.security import PROTECTED_DOC, login_required
-from api.utils import is_email_valid
 
 ns = Namespace("auth", description="Authentication operations")
+
+# Deliberately loose: this rejects typos, not exotic-but-valid addresses. The
+# only real proof an address works is sending to it.
+EMAIL = re.compile(r"([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+")
 
 for model in [login_model, register_model, user_model]:
     ns.models[model.name] = model
@@ -42,7 +47,7 @@ class Register(Resource):
         email = data["email"]
         password = data["password"]
 
-        if not is_email_valid(email):
+        if not EMAIL.fullmatch(email):
             ns.abort(400, "This email is not valid")
 
         with get_db_connection() as (_, cursor):

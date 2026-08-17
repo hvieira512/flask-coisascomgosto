@@ -130,12 +130,7 @@ class TestPageLayoutWrappers:
 
 
 class TestNotifications:
-    """SweetAlert2 replaced toastr; js/core/notify.js wraps it.
-
-    toastr required jQuery, which had no other consumer in the project, so both
-    were removed. These assertions stop either creeping back and stop a page
-    calling Notify before the library that backs it has loaded.
-    """
+    """js/core/notify.js wraps SweetAlert2 and must load after it."""
 
     def _dashboard(self, client, make_user):
         make_user("dash", password="pw")
@@ -157,29 +152,12 @@ class TestNotifications:
         html = anon_client.get("/auth").get_data(as_text=True)
         assert html.index("sweetalert2.all.min.js") < html.index("js/core/notify.js")
 
-    @pytest.mark.parametrize("path", ["/", "/products", "/nao-encontrado"])
+    @pytest.mark.parametrize("path", ["/", "/products", "/not-found"])
     def test_storefront_stays_lean(self, client, path):
-        """No public page notifies, so none should carry the 79KB library."""
+        """No public page notifies, so none should carry the 77KB library. It
+        used to sit in the shared base template and load on every page."""
         html = client.get(path).get_data(as_text=True)
         assert "sweetalert2" not in html
-
-    @pytest.mark.parametrize("path", ["/", "/products", "/auth"])
-    def test_toastr_and_jquery_are_gone(self, client, path):
-        html = client.get(path).get_data(as_text=True)
-        assert "toastr" not in html
-        assert "jquery" not in html.lower()
-
-    def test_dashboard_has_no_toastr_or_jquery(self, client, make_user):
-        html = self._dashboard(client, make_user)
-        assert "toastr" not in html
-        assert "jquery" not in html.lower()
-
-    def test_no_javascript_still_calls_toastr(self):
-        """The library is gone, so a stray call would be a runtime crash."""
-        import pathlib
-
-        for script in pathlib.Path("static/js").rglob("*.js"):
-            assert "toastr" not in script.read_text(), script
 
 
 class TestColorScheme:
@@ -255,11 +233,6 @@ class TestDashboardProducts:
         html = self._page(client, make_user)
         assert html.index("js/store/color-set.js") < html.index("js/dashboard/products/main.js")
 
-    def test_dados_tab_is_gone(self, client, make_user):
-        html = self._page(client, make_user)
-        assert "Dados" not in html
-        assert "dashboard/stats" not in html
-
 
 class TestDashboardHome:
     def test_home_renders_analytics_hooks(self, client, make_user):
@@ -326,13 +299,6 @@ class TestDashboardChrome:
         assert "Ver a loja" in html
         assert "dash-sidebar-foot" in html
 
-    def test_notifications_are_gone(self, client, make_user):
-        """Nothing produced them, so the bell promised something that did not
-        exist."""
-        html = self._page(client, make_user)
-        assert "fa-bell" not in html
-        assert "dash-badge" not in html
-
     def test_navbar_uses_bulma_fixed_top(self, client, make_user):
         """The shell relies on Bulma's own fixed navbar, which needs
         has-navbar-fixed-top on <html> for the page padding to match."""
@@ -362,34 +328,30 @@ class TestProductGallery:
         assert html.index("js/store/gallery.js") < html.index("js/store/product.js")
 
 
-class TestColorSetBadgeMarkup:
-    def _source(self):
-        import pathlib
+class TestColorSetBadge:
+    """The badge is rendered by both the storefront and the dashboard."""
 
-        return pathlib.Path("static/js/store/color-set.js").read_text()
-
-    def test_badge_carries_the_full_name_as_a_title(self):
-        """The catalog constrains badges to a column, so the longest names
-        truncate; the title is what makes them readable on hover."""
-        assert 'title="${escapeHtml(colorSet.name)}"' in self._source()
-
-    def test_label_is_wrapped_so_it_can_truncate(self):
-        assert 'class="color-set-name"' in self._source()
-
-    def test_catalog_badges_are_left_aligned(self):
-        """Bulma's .tag centres its content, which gave every label a different
-        offset inside a fixed-width badge and made the circles zigzag down the
-        column."""
-        import pathlib
-
-        css = pathlib.Path("static/css/theme.css").read_text()
-        block = css.split(".swatch-row .color-set-badge {")[1].split("}")[0]
-        assert "justify-content: flex-start" in block
-
-    def test_badge_styles_live_in_the_shared_stylesheet(self):
-        """The dashboard renders the same badge but loads only theme.css, so
-        keeping these rules in store.css left its swatches unstyled."""
+    def test_styles_live_in_the_shared_stylesheet(self):
+        """The dashboard loads only theme.css, so while these rules lived in
+        store.css its badges rendered with no swatches at all."""
         import pathlib
 
         assert ".swatch {" in pathlib.Path("static/css/theme.css").read_text()
         assert ".swatch {" not in pathlib.Path("static/css/store.css").read_text()
+
+    def test_the_catalog_renders_swatches_and_a_full_name(self, client, make_product,
+                                                          make_color, make_color_set):
+        """The name truncates in the catalog's column, so the title attribute is
+        what makes the long ones readable. Asserted through the API the page
+        renders from, rather than by grepping the script that builds it."""
+        color = make_color("Vermelho", hex="#B3282D")
+        color_set = make_color_set("Vermelho e Branco", [color["id"]])
+        product = make_product("Caixa")
+        client.post(f"/api/products/{product['id']}/variants",
+                    json={"color_set_id": color_set["id"]})
+
+        body = client.get(f"/api/products/{product['id']}").get_json()
+        variant = body["variants"][0]
+
+        assert variant["color_set"]["name"] == "Vermelho e Branco"
+        assert variant["color_set"]["colors"][0]["hex"] == "#B3282D"

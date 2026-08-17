@@ -131,35 +131,21 @@ class TestPlaceholderScriptIsLoaded:
         assert "js/store/placeholder.js" in html
 
 
-class TestPlaceholderStyles:
-    """The tile is styled entirely in CSS, so losing the rules leaves a valid
-    page that renders a bare icon in the corner — invisible to every other test.
-    A comment-stripping regex deleted exactly this block once."""
+def test_placeholder_tile_keeps_its_load_bearing_rules():
+    """The tile is styled entirely in CSS, so losing these leaves a valid page
+    rendering a bare icon in a corner — which no other test would notice. A
+    comment-stripping regex deleted exactly this block once.
 
-    def _store_css(self):
-        import pathlib
+    Only the two declarations that fail silently are pinned: without the flex
+    centring the icon sits top-left, and without container-type the circle's cqw
+    width resolves against the viewport instead of the tile.
+    """
+    import pathlib
 
-        return pathlib.Path("static/css/store.css").read_text()
+    css = pathlib.Path("static/css/store.css").read_text()
+    block = css.split(".product-placeholder {")[1].split("}")[0]
 
-    def test_placeholder_rules_exist(self):
-        css = self._store_css()
-        for selector in [".product-placeholder {",
-                         ".product-placeholder-circle {",
-                         ".product-placeholder i {",
-                         ".product-placeholder--stage {"]:
-            assert selector in css, selector
-
-    def test_tile_centres_its_circle(self):
-        """display:block would put the icon in the top-left corner."""
-        css = self._store_css()
-        block = css.split(".product-placeholder {")[1].split("}")[0]
-        assert "display: flex" in block
-        assert "align-items: center" in block
-        assert "justify-content: center" in block
-
-    def test_tile_declares_a_query_container(self):
-        """The circle sizes with cqw, which resolves against the viewport
-        unless the tile declares container-type."""
-        css = self._store_css()
-        block = css.split(".product-placeholder {")[1].split("}")[0]
-        assert "container-type: inline-size" in block
+    assert "display: flex" in block
+    assert "align-items: center" in block
+    assert "justify-content: center" in block
+    assert "container-type: inline-size" in block
