@@ -171,9 +171,16 @@ PRODUCTS = [
 
 
 # Photographs lifted from the page's own albums, cropped square.
-# (product, colour set or None for a product-wide fallback, file, alt)
+#
+# (product, colour set, file, alt). A photograph belongs to the colour it shows;
+# None means the piece is sold in one look only, and is not a general fallback
+# for a piece offered in several — a colour with no photograph of its own draws
+# the placeholder in its own colour instead.
+#
+# The entries still on None are the ones whose photograph shows a colour the
+# piece is not currently listed as being made in.
 IMAGES = [
-    ("Caixa Redonda Filigrana", None, "caixa-redonda-dourado.jpg",
+    ("Caixa Redonda Filigrana", "Branco e Dourado", "caixa-redonda-dourado.jpg",
      "Caixa redonda branca com coração de filigrana a dourado"),
     ("Caixa Redonda Filigrana", "Azul e Branco", "caixa-redonda-azul.jpg",
      "Três caixas redondas brancas com filigrana azul"),
@@ -185,7 +192,7 @@ IMAGES = [
     ("Caixa Redonda Manel e Maria", None, "manel-e-maria.jpg",
      "O par do Minho em traje sobre um coração dourado"),
 
-    ("Caixa de Joias", None, "caixa-preto-dourado.jpg",
+    ("Caixa de Joias", "Preto e Dourado", "caixa-preto-dourado.jpg",
      "Peças pretas com filigrana dourada"),
 
     ("Moldura Oval", None, "moldura-rosa.jpg",
@@ -194,7 +201,7 @@ IMAGES = [
     ("Bastidor Bordado", None, "bastidor-nome.jpg",
      "Bastidor bordado à mão com um nome ao centro"),
 
-    ("Coração de Natal", None, "coracao-natal-nome.jpg",
+    ("Coração de Natal", "Branco e Dourado", "coracao-natal-nome.jpg",
      "Coração de Viana branco com nome escrito a dourado"),
 
     ("Abre-cápsulas Coração", None, "abre-capsulas.jpg",
@@ -202,12 +209,12 @@ IMAGES = [
     ("Caixa Lenço dos Namorados", None, "caixa-lenco-rosas.jpg",
      "Caixa branca com as rosas do Lenço dos Namorados na tampa"),
 
-    ("Coração de Viana", None, "coracao-branco-nome.jpg",
+    ("Coração de Viana", "Branco e Dourado", "coracao-branco-nome.jpg",
      "Coração de Viana branco com nome escrito a dourado"),
     ("Coração de Viana", "Vermelho e Branco", "coracao-vermelho-nome.jpg",
      "Coração de Viana vermelho com letras douradas"),
 
-    ("Coração de Mesa", None, "coracao-mesa-figura.jpg",
+    ("Coração de Mesa", "Branco e Dourado", "coracao-mesa-figura.jpg",
      "Coração de pé com uma figura em traje minhoto"),
     ("Coração de Mesa", "Branco e Dourado", "coracao-mesa-par.jpg",
      "Coração de pé com o par do Minho e a frase quem ama fica"),
@@ -217,12 +224,12 @@ IMAGES = [
     ("Moldura Filigrana", "Preto e Dourado", "moldura-preto-dourado.jpg",
      "Moldura preta com janela oval e filigrana dourada"),
 
-    ("Bastidor Viana é Amor", None, "bastidor-dourado.jpg",
+    ("Bastidor Viana é Amor", "Branco e Dourado", "bastidor-dourado.jpg",
      "Bastidor com um coração de Viana bordado a dourado"),
     ("Bastidor Viana é Amor", "Branco e Azul", "bastidor-azul-nome.jpg",
      "Bastidor com coração bordado a azul e um nome"),
 
-    ("Bola de Natal", None, "bola-natal-branco.jpg",
+    ("Bola de Natal", "Branco e Dourado", "bola-natal-branco.jpg",
      "Bastidor branco com coração dourado e laço vermelho"),
     ("Bola de Natal", "Vermelho e Branco", "bola-natal-vermelho.jpg",
      "Três bastidores vermelhos com filigrana branca"),
