@@ -11,7 +11,7 @@ from api.models.categories import (
 from api.models.common import pagination_model
 from api.repositories import CategoryRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
-from api.security import PROTECTED_DOC, login_required
+from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("categories", description="Categories operations")
 
@@ -43,7 +43,7 @@ class CategoryList(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A category with that name already exists")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def post(self):
         """Create a new category."""
         name = ns.payload["name"]
@@ -74,7 +74,7 @@ class Category(Resource):
     @ns.response(404, "Category not found")
     @ns.response(409, "Another category already uses that name")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def put(self, category_id):
         """Update a category by ID."""
         name = ns.payload["name"]
@@ -93,7 +93,7 @@ class Category(Resource):
     @ns.response(200, "The deleted category")
     @ns.response(404, "Category not found")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def delete(self, category_id):
         """Delete a category by ID.
 

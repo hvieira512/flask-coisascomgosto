@@ -37,7 +37,10 @@ inside the network.
 | Variable | Default | Purpose |
 |---|---|---|
 | `FLASK_DEBUG` | `1` | `1` gives live reload and the debugger; anything else runs gunicorn |
-| `SECRET_KEY` | dev value | Signs the session cookie, which is the whole of authentication. **Change in production** |
+| `SECRET_KEY` | dev value | Signs the dashboard's session cookie. **Change in production** |
+| `JWT_SECRET_KEY` | falls back to `SECRET_KEY` | Signs the API's bearer tokens. **Change in production**, 32+ bytes |
+| `JWT_ACCESS_MINUTES` | `15` | Access-token lifetime |
+| `JWT_REFRESH_DAYS` | `14` | Refresh-token lifetime |
 | `MYSQL_HOST` | `127.0.0.1` | Compose overrides this to `db` |
 | `MYSQL_PORT` | `3306` | |
 | `MYSQL_USER` / `MYSQL_PASSWORD` | `coisascomgosto` | Application account |
@@ -196,38 +199,60 @@ All routes are prefixed with `/api`.
 
 ### Authentication
 
-Signing in sets Flask's **session cookie**, and the browser sends it on every
-subsequent request — page loads and `fetch()` alike. There is no token to store,
-attach or refresh.
+The API uses **JWT bearer tokens**.
 
 ```
 POST /auth/register  { username, email, password }  -> the new account
-POST /auth/login     { username, password }         -> the account, + Set-Cookie
-GET  /auth/me                                       -> the signed-in account
-POST /auth/logout                                   -> clears the session
+POST /auth/login     { username, password }         -> { access_token, refresh_token, user }
+POST /auth/refresh   (REFRESH token in header)      -> { access_token }
+GET  /auth/me        (access token in header)       -> the caller's account
+POST /auth/logout                                   -> clears the rendered session
 ```
 
 ```bash
-curl -c jar -X POST localhost:5000/api/auth/login \
+ACCESS=$(curl -s -X POST localhost:5000/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"hugo","password":"..."}'
+  -d '{"username":"hugo","password":"..."}' | jq -r .access_token)
 
-curl -b jar localhost:5000/api/users/
+curl -H "Authorization: Bearer $ACCESS" localhost:5000/api/users/
 ```
 
+In `/api/docs` the **Authorize** button sends the same header, so every padlocked
+endpoint can be exercised from the docs.
+
+| Token | Lifetime | Purpose |
+|---|---|---|
+| **access** | 15 min (`JWT_ACCESS_MINUTES`) | Sent with every request |
+| **refresh** | 14 days (`JWT_REFRESH_DAYS`) | Exchanged for a new access token |
+
+**When the access token expires**, the client POSTs to `/auth/refresh` with the
+**refresh** token and retries — no password prompt. An *access* token sent to
+`/auth/refresh` is rejected with `422`; only a refresh token is accepted there.
+Tokens carry `username` and `is_admin` claims, so a guard needs no database round
+trip.
+
 Catalog **reads are public** — the storefront depends on that. Every **write**,
-plus all of `/users` and `/contacts`, needs a session and answers `401` without
-one. `api/security.py` holds the single guard, `login_required`; it aborts with
-JSON rather than redirecting, because its callers are `fetch()` requests that
-would otherwise be handed a login page to parse.
+plus all of `/users` and `/contacts`, is guarded by `auth_required` in
+`api/security.py`, and answers `401` with JSON rather than redirecting: its
+callers are API clients and `fetch()` requests, either of which would otherwise
+be handed a login page to parse as a payload.
 
 `is_admin` is **not** accepted at registration, so nobody can self-promote.
 Password hashes are never returned.
 
-> The dashboard pages use the same cookie, through `web/dashboard.py`'s own
-> `login_required`, which *does* redirect — a browser following a link wants the
-> login form, not a 401. Set `SECRET_KEY` in production: it signs the cookie, and
-> the default is a placeholder.
+> **Why `auth_required` also accepts a session.** The dashboard's pages are
+> rendered server-side and gated by Flask's session cookie, because a page load
+> cannot carry a token from localStorage. Login therefore sets the cookie
+> alongside issuing the tokens, and the guard accepts either — which is what lets
+> the dashboard's own scripts call plain `fetch()` with no token handling, while
+> the documented token flow stays intact for API clients. `web/dashboard.py` has
+> its own `login_required` for the pages, and that one *does* redirect: a browser
+> following a link wants the login form, not a 401.
+>
+> JWTs are stateless, so `/auth/logout` clears the session but cannot revoke an
+> issued token — the client discards it. Set both `SECRET_KEY` and
+> `JWT_SECRET_KEY` in production; the defaults are placeholders, and
+> `JWT_SECRET_KEY` should be 32+ bytes.
 
 ### Conventions
 
@@ -249,8 +274,9 @@ name.
 |---|---|
 | `200` / `201` | Success |
 | `400` | Missing/invalid body fields, bad pagination, or illegal type nesting |
-| `401` | Wrong password, or not signed in |
-| `403` | Signed in, but the account lacks the required privilege |
+| `401` | Wrong password, or a missing/expired access token and no session |
+| `403` | Authenticated, but the account lacks the required privilege |
+| `422` | Malformed token, or the wrong token type for the endpoint |
 | `404` | The resource, or something it references, does not exist |
 | `409` | Name (or variant) already taken |
 
@@ -359,7 +385,7 @@ api/
   __init__.py           Api object; mounts every namespace under /api
   db.py                 PyMySQL connection handling and schema init
   pagination.py         Request-arg parsing and the pagination envelope
-  security.py           login_required — the session guard on every write
+  security.py           auth_required — bearer token or session, on every write
   uploads.py            Storing uploaded photographs on disk
   models/               flask-restx marshalling models — these ARE the Swagger docs
   repositories/         Every SQL statement in the application, one class per table

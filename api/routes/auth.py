@@ -1,35 +1,64 @@
 """Authentication.
 
     POST /auth/register -> a new account
-    POST /auth/login    -> the account, and a session cookie
+    POST /auth/login    -> { access_token, refresh_token, user }
+    POST /auth/refresh  -> { access_token }   (send the REFRESH token)
     GET  /auth/me       -> the caller's own user record
-    POST /auth/logout   -> clears the session
+    POST /auth/logout   -> clears the server-rendered session
 
-Logging in sets Flask's session cookie, which the browser then sends on every
-request — page loads and fetch() alike. That is the whole mechanism: there is no
-token to store, refresh or attach.
+Access tokens are short-lived; when one expires the client exchanges its refresh
+token at /auth/refresh rather than asking for the password again.
+
+Login also populates the Flask session, because the server-rendered dashboard
+pages are gated by it — a page load cannot carry a token from localStorage. So
+the tokens serve API clients and the cookie serves the rendered pages, and
+api/security.py accepts either.
 """
 
 import re
 
 from flask import session
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+)
 from flask_restx import Namespace, Resource
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from api.db import get_db_connection
-from api.models.auth import login_model, register_model
+from api.models.auth import login_model, refresh_model, register_model, token_model
 from api.models.users import user_model
 from api.repositories import UserRepository
-from api.security import PROTECTED_DOC, login_required
+from api.security import PROTECTED_DOC, auth_required, current_user_id
 
 ns = Namespace("auth", description="Authentication operations")
+
+for model in [login_model, register_model, refresh_model, token_model, user_model]:
+    ns.models[model.name] = model
 
 # Deliberately loose: this rejects typos, not exotic-but-valid addresses. The
 # only real proof an address works is sending to it.
 EMAIL = re.compile(r"([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+")
 
-for model in [login_model, register_model, user_model]:
-    ns.models[model.name] = model
+
+def _tokens_for(user: dict) -> dict:
+    """The token pair for a user.
+
+    The identity is the user id as a string, because a JWT `sub` must be one.
+    is_admin rides along as a claim so a guard needs no database round trip.
+    """
+    identity = str(user["id"])
+    claims = {"username": user["username"], "is_admin": user["is_admin"]}
+
+    return {
+        "access_token": create_access_token(identity=identity, additional_claims=claims),
+        "refresh_token": create_refresh_token(
+            identity=identity, additional_claims=claims
+        ),
+        "user": user,
+    }
 
 
 @ns.route("/register")
@@ -73,12 +102,12 @@ class Register(Resource):
 @ns.route("/login")
 class Login(Resource):
     @ns.expect(login_model, validate=True)
-    @ns.marshal_with(user_model)
-    @ns.response(200, "The authenticated account")
+    @ns.marshal_with(token_model)
+    @ns.response(200, "Access and refresh tokens")
     @ns.response(401, "Invalid password")
     @ns.response(404, "Unknown username")
     def post(self):
-        """Sign in, and receive the session cookie."""
+        """Exchange a username and password for a token pair."""
         data = ns.payload
 
         with get_db_connection() as (_, cursor):
@@ -90,8 +119,45 @@ class Login(Resource):
                 ns.abort(401, "Invalid login.")
 
             user = {k: v for k, v in credentials.items() if k != "password"}
+
+            # The rendered dashboard authenticates by session, so keep
+            # populating it alongside the tokens.
             session["user"] = user
-            return user, 200
+
+            return _tokens_for(user), 200
+
+
+@ns.route("/refresh")
+class Refresh(Resource):
+    @ns.expect(refresh_model)
+    @ns.doc(
+        security="Bearer",
+        description="Send the REFRESH token in the Authorization header.",
+    )
+    @ns.marshal_with(token_model)
+    @ns.response(200, "A fresh access token")
+    @ns.response(401, "Missing, malformed or expired refresh token")
+    @jwt_required(refresh=True)
+    def post(self):
+        """Exchange a refresh token for a new access token.
+
+        This is what a client calls when its access token expires, instead of
+        prompting for the password again. The refresh token itself is unchanged
+        and keeps its original expiry, so it is not reissued here.
+        """
+        with get_db_connection() as (_, cursor):
+            user = UserRepository(cursor).get(int(get_jwt_identity()))
+            if not user:
+                ns.abort(401, "The account for this token no longer exists.")
+
+            claims = {"username": user["username"], "is_admin": user["is_admin"]}
+            return {
+                "access_token": create_access_token(
+                    identity=str(user["id"]), additional_claims=claims
+                ),
+                "refresh_token": None,
+                "user": user,
+            }, 200
 
 
 @ns.route("/me")
@@ -99,11 +165,11 @@ class Me(Resource):
     @ns.doc(**PROTECTED_DOC)
     @ns.marshal_with(user_model)
     @ns.response(200, "The authenticated user")
-    @login_required
+    @auth_required
     def get(self):
-        """Return the signed-in account."""
+        """Return the account the caller is authenticated as."""
         with get_db_connection() as (_, cursor):
-            user = UserRepository(cursor).get(session["user"]["id"])
+            user = UserRepository(cursor).get(current_user_id())
             if not user:
                 session.clear()
                 ns.abort(401, "This account no longer exists.")
@@ -115,6 +181,10 @@ class Me(Resource):
 class Logout(Resource):
     @ns.response(200, "Session cleared")
     def post(self):
-        """Sign out."""
+        """Clear the server-rendered session.
+
+        JWTs are stateless, so the tokens themselves stay valid until they
+        expire — the client is responsible for discarding them.
+        """
         user = session.pop("user", None)
         return {"message": "Successfully logged out" if user else "No user logged in"}, 200

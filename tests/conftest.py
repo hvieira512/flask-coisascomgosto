@@ -55,24 +55,32 @@ def app(clean_database):
     """A Flask app bound to the freshly emptied test database."""
     from app import app as flask_app
 
-    flask_app.config.update(TESTING=True, SECRET_KEY="test-secret")
+    flask_app.config.update(
+        TESTING=True,
+        SECRET_KEY="test-secret",
+        # 32+ bytes, or PyJWT warns the HMAC key is too short for SHA256.
+        JWT_SECRET_KEY="test-jwt-secret-key-at-least-32-bytes-long",
+    )
     return flask_app
 
 
 @pytest.fixture()
 def anon_client(app):
-    """A client that never signs in. Use it to prove an endpoint is guarded."""
+    """A client with neither a token nor a session. Use it to prove an endpoint
+    is guarded."""
     return app.test_client()
 
 
 @pytest.fixture()
 def client(app, make_user):
-    """The default client, signed in.
+    """The default client, authenticated by session.
 
-    Writes require a session, so the ordinary client holds one. A test client
-    keeps its cookies across requests the way a browser does, so signing in once
-    is enough — and this is a client of its own, so `anon_client` stays signed
-    out even in a test that asks for both.
+    A protected endpoint accepts either a bearer token or a session, and the
+    session is the cheaper one to hold in a test: a test client keeps its cookies
+    across requests the way a browser does, so signing in once is enough. Tests
+    of the token path itself use the `tokens` fixture and pass the header
+    explicitly. This is a client of its own, so `anon_client` stays anonymous
+    even in a test that asks for both.
     """
     make_user("tokenuser", password="Passw0rd!")
 
@@ -82,6 +90,29 @@ def client(app, make_user):
     )
     assert response.status_code == 200, response.get_json()
     return signed_in
+
+
+@pytest.fixture()
+def tokens(app, make_user):
+    """Register a user and return their freshly issued token pair.
+
+    Logs in on a throwaway client, never on `anon_client`: login also sets the
+    session cookie, so borrowing that client would leave it authenticated and
+    every "a token is required here" test would pass on the cookie instead.
+    """
+    make_user("apiclient", password="Passw0rd!")
+
+    response = app.test_client().post(
+        "/api/auth/login", json={"username": "apiclient", "password": "Passw0rd!"}
+    )
+    assert response.status_code == 200, response.get_json()
+    return response.get_json()
+
+
+@pytest.fixture()
+def bearer(tokens):
+    """The Authorization header an API client would send."""
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
 @pytest.fixture()

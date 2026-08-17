@@ -10,7 +10,7 @@ from flask_restx import Namespace, Resource
 from api.db import get_db_connection
 from api.models.contacts import contact_model, contact_write_model
 from api.repositories import ContactRepository
-from api.security import PROTECTED_DOC, login_required
+from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace(
     "contacts",
@@ -28,7 +28,7 @@ class Contact(Resource):
     @ns.marshal_with(contact_model)
     @ns.response(200, "The shop's contact details")
     @ns.response(404, "Contact details have not been set up")
-    @login_required
+    @auth_required
     def get(self):
         """Get the shop's address, email and social links."""
         with get_db_connection() as (_, cursor):
@@ -43,7 +43,7 @@ class Contact(Resource):
     @ns.marshal_with(contact_model)
     @ns.response(200, "Contact details updated")
     @ns.response(400, "Invalid fields")
-    @login_required
+    @auth_required
     def put(self):
         """Replace the shop's contact details.
 

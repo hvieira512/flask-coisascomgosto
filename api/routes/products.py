@@ -38,7 +38,7 @@ from api.models.products import (
     update_product_model,
 )
 from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, login_required
+from api.security import PROTECTED_DOC, auth_required
 from api.repositories import (
     CategoryRepository,
     CollectionRepository,
@@ -142,7 +142,7 @@ class ProductList(Resource):
     @ns.response(404, "Referenced category, type, collection or size not found")
     @ns.response(409, "A product with that name already exists")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def post(self):
         """Create a new product."""
         data = ns.payload
@@ -188,7 +188,7 @@ class Product(Resource):
     @ns.response(404, "Product, category, type, collection or size not found")
     @ns.response(409, "Another product already uses that name")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def put(self, product_id):
         """Update a product's own fields.
 
@@ -225,7 +225,7 @@ class Product(Resource):
     @ns.response(200, "The deleted product")
     @ns.response(404, "Product not found")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def delete(self, product_id):
         """Delete a product by ID, along with its variants and size links."""
         with get_db_connection() as (_, cursor):
@@ -264,7 +264,7 @@ class ProductVariantList(Resource):
     @ns.response(404, "Product or colour set not found")
     @ns.response(409, "This product already has a variant in that colour set")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def post(self, product_id):
         """Offer this product in another colour set."""
         color_set_id = ns.payload["color_set_id"]
@@ -298,7 +298,7 @@ class ProductVariant(Resource):
     @ns.response(200, "The deleted variant")
     @ns.response(404, "Product not found, or the variant is not one of its own")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def delete(self, product_id, variant_id):
         """Stop offering this product in one colour set."""
         with get_db_connection() as (_, cursor):
@@ -354,7 +354,7 @@ class ProductImageList(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product not found, or the variant is not one of its own")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def post(self, product_id):
         """Add an image to a product, or to one of its variants."""
         data = ns.payload
@@ -392,7 +392,7 @@ class ProductImageUpload(Resource):
     @ns.response(400, "Missing file, unsupported format, or too large")
     @ns.response(404, "Product not found, or the variant is not one of its own")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def post(self, product_id):
         """Upload a photograph and attach it to a product or one of its variants."""
         args = upload_parser.parse_args()
@@ -435,7 +435,7 @@ class ProductImage(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Image or variant does not belong to this product")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def put(self, product_id, image_id):
         """Update an image's URL, alt text, position or variant."""
         data = ns.payload
@@ -471,7 +471,7 @@ class ProductImage(Resource):
     @ns.response(200, "The deleted image")
     @ns.response(404, "Image does not belong to this product")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def delete(self, product_id, image_id):
         """Remove an image from a product."""
         with get_db_connection() as (_, cursor):
@@ -512,7 +512,7 @@ class ProductSizes(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product or size not found")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def put(self, product_id):
         """Replace the set of sizes this product is available in.
 

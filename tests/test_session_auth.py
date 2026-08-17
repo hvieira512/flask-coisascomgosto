@@ -1,4 +1,10 @@
-"""Tests for session authentication: signing in, guarding, signing out."""
+"""Tests for the session half of authentication.
+
+The dashboard's pages are rendered server-side, so they cannot carry a token from
+localStorage — they are gated by Flask's session cookie instead, and the API
+guard accepts it alongside a bearer token. The token half is covered in
+test_jwt_auth.py.
+"""
 
 import pytest
 
@@ -11,24 +17,6 @@ GUARDED = [
 
 
 class TestSigningIn:
-    def test_login_returns_the_user(self, anon_client, make_user):
-        make_user("alice", password="Passw0rd!")
-
-        body = anon_client.post(
-            "/api/auth/login", json={"username": "alice", "password": "Passw0rd!"}
-        ).get_json()
-
-        assert body["username"] == "alice"
-        assert body["is_admin"] is False
-
-    def test_login_never_returns_the_password(self, anon_client, make_user):
-        make_user("alice", password="Passw0rd!")
-
-        body = anon_client.post(
-            "/api/auth/login", json={"username": "alice", "password": "Passw0rd!"}
-        ).get_json()
-        assert "password" not in body
-
     def test_login_populates_the_session(self, anon_client, make_user):
         make_user("alice", password="Passw0rd!")
         anon_client.post(
@@ -49,9 +37,14 @@ class TestSigningIn:
         assert anon_client.get("/api/auth/me").status_code == 401
 
     def test_the_cookie_carries_across_requests(self, client):
-        """One sign-in is enough; there is no token to attach per call."""
+        """One sign-in is enough; the dashboard attaches nothing per call."""
         assert client.get("/api/auth/me").status_code == 200
         assert client.get("/api/auth/me").status_code == 200
+
+    def test_the_session_authorises_a_write(self, client):
+        """This is what lets the dashboard's fetch() calls stay plain."""
+        response = client.post("/api/categories/", json={"name": "Vidro"})
+        assert response.status_code == 201
 
 
 class TestGuards:
@@ -63,12 +56,13 @@ class TestGuards:
     def test_signed_in_is_allowed(self, auth_client, method, path):
         assert getattr(auth_client, method)(path).status_code != 401
 
-    def test_a_stale_bearer_header_buys_nothing(self, anon_client):
-        """Tokens are gone: an Authorization header is now just noise."""
-        response = anon_client.get(
-            "/api/users/", headers={"Authorization": "Bearer whatever"}
+    def test_a_session_wins_even_with_a_broken_token(self, client):
+        """The guard checks the session first, so a client holding both is not
+        locked out by a stale token."""
+        response = client.get(
+            "/api/auth/me", headers={"Authorization": "Bearer not-a-jwt"}
         )
-        assert response.status_code == 401
+        assert response.status_code == 200
 
     def test_contacts_put_is_guarded(self, anon_client):
         assert anon_client.put(
@@ -114,13 +108,7 @@ class TestMe:
         assert client.get("/api/auth/me").status_code == 401
 
 
-class TestSwaggerDocumentsAuth:
-    def test_no_bearer_scheme_is_published(self, client):
-        """The API stopped speaking bearer tokens, so it must stop advertising
-        an Authorize button that cannot work."""
-        schema = client.get("/api/swagger.json").get_json()
-        assert "securityDefinitions" not in schema
-
+class TestDocumentedStatusCodes:
     def test_guarded_endpoint_documents_its_401(self, client):
         schema = client.get("/api/swagger.json").get_json()
         assert "401" in schema["paths"]["/users/"]["get"]["responses"]

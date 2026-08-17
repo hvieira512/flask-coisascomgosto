@@ -7,7 +7,7 @@ from api.models.catalog import color_list_model, color_model, color_write_model
 from api.models.common import pagination_model
 from api.repositories import ColorRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
-from api.security import PROTECTED_DOC, login_required
+from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("colors", description="Colours operations")
 
@@ -34,7 +34,7 @@ class ColorList(Resource):
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A colour with that name already exists")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def post(self):
         """Create a new colour."""
         data = ns.payload
@@ -65,7 +65,7 @@ class Color(Resource):
     @ns.response(404, "Colour not found")
     @ns.response(409, "Another colour already uses that name")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def put(self, color_id):
         """Update a colour by ID."""
         data = ns.payload
@@ -84,7 +84,7 @@ class Color(Resource):
     @ns.response(200, "The deleted colour")
     @ns.response(404, "Colour not found")
     @ns.doc(**PROTECTED_DOC)
-    @login_required
+    @auth_required
     def delete(self, color_id):
         """Delete a colour by ID.
 

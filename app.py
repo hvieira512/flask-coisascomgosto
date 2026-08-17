@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_jwt_extended import JWTManager
 
 from api import api
 from api.db import init_db
@@ -8,6 +9,7 @@ from web import register_web
 app = Flask(__name__)
 app.config.from_object(Config)
 
+JWTManager(app)
 api.init_app(app)
 register_web(app)
 
