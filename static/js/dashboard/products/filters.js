@@ -74,4 +74,29 @@ export async function mountFilters(handler) {
         syncClearButton();
         onChange();
     });
+
+    applyUrlFilters();
+}
+
+/**
+ * Lets another page link straight to a filtered catalogue — the panel's "N peças
+ * sem fotografia" opens ?fotos=none, and the bar has to show that it did, or the
+ * list looks wrong rather than filtered.
+ */
+function applyUrlFilters() {
+    const params = new URLSearchParams(window.location.search);
+
+    const photos = params.get("fotos");
+    if (photos === "none" || photos === "some") {
+        state.photos = photos;
+        control("filter-photos").value = photos;
+    }
+
+    const q = params.get("q");
+    if (q) {
+        state.q = q;
+        control("filter-q").value = q;
+    }
+
+    syncClearButton();
 }

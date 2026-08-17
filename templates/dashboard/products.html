@@ -8,7 +8,7 @@
 {{ page_head_action('Catálogo', 'Produtos', 'product-count',
                     'new-product', 'Novo produto') }}
 
-<div class="card dash-panel p-4 mb-5">
+<div class="card dash-panel p-4 mb-4">
     <div class="grid is-col-min-7 is-align-items-flex-end">
         {{ filter_field('filter-q', 'Pesquisar', placeholder='Nome do produto…') }}
         {{ filter_field('filter-type', 'Tipo', [('', 'Todos')]) }}
@@ -25,7 +25,24 @@
     </div>
 </div>
 
-<div id="product-list" class="grid is-col-min-14"></div>
+{# One record per row. js/dashboard/products/fetch.js fills the tbody; the
+   header is markup so it is there before the first request answers. #}
+<div class="card dash-panel">
+    <div class="dash-table-wrap">
+        <table class="table dash-table is-fullwidth is-hoverable mb-0">
+            <thead>
+                <tr>
+                    <th class="dash-col-thumb"><span class="is-sr-only">Fotografia</span></th>
+                    <th class="dash-col-name">Peça</th>
+                    <th>Cores</th>
+                    <th class="dash-col-photos">Fotografias</th>
+                    <th class="dash-col-actions"><span class="is-sr-only">Acções</span></th>
+                </tr>
+            </thead>
+            <tbody id="product-list"></tbody>
+        </table>
+    </div>
+</div>
 
 {# Bodies and footers are rendered by js/dashboard/products/main.js, which
    needs the product before it can build a form. #}

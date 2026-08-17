@@ -7,27 +7,39 @@
 {% block content %}
 {{ page_head('Painel',
              'Olá' ~ (', ' ~ session.user.username if session.user else ''),
-             'Um resumo do catálogo.') }}
+             'O que precisa de atenção, e o estado do catálogo.') }}
 
-{# Filled by js/dashboard/home.js from the API, so the numbers cannot drift
-   from what the storefront actually shows. #}
-<div class="fixed-grid has-1-cols-mobile has-2-cols-tablet has-4-cols-desktop mb-5">
-    <div class="grid" id="stat-cards"></div>
-</div>
+{# Attention first, counters second: the owner opens this page to find out what
+   is waiting for her, not to read four totals. js/dashboard/home.js fills both
+   from the API, so the numbers cannot drift from what the storefront shows. #}
+<section id="attention" class="mb-5"></section>
 
 <div class="columns">
     <div class="column is-7">
-        <div class="card p-5 dash-panel">
-            <h2 class="title is-6 mb-4">Peças sem fotografia</h2>
+        <div class="card dash-panel p-5">
+            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
+                <h2 class="title is-6 mb-0">Peças sem fotografia</h2>
+                <a class="is-size-7" href="{{ url_for('web.dashboard.products') }}?fotos=none">
+                    Ver no catálogo
+                </a>
+            </header>
             <div id="missing-photos"></div>
         </div>
     </div>
     <div class="column is-5">
-        <div class="card p-5 dash-panel">
-            <h2 class="title is-6 mb-4">Próximos eventos</h2>
+        <div class="card dash-panel p-5">
+            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
+                <h2 class="title is-6 mb-0">Próximos eventos</h2>
+                <a class="is-size-7" href="{{ url_for('web.dashboard.events') }}">Ver todos</a>
+            </header>
             <div id="upcoming-events"></div>
         </div>
     </div>
+</div>
+
+<h2 class="eyebrow mt-6 mb-3">No catálogo</h2>
+<div class="fixed-grid has-2-cols-mobile has-4-cols-tablet">
+    <div class="grid" id="stat-cards"></div>
 </div>
 {% endblock %}
 

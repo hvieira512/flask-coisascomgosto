@@ -32,6 +32,23 @@
     --ccg-ink-soft: #6E675E;
     --ccg-ink-faint: #9C9489;
 
+    /* State, kept deliberately separate from the accent blue: the dashboard has
+       to show "this needs you" at a glance, and if that shared the accent hue
+       there would be no way to tell a link from a warning. Warm-family so they
+       sit inside the paper palette rather than fighting it. */
+    --ccg-attention: #B5791B;
+    --ccg-attention-wash: #FBF2DF;
+    --ccg-ready: #4E7A56;
+    --ccg-ready-wash: #EAF1EA;
+    --ccg-critical: #B3282D;
+    --ccg-critical-wash: #FBEAEA;
+
+    /* Data, not prose: counts, dates and ids line up in columns, so they get a
+       monospace face and lining figures. System stack — the project vendors its
+       assets and has no font files, and a webfont here would drift the
+       dashboard away from the storefront. */
+    --font-data: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+
     --space-xs: .5rem;
     --space-sm: 1rem;
     --space-md: 2rem;

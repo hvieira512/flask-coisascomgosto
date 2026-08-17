@@ -1,22 +1,27 @@
 /*
- * Dashboard chrome. Bulma provides the navbar, menu, card and modal styling;
- * this file adds the app shell (fixed sidebar + scrolling content) and the
- * small-screen sidebar overlay.
+ * The dashboard is a workbench, not a shop window.
+ *
+ * It shares the storefront's palette and tokens, but not its rhythm: the store
+ * is read, this is operated. So the type scale is tighter, the ground is the
+ * deeper paper with white work surfaces sitting on it, and state is carried by
+ * colour and shape rather than by prose.
+ *
+ * Bulma provides the navbar, menu, table, card, tag and modal; this file adds
+ * the app shell, the density, and the state chips it has no vocabulary for.
  */
 
 :root {
-    /* The same warm line the storefront uses. The dashboard ran on cold greys
-       (#ededed, #fbfbfa, #363636), which is why it read as a different product
-       from the shop it manages. */
     --dash-border: var(--ccg-line);
-    --dash-sidebar-width: 240px;
+    --dash-sidebar-width: 232px;
     /* Bulma's own navbar height, and what it pads <html> by for is-fixed-top.
        Pinned here so the sidebar can subtract exactly the same amount. */
     --dash-navbar-height: 3.25rem;
 }
 
+/* The desk. Work surfaces are white cards on top of it, which is what separates
+   "the thing I am editing" from "the application around it". */
 .dashboard-body {
-    background: var(--ccg-paper);
+    background: var(--ccg-paper-deep);
     color: var(--ccg-ink);
     min-height: 100vh;
 }
@@ -30,8 +35,8 @@
 }
 
 .dash-logo {
-    max-height: 2rem;
-    height: 2rem;
+    max-height: 1.75rem;
+    height: 1.75rem;
     width: auto;
     margin-right: .5rem;
 }
@@ -66,7 +71,7 @@
 .dash-sidebar {
     flex: 0 0 var(--dash-sidebar-width);
     width: var(--dash-sidebar-width);
-    padding: 1.5rem 1rem;
+    padding: 1rem .75rem;
     background: var(--ccg-surface);
     border-right: 1px solid var(--dash-border);
     position: sticky;
@@ -81,7 +86,7 @@
    not one of them. */
 .dash-sidebar-foot {
     margin-top: auto;
-    padding-top: 1rem;
+    padding-top: .75rem;
     border-top: 1px solid var(--bulma-border);
 }
 
@@ -89,7 +94,8 @@
     display: flex;
     align-items: center;
     gap: .6rem;
-    padding: .6rem .75rem;
+    padding: .5rem .7rem;
+    font-size: .875rem;
     border-radius: var(--bulma-radius);
     color: var(--ccg-ink);
     transition: background-color .15s ease, color .15s ease;
@@ -106,11 +112,19 @@
     color: currentColor;
 }
 
+.dash-sidebar .menu-list a:hover {
+    background-color: var(--ccg-blue-50);
+    color: var(--ccg-blue-800);
+}
+
+.dash-sidebar .menu-list a.is-active {
+    background-color: var(--ccg-blue-800);
+    color: var(--ccg-surface);
+}
+
 .dash-main {
     flex: 1 1 auto;
-    /* The storefront breathes on .section spacing; the dashboard was tighter
-       than everything it manages. */
-    padding: 2.5rem 2.5rem 4rem;
+    padding: 1.75rem 2rem 4rem;
     min-width: 0;
 }
 
@@ -156,45 +170,170 @@
     }
 }
 
-.dash-sidebar .menu-list a:hover {
-    background-color: var(--ccg-blue-50);
-    color: var(--ccg-blue-800);
-}
-
-.dash-sidebar .menu-list a.is-active {
-    background-color: var(--ccg-blue-800);
-    color: var(--ccg-surface);
-}
+/* ----------------------------------------------------------------
+   Work surfaces
+   ---------------------------------------------------------------- */
 
 .dash-panel {
     border: 1px solid var(--bulma-border);
     height: 100%;
 }
 
-/* Product cards. */
-.dash-product {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--bulma-border);
+/* Counts, dates and ids: a column of figures should line up, and should not be
+   mistaken for prose. */
+.data {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: .8125rem;
+    /* A date broken across two lines stops being one value. */
+    white-space: nowrap;
 }
 
-.dash-product .card-content {
-    flex: 1 0 auto;
+/* State, as a shape and a colour rather than a sentence. Bulma's .tag supplies
+   the pill; these supply the meaning, from the semantic tokens in theme.css. */
+.chip {
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .02em;
 }
 
-.dash-product-media img,
-.dash-product-media .product-placeholder {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    display: block;
+.chip.is-attention {
+    background-color: var(--ccg-attention-wash);
+    color: var(--ccg-attention);
 }
 
-/* The only part Bulma cannot express: spanning every column of the grid. */
-.dash-empty {
-    grid-column: 1 / -1;
+.chip.is-ready {
+    background-color: var(--ccg-ready-wash);
+    color: var(--ccg-ready);
 }
+
+.chip.is-quiet {
+    background-color: var(--ccg-paper-deep);
+    color: var(--ccg-ink-soft);
+}
+
+/* ----------------------------------------------------------------
+   The catalogue table
+   ---------------------------------------------------------------- */
+
+/* Deliberately NOT Bulma's .table-container. Its overflow-x makes it the
+   scrollport, and a sticky thead then pins to the top of the container rather
+   than the viewport — which put the header 52px *below* the first row. The page
+   has to be the scrollport for that to work, so horizontal scrolling is only
+   turned on at the widths that actually need it. */
+.dash-table-wrap {
+    min-width: 0;
+}
+
+@media screen and (max-width: 1023px) {
+    .dash-table-wrap {
+        overflow-x: auto;
+    }
+
+    /* Sticky resolves against the nearest scrollport, which is now the wrapper
+       rather than the page — the header would pin 52px down inside it, below the
+       first row. Scrolling a short table is cheaper than that. */
+    .dash-table thead th {
+        position: static;
+    }
+}
+
+.dash-table {
+    /* Bulma's table draws a line under every cell; one line per row reads as a
+       list of records rather than a grid of boxes. */
+    --bulma-table-cell-border-width: 0 0 1px;
+    --bulma-table-cell-padding: .625rem .75rem;
+    font-size: .875rem;
+    /* Enough for every column to get its share: three colour chips alone want
+       ~25rem, and under auto table layout their intrinsic width beats the
+       percentage widths below, squeezing the name column until it breaks one
+       word per line. Below this the table scrolls sideways instead, which is the
+       better failure. */
+    min-width: 56rem;
+}
+
+.dash-table thead th {
+    /* An operating surface gets scrolled past its own header, so the header
+       stays put under the fixed navbar. */
+    position: sticky;
+    top: var(--dash-navbar-height);
+    z-index: 2;
+    background: var(--ccg-surface);
+    font-size: .6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ccg-ink-soft);
+    white-space: nowrap;
+}
+
+.dash-table tbody tr {
+    cursor: pointer;
+}
+
+.dash-table td {
+    vertical-align: middle;
+}
+
+/* Every row is the same height whatever it holds, so the eye can run down the
+   column without re-finding the baseline. */
+.dash-table .dash-thumb,
+.dash-table .product-placeholder {
+    width: 42px;
+    height: 42px;
+    flex: none;
+}
+
+/* Column widths, so the colour chips cannot push the figures to the far edge of
+   a wide screen and break the scan down the column. */
+.dash-col-thumb {
+    width: 42px;
+}
+
+.dash-col-name {
+    width: 30%;
+    /* A percentage alone is only a suggestion to auto table layout. */
+    min-width: 12rem;
+}
+
+.dash-col-photos {
+    width: 9rem;
+}
+
+.dash-col-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+/* Revealed on hover, so a row of icons does not compete with the names. Always
+   visible to the keyboard, and on touch, where there is no hover. */
+.dash-row-actions {
+    opacity: 0;
+    transition: opacity .12s ease;
+}
+
+.dash-table tbody tr:hover .dash-row-actions,
+.dash-row-actions:focus-within {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .dash-row-actions {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-row-actions,
+    .dash-sidebar,
+    .dash-sidebar .menu-list a {
+        transition: none;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Modals and the read-only view
+   ---------------------------------------------------------------- */
 
 .dash-thumb {
     width: 46px;
@@ -204,7 +343,6 @@
     border: 1px solid var(--bulma-border);
 }
 
-/* The read-only product view. */
 .dash-view {
     display: grid;
     grid-template-columns: 200px 1fr;
@@ -235,4 +373,3 @@
         grid-template-columns: 1fr;
     }
 }
-

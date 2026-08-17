@@ -207,12 +207,18 @@ async function openDelete(id) {
 
 document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-product-action]");
-    if (!trigger) return;
+    if (trigger) {
+        const { productAction: action, productId: id } = trigger.dataset;
+        if (action === "view") openView(id);
+        if (action === "edit") openEdit(id);
+        if (action === "delete") openDelete(id);
+        return;
+    }
 
-    const { productAction: action, productId: id } = trigger.dataset;
-    if (action === "view") openView(id);
-    if (action === "edit") openEdit(id);
-    if (action === "delete") openDelete(id);
+    // The whole row opens the piece for editing, which is what the pointer
+    // cursor on it promises. Checked after the buttons so their own actions win.
+    const row = event.target.closest("#product-list tr[data-product-id]");
+    if (row) openEdit(row.dataset.productId);
 });
 
 document.getElementById("new-product")?.addEventListener("click", openCreate);

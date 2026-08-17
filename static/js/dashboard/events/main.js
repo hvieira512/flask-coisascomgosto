@@ -1,17 +1,6 @@
 import { API } from "../../core/api.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
-
-/** "7 – 23 Ago 2026", or a single day. */
-function dateRange(event) {
-    const format = (iso) =>
-        new Date(`${iso}T00:00:00`).toLocaleDateString("pt-PT",
-            { day: "numeric", month: "short", year: "numeric" });
-
-    if (!event.ends_on || event.ends_on === event.starts_on) {
-        return format(event.starts_on);
-    }
-    return `${format(event.starts_on)} – ${format(event.ends_on)}`;
-}
+import { eventDates, stateChip } from "./dates.js";
 
 async function loadEvents() {
     const res = await fetch(`${API.events.list}?limit=100`);
@@ -25,24 +14,31 @@ async function loadEvents() {
 
     rows.innerHTML = events.length
         ? events.map((event) => `
-            <tr>
+            <tr data-event-id="${event.id}">
               <td>
-                <strong>${escapeHtml(event.name)}</strong>
+                <p class="has-text-weight-medium">
+                  ${escapeHtml(event.name)}
+                  ${stateChip(event, { extraClass: "ml-2" })}
+                </p>
                 ${event.description
                     ? `<p class="is-size-7 has-text-grey">${escapeHtml(event.description)}</p>`
                     : ""}
               </td>
-              <td class="is-size-7">${escapeHtml(event.location ?? "—")}</td>
-              <td class="is-size-7">${escapeHtml(dateRange(event))}</td>
-              <td class="has-text-right">
-                <button class="button is-small is-ghost" data-event-action="edit"
-                        data-event-id="${event.id}" title="Editar">
-                  <span class="icon"><i class="fa-solid fa-pencil"></i></span>
-                </button>
-                <button class="button is-small is-ghost has-text-danger"
-                        data-event-action="delete" data-event-id="${event.id}" title="Apagar">
-                  <span class="icon"><i class="fa-solid fa-trash"></i></span>
-                </button>
+              <td class="is-size-7 has-text-grey">${escapeHtml(event.location ?? "—")}</td>
+              <td class="data has-text-grey">${escapeHtml(eventDates(event))}</td>
+              <td class="dash-col-actions">
+                <span class="dash-row-actions is-flex is-gap-1">
+                  <button class="button is-small is-ghost" data-event-action="edit"
+                          data-event-id="${event.id}" title="Editar"
+                          aria-label="Editar ${escapeHtml(event.name)}">
+                    <span class="icon"><i class="fa-solid fa-pencil"></i></span>
+                  </button>
+                  <button class="button is-small is-ghost has-text-danger"
+                          data-event-action="delete" data-event-id="${event.id}" title="Apagar"
+                          aria-label="Apagar ${escapeHtml(event.name)}">
+                    <span class="icon"><i class="fa-solid fa-trash"></i></span>
+                  </button>
+                </span>
               </td>
             </tr>`).join("")
         : `<tr><td colspan="4" class="has-text-centered has-text-grey py-6">
@@ -185,11 +181,18 @@ async function openDelete(id) {
 
 document.addEventListener("click", async (clicked) => {
     const trigger = clicked.target.closest("[data-event-action]");
-    if (!trigger) return;
+    if (trigger) {
+        const { eventAction: action, eventId: id } = trigger.dataset;
+        if (action === "edit") openForm({ id: "editEventModal", event: await getEvent(id) });
+        if (action === "delete") openDelete(id);
+        return;
+    }
 
-    const { eventAction: action, eventId: id } = trigger.dataset;
-    if (action === "edit") openForm({ id: "editEventModal", event: await getEvent(id) });
-    if (action === "delete") openDelete(id);
+    // The whole row opens the event, matching the catalogue.
+    const row = clicked.target.closest("#event-rows tr[data-event-id]");
+    if (row) {
+        openForm({ id: "editEventModal", event: await getEvent(row.dataset.eventId) });
+    }
 });
 
 document.getElementById("new-event")
