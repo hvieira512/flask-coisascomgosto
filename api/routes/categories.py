@@ -1,4 +1,5 @@
-from flask import request
+"""Categories: the one grouping every product must have."""
+
 from flask_restx import Namespace, Resource
 
 from api.db import get_db_connection
@@ -8,14 +9,11 @@ from api.models.categories import (
     category_model,
 )
 from api.models.common import pagination_model
-from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, login_required
 from api.repositories import CategoryRepository
+from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.security import PROTECTED_DOC, login_required
 
-ns = Namespace(
-    "categories",
-    description="Categories operations",
-)
+ns = Namespace("categories", description="Categories operations")
 
 for model in [
     pagination_model,
@@ -30,25 +28,20 @@ for model in [
 class CategoryList(Resource):
     @ns.marshal_with(category_list_model)
     @ns.param("q", "Search term for category name (fuzzy search)")
+    @ns.param("page", "Page number, 1-based (default 1)")
+    @ns.param("limit", "Items per page, max 100 (default 10)")
+    @ns.response(200, "A page of categories")
+    @ns.response(400, "Invalid pagination parameters")
     def get(self):
-        """Get list of categories with pagination and optional fuzzy search."""
-        page, limit, offset = get_pagination_params(request.args)
-        search = request.args.get("q")
-
+        """List categories with pagination and optional fuzzy search."""
         with get_db_connection() as (_, cursor):
-            categories = CategoryRepository(cursor)
-
-            return {
-                "categories": categories.list(
-                    search=search, limit=limit, offset=offset
-                ),
-                "pagination": make_pagination(
-                    categories.count(search=search), page, limit
-                ),
-            }
+            return page_of(CategoryRepository(cursor), "categories")
 
     @ns.expect(category_create_model, validate=True)
     @ns.marshal_with(category_model, code=201)
+    @ns.response(201, "Category created")
+    @ns.response(400, "Missing or invalid fields")
+    @ns.response(409, "A category with that name already exists")
     @ns.doc(**PROTECTED_DOC)
     @login_required
     def post(self):
@@ -57,28 +50,29 @@ class CategoryList(Resource):
 
         with get_db_connection() as (_, cursor):
             categories = CategoryRepository(cursor)
-
-            if categories.name_exists(name):
-                ns.abort(409, f"The category '{name}' already exists.")
+            reject_duplicate_name(ns, categories, name, "Category")
 
             category_id = categories.create(name)
             return categories.get(category_id), 201
 
 
 @ns.route("/<int:category_id>")
+@ns.param("category_id", "The category identifier")
 class Category(Resource):
     @ns.marshal_with(category_model)
+    @ns.response(200, "The category")
+    @ns.response(404, "Category not found")
     def get(self, category_id):
         """Get a category by ID."""
         with get_db_connection() as (_, cursor):
-            category = CategoryRepository(cursor).get(category_id)
-            if not category:
-                ns.abort(404, f"Category #{category_id} not found")
-
-            return category
+            return get_or_404(ns, CategoryRepository(cursor), category_id, "Category")
 
     @ns.expect(category_create_model, validate=True)
     @ns.marshal_with(category_model)
+    @ns.response(200, "Category updated")
+    @ns.response(400, "Missing or invalid fields")
+    @ns.response(404, "Category not found")
+    @ns.response(409, "Another category already uses that name")
     @ns.doc(**PROTECTED_DOC)
     @login_required
     def put(self, category_id):
@@ -87,29 +81,28 @@ class Category(Resource):
 
         with get_db_connection() as (_, cursor):
             categories = CategoryRepository(cursor)
-
-            if not categories.exists(category_id):
-                ns.abort(404, f"Category #{category_id} not found")
-
-            if categories.name_exists(name, exclude_id=category_id):
-                ns.abort(
-                    409, f"Category name '{name}' is already used by another category."
-                )
+            get_or_404(ns, categories, category_id, "Category")
+            reject_duplicate_name(
+                ns, categories, name, "Category", exclude_id=category_id
+            )
 
             categories.update(category_id, name)
             return categories.get(category_id), 200
 
     @ns.marshal_with(category_model)
+    @ns.response(200, "The deleted category")
+    @ns.response(404, "Category not found")
     @ns.doc(**PROTECTED_DOC)
     @login_required
     def delete(self, category_id):
-        """Delete a category by ID."""
+        """Delete a category by ID.
+
+        Every product filed under it is deleted too, along with that product's
+        own images, sizes and variants.
+        """
         with get_db_connection() as (_, cursor):
             categories = CategoryRepository(cursor)
-
-            category = categories.get(category_id)
-            if not category:
-                ns.abort(404, f"Category #{category_id} not found")
+            category = get_or_404(ns, categories, category_id, "Category")
 
             categories.delete(category_id)
             return category, 200

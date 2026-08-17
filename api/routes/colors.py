@@ -1,14 +1,13 @@
 """Colours: the individual swatches that colour sets are built from."""
 
-from flask import request
 from flask_restx import Namespace, Resource
 
 from api.db import get_db_connection
 from api.models.catalog import color_list_model, color_model, color_write_model
 from api.models.common import pagination_model
-from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, login_required
 from api.repositories import ColorRepository
+from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.security import PROTECTED_DOC, login_required
 
 ns = Namespace("colors", description="Colours operations")
 
@@ -26,16 +25,8 @@ class ColorList(Resource):
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
         """List colours with pagination and optional fuzzy search."""
-        page, limit, offset = get_pagination_params(request.args)
-        search = request.args.get("q")
-
         with get_db_connection() as (_, cursor):
-            colors = ColorRepository(cursor)
-
-            return {
-                "colors": colors.list(search=search, limit=limit, offset=offset),
-                "pagination": make_pagination(colors.count(search=search), page, limit),
-            }
+            return page_of(ColorRepository(cursor), "colors")
 
     @ns.expect(color_write_model, validate=True)
     @ns.marshal_with(color_model, code=201)
@@ -47,15 +38,12 @@ class ColorList(Resource):
     def post(self):
         """Create a new colour."""
         data = ns.payload
-        name = data["name"]
 
         with get_db_connection() as (_, cursor):
             colors = ColorRepository(cursor)
+            reject_duplicate_name(ns, colors, data["name"], "Colour")
 
-            if colors.name_exists(name):
-                ns.abort(409, f"The colour '{name}' already exists.")
-
-            color_id = colors.create(name=name, hex=data.get("hex"))
+            color_id = colors.create(name=data["name"], hex=data.get("hex"))
             return colors.get(color_id), 201
 
 
@@ -68,11 +56,7 @@ class Color(Resource):
     def get(self, color_id):
         """Get a colour by ID."""
         with get_db_connection() as (_, cursor):
-            color = ColorRepository(cursor).get(color_id)
-            if not color:
-                ns.abort(404, f"Colour #{color_id} not found")
-
-            return color
+            return get_or_404(ns, ColorRepository(cursor), color_id, "Colour")
 
     @ns.expect(color_write_model, validate=True)
     @ns.marshal_with(color_model)
@@ -85,20 +69,15 @@ class Color(Resource):
     def put(self, color_id):
         """Update a colour by ID."""
         data = ns.payload
-        name = data["name"]
 
         with get_db_connection() as (_, cursor):
             colors = ColorRepository(cursor)
+            get_or_404(ns, colors, color_id, "Colour")
+            reject_duplicate_name(
+                ns, colors, data["name"], "Colour", exclude_id=color_id
+            )
 
-            if not colors.exists(color_id):
-                ns.abort(404, f"Colour #{color_id} not found")
-
-            if colors.name_exists(name, exclude_id=color_id):
-                ns.abort(
-                    409, f"Colour name '{name}' is already used by another colour."
-                )
-
-            colors.update(color_id, name=name, hex=data.get("hex"))
+            colors.update(color_id, name=data["name"], hex=data.get("hex"))
             return colors.get(color_id), 200
 
     @ns.marshal_with(color_model)
@@ -109,14 +88,11 @@ class Color(Resource):
     def delete(self, color_id):
         """Delete a colour by ID.
 
-        The colour is also removed from any colour set that contained it.
+        Any colour set that used it loses it from its swatch list.
         """
         with get_db_connection() as (_, cursor):
             colors = ColorRepository(cursor)
-
-            color = colors.get(color_id)
-            if not color:
-                ns.abort(404, f"Colour #{color_id} not found")
+            color = get_or_404(ns, colors, color_id, "Colour")
 
             colors.delete(color_id)
             return color, 200

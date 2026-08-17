@@ -20,7 +20,7 @@ from api.models.catalog import (
     product_type_write_model,
 )
 from api.models.common import pagination_model
-from api.pagination import get_pagination_params, make_pagination
+from api.routes.crud import page_of
 from api.security import PROTECTED_DOC, login_required
 from api.repositories import NestingTooDeepError, ProductTypeRepository
 
@@ -48,30 +48,13 @@ class ProductTypeList(Resource):
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
         """List product types with pagination, search and hierarchy filters."""
-        page, limit, offset = get_pagination_params(request.args)
-        search = request.args.get("q")
-        parent_id = request.args.get("parent_id", type=int)
-        roots_only = request.args.get("roots_only") in {"1", "true", "True"}
-
         with get_db_connection() as (_, cursor):
-            types = ProductTypeRepository(cursor)
-
-            return {
-                "product_types": types.list(
-                    search=search,
-                    parent_id=parent_id,
-                    roots_only=roots_only,
-                    limit=limit,
-                    offset=offset,
-                ),
-                "pagination": make_pagination(
-                    types.count(
-                        search=search, parent_id=parent_id, roots_only=roots_only
-                    ),
-                    page,
-                    limit,
-                ),
-            }
+            return page_of(
+                ProductTypeRepository(cursor),
+                "product_types",
+                parent_id=request.args.get("parent_id", type=int),
+                roots_only=request.args.get("roots_only") in {"1", "true", "True"},
+            )
 
     @ns.expect(product_type_write_model, validate=True)
     @ns.marshal_with(product_type_model, code=201)

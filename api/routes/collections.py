@@ -4,7 +4,6 @@ A collection owns colour sets, and products may belong to one. Deleting a
 collection leaves its colour sets and products in place, simply unowned.
 """
 
-from flask import request
 from flask_restx import Namespace, Resource
 
 from api.db import get_db_connection
@@ -14,9 +13,9 @@ from api.models.catalog import (
     collection_write_model,
 )
 from api.models.common import pagination_model
-from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, login_required
 from api.repositories import CollectionRepository
+from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.security import PROTECTED_DOC, login_required
 
 ns = Namespace("collections", description="Collections operations")
 
@@ -39,20 +38,8 @@ class CollectionList(Resource):
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
         """List collections with pagination and optional fuzzy search."""
-        page, limit, offset = get_pagination_params(request.args)
-        search = request.args.get("q")
-
         with get_db_connection() as (_, cursor):
-            collections = CollectionRepository(cursor)
-
-            return {
-                "collections": collections.list(
-                    search=search, limit=limit, offset=offset
-                ),
-                "pagination": make_pagination(
-                    collections.count(search=search), page, limit
-                ),
-            }
+            return page_of(CollectionRepository(cursor), "collections")
 
     @ns.expect(collection_write_model, validate=True)
     @ns.marshal_with(collection_model, code=201)
@@ -64,16 +51,13 @@ class CollectionList(Resource):
     def post(self):
         """Create a new collection."""
         data = ns.payload
-        name = data["name"]
 
         with get_db_connection() as (_, cursor):
             collections = CollectionRepository(cursor)
-
-            if collections.name_exists(name):
-                ns.abort(409, f"The collection '{name}' already exists.")
+            reject_duplicate_name(ns, collections, data["name"], "Collection")
 
             collection_id = collections.create(
-                name=name, description=data.get("description")
+                name=data["name"], description=data.get("description")
             )
             return collections.get(collection_id), 201
 
@@ -87,11 +71,9 @@ class Collection(Resource):
     def get(self, collection_id):
         """Get a collection by ID."""
         with get_db_connection() as (_, cursor):
-            collection = CollectionRepository(cursor).get(collection_id)
-            if not collection:
-                ns.abort(404, f"Collection #{collection_id} not found")
-
-            return collection
+            return get_or_404(
+                ns, CollectionRepository(cursor), collection_id, "Collection"
+            )
 
     @ns.expect(collection_write_model, validate=True)
     @ns.marshal_with(collection_model)
@@ -104,22 +86,18 @@ class Collection(Resource):
     def put(self, collection_id):
         """Update a collection by ID."""
         data = ns.payload
-        name = data["name"]
 
         with get_db_connection() as (_, cursor):
             collections = CollectionRepository(cursor)
-
-            if not collections.exists(collection_id):
-                ns.abort(404, f"Collection #{collection_id} not found")
-
-            if collections.name_exists(name, exclude_id=collection_id):
-                ns.abort(
-                    409,
-                    f"Collection name '{name}' is already used by another collection.",
-                )
+            get_or_404(ns, collections, collection_id, "Collection")
+            reject_duplicate_name(
+                ns, collections, data["name"], "Collection", exclude_id=collection_id
+            )
 
             collections.update(
-                collection_id, name=name, description=data.get("description")
+                collection_id,
+                name=data["name"],
+                description=data.get("description"),
             )
             return collections.get(collection_id), 200
 
@@ -131,14 +109,11 @@ class Collection(Resource):
     def delete(self, collection_id):
         """Delete a collection by ID.
 
-        Its colour sets and products survive with their collection cleared.
+        Its colour sets and products stay, detached from any collection.
         """
         with get_db_connection() as (_, cursor):
             collections = CollectionRepository(cursor)
-
-            collection = collections.get(collection_id)
-            if not collection:
-                ns.abort(404, f"Collection #{collection_id} not found")
+            collection = get_or_404(ns, collections, collection_id, "Collection")
 
             collections.delete(collection_id)
             return collection, 200

@@ -2,63 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
-from pymysql.cursors import DictCursor
+from api.repositories.base import NameTableRepository
 
 
-class SizeRepository:
-
-    def __init__(self, cursor: DictCursor):
-        self._cursor = cursor
-
-    def list(
-        self, *, search: Optional[str] = None, limit: int, offset: int
-    ) -> list[dict]:
-        where, params = self._filter(search)
-        self._cursor.execute(
-            f"SELECT id, name, position FROM sizes {where} "
-            "ORDER BY position, id LIMIT %s OFFSET %s",
-            params + [limit, offset],
-        )
-        return [dict(row) for row in self._cursor.fetchall()]
-
-    def count(self, *, search: Optional[str] = None) -> int:
-        where, params = self._filter(search)
-        self._cursor.execute(f"SELECT COUNT(*) AS total FROM sizes {where}", params)
-        return self._cursor.fetchone()["total"]
-
-    def get(self, size_id: int) -> Optional[dict]:
-        self._cursor.execute(
-            "SELECT id, name, position FROM sizes WHERE id = %s", (size_id,)
-        )
-        row = self._cursor.fetchone()
-        return dict(row) if row else None
-
-    def exists(self, size_id: int) -> bool:
-        self._cursor.execute("SELECT 1 FROM sizes WHERE id = %s", (size_id,))
-        return self._cursor.fetchone() is not None
-
-    def missing_ids(self, size_ids: list[int]) -> list[int]:
-        """Return the subset of `size_ids` that do not exist."""
-        if not size_ids:
-            return []
-        placeholders = ", ".join(["%s"] * len(size_ids))
-        self._cursor.execute(
-            f"SELECT id FROM sizes WHERE id IN ({placeholders})", list(size_ids)
-        )
-        found = {row["id"] for row in self._cursor.fetchall()}
-        return [sid for sid in size_ids if sid not in found]
-
-    def name_exists(self, name: str, *, exclude_id: Optional[int] = None) -> bool:
-        """Check whether `name` is taken, optionally ignoring one size."""
-        if exclude_id is None:
-            self._cursor.execute("SELECT 1 FROM sizes WHERE name = %s", (name,))
-        else:
-            self._cursor.execute(
-                "SELECT 1 FROM sizes WHERE name = %s AND id <> %s", (name, exclude_id)
-            )
-        return self._cursor.fetchone() is not None
+class SizeRepository(NameTableRepository):
+    TABLE = "sizes"
+    COLUMNS = "id, name, position"
+    # S before M before L, which is what position exists for.
+    ORDER_BY = "position, id"
 
     def create(self, *, name: str, position: int = 0) -> int:
         self._cursor.execute(
@@ -86,10 +37,3 @@ class SizeRepository:
             (size_id,),
         )
         self._cursor.execute("DELETE FROM sizes WHERE id = %s", (size_id,))
-
-    @staticmethod
-    def _filter(search: Optional[str]) -> Tuple[str, list]:
-        term = (search or "").strip()
-        if not term:
-            return "", []
-        return "WHERE name LIKE %s", [f"%{term}%"]

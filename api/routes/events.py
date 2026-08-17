@@ -1,17 +1,16 @@
 """Events: the fairs, markets and shows the workshop has taken part in.
 
-Reads are public — the landing page timeline uses them. Writes require a bearer
-token, since only the owners should be adding to the shop's history.
+Reads are public — the landing page timeline uses them. Writes require a session,
+since only the owners should be adding to the shop's history.
 """
 
-from flask import request
 from flask_restx import Namespace, Resource
 
 from api.db import get_db_connection
 from api.models.common import pagination_model
 from api.models.events import event_list_model, event_model, event_write_model
-from api.pagination import get_pagination_params, make_pagination
 from api.repositories import EventRepository
+from api.routes.crud import page_of
 from api.security import PROTECTED_DOC, login_required
 
 ns = Namespace("events", description="Fairs and markets the workshop attended")
@@ -30,16 +29,8 @@ class EventList(Resource):
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
         """List events, most recent first."""
-        page, limit, offset = get_pagination_params(request.args)
-        search = request.args.get("q")
-
         with get_db_connection() as (_, cursor):
-            events = EventRepository(cursor)
-
-            return {
-                "events": events.list(search=search, limit=limit, offset=offset),
-                "pagination": make_pagination(events.count(search=search), page, limit),
-            }
+            return page_of(EventRepository(cursor), "events")
 
     @ns.doc(**PROTECTED_DOC)
     @ns.expect(event_write_model, validate=True)

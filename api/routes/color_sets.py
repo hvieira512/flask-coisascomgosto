@@ -18,9 +18,9 @@ from api.models.catalog import (
     color_set_write_model,
 )
 from api.models.common import pagination_model
-from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, login_required
 from api.repositories import ColorRepository, ColorSetRepository, CollectionRepository
+from api.routes.crud import page_of
+from api.security import PROTECTED_DOC, login_required
 
 ns = Namespace("color-sets", description="Colour set operations")
 
@@ -58,26 +58,12 @@ class ColorSetList(Resource):
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
         """List colour sets with pagination, search and collection filter."""
-        page, limit, offset = get_pagination_params(request.args)
-        search = request.args.get("q")
-        collection_id = request.args.get("collection_id", type=int)
-
         with get_db_connection() as (_, cursor):
-            color_sets = ColorSetRepository(cursor)
-
-            return {
-                "color_sets": color_sets.list(
-                    search=search,
-                    collection_id=collection_id,
-                    limit=limit,
-                    offset=offset,
-                ),
-                "pagination": make_pagination(
-                    color_sets.count(search=search, collection_id=collection_id),
-                    page,
-                    limit,
-                ),
-            }
+            return page_of(
+                ColorSetRepository(cursor),
+                "color_sets",
+                collection_id=request.args.get("collection_id", type=int),
+            )
 
     @ns.expect(color_set_write_model, validate=True)
     @ns.marshal_with(color_set_model, code=201)
