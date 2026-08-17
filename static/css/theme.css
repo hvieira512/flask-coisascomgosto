@@ -96,6 +96,18 @@ h3 {
     letter-spacing: -.02em;
 }
 
+/* Shared primitives live here, not in store.css: theme.css is the only
+   stylesheet both the storefront and the dashboard load, and the dashboard had
+   its own copy of this rule under a different name. Bulma has is-uppercase and
+   is-size-7 but no letter-spacing helper. */
+.eyebrow {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--ccg-blue-500);
+    margin-bottom: .9rem;
+}
+
 body {
     background-color: var(--ccg-paper);
     color: var(--ccg-ink);

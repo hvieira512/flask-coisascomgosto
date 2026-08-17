@@ -2,11 +2,12 @@
 
 {% block title %}Início · Dashboard{% endblock %}
 
+{% from 'dashboard/components/page.html' import page_head %}
+
 {% block content %}
-<header class="mb-5">
-    <h1 class="title is-4 mb-1">Olá{% if session.user %}, {{ session.user.username }}{% endif %}</h1>
-    <p class="subtitle is-6 has-text-grey">Um resumo do catálogo.</p>
-</header>
+{{ page_head('Painel',
+             'Olá' ~ (', ' ~ session.user.username if session.user else ''),
+             'Um resumo do catálogo.') }}
 
 {# Filled by js/dashboard/home.js from the API, so the numbers cannot drift
    from what the storefront actually shows. #}

@@ -13,10 +13,11 @@ const totalOf = async (url) => {
 };
 
 const statCard = ({ label, value, icon, href }) => `
-    <a class="cell card p-5 mb-0 dash-stat" href="${href}">
-      <span class="dash-stat-icon"><i class="fa-solid ${icon}"></i></span>
+    <a class="cell card p-5 mb-0 is-flex is-flex-direction-column has-text-inherit"
+       href="${href}">
+      <span class="icon has-text-link mb-2"><i class="fa-solid ${icon}"></i></span>
       <span class="dash-stat-value">${value}</span>
-      <span class="dash-stat-label">${escapeHtml(label)}</span>
+      <span class="eyebrow mb-0">${escapeHtml(label)}</span>
     </a>`;
 
 async function renderStats() {

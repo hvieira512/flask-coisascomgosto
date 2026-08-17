@@ -2,21 +2,11 @@
 
 {% block title %}Eventos · Dashboard{% endblock %}
 
+{% from 'dashboard/components/page.html' import page_head_action %}
+
 {% block content %}
-<header class="level is-mobile mb-5">
-    <div class="level-left">
-        <div>
-            <h1 class="title is-4 mb-1">Eventos</h1>
-            <p class="subtitle is-6 has-text-grey mb-0" id="event-count">—</p>
-        </div>
-    </div>
-    <div class="level-right">
-        <button class="button is-dark" id="new-event">
-            <span class="icon"><i class="fa-solid fa-plus"></i></span>
-            <span>Novo evento</span>
-        </button>
-    </div>
-</header>
+{{ page_head_action('Percurso', 'Eventos', 'event-count',
+                    'new-event', 'Novo evento') }}
 
 <div class="card dash-panel p-0">
     <table class="table is-fullwidth is-hoverable mb-0" id="event-table">

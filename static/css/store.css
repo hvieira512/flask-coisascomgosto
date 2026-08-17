@@ -12,14 +12,6 @@ main {
 }
 
 /* Bulma has is-uppercase and is-size-7 but no letter-spacing helper. */
-.eyebrow {
-    font-size: .72rem;
-    text-transform: uppercase;
-    letter-spacing: .16em;
-    color: var(--ccg-blue-500);
-    margin-bottom: .9rem;
-}
-
 /* Bulma has no max-width helper, and unbounded body copy is unreadable. */
 .measure {
     max-width: 34rem;

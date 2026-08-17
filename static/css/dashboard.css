@@ -5,7 +5,10 @@
  */
 
 :root {
-    --dash-border: #ededed;
+    /* The same warm line the storefront uses. The dashboard ran on cold greys
+       (#ededed, #fbfbfa, #363636), which is why it read as a different product
+       from the shop it manages. */
+    --dash-border: var(--ccg-line);
     --dash-sidebar-width: 240px;
     /* Bulma's own navbar height, and what it pads <html> by for is-fixed-top.
        Pinned here so the sidebar can subtract exactly the same amount. */
@@ -13,13 +16,14 @@
 }
 
 .dashboard-body {
-    background: #fbfbfa;
+    background: var(--ccg-paper);
+    color: var(--ccg-ink);
     min-height: 100vh;
 }
 
 .dash-navbar {
     border-bottom: 1px solid var(--dash-border);
-    background: #fff;
+    background: var(--ccg-surface);
     /* The 2rem logo pushed it to 53px, one pixel past what Bulma pads for. */
     min-height: var(--dash-navbar-height);
     height: var(--dash-navbar-height);
@@ -43,12 +47,6 @@
     background: transparent;
 }
 
-.dash-navbar-menu .navbar-end {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-}
-
 /* Dropdowns are opened by toggling .is-active in menus.js. */
 .navbar-item.has-dropdown .navbar-dropdown {
     display: none;
@@ -62,11 +60,6 @@
    Shell
    ---------------------------------------------------------------- */
 
-.dash-shell {
-    display: flex;
-    align-items: flex-start;
-}
-
 /* Sticky under the fixed navbar, sized to exactly the space left below it, so
    the foot of the menu is always on screen however long the page gets. Its own
    overflow-y means a very long menu can still scroll. */
@@ -74,7 +67,7 @@
     flex: 0 0 var(--dash-sidebar-width);
     width: var(--dash-sidebar-width);
     padding: 1.5rem 1rem;
-    background: #fff;
+    background: var(--ccg-surface);
     border-right: 1px solid var(--dash-border);
     position: sticky;
     top: var(--dash-navbar-height);
@@ -97,13 +90,27 @@
     align-items: center;
     gap: .6rem;
     padding: .6rem .75rem;
-    border-radius: 6px;
-    color: #363636;
+    border-radius: var(--bulma-radius);
+    color: var(--ccg-ink);
+    transition: background-color .15s ease, color .15s ease;
+}
+
+/* The icons carry the section; at full ink they competed with the label. */
+.dash-sidebar .menu-list a .icon {
+    color: var(--ccg-ink-faint);
+    transition: color .15s ease;
+}
+
+.dash-sidebar .menu-list a:hover .icon,
+.dash-sidebar .menu-list a.is-active .icon {
+    color: currentColor;
 }
 
 .dash-main {
     flex: 1 1 auto;
-    padding: 2rem;
+    /* The storefront breathes on .section spacing; the dashboard was tighter
+       than everything it manages. */
+    padding: 2.5rem 2.5rem 4rem;
     min-width: 0;
 }
 
@@ -121,26 +128,6 @@
 
 .dash-overlay.is-open {
     display: block;
-}
-
-/* Product cards in the dashboard grid. */
-.dash-main .product-card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--dash-border);
-    box-shadow: none;
-}
-
-.dash-main .product-card .card-image img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    display: block;
-}
-
-.dash-main .product-card .card-content {
-    flex: 1 0 auto;
 }
 
 @media screen and (max-width: 1023px) {
@@ -175,7 +162,7 @@
     width: 2rem;
     height: 2rem;
     border: 2px solid var(--dash-border);
-    border-top-color: #363636;
+    border-top-color: var(--ccg-blue-500);
     border-radius: 50%;
     animation: app-spin .7s linear infinite;
 }
@@ -186,24 +173,6 @@
     }
 }
 
-/* ----------------------------------------------------------------
-   Panels, stats and product management
-   ---------------------------------------------------------------- */
-
-.dashboard-body {
-    background: var(--ccg-paper);
-}
-
-.dash-navbar {
-    border-bottom: 1px solid var(--bulma-border);
-}
-
-.dash-sidebar .menu-list a {
-    border-radius: var(--bulma-radius);
-    color: var(--ccg-ink);
-    transition: background-color .15s ease, color .15s ease;
-}
-
 .dash-sidebar .menu-list a:hover {
     background-color: var(--ccg-blue-50);
     color: var(--ccg-blue-800);
@@ -211,7 +180,7 @@
 
 .dash-sidebar .menu-list a.is-active {
     background-color: var(--ccg-blue-800);
-    color: #fff;
+    color: var(--ccg-surface);
 }
 
 .dash-panel {
@@ -220,36 +189,11 @@
 }
 
 /* Stat cards on Início. */
-.dash-stat {
-    display: flex;
-    flex-direction: column;
-    gap: .15rem;
-    color: inherit;
-}
-
-.dash-stat-icon {
-    color: var(--ccg-blue-500);
-    font-size: .9rem;
-    margin-bottom: .35rem;
-}
-
 .dash-stat-value {
     font-size: 1.9rem;
     font-weight: 700;
     line-height: 1;
     color: var(--ccg-blue-900);
-}
-
-.dash-stat-label {
-    font-size: .72rem;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--ccg-ink-soft);
-}
-
-.dash-list {
-    display: flex;
-    flex-direction: column;
 }
 
 .dash-list li {
@@ -285,24 +229,12 @@
     display: block;
 }
 
-.dash-product-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .3rem;
-}
-
+/* The only part Bulma cannot express: spanning every column of the grid. */
 .dash-empty {
     grid-column: 1 / -1;
-    text-align: center;
-    padding: 4rem 1rem;
 }
 
 /* Rows inside the edit modal's colour and photograph panels. */
-.dash-rows {
-    display: flex;
-    flex-direction: column;
-}
-
 .dash-row {
     display: flex;
     align-items: center;
@@ -353,10 +285,6 @@
     color: var(--ccg-ink-soft);
 }
 
-.dash-facts dd {
-    font-weight: 500;
-}
-
 @media screen and (max-width: 768px) {
     .dash-view {
         grid-template-columns: 1fr;
@@ -372,7 +300,3 @@
     align-items: end;
 }
 
-.dash-filters-clear {
-    display: flex;
-    align-items: flex-end;
-}

@@ -2,13 +2,11 @@
 
 {% block title %}Contactos · Dashboard{% endblock %}
 
+{% from 'dashboard/components/page.html' import page_head %}
+
 {% block content %}
-<header class="mb-5">
-    <h1 class="title is-4 mb-1">Contactos</h1>
-    <p class="subtitle is-6 has-text-grey mb-0">
-        O que aparece no fim da página inicial e no rodapé da loja.
-    </p>
-</header>
+{{ page_head('A loja', 'Contactos',
+             'O que aparece no fim da página inicial e no rodapé da loja.') }}
 
 <div class="columns">
     <div class="column is-7">

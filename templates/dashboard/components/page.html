@@ -1,0 +1,53 @@
+{# Page furniture for the dashboard, so the four pages cannot drift apart.
+
+   Everything here is Bulma: the eyebrow is the one primitive it has no helper
+   for (letter-spacing), and it lives in theme.css because the storefront uses
+   it too. #}
+
+{% macro page_head(eyebrow, title, subtitle=None) %}
+<header class="mb-6">
+    <p class="eyebrow mb-2">{{ eyebrow }}</p>
+    <h1 class="title is-4 mb-1">{{ title }}</h1>
+    {% if subtitle %}
+    <p class="subtitle is-6 has-text-grey mb-0">{{ subtitle }}</p>
+    {% endif %}
+</header>
+{% endmacro %}
+
+{# Header with an action on the right, for pages that create something. #}
+{% macro page_head_action(eyebrow, title, subtitle, button_id, button_label,
+                         icon='fa-plus') %}
+<header class="level is-mobile mb-6">
+    <div class="level-left">
+        <div>
+            <p class="eyebrow mb-2">{{ eyebrow }}</p>
+            <h1 class="title is-4 mb-1">{{ title }}</h1>
+            <p class="subtitle is-6 has-text-grey mb-0" id="{{ subtitle }}">—</p>
+        </div>
+    </div>
+    <div class="level-right">
+        <button class="button is-dark" id="{{ button_id }}">
+            <span class="icon"><i class="fa-solid {{ icon }}"></i></span>
+            <span>{{ button_label }}</span>
+        </button>
+    </div>
+</header>
+{% endmacro %}
+
+{# One filter control. The dashboard's filter bar repeats this four times. #}
+{% macro filter_field(id, label, options=None, placeholder=None) %}
+<div class="field mb-0">
+    <label class="label is-small" for="{{ id }}">{{ label }}</label>
+    {% if options is none %}
+    <input class="input is-small" id="{{ id }}" placeholder="{{ placeholder or '' }}">
+    {% else %}
+    <div class="select is-small is-fullwidth">
+        <select id="{{ id }}">
+            {% for value, text in options %}
+            <option value="{{ value }}">{{ text }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

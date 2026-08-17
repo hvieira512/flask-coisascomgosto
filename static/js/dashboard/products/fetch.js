@@ -13,7 +13,7 @@ const escapeHtml = (value) =>
 const renderEmptyMessage = () => {
     const filtered = isFiltered();
     productList.innerHTML = `
-        <div class="cell dash-empty">
+        <div class="cell dash-empty has-text-centered py-6">
             <span class="icon is-large has-text-grey-light">
               <i class="fa-solid ${filtered ? "fa-filter-circle-xmark" : "fa-box-open"} fa-2x"></i>
             </span>
@@ -53,7 +53,7 @@ const renderProduct = (product) => {
                     ${escapeHtml(product.type?.name ?? product.category.name)}
                     ${product.collection ? ` · ${escapeHtml(product.collection.name)}` : ""}
                 </p>
-                <div class="dash-product-badges">${badges}</div>
+                <div class="is-flex is-flex-wrap-wrap is-gap-1">${badges}</div>
                 <p class="is-size-7 has-text-grey mt-3">
                     <span class="icon is-small"><i class="fa-solid fa-image"></i></span>
                     ${photos} ${photos === 1 ? "fotografia" : "fotografias"}
