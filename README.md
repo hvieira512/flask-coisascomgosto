@@ -37,10 +37,7 @@ inside the network.
 | Variable | Default | Purpose |
 |---|---|---|
 | `FLASK_DEBUG` | `1` | `1` gives live reload and the debugger; anything else runs gunicorn |
-| `SECRET_KEY` | dev value | Signs sessions. **Change in production** |
-| `JWT_SECRET_KEY` | dev value | Signs tokens. **Change in production** |
-| `JWT_ACCESS_MINUTES` | `15` | Access-token lifetime |
-| `JWT_REFRESH_DAYS` | `14` | Refresh-token lifetime |
+| `SECRET_KEY` | dev value | Signs the session cookie, which is the whole of authentication. **Change in production** |
 | `MYSQL_HOST` | `127.0.0.1` | Compose overrides this to `db` |
 | `MYSQL_PORT` | `3306` | |
 | `MYSQL_USER` / `MYSQL_PASSWORD` | `coisascomgosto` | Application account |
@@ -48,7 +45,6 @@ inside the network.
 | `MYSQL_ROOT_PASSWORD` | `root` | Bootstraps the MySQL container |
 | `WEB_PORT` | `5000` | Host port |
 | `GUNICORN_WORKERS` | `3` | Ignored when `FLASK_DEBUG=1` |
-| `MAIL_*` | unset | Outgoing mail; disabled when unset |
 
 ### Live reload
 
@@ -191,58 +187,55 @@ like `products.category_id` use them).
 
 ## API reference
 
+Every endpoint, field, status code and example body is generated from the
+flask-restx models and served at **`/api/docs`** (Swagger UI), with the raw
+schema at `/api/swagger.json`. That is the reference; this section covers only
+what a schema cannot tell you.
+
 All routes are prefixed with `/api`.
 
 ### Authentication
 
-The API uses **JWT bearer tokens**. Catalog reads are public; `/users` and
-`/contacts` require a token.
+Signing in sets Flask's **session cookie**, and the browser sends it on every
+subsequent request — page loads and `fetch()` alike. There is no token to store,
+attach or refresh.
 
 ```
-POST /auth/login    { username, password }  -> { access_token, refresh_token, user }
-POST /auth/refresh  (refresh token in header) -> { access_token }
-GET  /auth/me       (access token in header)  -> the caller's account
-POST /auth/logout   clears the server-rendered session
+POST /auth/register  { username, email, password }  -> the new account
+POST /auth/login     { username, password }         -> the account, + Set-Cookie
+GET  /auth/me                                       -> the signed-in account
+POST /auth/logout                                   -> clears the session
 ```
-
-Send the access token on every protected call:
 
 ```bash
-curl -H "Authorization: Bearer $ACCESS_TOKEN" localhost:5000/api/users/
+curl -c jar -X POST localhost:5000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"hugo","password":"..."}'
+
+curl -b jar localhost:5000/api/users/
 ```
 
-| Token | Lifetime | Purpose |
-|---|---|---|
-| **access** | 15 min (`JWT_ACCESS_MINUTES`) | Sent with every request |
-| **refresh** | 14 days (`JWT_REFRESH_DAYS`) | Exchanged for a new access token |
+Catalog **reads are public** — the storefront depends on that. Every **write**,
+plus all of `/users` and `/contacts`, needs a session and answers `401` without
+one. `api/security.py` holds the single guard, `login_required`; it aborts with
+JSON rather than redirecting, because its callers are `fetch()` requests that
+would otherwise be handed a login page to parse.
 
-**When the access token expires**, the client POSTs to `/auth/refresh` with the
-**refresh** token and retries — no password prompt. An *access* token sent to
-`/auth/refresh` is rejected (422); only a refresh token is accepted there.
+`is_admin` is **not** accepted at registration, so nobody can self-promote.
+Password hashes are never returned.
 
-`static/js/core/auth.js` implements this in the browser: `Auth.authFetch()`
-attaches the access token, and on a 401 it refreshes once and replays the
-request. Parallel 401s share one in-flight refresh. Only when the refresh token
-is dead too is the user sent back to `/auth`.
-
-Tokens carry `username` and `is_admin` claims, so guards need no database round
-trip. `api/security.py` exposes `token_required` and `admin_required`.
-
-> The rendered dashboard pages still authenticate by **Flask session**, which
-> login sets alongside the tokens. JWTs are stateless, so `/auth/logout` clears
-> the session but cannot revoke an issued token — the client discards it, which
-> the dashboard does on sign-out. Set `JWT_SECRET_KEY` to 32+ bytes in
-> production.
+> The dashboard pages use the same cookie, through `web/dashboard.py`'s own
+> `login_required`, which *does* redirect — a browser following a link wants the
+> login form, not a 401. Set `SECRET_KEY` in production: it signs the cookie, and
+> the default is a placeholder.
 
 ### Conventions
 
 **Pagination** — every list endpoint accepts `page` (1-based, default 1) and
-`limit` (default 10, max 100), and returns:
+`limit` (default 10, max 100), and wraps its rows alongside:
 
 ```json
-{
-  "pagination": { "total": 42, "page": 2, "pages": 5, "limit": 10 }
-}
+{ "pagination": { "total": 42, "page": 2, "pages": 5, "limit": 10 } }
 ```
 
 Non-numeric or non-positive values return `400`.
@@ -256,271 +249,39 @@ name.
 |---|---|
 | `200` / `201` | Success |
 | `400` | Missing/invalid body fields, bad pagination, or illegal type nesting |
-| `401` | Wrong password, or a missing/expired bearer token |
-| `403` | Valid token, but the account lacks the required privilege |
-| `422` | Malformed token, or the wrong token type for the endpoint |
+| `401` | Wrong password, or not signed in |
+| `403` | Signed in, but the account lacks the required privilege |
 | `404` | The resource, or something it references, does not exist |
 | `409` | Name (or variant) already taken |
 
-### Categories
+### Behaviour the schema does not show
 
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/categories/` | `?q=` |
-| `POST` | `/categories/` | `{ name }` |
-| `GET` | `/categories/<id>` | |
-| `PUT` | `/categories/<id>` | `{ name }` |
-| `DELETE` | `/categories/<id>` | Cascades to its products |
-
-### Product types
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/product-types/` | `?q=`, `?parent_id=`, `?roots_only=1` |
-| `POST` | `/product-types/` | `{ name, description?, parent_id? }` |
-| `GET` | `/product-types/<id>` | Includes `sub_types` |
-| `PUT` | `/product-types/<id>` | `{ name, description?, parent_id? }` |
-| `DELETE` | `/product-types/<id>` | Cascades to sub-types |
-
-```bash
-# A Coração, and the two ways it can be finished
-curl -X POST localhost:5000/api/product-types/ \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Coração","description":"Wooden Viana heart plaque"}'
-
-curl -X POST localhost:5000/api/product-types/ \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"With string","parent_id":1}'
-
-curl -X POST localhost:5000/api/product-types/ \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Base for mini figures","parent_id":1}'
-```
-
-### Collections
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/collections/` | `?q=` |
-| `POST` | `/collections/` | `{ name, description? }` |
-| `GET` | `/collections/<id>` | |
-| `PUT` | `/collections/<id>` | `{ name, description? }` |
-| `DELETE` | `/collections/<id>` | Products and colour sets survive, unowned |
-
-### Colours
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/colors/` | `?q=` |
-| `POST` | `/colors/` | `{ name, hex? }` |
-| `GET` | `/colors/<id>` | |
-| `PUT` | `/colors/<id>` | `{ name, hex? }` |
-| `DELETE` | `/colors/<id>` | Removed from any colour set that used it |
-
-### Colour sets
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/color-sets/` | `?q=`, `?collection_id=` |
-| `POST` | `/color-sets/` | `{ name, color_ids[], collection_id? }` |
-| `GET` | `/color-sets/<id>` | |
-| `PUT` | `/color-sets/<id>` | Replaces the colour list wholesale |
-| `DELETE` | `/color-sets/<id>` | Removes variants offered in it |
-
-`color_ids` is ordered — the first colour is the primary one. Duplicates are
-collapsed.
-
-```bash
-curl -X POST localhost:5000/api/color-sets/ \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"White and Green","color_ids":[1,2],"collection_id":1}'
-```
-
-### Sizes
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/sizes/` | `?q=`; ordered by `position` |
-| `POST` | `/sizes/` | `{ name, position? }` |
-| `GET` | `/sizes/<id>` | |
-| `PUT` | `/sizes/<id>` | `{ name, position? }` |
-| `DELETE` | `/sizes/<id>` | Detached from products; defaults cleared |
-
-`S`, `M` and `L` are seeded by `db/schema.sql`.
-
-### Products
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/products/` | `?q=`, `?category_id=`, `?collection_id=`, `?type_id=` |
-| `POST` | `/products/` | see body below |
-| `GET` | `/products/<id>` | |
-| `PUT` | `/products/<id>` | Same body; variants and sizes are separate |
-| `DELETE` | `/products/<id>` | Cascades to variants and size links |
-
-Request body — only `name`, `description` and `category_id` are required:
-
-```json
-{
-  "name": "Caixa Redonda",
-  "description": "Caixa de madeira redonda",
-  "category_id": 1,
-  "type_id": 3,
-  "collection_id": 1,
-  "default_size_id": 2
-}
-```
-
-Response:
-
-```json
-{
-  "id": 1,
-  "name": "Caixa Redonda",
-  "description": "Caixa de madeira redonda",
-  "category":     { "id": 1, "name": "Madeira" },
-  "type":         { "id": 3, "name": "With string",
-                    "parent": { "id": 1, "name": "Coração" } },
-  "collection":   { "id": 1, "name": "Barra da Saia" },
-  "default_size": { "id": 2, "name": "M", "position": 2 },
-  "sizes":    [ { "id": 1, "name": "S", "position": 1 } ],
-  "variants": [
-    {
-      "id": 1,
-      "color_set": {
-        "id": 1,
-        "name": "White and Green",
-        "collection": { "id": 1, "name": "Barra da Saia" },
-        "colors": [
-          { "id": 1, "name": "White", "hex": "#FFFFFF" },
-          { "id": 2, "name": "Green", "hex": "#2E7D32" }
-        ]
-      }
-    }
-  ]
-}
-```
-
-`type`, `collection` and `default_size` are `null` when unset.
-
-### Product variants
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/products/<id>/variants` | |
-| `POST` | `/products/<id>/variants` | `{ color_set_id }` — `409` if already offered |
-| `DELETE` | `/products/<id>/variants/<variant_id>` | `404` if the variant belongs to another product |
-
-### Product images
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/products/<id>/images` | `?variant_id=` to narrow to one colour set |
-| `POST` | `/products/<id>/images` | `{ url, alt?, position?, variant_id? }` |
-| `PUT` | `/products/<id>/images/<image_id>` | Same body |
-| `DELETE` | `/products/<id>/images/<image_id>` | |
-
-An image with a `variant_id` belongs to that colour set; without one it belongs
-to the product and acts as the fallback. `primary_image` on a product is the
-first product-level photo, falling back to the first variant photo — so a
-product photographed only per colour set still gets a grid tile.
-
-```bash
-# A photo of the white/green version specifically
-curl -X POST localhost:5000/api/products/1/images \
-  -H 'Content-Type: application/json' \
-  -d '{"url":"/static/img/caixa-branco-verde.jpg","alt":"Caixa branco e verde","variant_id":1}'
-```
-
-### Product sizes
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/products/<id>/sizes` | |
-| `PUT` | `/products/<id>/sizes` | `{ size_ids: [] }` — full replacement |
-
-```bash
-# Offer the product in S, M and L
-curl -X PUT localhost:5000/api/products/1/sizes \
-  -H 'Content-Type: application/json' -d '{"size_ids":[1,2,3]}'
-
-# Back to default size only
-curl -X PUT localhost:5000/api/products/1/sizes \
-  -H 'Content-Type: application/json' -d '{"size_ids":[]}'
-```
-
-### Events
-
-Fairs, markets and shows the workshop has attended. Reads are public — the
-landing-page timeline uses them; writes need a bearer token.
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/events/` | `?q=` matches name or location. Most recent first. |
-| `POST` | `/events/` | **Bearer token.** `{ name, starts_on, location?, description?, ends_on?, url? }` |
-| `GET` | `/events/<id>` | |
-| `PUT` | `/events/<id>` | **Bearer token.** |
-| `DELETE` | `/events/<id>` | **Bearer token.** |
-
-`starts_on`/`ends_on` are ISO dates; omit `ends_on` for a one-day event. `year`
-is derived from `starts_on` for grouping. The timeline renders the range in
-Portuguese via the `event_dates` Jinja filter, collapsing shared parts —
-`12 - 20 de Agosto de 2025`, but `28 de Julho - 3 de Agosto de 2025`.
-
-```bash
-curl -X POST localhost:5000/api/events/ \
-  -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"name":"Feira de Artesanato","location":"Viana do Castelo",
-       "starts_on":"2025-08-15","ends_on":"2025-08-20"}'
-```
-
-### Contacts
-
-The shop's own details — a **singleton**: one row, always id 1, edited in place.
-There is no ID in the path and no POST/DELETE.
-
-| Method | Path | Notes |
-|---|---|---|
-| `GET` | `/contacts/` | **Bearer token required.** Address, email, WhatsApp, socials |
-| `PUT` | `/contacts/` | **Bearer token required.** Full replacement; omitted fields are cleared |
-
-```json
-{
-  "id": 1,
-  "address": "Viana do Castelo, Portugal",
-  "email": "geral@coisascomgosto.pt",
-  "whatsapp": "939320334",
-  "whatsapp_url": "https://wa.me/939320334",
-  "facebook_url": "https://www.facebook.com/coisascomgosto.vianadocastelo/",
-  "instagram_url": "https://www.instagram.com/coisascomgostovc/"
-}
-```
-
-**There is deliberately no `phone` field.** The WhatsApp number *is* the phone
-number; `whatsapp_url` is derived from it by stripping every non-digit, so
-`+351 912 345 678` becomes `https://wa.me/351912345678`.
-
-The navbar and footer read this via an app-wide context processor
-(`web/__init__.py`), so the owners change their details in one place.
-
-### Users and auth
-
-| Method | Path | Notes |
-|---|---|---|
-| `POST` | `/auth/register` | `{ username, email, password }` |
-| `POST` | `/auth/login` | `{ username, password }` → token pair + session cookie |
-| `POST` | `/auth/refresh` | Refresh token in header → new access token |
-| `GET` | `/auth/me` | **Bearer token required.** The caller's account |
-| `POST` | `/auth/logout` | |
-| `GET` | `/users/` | **Bearer token required.** Paginated |
-| `GET` | `/users/<id>` | **Bearer token required.** |
-
-`is_admin` is **not** accepted at registration; every account is created
-non-admin so nobody can self-promote. Password hashes are never returned.
-
-Both `/users` and `/contacts` are behind bearer tokens. The public site never
-calls them: the footer and landing page read contacts server-side through the
-context processor.
+- **`color_ids` is ordered.** The first colour is the primary one — it is what
+  the storefront badge tints itself with. Duplicates are collapsed.
+- **`S`, `M` and `L` are seeded** by `db/schema.sql`, ordered by `position`
+  rather than by id.
+- **Variants, images and sizes are sub-resources**, not fields on the product
+  body: `POST /products/<id>/variants`, `/images`, and `PUT /sizes`.
+- **`PUT /products/<id>/sizes` replaces the whole list**; `{"size_ids": []}` puts
+  a product back to its default size only.
+- **An image with a `variant_id` belongs to that colour set**; without one it
+  belongs to the product and acts as the fallback. `primary_image` is the first
+  product-level photo, falling back to the first variant photo — so a product
+  photographed only per colour set still gets a grid tile.
+- **`POST /products/<id>/images/upload`** takes `multipart/form-data` instead of
+  JSON, and stores the file under `static/img/products/`. Everything else about
+  an image row is identical either way.
+- **Contacts is a singleton**: one row, always id 1, edited in place. No id in
+  the path, no POST, no DELETE. `PUT` is a full replacement, so an omitted field
+  is cleared. There is deliberately no `phone` field — the WhatsApp number *is*
+  the phone number, and `whatsapp_url` is derived from it by stripping every
+  non-digit, so `+351 912 345 678` becomes `https://wa.me/351912345678`. The
+  navbar and footer read it through an app-wide context processor
+  (`web/__init__.py`), so the owners change their details in one place.
+- **Events**: `starts_on`/`ends_on` are ISO dates and `ends_on` is omitted for a
+  one-day event. The timeline renders the range in Portuguese via the
+  `event_dates` Jinja filter, collapsing shared parts — `12 - 20 de Agosto de
+  2025`, but `28 de Julho - 3 de Agosto de 2025`.
 
 ---
 
@@ -591,19 +352,22 @@ static/js/store/product.js    detail page wiring
 ## Project layout
 
 ```
-app.py                  Flask app factory-ish entrypoint + the init-db command
+app.py                  Flask app entrypoint + the init-db and seed commands
 config.py               Config read from environment variables
-extensions.py           CORS and Mail extension instances
 
 api/
   __init__.py           Api object; mounts every namespace under /api
-  db.py                 Connection handling, PRAGMA foreign_keys, schema init
+  db.py                 PyMySQL connection handling and schema init
   pagination.py         Request-arg parsing and the pagination envelope
+  security.py           login_required — the session guard on every write
+  uploads.py            Storing uploaded photographs on disk
   models/               flask-restx marshalling models — these ARE the Swagger docs
   repositories/         Every SQL statement in the application, one class per table
+    base.py             The reads the lookup tables share
   routes/               HTTP concerns only: validation, status codes, marshalling
+    crud.py             The route bodies they share: paging, 404, 409
 
-web/                    Server-rendered dashboard blueprints
+web/                    Server-rendered storefront and dashboard blueprints
 templates/  static/     Jinja templates and assets
 db/schema.sql           Full schema, dropped and recreated by init-db
 tests/                  pytest suite, isolated per test by truncating tables
