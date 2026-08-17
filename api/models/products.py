@@ -15,7 +15,7 @@ from api.models.catalog import (
     size_model,
     variant_model,
 )
-from api.models.common import pagination_model
+from api.models.common import list_model
 
 product_model = Model(
     "Product",
@@ -63,13 +63,7 @@ product_model = Model(
     },
 )
 
-product_list_model = Model(
-    "ProductList",
-    {
-        "products": fields.List(fields.Nested(product_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+product_list_model = list_model("ProductList", "products", product_model)
 
 product_create_model = Model(
     "ProductCreate",

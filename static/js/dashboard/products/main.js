@@ -2,7 +2,7 @@ import { API } from "../../core/api.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
-import { escapeHtml, productForm, submitProductForm } from "./form.js";
+import { productForm, submitProductForm } from "./form.js";
 import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
 import { addVariant, removeVariant, variantsPanel } from "./variants.js";
 

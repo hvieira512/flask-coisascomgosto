@@ -6,7 +6,7 @@ descriptions here are the API's user-facing documentation.
 
 from flask_restx import Model, fields
 
-from api.models.common import pagination_model
+from api.models.common import list_model
 
 # ----------------
 # Collections
@@ -31,13 +31,7 @@ collection_ref_model = Model(
     },
 )
 
-collection_list_model = Model(
-    "CollectionList",
-    {
-        "collections": fields.List(fields.Nested(collection_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+collection_list_model = list_model("CollectionList", "collections", collection_model)
 
 collection_write_model = Model(
     "CollectionWrite",
@@ -60,13 +54,7 @@ color_model = Model(
     },
 )
 
-color_list_model = Model(
-    "ColorList",
-    {
-        "colors": fields.List(fields.Nested(color_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+color_list_model = list_model("ColorList", "colors", color_model)
 
 color_write_model = Model(
     "ColorWrite",
@@ -98,13 +86,7 @@ color_set_model = Model(
     },
 )
 
-color_set_list_model = Model(
-    "ColorSetList",
-    {
-        "color_sets": fields.List(fields.Nested(color_set_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+color_set_list_model = list_model("ColorSetList", "color_sets", color_set_model)
 
 color_set_write_model = Model(
     "ColorSetWrite",
@@ -134,13 +116,7 @@ size_model = Model(
     },
 )
 
-size_list_model = Model(
-    "SizeList",
-    {
-        "sizes": fields.List(fields.Nested(size_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+size_list_model = list_model("SizeList", "sizes", size_model)
 
 size_write_model = Model(
     "SizeWrite",
@@ -201,12 +177,8 @@ product_type_model = Model(
     },
 )
 
-product_type_list_model = Model(
-    "ProductTypeList",
-    {
-        "product_types": fields.List(fields.Nested(product_type_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
+product_type_list_model = list_model(
+    "ProductTypeList", "product_types", product_type_model
 )
 
 product_type_write_model = Model(

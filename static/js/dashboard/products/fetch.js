@@ -5,11 +5,6 @@ import { isFiltered, photoFilter, query } from "./filters.js";
 const productList = document.getElementById("product-list");
 const container = "#product-list";
 
-const escapeHtml = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-
 const renderEmptyMessage = () => {
     const filtered = isFiltered();
     productList.innerHTML = `

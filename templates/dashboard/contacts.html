@@ -1,6 +1,6 @@
-{% extends 'dashbord_base.html' %}
+{% extends 'dashboard/base.html' %}
 
-{% block title %}Contactos · Dashboard{% endblock %}
+{% block page_title %}Contactos{% endblock %}
 
 {% from 'dashboard/components/page.html' import page_head %}
 
@@ -80,6 +80,6 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block page_scripts %}
 <script type="module" src="{{ url_for('static', filename='js/dashboard/contacts.js') }}"></script>
 {% endblock %}

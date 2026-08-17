@@ -1,6 +1,6 @@
-{% extends 'dashbord_base.html' %}
+{% extends 'dashboard/base.html' %}
 
-{% block title %}Produtos · Dashboard{% endblock %}
+{% block page_title %}Produtos{% endblock %}
 
 {% from 'dashboard/components/page.html' import page_head_action, filter_field %}
 
@@ -46,7 +46,7 @@
 {% endwith %}
 {% endblock %}
 
-{% block scripts %}
+{% block page_scripts %}
 <script src="{{ url_for('static', filename='js/store/color-set.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/dashboard/products/main.js') }}"></script>
 {% endblock %}

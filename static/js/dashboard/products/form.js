@@ -1,11 +1,6 @@
 import { API } from "../../core/api.js";
 import { reference, typeOptions } from "./reference.js";
 
-export const escapeHtml = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-
 const option = (value, label, selected) =>
     `<option value="${value}"${String(selected) === String(value) ? " selected" : ""}>${escapeHtml(label)}</option>`;
 

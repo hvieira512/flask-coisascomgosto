@@ -2,7 +2,7 @@
 
 from flask_restx import Model, fields
 
-from api.models.common import pagination_model
+from api.models.common import list_model
 
 event_model = Model(
     "Event",
@@ -26,13 +26,7 @@ event_model = Model(
     },
 )
 
-event_list_model = Model(
-    "EventList",
-    {
-        "events": fields.List(fields.Nested(event_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+event_list_model = list_model("EventList", "events", event_model)
 
 event_write_model = Model(
     "EventWrite",

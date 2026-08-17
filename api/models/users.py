@@ -1,6 +1,6 @@
 from flask_restx import Model, fields
 
-from api.models.common import pagination_model
+from api.models.common import list_model
 
 user_model = Model(
     "User",
@@ -13,10 +13,4 @@ user_model = Model(
     },
 )
 
-user_list_model = Model(
-    "UserList",
-    {
-        "users": fields.List(fields.Nested(user_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+user_list_model = list_model("UserList", "users", user_model)

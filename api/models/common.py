@@ -9,3 +9,15 @@ pagination_model = Model(
         "limit": fields.Integer,
     },
 )
+
+
+def list_model(name: str, key: str, model: Model) -> Model:
+    """The envelope every list endpoint returns: the rows, and the page they
+    came from. Nine resources declared this identically."""
+    return Model(
+        name,
+        {
+            key: fields.List(fields.Nested(model)),
+            "pagination": fields.Nested(pagination_model),
+        },
+    )

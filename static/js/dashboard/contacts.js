@@ -9,11 +9,6 @@ const FIELDS = [
     "address", "maps_url", "email", "whatsapp", "facebook_url", "instagram_url",
 ];
 
-const escapeHtml = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-
 const field = (name) => document.getElementById(`cf-${name}`);
 let saved = {};
 

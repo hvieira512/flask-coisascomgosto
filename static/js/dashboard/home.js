@@ -1,10 +1,5 @@
 import { API } from "../core/api.js";
 
-const escapeHtml = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-
 /** Every list endpoint answers with a pagination envelope. */
 const totalOf = async (url) => {
     const res = await fetch(`${url}?limit=1`);

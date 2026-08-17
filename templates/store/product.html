@@ -1,6 +1,6 @@
 {% extends 'store/base.html' %}
 
-{% block title %}Produto{% endblock %}
+{% block page_title %}Produto{% endblock %}
 
 {#
   Product detail.
@@ -97,7 +97,7 @@
 </section>
 {% endblock %}
 
-{% block scripts %}
+{% block page_scripts %}
 {# PhotoSwipe ships ESM only, so the lightbox is a module; it publishes
    window.StoreLightbox for the classic scripts below. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='photoswipe/photoswipe.css') }}">

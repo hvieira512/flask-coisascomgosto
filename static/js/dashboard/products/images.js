@@ -1,5 +1,4 @@
 import { API } from "../../core/api.js";
-import { escapeHtml } from "./form.js";
 
 /**
  * Every photograph of a product, from both places the API keeps them:

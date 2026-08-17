@@ -1,6 +1,6 @@
 from flask_restx import Model, fields
 
-from api.models.common import pagination_model
+from api.models.common import list_model
 
 category_model = Model(
     "Category",
@@ -10,13 +10,7 @@ category_model = Model(
     },
 )
 
-category_list_model = Model(
-    "CategoryList",
-    {
-        "categories": fields.List(fields.Nested(category_model)),
-        "pagination": fields.Nested(pagination_model),
-    },
-)
+category_list_model = list_model("CategoryList", "categories", category_model)
 
 category_create_model = Model(
     "CategoryCreateModel",

@@ -1,5 +1,4 @@
 import { API } from "../../core/api.js";
-import { escapeHtml } from "./form.js";
 import { reference } from "./reference.js";
 
 /** The variants panel inside the edit modal: what the product is offered in. */

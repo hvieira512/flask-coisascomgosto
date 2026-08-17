@@ -1,11 +1,6 @@
 import { API } from "../../core/api.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
 
-const escapeHtml = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-
 /** "7 – 23 Ago 2026", or a single day. */
 function dateRange(event) {
     const format = (iso) =>

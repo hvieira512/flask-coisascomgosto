@@ -33,14 +33,3 @@ window.StoreApi = (function () {
         product: (id) => get(`/api/products/${id}`),
     };
 })();
-
-/** Escape text before putting it into innerHTML. */
-window.escapeHtml = function (value) {
-    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-    })[char]);
-};

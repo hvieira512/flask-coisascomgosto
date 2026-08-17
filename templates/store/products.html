@@ -1,6 +1,6 @@
 {% extends 'store/base.html' %}
 
-{% block title %}Catálogo{% endblock %}
+{% block page_title %}Catálogo{% endblock %}
 
 {% block content %}
 {# base.html renders <main> bare so the landing page can supply full-bleed
@@ -81,7 +81,7 @@
 </section>
 {% endblock %}
 
-{% block scripts %}
+{% block page_scripts %}
 <script src="{{ url_for('static', filename='js/store/filters.js') }}"></script>
 <script src="{{ url_for('static', filename='js/store/color-set.js') }}"></script>
 <script src="{{ url_for('static', filename='js/store/products.js') }}"></script>

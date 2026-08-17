@@ -2,29 +2,29 @@
 {# data-theme="light" pins Bulma to its light scheme. Without it Bulma 1.x
    switches at prefers-color-scheme: dark and repaints the navbar, cards and
    inputs near-black, which fights the warm paper palette. #}
-<html lang="pt" data-theme="light">
+<html lang="pt" data-theme="light" class="{% block html_class %}{% endblock %}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CoisasComGosto{% endblock %}</title>
     <link href="{{ url_for('static', filename='img/logo.png') }}" rel="icon" type="image/png">
-    <link href="{{ url_for('static', filename='bulma/bulma.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='bulma/bulma.min.css') }}" rel="stylesheet">
     {# theme.css must follow bulma so it can override Bulma's own variables. #}
-    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
+    {% block styles %}{% endblock %}
     <script src="{{ url_for('static', filename='fontawesome/a38dd6e785.js') }}" crossorigin="anonymous"></script>
     {% block head %}{% endblock %}
 </head>
 
-<body>
+<body class="{% block body_class %}{% endblock %}">
     {% include 'components/loader.html' %}
-    {% block content %}{% endblock %}
+
+    {% block body %}{% block content %}{% endblock %}{% endblock %}
 
     <script src="{{ url_for('static', filename='js/store/loader.js') }}"></script>
-    {# SweetAlert2 bundles its own CSS, so there is no stylesheet to load.
-       js/core/notify.js wraps it and must follow it. #}
-    <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.all.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/core/notify.js') }}"></script>
+    {# Publishes window.escapeHtml, which every script below builds markup with. #}
+    <script src="{{ url_for('static', filename='js/core/html.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 

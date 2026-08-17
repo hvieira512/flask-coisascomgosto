@@ -30,12 +30,6 @@ window.ColorSet = (function () {
         return current;
     }
 
-    function escapeHtml(value) {
-        return String(value ?? "").replace(/[&<>"']/g, (c) => ({
-            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-        }[c]));
-    }
-
     /** The inline custom properties the .color-set-badge rule paints with. */
     function style(colorSet) {
         const channels = rgb((colorSet.colors || [])[0]?.hex) || rgb(FALLBACK);

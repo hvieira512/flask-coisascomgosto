@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% set tabs = [
+{'icon': 'fa-house', 'label': 'Início', 'endpoint': 'web.dashboard.home'},
+{'icon': 'fa-box', 'label': 'Produtos', 'endpoint': 'web.dashboard.products'},
+{'icon': 'fa-calendar-days', 'label': 'Eventos', 'endpoint': 'web.dashboard.events'},
+{'icon': 'fa-address-book', 'label': 'Contactos', 'endpoint': 'web.dashboard.contacts'}
+] %}
+
+{% block title %}{% block page_title %}Painel{% endblock %} · Dashboard{% endblock %}
+
+{% block html_class %}has-navbar-fixed-top{% endblock %}
+{% block body_class %}dashboard-body{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block body %}
+<nav class="navbar is-fixed-top dash-navbar" role="navigation" aria-label="navegação do painel">
+    <div class="navbar-brand">
+        <a class="navbar-item has-text-weight-bold" href="{{ url_for('web.dashboard.home') }}">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
+            <span>CoisasComGosto</span>
+        </a>
+
+        {# Opens the sidebar as an overlay on small screens. #}
+        <button class="button is-white dash-burger" id="sidebarToggle" aria-label="Abrir menu">
+            <span class="icon"><i class="fa-solid fa-bars"></i></span>
+        </button>
+    </div>
+
+    <div class="navbar-menu is-active dash-navbar-menu">
+        <div class="navbar-end">
+            <div class="navbar-item has-dropdown" data-dropdown>
+                <button class="button is-white" data-dropdown-trigger aria-haspopup="true" aria-expanded="false">
+                    <span class="icon"><i class="fa-solid fa-user"></i></span>
+                    <span>{{ session["user"]["username"] }}</span>
+                    <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
+                </button>
+                <div class="navbar-dropdown is-right">
+                    <a class="navbar-item" href="{{ url_for('web.logout') }}">
+                        <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                        <span>Sair</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="is-flex is-align-items-flex-start">
+    <aside class="dash-sidebar" id="sidebar">
+        <ul class="menu-list">
+            {% for tab in tabs %}
+            <li>
+                <a href="{{ url_for(tab.endpoint) }}"
+                   class="{{ 'is-active' if request.endpoint == tab.endpoint else '' }}">
+                    <span class="icon"><i class="fa-solid {{ tab.icon }}"></i></span>
+                    <span>{{ tab.label }}</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <ul class="menu-list dash-sidebar-foot">
+            <li>
+                <a href="{{ url_for('web.store.home') }}">
+                    <span class="icon"><i class="fa-solid fa-arrow-left"></i></span>
+                    <span>Ver a loja</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <section class="dash-main">
+        {% block content %}{% endblock %}
+    </section>
+</div>
+
+<div id="overlay" class="dash-overlay"></div>
+{% endblock %}
+
+{% block scripts %}
+{# SweetAlert2 bundles its own CSS, so there is no stylesheet to load.
+   js/core/notify.js wraps it and must follow it. #}
+<script src="{{ url_for('static', filename='sweetalert2/sweetalert2.all.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/core/notify.js') }}"></script>
+<script src="{{ url_for('static', filename='js/store/placeholder.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard/menus.js') }}"></script>
+{% block page_scripts %}{% endblock %}
+{% endblock %}
