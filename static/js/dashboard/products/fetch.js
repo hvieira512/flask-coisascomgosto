@@ -53,7 +53,7 @@ const renderProduct = (product) => {
                     ${escapeHtml(product.type?.name ?? product.category.name)}
                     ${product.collection ? ` · ${escapeHtml(product.collection.name)}` : ""}
                 </p>
-                <div class="is-flex is-flex-wrap-wrap is-gap-1">${badges}</div>
+                <div class="swatch-row">${badges}</div>
                 <p class="is-size-7 has-text-grey mt-3">
                     <span class="icon is-small"><i class="fa-solid fa-image"></i></span>
                     ${photos} ${photos === 1 ? "fotografia" : "fotografias"}

@@ -20,7 +20,7 @@ export async function variantsPanel(product) {
         : `<li class="has-text-grey is-size-7">Sem cores associadas.</li>`;
 
     return `
-      <ul class="dash-rows mb-3" id="variant-rows">${rows}</ul>
+      <ul class="dash-rows is-flex is-flex-direction-column mb-3" id="variant-rows">${rows}</ul>
       <div class="field has-addons">
         <div class="control is-expanded">
           <div class="select is-fullwidth is-small">

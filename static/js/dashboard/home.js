@@ -47,7 +47,7 @@ async function renderMissingPhotos() {
     const missing = products.filter((p) => !p.primary_image);
 
     target.innerHTML = missing.length
-        ? `<ul class="dash-list">${missing
+        ? `<ul class="dash-list is-flex is-flex-direction-column">${missing
               .map((p) => `<li><a href="/products/${p.id}">${escapeHtml(p.name)}</a>
                     <span class="tag is-light is-rounded">${escapeHtml(p.type?.name ?? "—")}</span></li>`)
               .join("")}</ul>`
@@ -61,7 +61,7 @@ async function renderEvents() {
 
     const { events } = await res.json();
     target.innerHTML = events.length
-        ? `<ul class="dash-list">${events
+        ? `<ul class="dash-list is-flex is-flex-direction-column">${events
               .map((e) => `<li><span>${escapeHtml(e.name)}</span>
                     <span class="has-text-grey is-size-7">${escapeHtml(e.starts_on)}</span></li>`)
               .join("")}</ul>`

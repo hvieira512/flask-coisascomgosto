@@ -108,6 +108,107 @@ h3 {
     margin-bottom: .9rem;
 }
 
+/* A circle with its content centred. Six components repeated these four
+   declarations — the contact icons, the product type icons, the no-photo
+   placeholder, the hero scroll cue and both sets of carousel arrows. Bulma
+   covers three of the four with is-inline-flex and is-align-items-center, but
+   .is-rounded is scoped to .button/.tag/.input, so there is no helper that
+   makes an arbitrary element a circle. Callers set only size and colour. */
+.disc {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex: none;
+}
+
+/* Used by the storefront's contact cards and by the dashboard's preview of
+   them, so it cannot live in store.css — the dashboard does not load it, and
+   the preview icons were rendering unstyled. */
+.contact-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-600);
+}
+
+/* The colour-set badge: clipped swatches followed by the set's name, tinted in
+   the set's first colour over a pale wash of the same. The three custom
+   properties are set inline per set by js/store/color-set.js, which both the
+   storefront and the dashboard load — so these rules cannot live in store.css
+   either, and the dashboard's badges were rendering with no swatches at all.
+   Bulma's .tag.is-rounded supplies the pill shape. */
+.color-set-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    /* Grid items refuse to shrink below their content without this, so a long
+       name would spill out of its column. */
+    min-width: 0;
+    background-color: var(--cs-bg);
+    border: 1px solid var(--cs-border);
+    color: var(--cs-fg);
+    font-weight: 500;
+}
+
+.swatch-set {
+    display: inline-flex;
+    flex: none;
+}
+
+/* Truncates only where the badge is constrained — in the catalog's two-column
+   grid. The full name stays in the badge's title attribute. */
+.color-set-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.swatch {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    /* A white circle on a pale wash is only its outline, so the ring stays. */
+    border: 1px solid rgba(0, 0, 0, .2);
+    display: block;
+}
+
+/* Each circle laps over the one before it. Later siblings paint on top without
+   needing z-index, so the overlap runs left to right. */
+.swatch + .swatch {
+    margin-left: -5px;
+}
+
+/* Two fixed columns rather than wrapping: a card with five colour sets used to
+   break 3 + 2 and leave a ragged edge, and neighbouring cards broke at
+   different points. A grid keeps every card's badges on the same lines. */
+.swatch-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem;
+}
+
+/* A column is ~134px and "Vermelho e Branco" wants 152px at the badge's normal
+   size, so a card runs a tighter one. The product page, where there is no
+   column to fit, keeps the larger badge. */
+.swatch-row .color-set-badge {
+    font-size: .68rem;
+    gap: .3rem;
+    /* Bulma's .tag centres its content. In a fixed-width badge that gave every
+       label a different offset, so the circles zigzagged down the column
+       (insets of 10, 14, 18, 9, 21px). Left-aligned, they line up. */
+    justify-content: flex-start;
+}
+
+.swatch-row .swatch {
+    width: 11px;
+    height: 11px;
+}
+
+.swatch-row .swatch + .swatch {
+    margin-left: -4px;
+}
+
 body {
     background-color: var(--ccg-paper);
     color: var(--ccg-ink);

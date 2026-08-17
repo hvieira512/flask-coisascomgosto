@@ -32,9 +32,9 @@ function renderPreview() {
     ].filter((card) => card.value.trim());
 
     document.getElementById("contact-preview").innerHTML = cards.length
-        ? `<ul class="dash-rows">${cards.map((card) => `
+        ? `<ul class="dash-rows is-flex is-flex-direction-column">${cards.map((card) => `
              <li class="dash-row">
-               <span class="contact-icon mr-3"><i class="${card.icon}"></i></span>
+               <span class="disc contact-icon mr-3"><i class="${card.icon}"></i></span>
                <span class="eyebrow mb-0">${escapeHtml(card.label)}</span>
              </li>`).join("")}</ul>`
         : `<p class="has-text-grey is-size-7">Sem contactos preenchidos.</p>`;

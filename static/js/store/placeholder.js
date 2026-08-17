@@ -83,7 +83,7 @@ window.ProductPlaceholder = (function () {
                       --ph-circle:${tint(color, 0.18)}"
                role="img"
                aria-label="${product.name} — sem fotografia">
-            <span class="product-placeholder-circle">
+            <span class="disc product-placeholder-circle">
               <i class="fa-solid ${icon}"></i>
             </span>
           </div>`;

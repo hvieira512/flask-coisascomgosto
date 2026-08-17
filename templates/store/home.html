@@ -43,7 +43,7 @@
     <a class="hero-scroll is-flex is-flex-direction-column is-align-items-center"
        href="#origin">
         <span class="is-size-7 is-uppercase">Conheça a nossa história</span>
-        <span class="hero-scroll-icon mt-4" aria-hidden="true">
+        <span class="disc hero-scroll-icon mt-4" aria-hidden="true">
             <i class="fa-solid fa-chevron-down"></i>
         </span>
     </a>
@@ -140,7 +140,7 @@
                 {% for type in product_types %}
                 <a class="cell card p-5 mb-0 type-card"
                    href="{{ url_for('web.store.products', type_id=type.id) }}">
-                    <span class="type-card-icon mb-4">
+                    <span class="disc type-card-icon mb-4">
                         <i class="fa-solid {{ type | type_icon }}"></i>
                     </span>
 

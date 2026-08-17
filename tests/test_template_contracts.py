@@ -382,6 +382,14 @@ class TestColorSetBadgeMarkup:
         column."""
         import pathlib
 
-        css = pathlib.Path("static/css/store.css").read_text()
+        css = pathlib.Path("static/css/theme.css").read_text()
         block = css.split(".swatch-row .color-set-badge {")[1].split("}")[0]
         assert "justify-content: flex-start" in block
+
+    def test_badge_styles_live_in_the_shared_stylesheet(self):
+        """The dashboard renders the same badge but loads only theme.css, so
+        keeping these rules in store.css left its swatches unstyled."""
+        import pathlib
+
+        assert ".swatch {" in pathlib.Path("static/css/theme.css").read_text()
+        assert ".swatch {" not in pathlib.Path("static/css/store.css").read_text()

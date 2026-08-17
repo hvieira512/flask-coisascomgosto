@@ -40,7 +40,7 @@ export function imagesPanel(product) {
         : `<li class="has-text-grey is-size-7">Sem fotografias. A loja mostra o marcador de cor.</li>`;
 
     return `
-      <ul class="dash-rows mb-3" id="image-rows">${rows}</ul>
+      <ul class="dash-rows is-flex is-flex-direction-column mb-3" id="image-rows">${rows}</ul>
       <div class="field">
         <div class="file is-small has-name is-fullwidth">
           <label class="file-label">
