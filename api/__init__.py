@@ -9,11 +9,10 @@ Layering:
     repositories/   every SQL statement in the application
     db.py           connection handling and schema initialisation
     pagination.py   request-arg parsing and the pagination response envelope
+    security.py     the session guard applied to every write
 """
 
 from flask_restx import Api
-
-from api.security import AUTHORIZATIONS
 
 from .routes.auth import ns as auth_ns
 from .routes.categories import ns as categories_ns
@@ -36,13 +35,12 @@ api = Api(
         "type** (with one level of sub-types), belong to a **collection**, "
         "declare a **default size**, list the **sizes** it is available in, and "
         "carry **variants** — one per **colour set** it is offered in.\n\n"
-        "Catalog reads are public. `/users` and `/contacts` require a bearer "
-        "token: POST `/auth/login` for a token pair, then `/auth/refresh` when "
-        "the access token expires."
+        "Catalog reads are public. Every write, plus `/users` and `/contacts`, "
+        "requires a signed-in session: POST `/auth/login`, and the session "
+        "cookie you get back rides along on subsequent calls."
     ),
     prefix="/api",
     doc="/api/docs",
-    authorizations=AUTHORIZATIONS,
 )
 
 api.add_namespace(categories_ns, path="/categories")

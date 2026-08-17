@@ -55,88 +55,38 @@ def app(clean_database):
     """A Flask app bound to the freshly emptied test database."""
     from app import app as flask_app
 
-    flask_app.config.update(
-        TESTING=True,
-        SECRET_KEY="test-secret",
-        # 32+ bytes, or PyJWT warns the HMAC key is too short for SHA256.
-        JWT_SECRET_KEY="test-jwt-secret-key-at-least-32-bytes-long",
-    )
+    flask_app.config.update(TESTING=True, SECRET_KEY="test-secret")
     return flask_app
 
 
 @pytest.fixture()
 def anon_client(app):
-    """A client carrying no token. Use it to prove an endpoint is guarded."""
+    """A client that never signs in. Use it to prove an endpoint is guarded."""
     return app.test_client()
 
 
 @pytest.fixture()
-def client(anon_client, tokens):
-    """The default client, authenticated.
+def client(app, make_user):
+    """The default client, signed in.
 
-    Catalog writes require a bearer token, so the ordinary client carries one —
-    the same way the dashboard does. Tests that assert a guard rejects an
-    anonymous caller ask for `anon_client` instead.
+    Writes require a session, so the ordinary client holds one. A test client
+    keeps its cookies across requests the way a browser does, so signing in once
+    is enough — and this is a client of its own, so `anon_client` stays signed
+    out even in a test that asks for both.
     """
-    return _AuthorizedClient(
-        anon_client, {"Authorization": f"Bearer {tokens['access_token']}"}
-    )
-
-
-class _AuthorizedClient:
-    """Test client that attaches a bearer token to every request.
-
-    Lets a protected endpoint be exercised without repeating `headers=` at
-    each call site.
-    """
-
-    def __init__(self, client, headers):
-        self._client = client
-        self._headers = headers
-
-    def _with_auth(self, kwargs):
-        """Attach the token, unless the caller supplied its own.
-
-        The refresh endpoint needs the refresh token, not the access token, so
-        an explicit Authorization header always wins.
-        """
-        headers = dict(kwargs.pop("headers", {}) or {})
-        for name, value in self._headers.items():
-            headers.setdefault(name, value)
-        kwargs["headers"] = headers
-        return kwargs
-
-    def get(self, *args, **kwargs):
-        return self._client.get(*args, **self._with_auth(kwargs))
-
-    def post(self, *args, **kwargs):
-        return self._client.post(*args, **self._with_auth(kwargs))
-
-    def put(self, *args, **kwargs):
-        return self._client.put(*args, **self._with_auth(kwargs))
-
-    def delete(self, *args, **kwargs):
-        return self._client.delete(*args, **self._with_auth(kwargs))
-
-    def session_transaction(self, *args, **kwargs):
-        return self._client.session_transaction(*args, **kwargs)
-
-
-@pytest.fixture()
-def tokens(anon_client, make_user):
-    """Register a user and return their freshly issued token pair."""
     make_user("tokenuser", password="Passw0rd!")
 
-    response = anon_client.post(
+    signed_in = app.test_client()
+    response = signed_in.post(
         "/api/auth/login", json={"username": "tokenuser", "password": "Passw0rd!"}
     )
     assert response.status_code == 200, response.get_json()
-    return response.get_json()
+    return signed_in
 
 
 @pytest.fixture()
 def auth_client(client):
-    """Kept as a name: the default client is already authenticated."""
+    """Kept as a name: the default client is already signed in."""
     return client
 
 

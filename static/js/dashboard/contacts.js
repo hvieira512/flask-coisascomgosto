@@ -53,7 +53,7 @@ function fill(contact) {
 }
 
 async function load() {
-    const res = await window.Auth.authFetch(API.contacts.get);
+    const res = await fetch(API.contacts.get);
     if (!res.ok) {
         Notify.error("Erro ao carregar os contactos.");
         return;
@@ -75,7 +75,7 @@ function save(event) {
             if (value) payload[name] = value;
         });
 
-        const res = await window.Auth.authFetch(API.contacts.update, {
+        const res = await fetch(API.contacts.update, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),

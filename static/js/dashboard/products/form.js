@@ -108,7 +108,7 @@ export async function submitProductForm(root = document) {
 
     if (!payload.name) throw new Error("O nome é obrigatório.");
 
-    const res = await window.Auth.authFetch(
+    const res = await fetch(
         id ? API.products.update(id) : API.products.create,
         {
             method: id ? "PUT" : "POST",
@@ -124,7 +124,7 @@ export async function submitProductForm(root = document) {
 
     const sizeIds = [...root.querySelectorAll("#pf-sizes input:checked")]
         .map((input) => Number(input.value));
-    await window.Auth.authFetch(API.products.sizes(productId), {
+    await fetch(API.products.sizes(productId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ size_ids: sizeIds }),

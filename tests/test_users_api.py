@@ -1,7 +1,7 @@
 """HTTP-level tests for /api/users.
 
 Every endpoint is behind a bearer token, so these use the `auth_client`
-fixture. The guard itself is covered in test_jwt_auth.py.
+fixture. The guard itself is covered in test_session_auth.py.
 """
 
 

@@ -93,7 +93,7 @@ export const fetchProducts = async () => {
     try {
         // The query carries limit=100 plus whatever the filter bar has set.
         // The API defaults to 10, which silently hid four of fourteen products.
-        const res = await window.Auth.authFetch(`${API.products.list}?${query()}`);
+        const res = await fetch(`${API.products.list}?${query()}`);
         if (!res.ok) throw new Error("Failed to fetch products");
 
         const { products } = await res.json();

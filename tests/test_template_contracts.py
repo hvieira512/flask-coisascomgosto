@@ -37,10 +37,10 @@ class TestLoginPageHooks:
         html = anon_client.get("/auth").get_data(as_text=True)
         assert "js/auth/auth.js" in html
 
-    def test_token_helper_loads_before_page_modules(self, anon_client):
-        """auth.js calls window.Auth.storeTokens, so core/auth.js must come first."""
+    def test_no_token_helper_is_loaded(self, anon_client):
+        """Signing in sets a cookie; there is no token for the page to keep."""
         html = anon_client.get("/auth").get_data(as_text=True)
-        assert html.index("js/core/auth.js") < html.index("js/auth/auth.js")
+        assert "js/core/auth.js" not in html
 
 
 class TestDashboardHooks:
@@ -72,11 +72,11 @@ class TestDashboardHooks:
         assert "data-modal-close" in html
         assert "data-bs-" not in html
 
-    def test_token_helper_loads_before_page_modules(self, client, make_user):
-        """fetch.js calls window.Auth.authFetch."""
+    def test_no_token_helper_is_loaded(self, client, make_user):
+        """The page modules call fetch() directly; the cookie rides along."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
-        assert html.index("js/core/auth.js") < html.index("js/dashboard/products/main.js")
+        assert "js/core/auth.js" not in html
 
 
 class TestStorefrontHooks:

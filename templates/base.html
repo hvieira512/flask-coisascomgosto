@@ -25,8 +25,6 @@
        js/core/notify.js wraps it and must follow it. #}
     <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.all.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/core/notify.js') }}"></script>
-    {# Must load before the page modules, which call window.Auth. #}
-    <script src="{{ url_for('static', filename='js/core/auth.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 

@@ -40,7 +40,7 @@ export async function variantsPanel(product) {
 }
 
 export async function addVariant(productId, colorSetId) {
-    const res = await window.Auth.authFetch(API.products.variants(productId), {
+    const res = await fetch(API.products.variants(productId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ color_set_id: Number(colorSetId) }),
@@ -52,7 +52,7 @@ export async function addVariant(productId, colorSetId) {
 }
 
 export async function removeVariant(productId, variantId) {
-    const res = await window.Auth.authFetch(
+    const res = await fetch(
         API.products.variant(productId, variantId), { method: "DELETE" }
     );
     if (!res.ok) throw new Error("Não foi possível remover a cor.");

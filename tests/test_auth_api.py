@@ -81,7 +81,7 @@ class TestLogin:
             "/api/auth/login", json={"username": "alice", "password": "Passw0rd!"}
         )
         assert response.status_code == 200
-        assert response.get_json()["user"]["username"] == "alice"
+        assert response.get_json()["username"] == "alice"
 
     def test_password_is_never_returned(self, client, make_user):
         make_user("alice", password="Passw0rd!")
@@ -90,7 +90,6 @@ class TestLogin:
             "/api/auth/login", json={"username": "alice", "password": "Passw0rd!"}
         ).get_json()
         assert "password" not in body
-        assert "password" not in body["user"]
 
     def test_wrong_password_returns_401(self, anon_client, make_user):
         make_user("alice", password="Passw0rd!")

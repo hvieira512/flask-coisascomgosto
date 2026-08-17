@@ -197,7 +197,7 @@ async function openDelete(id) {
 
     document.getElementById("delete-submit").onclick = (event) =>
         submitting(event.currentTarget, async () => {
-            const res = await window.Auth.authFetch(API.products.delete(id), { method: "DELETE" });
+            const res = await fetch(API.products.delete(id), { method: "DELETE" });
             if (!res.ok) throw new Error("Não foi possível apagar.");
             close("deleteProductModal");
             Notify.success("Produto apagado.");

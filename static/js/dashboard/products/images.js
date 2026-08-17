@@ -89,7 +89,7 @@ export async function uploadImage(productId, { file, variantId, alt }) {
     if (alt) body.append("alt", alt);
 
     // No Content-Type header: the browser sets the multipart boundary.
-    const res = await window.Auth.authFetch(API.products.uploadImage(productId), {
+    const res = await fetch(API.products.uploadImage(productId), {
         method: "POST",
         body,
     });
@@ -105,7 +105,7 @@ export async function addImage(productId, { url, variantId, alt }) {
     const payload = { url, alt: alt || null };
     if (variantId) payload.variant_id = Number(variantId);
 
-    const res = await window.Auth.authFetch(API.products.images(productId), {
+    const res = await fetch(API.products.images(productId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -117,7 +117,7 @@ export async function addImage(productId, { url, variantId, alt }) {
 }
 
 export async function removeImage(productId, imageId) {
-    const res = await window.Auth.authFetch(
+    const res = await fetch(
         API.products.image(productId, imageId), { method: "DELETE" }
     );
     if (!res.ok) throw new Error("Não foi possível remover a fotografia.");

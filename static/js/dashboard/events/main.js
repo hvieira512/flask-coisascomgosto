@@ -128,7 +128,7 @@ async function submitEventForm(modalId) {
         throw new Error("O fim não pode ser anterior ao início.");
     }
 
-    const res = await window.Auth.authFetch(
+    const res = await fetch(
         id ? API.events.update(id) : API.events.create,
         {
             method: id ? "PUT" : "POST",
@@ -180,7 +180,7 @@ async function openDelete(id) {
 
     document.getElementById("event-delete").onclick = (e) =>
         submitting(e.currentTarget, async () => {
-            const res = await window.Auth.authFetch(API.events.delete(id), { method: "DELETE" });
+            const res = await fetch(API.events.delete(id), { method: "DELETE" });
             if (!res.ok) throw new Error("Não foi possível apagar.");
             close("deleteEventModal");
             Notify.success("Evento apagado.");

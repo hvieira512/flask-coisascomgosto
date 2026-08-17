@@ -12,7 +12,7 @@ from api.models.common import pagination_model
 from api.models.events import event_list_model, event_model, event_write_model
 from api.pagination import get_pagination_params, make_pagination
 from api.repositories import EventRepository
-from api.security import PROTECTED_DOC, token_required
+from api.security import PROTECTED_DOC, login_required
 
 ns = Namespace("events", description="Fairs and markets the workshop attended")
 
@@ -46,7 +46,7 @@ class EventList(Resource):
     @ns.marshal_with(event_model, code=201)
     @ns.response(201, "Event created")
     @ns.response(400, "Missing or invalid fields")
-    @token_required
+    @login_required
     def post(self):
         """Add an event to the workshop's history."""
         data = ns.payload
@@ -85,7 +85,7 @@ class Event(Resource):
     @ns.response(200, "Event updated")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Event not found")
-    @token_required
+    @login_required
     def put(self, event_id):
         """Update an event."""
         data = ns.payload
@@ -111,7 +111,7 @@ class Event(Resource):
     @ns.marshal_with(event_model)
     @ns.response(200, "The deleted event")
     @ns.response(404, "Event not found")
-    @token_required
+    @login_required
     def delete(self, event_id):
         """Remove an event."""
         with get_db_connection() as (_, cursor):

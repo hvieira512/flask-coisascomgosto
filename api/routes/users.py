@@ -6,11 +6,11 @@ from api.models.common import pagination_model
 from api.models.users import user_list_model, user_model
 from api.pagination import get_pagination_params, make_pagination
 from api.repositories import UserRepository
-from api.security import PROTECTED_DOC, token_required
+from api.security import PROTECTED_DOC, login_required
 
 ns = Namespace(
     "users",
-    description="Users operations. Every endpoint requires a bearer token.",
+    description="Users operations. Every endpoint requires a signed-in session.",
 )
 
 for model in [pagination_model, user_model, user_list_model]:
@@ -25,7 +25,7 @@ class UserList(Resource):
     @ns.param("limit", "Items per page, max 100 (default 10)")
     @ns.response(200, "A page of users")
     @ns.response(400, "Invalid pagination parameters")
-    @token_required
+    @login_required
     def get(self):
         """Get list of users with pagination."""
         page, limit, offset = get_pagination_params(request.args)
@@ -45,7 +45,7 @@ class User(Resource):
     @ns.marshal_with(user_model)
     @ns.response(200, "The user")
     @ns.response(404, "User not found")
-    @token_required
+    @login_required
     def get(self, user_id):
         """Get a user by ID."""
         with get_db_connection() as (_, cursor):

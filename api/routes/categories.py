@@ -9,7 +9,7 @@ from api.models.categories import (
 )
 from api.models.common import pagination_model
 from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, token_required
+from api.security import PROTECTED_DOC, login_required
 from api.repositories import CategoryRepository
 
 ns = Namespace(
@@ -50,7 +50,7 @@ class CategoryList(Resource):
     @ns.expect(category_create_model, validate=True)
     @ns.marshal_with(category_model, code=201)
     @ns.doc(**PROTECTED_DOC)
-    @token_required
+    @login_required
     def post(self):
         """Create a new category."""
         name = ns.payload["name"]
@@ -80,7 +80,7 @@ class Category(Resource):
     @ns.expect(category_create_model, validate=True)
     @ns.marshal_with(category_model)
     @ns.doc(**PROTECTED_DOC)
-    @token_required
+    @login_required
     def put(self, category_id):
         """Update a category by ID."""
         name = ns.payload["name"]
@@ -101,7 +101,7 @@ class Category(Resource):
 
     @ns.marshal_with(category_model)
     @ns.doc(**PROTECTED_DOC)
-    @token_required
+    @login_required
     def delete(self, category_id):
         """Delete a category by ID."""
         with get_db_connection() as (_, cursor):

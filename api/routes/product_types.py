@@ -21,7 +21,7 @@ from api.models.catalog import (
 )
 from api.models.common import pagination_model
 from api.pagination import get_pagination_params, make_pagination
-from api.security import PROTECTED_DOC, token_required
+from api.security import PROTECTED_DOC, login_required
 from api.repositories import NestingTooDeepError, ProductTypeRepository
 
 ns = Namespace("product-types", description="Product type operations")
@@ -80,7 +80,7 @@ class ProductTypeList(Resource):
     @ns.response(404, "Parent type not found")
     @ns.response(409, "A sibling type already uses that name")
     @ns.doc(**PROTECTED_DOC)
-    @token_required
+    @login_required
     def post(self):
         """Create a product type, or a sub-type by supplying parent_id."""
         data = ns.payload
@@ -131,7 +131,7 @@ class ProductType(Resource):
     @ns.response(404, "Product type or parent not found")
     @ns.response(409, "A sibling type already uses that name")
     @ns.doc(**PROTECTED_DOC)
-    @token_required
+    @login_required
     def put(self, type_id):
         """Update a product type, including where it sits in the hierarchy."""
         data = ns.payload
@@ -167,7 +167,7 @@ class ProductType(Resource):
     @ns.response(200, "The deleted product type")
     @ns.response(404, "Product type not found")
     @ns.doc(**PROTECTED_DOC)
-    @token_required
+    @login_required
     def delete(self, type_id):
         """Delete a product type by ID.
 

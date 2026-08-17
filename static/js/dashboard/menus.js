@@ -91,11 +91,5 @@
         }
     });
 
-    // Signing out must drop the bearer tokens as well as the session cookie,
-    // otherwise a "logged out" browser still holds a usable access token.
-    document.querySelectorAll('a[href$="/logout"]').forEach((link) => {
-        link.addEventListener("click", () => window.Auth?.logout());
-    });
-
     window.DashboardModals = { open: openModal, close: closeModals };
 })();

@@ -58,10 +58,6 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        // Keep the bearer tokens for API calls; the session cookie the server
-        // also sets is what authenticates the rendered dashboard pages.
-        window.Auth.storeTokens(await res.json());
-
         Notify.success("Login realizado com sucesso.");
         window.location.href = "/dashboard";
     }
@@ -104,8 +100,6 @@ form.addEventListener("submit", async (e) => {
             Notify.error(data.message || "Login falhou.");
             return;
         }
-
-        window.Auth.storeTokens(await login_res.json());
 
         Notify.success("Login realizado com sucesso.");
         window.location.href = "/dashboard";
