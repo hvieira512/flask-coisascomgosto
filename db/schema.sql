@@ -1,11 +1,9 @@
 -- CoisasComGosto catalog schema (MySQL 8).
 --
 -- Domain shape:
---   product type        what the object is (hairbrush, picture frame, wooden box).
---                       Required: it is the one fact every piece has. Types nest
---                       exactly one level, so a "Coracao" type can have sub-types
---                       for how it is finished, e.g. "with string to hang" vs
---                       "base for mini figures".
+--   product type        the family a piece belongs to ("Caixa", "Coração",
+--                       "Moldura"). Required: it is the one fact every piece has.
+--                       Flat — the shape lives in the product's own name.
 --   material            what it is made of ("Madeira", "Tecido"). Optional, and
 --                       a lookup the owners maintain themselves.
 --   collection          a themed grouping (e.g. "Barra da Saia") that owns colour sets
@@ -13,8 +11,8 @@
 --   colour set          a named combination of colours ("White and Green"), normally
 --                       belonging to a collection
 --   product variant     a product offered in one specific colour set
---   size                S / M / L; a product may declare a default size and/or a set
---                       of sizes it is available in
+--   size                Pequeno / Médio / Grande; a product may declare a default
+--                       size and/or a set of sizes it is available in
 --   product image       a photo. Attached to a variant when the colour set
 --                       changes how the item looks, or to the product itself as
 --                       a fallback shown when a variant has no photos of its own.
@@ -73,7 +71,8 @@ CREATE TABLE colors (
     hex VARCHAR(9)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- S / M / L. `position` controls display order rather than relying on the name.
+-- Pequeno / Médio / Grande, in the owners' own words rather than clothing
+-- letters. `position` controls display order rather than relying on the name.
 CREATE TABLE sizes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(40) NOT NULL UNIQUE,
@@ -204,7 +203,8 @@ CREATE TABLE events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- The standard size run. Seeded so the API is usable immediately.
-INSERT INTO sizes (name, position) VALUES ('S', 1), ('M', 2), ('L', 3);
+INSERT INTO sizes (name, position) VALUES
+    ('Pequeno', 1), ('Médio', 2), ('Grande', 3);
 
 
 -- Seeded from the links already used across the site.

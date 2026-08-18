@@ -230,10 +230,10 @@ class TestProductVariants:
 
 class TestProductSizes:
     def test_default_size_can_be_set(self, client, make_product, sizes):
-        product = make_product("Caixa", default_size_id=sizes["M"]["id"])
+        product = make_product("Caixa", default_size_id=sizes["Médio"]["id"])
 
         body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["default_size"]["name"] == "M"
+        assert body["default_size"]["name"] == "Médio"
 
     def test_default_size_is_optional(self, client, make_product):
         product = make_product("Caixa")
@@ -265,47 +265,47 @@ class TestProductSizes:
 
         response = client.put(
             f"/api/products/{product['id']}/sizes",
-            json={"size_ids": [sizes["S"]["id"], sizes["M"]["id"], sizes["L"]["id"]]},
+            json={"size_ids": [sizes["Pequeno"]["id"], sizes["Médio"]["id"], sizes["Grande"]["id"]]},
         )
         assert response.status_code == 200
-        assert [s["name"] for s in response.get_json()] == ["S", "M", "L"]
+        assert [s["name"] for s in response.get_json()] == ["Pequeno", "Médio", "Grande"]
 
     def test_sizes_come_back_in_display_order(self, client, make_product, sizes):
         product = make_product("Caixa")
         client.put(
             f"/api/products/{product['id']}/sizes",
-            json={"size_ids": [sizes["L"]["id"], sizes["S"]["id"]]},
+            json={"size_ids": [sizes["Grande"]["id"], sizes["Pequeno"]["id"]]},
         )
 
         body = client.get(f"/api/products/{product['id']}/sizes").get_json()
-        assert [s["name"] for s in body] == ["S", "L"]
+        assert [s["name"] for s in body] == ["Pequeno", "Grande"]
 
     def test_sizes_appear_on_the_product(self, client, make_product, sizes):
         product = make_product("Caixa")
         client.put(
             f"/api/products/{product['id']}/sizes",
-            json={"size_ids": [sizes["S"]["id"], sizes["M"]["id"]]},
+            json={"size_ids": [sizes["Pequeno"]["id"], sizes["Médio"]["id"]]},
         )
 
         body = client.get(f"/api/products/{product['id']}").get_json()
-        assert [s["name"] for s in body["sizes"]] == ["S", "M"]
+        assert [s["name"] for s in body["sizes"]] == ["Pequeno", "Médio"]
 
     def test_put_replaces_rather_than_appends(self, client, make_product, sizes):
         product = make_product("Caixa")
         client.put(
             f"/api/products/{product['id']}/sizes",
-            json={"size_ids": [sizes["S"]["id"], sizes["M"]["id"]]},
+            json={"size_ids": [sizes["Pequeno"]["id"], sizes["Médio"]["id"]]},
         )
 
         response = client.put(
-            f"/api/products/{product['id']}/sizes", json={"size_ids": [sizes["L"]["id"]]}
+            f"/api/products/{product['id']}/sizes", json={"size_ids": [sizes["Grande"]["id"]]}
         )
-        assert [s["name"] for s in response.get_json()] == ["L"]
+        assert [s["name"] for s in response.get_json()] == ["Grande"]
 
     def test_empty_list_clears_sizes(self, client, make_product, sizes):
         product = make_product("Caixa")
         client.put(
-            f"/api/products/{product['id']}/sizes", json={"size_ids": [sizes["S"]["id"]]}
+            f"/api/products/{product['id']}/sizes", json={"size_ids": [sizes["Pequeno"]["id"]]}
         )
 
         response = client.put(
@@ -324,7 +324,7 @@ class TestProductSizes:
         assert client.get("/api/products/9999/sizes").status_code == 404
         assert (
             client.put(
-                "/api/products/9999/sizes", json={"size_ids": [sizes["S"]["id"]]}
+                "/api/products/9999/sizes", json={"size_ids": [sizes["Pequeno"]["id"]]}
             ).status_code
             == 404
         )
@@ -335,18 +335,18 @@ class TestProductSizes:
         product = make_product("Caixa")
         client.put(
             f"/api/products/{product['id']}/sizes",
-            json={"size_ids": [sizes["S"]["id"], sizes["M"]["id"]]},
+            json={"size_ids": [sizes["Pequeno"]["id"], sizes["Médio"]["id"]]},
         )
 
-        client.delete(f"/api/sizes/{sizes['S']['id']}")
+        client.delete(f"/api/sizes/{sizes['Pequeno']['id']}")
 
         body = client.get(f"/api/products/{product['id']}/sizes").get_json()
-        assert [s["name"] for s in body] == ["M"]
+        assert [s["name"] for s in body] == ["Médio"]
 
     def test_deleting_the_default_size_clears_it(self, client, make_product, sizes):
-        product = make_product("Caixa", default_size_id=sizes["M"]["id"])
+        product = make_product("Caixa", default_size_id=sizes["Médio"]["id"])
 
-        client.delete(f"/api/sizes/{sizes['M']['id']}")
+        client.delete(f"/api/sizes/{sizes['Médio']['id']}")
 
         body = client.get(f"/api/products/{product['id']}").get_json()
         assert body["default_size"] is None

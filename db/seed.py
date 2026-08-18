@@ -109,20 +109,20 @@ PRODUCTS = [
      "Caixa redonda com a filigrana desenhada a pincel na tampa.",
      ["Branco e Dourado", "Preto e Dourado", "Preto e Branco",
       "Vermelho e Branco", "Azul e Branco"],
-     ["S", "M", "L"]),
+     ["Pequeno", "Médio", "Grande"]),
 
     ("Manel e Maria", "Presépio Minhoto", "Filigrana",
      "Presépio minhoto: Manel e Maria em traje sobre um coração dourado.",
-     ["Vermelho e Branco", "Preto e Branco"], ["M"]),
+     ["Vermelho e Branco", "Preto e Branco"], ["Médio"]),
 
     ("Caixa de Joias", "Caixa", "Filigrana",
      "Caixa rectangular forrada, para joias e missangas.",
      ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco"],
-     ["S", "M", "L"]),
+     ["Pequeno", "Médio", "Grande"]),
 
     ("Caixa Lenço dos Namorados", "Caixa", "Lenços",
      "Tampa com as flores do Lenço dos Namorados.",
-     ["Preto Floral", "Vermelho Floral"], ["M"]),
+     ["Preto Floral", "Vermelho Floral"], ["Médio"]),
 
     ("Caixa de Garrafa", "Caixa", "Filigrana",
      "Caixa alta para uma garrafa, decorada nas quatro faces.",
@@ -131,36 +131,36 @@ PRODUCTS = [
     ("Coração de Viana", "Coração", "Filigrana",
      "Coração recortado em madeira, com fita para pendurar.",
      ["Branco e Dourado", "Preto e Dourado", "Azul e Branco",
-      "Vermelho e Branco"], ["S", "M"]),
+      "Vermelho e Branco"], ["Pequeno", "Médio"]),
 
     ("Coração de Mesa", "Coração", "Filigrana",
      "Coração assente numa base, para ficar de pé.",
-     ["Branco e Dourado", "Preto e Branco"], ["M"]),
+     ["Branco e Dourado", "Preto e Branco"], ["Médio"]),
 
     ("Moldura Filigrana", "Moldura", "Filigrana",
      "Moldura de fotografia com filigrana à volta da janela.",
      ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco"],
-     ["S", "M", "L"]),
+     ["Pequeno", "Médio", "Grande"]),
 
     ("Moldura Oval", "Moldura", "Filigrana",
      "Janela oval, com o motivo a subir pelos lados.",
-     ["Branco e Dourado", "Preto e Dourado"], ["M"]),
+     ["Branco e Dourado", "Preto e Dourado"], ["Médio"]),
 
     ("Bastidor Viana é Amor", "Bastidor", "Bordados",
      "Bastidor com letras desenhadas à mão e a filigrana à volta.",
-     ["Branco e Dourado", "Branco e Azul"], ["M"]),
+     ["Branco e Dourado", "Branco e Azul"], ["Médio"]),
 
     ("Bastidor Bordado", "Bastidor", "Bordados",
      "Bastidor com os motivos dos bordados de Viana.",
-     ["Branco e Azul", "Verde e Dourado"], ["S", "M"]),
+     ["Branco e Azul", "Verde e Dourado"], ["Pequeno", "Médio"]),
 
     ("Coração de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em coração, personalizado com o nome.",
-     ["Vermelho e Branco", "Branco e Dourado"], ["S"]),
+     ["Vermelho e Branco", "Branco e Dourado"], ["Pequeno"]),
 
     ("Bola de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em bola achatada, personalizado com o nome.",
-     ["Vermelho e Branco", "Branco e Dourado"], ["S"]),
+     ["Vermelho e Branco", "Branco e Dourado"], ["Pequeno"]),
 
     ("Abre-cápsulas Coração", "Abre-cápsulas", "Filigrana",
      "Abre-cápsulas com pega em coração.",

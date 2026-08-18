@@ -1,8 +1,9 @@
-"""Sizes: the S / M / L vocabulary products can be sold in.
+"""Sizes: the vocabulary products can be sold in.
 
-The schema seeds S, M and L. A product may name one size as its default and
-list the sizes it is actually available in; a product with no listed sizes is
-sold only in its default size.
+The schema seeds Pequeno, Médio and Grande — the owners' own words rather than
+clothing letters — and the list is theirs to extend. A product may name one size
+as its default and list the sizes it is actually available in; a product with no
+listed sizes is sold only in its default size.
 """
 
 from flask_restx import Namespace, Resource

@@ -250,7 +250,7 @@ def make_product_type(client):
 
 @pytest.fixture()
 def sizes(client):
-    """The S / M / L rows seeded by the schema, keyed by name."""
+    """The Pequeno / Médio / Grande rows seeded by the schema, keyed by name."""
     body = client.get("/api/sizes/").get_json()
     return {s["name"]: s for s in body["sizes"]}
 

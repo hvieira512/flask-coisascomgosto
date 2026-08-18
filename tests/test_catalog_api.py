@@ -223,21 +223,30 @@ class TestColorSets:
 
 
 class TestSizes:
-    def test_schema_seeds_s_m_l(self, client):
+    def test_schema_seeds_the_three_sizes(self, client):
         body = client.get("/api/sizes/").get_json()
-        assert [s["name"] for s in body["sizes"]] == ["S", "M", "L"]
+        assert [s["name"] for s in body["sizes"]] == ["Pequeno", "Médio", "Grande"]
 
     def test_ordered_by_position_not_name(self, client):
         sizes = client.get("/api/sizes/").get_json()["sizes"]
         assert [s["position"] for s in sizes] == sorted(s["position"] for s in sizes)
 
     def test_create_new_size(self, client):
-        response = client.post("/api/sizes/", json={"name": "XL", "position": 4})
+        response = client.post("/api/sizes/", json={"name": "Extra grande", "position": 4})
         assert response.status_code == 201
-        assert response.get_json()["name"] == "XL"
+        assert response.get_json()["name"] == "Extra grande"
 
     def test_duplicate_name_returns_409(self, client):
-        assert client.post("/api/sizes/", json={"name": "S"}).status_code == 409
+        assert client.post("/api/sizes/", json={"name": "Pequeno"}).status_code == 409
+
+    def test_an_accented_name_round_trips(self, client):
+        """utf8mb4 all the way through: "Médio" is seeded, read and matched with
+        its accent intact."""
+        body = client.get("/api/sizes/").get_json()
+        medium = next(s for s in body["sizes"] if s["position"] == 2)
+
+        assert medium["name"] == "Médio"
+        assert client.get(f"/api/sizes/{medium['id']}").get_json()["name"] == "Médio"
 
     def test_unknown_id_returns_404(self, client):
         assert client.get("/api/sizes/9999").status_code == 404

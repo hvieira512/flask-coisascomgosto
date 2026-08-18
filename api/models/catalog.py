@@ -111,7 +111,7 @@ size_model = Model(
     "Size",
     {
         "id": fields.Integer(readOnly=True, description="Size ID"),
-        "name": fields.String(required=True, description="Size name, e.g. 'M'"),
+        "name": fields.String(required=True, description="Size name, e.g. 'Médio'"),
         "position": fields.Integer(description="Display order, ascending"),
     },
 )
