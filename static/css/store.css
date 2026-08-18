@@ -21,10 +21,21 @@ main {
     max-width: 30rem;
 }
 
+/* Section and page headings carry the display serif; card titles (.is-5, .is-6)
+   stay on the UI sans, where they sit beside prices, badges and buttons. */
+h1.title,
+h2.title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -.01em;
+    /* Otherwise a heading breaks mid-hyphenate — "três mãos-" / "cheias". */
+    text-wrap: balance;
+}
+
 /* Bulma's .title tracking is fine at small sizes but loose on a display line. */
 .store-display {
-    letter-spacing: -.035em;
-    line-height: 1.08;
+    letter-spacing: -.025em;
+    line-height: 1.1;
 }
 
 /* Bulma caps navbar images at 1.75rem, which renders the logo as a speck —

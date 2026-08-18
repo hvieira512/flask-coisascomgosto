@@ -43,6 +43,15 @@
     --ccg-critical: #B3282D;
     --ccg-critical-wash: #FBEAEA;
 
+    /* Headlines, storefront only. Bulma's stack is the system UI sans, which
+       made a workshop's shop read like a settings screen — every heading was
+       the same voice as the buttons. A serif gives the display lines their own,
+       and it is a stack rather than a webfont because the project vendors its
+       assets and will not carry a font file for six headings. Iowan Old Style
+       ships with macOS, Palatino Linotype with Windows, Georgia with both. */
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino,
+        "Book Antiqua", Georgia, serif;
+
     /* Data, not prose: counts, dates and ids line up in columns, so they get a
        monospace face and lining figures. System stack — the project vendors its
        assets and has no font files, and a webfont here would drift the
