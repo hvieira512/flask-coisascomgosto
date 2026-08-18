@@ -12,7 +12,7 @@ window.StoreFilters = (function () {
         q: { label: "Pesquisa" },
         material_id: { label: "Material" },
         type_id: { label: "Tipo" },
-        collection_id: { label: "Coleção" },
+        collection_id: { label: "Colecção" },
     };
 
     const state = {};
