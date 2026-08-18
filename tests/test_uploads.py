@@ -8,9 +8,37 @@ import pathlib
 
 import pytest
 
+from PIL import Image
+
 import uploads
 
-JPEG_BYTES = b"\xff\xd8\xff\xe0 fake jpeg"
+
+def image_bytes(fmt="JPEG", size=(40, 30), exif=None, **save_options):
+    """A real image, because the uploader decodes what it is given.
+
+    These tests used to post b"\\xff\\xd8\\xff\\xe0 fake jpeg" and pass, which was
+    the hole: fourteen bytes of nothing called foto.jpg went to disk and became a
+    product photograph.
+    """
+    buffer = io.BytesIO()
+    options = dict(save_options)
+    if exif is not None:
+        options["exif"] = exif
+    Image.new("RGB", size, (120, 40, 60)).save(buffer, fmt, **options)
+    return buffer.getvalue()
+
+
+def phone_exif():
+    """What a phone attaches: the make, and where the picture was taken."""
+    exif = Image.Exif()
+    exif[0x010F] = "TestPhone"
+    gps = exif.get_ifd(0x8825)
+    gps[1] = "N"
+    gps[2] = (41.69, 8.83, 0.0)
+    return exif
+
+
+JPEG_BYTES = image_bytes()
 
 
 @pytest.fixture(autouse=True)
@@ -127,6 +155,99 @@ class TestFilenameSafety:
             for _ in range(2)
         }
         assert len(urls) == 2
+
+
+class TestWhatIsActuallyInTheFile:
+    """An extension is a claim by whoever uploaded the file, so the bytes decide.
+
+    Nothing here was covered before: the uploader trusted the suffix and wrote the
+    stream straight to disk.
+    """
+
+    def test_a_file_that_is_not_an_image_is_refused(self, client, product):
+        """The old fixture — fourteen bytes with a JPEG magic number — went
+        through, and every page then rendered an <img> pointing at rubbish."""
+        response = upload(client, product["id"],
+                          {"file": (io.BytesIO(b"\xff\xd8\xff\xe0 fake jpeg"), "foto.jpg")})
+
+        assert response.status_code == 400
+        assert "não é uma imagem" in response.get_json()["message"]
+        assert list(uploads.UPLOAD_DIR.iterdir()) == [], "nothing may reach the disk"
+
+    def test_a_truncated_image_is_refused(self, client, product):
+        """A cut-off upload has a perfectly good header."""
+        whole = image_bytes(size=(200, 200))
+        response = upload(client, product["id"],
+                          {"file": (io.BytesIO(whole[: len(whole) // 3]), "foto.jpg")})
+
+        assert response.status_code == 400
+        assert list(uploads.UPLOAD_DIR.iterdir()) == []
+
+    def test_the_stored_suffix_follows_the_real_format(self, client, product):
+        """A PNG named .jpg is stored as .png, because the suffix is what the
+        browser will be told the file is when it is served back."""
+        body = upload(client, product["id"],
+                      {"file": (io.BytesIO(image_bytes("PNG")), "enganador.jpg")}).get_json()
+
+        assert body["url"].endswith(".png")
+        stored = uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name
+        assert Image.open(stored).format == "PNG"
+
+    def test_an_svg_dressed_as_a_png_is_refused(self, client, product):
+        """The one that matters: markup with a .png suffix, which Pillow cannot
+        open and which a browser would otherwise be free to interpret."""
+        svg = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+        response = upload(client, product["id"], {"file": (io.BytesIO(svg), "foto.png")})
+
+        assert response.status_code == 400
+        assert list(uploads.UPLOAD_DIR.iterdir()) == []
+
+
+class TestMetadataIsStripped:
+    """The owners photograph their work at home, and a phone writes the
+    coordinates of the room into the file. Those files are then served publicly.
+    """
+
+    def test_exif_does_not_reach_the_disk(self, client, product):
+        original = image_bytes(exif=phone_exif())
+        assert Image.open(io.BytesIO(original)).getexif(), "the fixture must carry EXIF"
+
+        body = upload(client, product["id"],
+                      {"file": (io.BytesIO(original), "foto.jpg")}).get_json()
+
+        stored = Image.open(uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name)
+        assert dict(stored.getexif()) == {}
+        assert stored.info.get("exif") is None
+
+    def test_the_gps_tag_in_particular_is_gone(self, client, product):
+        body = upload(client, product["id"],
+                      {"file": (io.BytesIO(image_bytes(exif=phone_exif())), "foto.jpg")}).get_json()
+
+        stored = Image.open(uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name)
+        assert 0x8825 not in dict(stored.getexif())
+
+    def test_the_photograph_itself_survives(self, client, product):
+        """Stripping must not quietly re-encode the picture into mush: JPEG is
+        saved with the source's own quantization tables."""
+        body = upload(client, product["id"],
+                      {"file": (io.BytesIO(image_bytes(size=(64, 48))), "foto.jpg")}).get_json()
+
+        stored = Image.open(uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name)
+        assert stored.size == (64, 48)
+        assert stored.format == "JPEG"
+
+
+class TestDecompressionLimit:
+    def test_a_bomb_is_refused_rather_than_decoded(self, client, product, monkeypatch):
+        """A few hundred kilobytes of PNG can decode to gigabytes of bitmap, and
+        decoding is the first thing that happens to it."""
+        monkeypatch.setattr(uploads.Image, "MAX_IMAGE_PIXELS", 1000)
+
+        response = upload(client, product["id"],
+                          {"file": (io.BytesIO(image_bytes("PNG", size=(400, 400))), "foto.png")})
+
+        assert response.status_code == 400
+        assert list(uploads.UPLOAD_DIR.iterdir()) == []
 
 
 class TestDeleteHelper:

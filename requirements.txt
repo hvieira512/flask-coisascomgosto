@@ -9,3 +9,7 @@ python-dotenv==1.2.1
 # cryptography installed. Without it the connection fails at authentication.
 cryptography==46.0.3
 gunicorn==23.0.0
+# Decodes an uploaded photograph before it is stored, which is the only way to
+# know it is one — and re-encoding is what drops the EXIF the owners' phones write
+# into it, including where the picture was taken.
+Pillow==12.3.0
