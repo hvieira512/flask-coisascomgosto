@@ -61,10 +61,10 @@
 </section>
 
 {# ------------------------------------------------------------- 2. Origin #}
-<section class="section is-medium" id="origin">
+<section class="section" id="origin">
     <div class="container">
         <div class="columns is-variable is-8 is-vcentered">
-            <div class="column is-half">
+            <div class="column is-7">
                 <p class="eyebrow">Origem</p>
                 <h2 class="title is-3">Começou numa bancada pequena</h2>
                 <p class="measure">
@@ -79,22 +79,22 @@
                 </p>
             </div>
 
-            <div class="column is-half">
-                <figure class="image">
-                    <img class="media-photo" src="{{ url_for('static', filename='img/ccg-01.jpg') }}"
-                         alt="Duas caixas redondas pretas com filigrana branca e friso vermelho,
-                              sobre um Lenço dos Namorados."
-                         loading="lazy">
-                </figure>
+            {# No figure.image wrapper: Bulma's `.image img { height: auto }`
+               outranks .media-photo, which let this 407px-wide photograph
+               render 640px wide and soft. #}
+            <div class="column is-5">
+                <img class="media-photo" src="{{ url_for('static', filename='img/ccg-01.jpg') }}"
+                     alt="Duas caixas redondas pretas com filigrana branca e friso vermelho, sobre um Lenço dos Namorados."
+                     width="407" height="414" loading="lazy">
             </div>
         </div>
     </div>
 </section>
 
 {# ----------------------------------------------------------- 3. O ofício #}
-<section class="section is-medium has-background-light">
+<section class="section has-background-light">
     <div class="container">
-        <header class="mb-6">
+        <header class="mb-5">
             <p class="eyebrow">O ofício</p>
             <h2 class="title is-3 measure">Cada peça passa por três mãos-cheias de tempo</h2>
         </header>
@@ -136,14 +136,21 @@
    so the filter is already applied — and shown as a removable badge — by the
    time the grid renders. #}
 {% if product_types %}
-<section class="section is-medium">
+<section class="section">
     <div class="container">
-        <header class="mb-6">
-            <p class="eyebrow">O que fazemos</p>
-            <h2 class="title is-3 is-spaced">As peças que saem da oficina</h2>
-            <p class="subtitle is-6 has-text-grey measure">
-                Escolha uma família de peças para ver tudo o que temos dela.
-            </p>
+        <header class="mb-5 is-flex is-justify-content-space-between is-align-items-flex-end">
+            <div>
+                <p class="eyebrow">O que fazemos</p>
+                <h2 class="title is-3 is-spaced">As peças que saem da oficina</h2>
+                <p class="subtitle is-6 has-text-grey measure mb-0">
+                    Escolha uma família de peças para ver tudo o que temos dela.
+                </p>
+            </div>
+
+            {# Only six families lead here; the rest are one click away. #}
+            <a class="button is-light" href="{{ url_for('web.store.products') }}">
+                Ver tudo
+            </a>
         </header>
 
         <div class="fixed-grid has-1-cols-mobile has-3-cols-tablet">

@@ -127,7 +127,7 @@ main {
 .media-photo {
     display: block;
     width: 100%;
-    height: 28rem;
+    height: 24rem;
     object-fit: cover;
     border-radius: var(--bulma-radius-large);
 }

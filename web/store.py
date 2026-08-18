@@ -5,7 +5,9 @@ from api.repositories import EventRepository, ProductTypeRepository
 
 bp = Blueprint("store", __name__)
 
-TYPES_LIMIT = 12
+# Two full rows of three. The landing page is a way into the catalogue, not a
+# copy of it, and a seventh type left an orphan card alone on a third row.
+TYPES_LIMIT = 6
 TIMELINE_LIMIT = 12
 
 

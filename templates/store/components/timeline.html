@@ -7,9 +7,32 @@
    above it. Rendered server-side, so it works without JavaScript: the rail is
    still a scroll container and only the arrow buttons need the script. The
    section is omitted entirely when there are no events. #}
-<section class="section is-medium pb-6" id="events">
+
+{% macro event_body(event) %}
+<p class="timeline-date">
+    {{ event.starts_on | event_dates(event.ends_on) }}
+</p>
+
+<h3 class="title is-6 mb-1">
+    {% if event.url %}
+    <a href="{{ event.url }}" target="_blank" rel="noopener">{{ event.name }}</a>
+    {% else %}
+    {{ event.name }}
+    {% endif %}
+</h3>
+
+{% if event.location %}
+<p class="is-size-7 has-text-grey mb-2">{{ event.location }}</p>
+{% endif %}
+
+{% if event.description %}
+<p class="is-size-7 has-text-grey">{{ event.description }}</p>
+{% endif %}
+{% endmacro %}
+
+<section class="section pb-6" id="events">
     <div class="container">
-        <header class="mb-6">
+        <header class="mb-5">
             <p class="eyebrow">Percurso</p>
             <h2 class="title is-3 is-spaced">Onde já estivemos</h2>
             <p class="subtitle is-6 has-text-grey measure">
@@ -17,6 +40,13 @@
             </p>
         </header>
 
+        {# One event is not a history: the rail's markers, drag affordance and
+           arrows all promise a sequence that is not there. #}
+        {% if events | length == 1 %}
+        <div class="card p-5 measure">
+            <div class="timeline-body">{{ event_body(events[0]) }}</div>
+        </div>
+        {% else %}
         <div class="timeline-shell">
             <button class="disc timeline-arrow timeline-arrow-left" type="button"
                     data-timeline-prev aria-label="Eventos anteriores" hidden>
@@ -29,27 +59,7 @@
                 <li class="timeline-entry">
                     <div class="timeline-marker" aria-hidden="true"></div>
 
-                    <div class="timeline-body">
-                        <p class="timeline-date">
-                            {{ event.starts_on | event_dates(event.ends_on) }}
-                        </p>
-
-                        <h3 class="title is-6 mb-1">
-                            {% if event.url %}
-                            <a href="{{ event.url }}" target="_blank" rel="noopener">{{ event.name }}</a>
-                            {% else %}
-                            {{ event.name }}
-                            {% endif %}
-                        </h3>
-
-                        {% if event.location %}
-                        <p class="is-size-7 has-text-grey mb-2">{{ event.location }}</p>
-                        {% endif %}
-
-                        {% if event.description %}
-                        <p class="is-size-7 has-text-grey">{{ event.description }}</p>
-                        {% endif %}
-                    </div>
+                    <div class="timeline-body">{{ event_body(event) }}</div>
                 </li>
                 {% endfor %}
             </ol>
@@ -59,5 +69,6 @@
                 <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
             </button>
         </div>
+        {% endif %}
     </div>
 </section>

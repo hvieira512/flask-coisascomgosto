@@ -119,9 +119,20 @@ class TestTimelineSection:
         assert html.index("O que fazemos") < html.index('id="events"')
         assert html.index('id="events"') < html.index('id="contacts"')
 
+    def test_a_single_event_is_a_card_not_a_rail(self, client, make_event):
+        """A rail of one promises a sequence that is not there — the markers,
+        the drag cursor and the arrows are all affordances for nothing."""
+        make_event("Feira de Artesanato", "2025-08-12")
+        html = client.get("/").get_data(as_text=True)
+
+        assert "Feira de Artesanato" in html
+        assert 'id="timeline"' not in html
+        assert "data-timeline-prev" not in html
+
     def test_rail_is_a_focusable_scroll_container(self, client, make_event):
         """Keyboard users must be able to reach and scroll the horizontal rail."""
-        make_event()
+        make_event("Primeira", "2025-08-12")
+        make_event("Segunda", "2025-09-12")
         html = client.get("/").get_data(as_text=True)
 
         assert 'id="timeline"' in html
@@ -135,7 +146,8 @@ class TestTimelineSection:
 
     def test_arrow_buttons_are_rendered(self, client, make_event):
         """Visitors who would rather not drag get previous/next controls."""
-        make_event()
+        make_event("Primeira", "2025-08-12")
+        make_event("Segunda", "2025-09-12")
         html = client.get("/").get_data(as_text=True)
 
         assert "data-timeline-prev" in html
@@ -143,7 +155,8 @@ class TestTimelineSection:
 
     def test_arrows_use_font_awesome_chevrons(self, client, make_event):
         """Text glyphs like &#8249; render differently per platform font."""
-        make_event()
+        make_event("Primeira", "2025-08-12")
+        make_event("Segunda", "2025-09-12")
         html = client.get("/").get_data(as_text=True)
 
         assert "fa-chevron-left" in html
@@ -151,7 +164,8 @@ class TestTimelineSection:
 
     def test_rail_aligns_with_its_header(self, client, make_event):
         """The rail lives in the same .container as the header above it."""
-        make_event()
+        make_event("Primeira", "2025-08-12")
+        make_event("Segunda", "2025-09-12")
         html = client.get("/").get_data(as_text=True)
 
         # A full-bleed wrapper previously pushed the rail 72px off.
