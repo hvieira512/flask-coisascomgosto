@@ -1,10 +1,10 @@
 export const API = {
-    categories: {
-        list: "/api/categories",
-        get: (id) => `/api/categories/${id}`,
-        create: "/api/categories",
-        update: (id) => `/api/categories/${id}`,
-        delete: (id) => `/api/categories/${id}`,
+    materials: {
+        list: "/api/materials",
+        get: (id) => `/api/materials/${id}`,
+        create: "/api/materials",
+        update: (id) => `/api/materials/${id}`,
+        delete: (id) => `/api/materials/${id}`,
     },
     products: {
         list: "/api/products",

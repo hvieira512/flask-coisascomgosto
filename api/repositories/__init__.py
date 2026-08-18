@@ -7,13 +7,13 @@ build SQL themselves.
 
 from __future__ import annotations
 
-from api.repositories.categories import CategoryRepository
 from api.repositories.collections import CollectionRepository
 from api.repositories.color_sets import ColorSetRepository
 from api.repositories.contacts import ContactRepository
 from api.repositories.colors import ColorRepository
 from api.repositories.events import EventRepository
 from api.repositories.images import ProductImageRepository
+from api.repositories.materials import MaterialRepository
 from api.repositories.product_types import (
     NestingTooDeepError,
     ProductTypeRepository,
@@ -24,12 +24,12 @@ from api.repositories.users import UserRepository
 from api.repositories.variants import ProductVariantRepository
 
 __all__ = [
-    "CategoryRepository",
     "CollectionRepository",
     "ColorRepository",
     "ColorSetRepository",
     "ContactRepository",
     "EventRepository",
+    "MaterialRepository",
     "NestingTooDeepError",
     "ProductImageRepository",
     "ProductRepository",

@@ -58,26 +58,31 @@ class TestProductType:
     def test_sub_type_exposes_its_parent(
         self, client, make_product, make_product_type
     ):
-        parent = make_product_type("Coracao")
+        parent = make_product_type("Coracao de Viana")
         sub = make_product_type("With string", parent_id=parent["id"])
         product = make_product("Coracao pendurado", type_id=sub["id"])
 
         body = client.get(f"/api/products/{product['id']}").get_json()
         assert body["type"]["name"] == "With string"
-        assert body["type"]["parent"]["name"] == "Coracao"
+        assert body["type"]["parent"]["name"] == "Coracao de Viana"
 
-    def test_type_is_optional(self, client, make_product):
-        product = make_product("Sem tipo")
-        assert client.get(f"/api/products/{product['id']}").get_json()["type"] is None
+    def test_type_is_required(self, client, make_material):
+        """Every piece is something; there is no untyped state."""
+        material = make_material("Madeira")
+        response = client.post(
+            "/api/products/",
+            json={"name": "Sem tipo", "description": "d", "material_id": material["id"]},
+        )
+        assert response.status_code == 400
 
-    def test_unknown_type_returns_404(self, client, make_category):
-        category = make_category("Madeira")
+    def test_unknown_type_returns_404(self, client, make_material):
+        material = make_material("Madeira")
         response = client.post(
             "/api/products/",
             json={
                 "name": "Ghost",
                 "description": "d",
-                "category_id": category["id"],
+                "material_id": material["id"],
                 "type_id": 9999,
             },
         )
@@ -95,26 +100,37 @@ class TestProductType:
     def test_filtering_by_parent_type_includes_sub_typed_products(
         self, client, make_product, make_product_type
     ):
-        parent = make_product_type("Coracao")
+        parent = make_product_type("Coracao de Viana")
         with_string = make_product_type("With string", parent_id=parent["id"])
         base = make_product_type("Base for mini figures", parent_id=parent["id"])
         make_product("Pendurado", type_id=with_string["id"])
         make_product("Base", type_id=base["id"])
-        make_product("Escova")  # untyped, must not appear
+        make_product("Escova")  # the shared default type, must not appear
 
         body = client.get(f"/api/products/?type_id={parent['id']}").get_json()
         assert sorted(p["name"] for p in body["products"]) == ["Base", "Pendurado"]
         assert body["pagination"]["total"] == 2
 
-    def test_deleting_a_type_clears_it_on_products(
+    def test_deleting_a_type_still_in_use_returns_409(
         self, client, make_product, make_product_type
     ):
-        product_type = make_product_type("Hairbrush")
-        product = make_product("Escova", type_id=product_type["id"])
+        """type_id is NOT NULL, so there is no unfiled state to move the piece
+        into — refusing beats destroying it."""
+        brush = make_product_type("Hairbrush")
+        product = make_product("Escova", type_id=brush["id"])
 
-        client.delete(f"/api/product-types/{product_type['id']}")
+        response = client.delete(f"/api/product-types/{brush['id']}")
+        assert response.status_code == 409
+        assert "1 product" in response.get_json()["message"]
 
-        assert client.get(f"/api/products/{product['id']}").get_json()["type"] is None
+        # Both survive.
+        assert client.get(f"/api/product-types/{brush['id']}").status_code == 200
+        assert client.get(f"/api/products/{product['id']}").status_code == 200
+
+    def test_deleting_an_unused_type_succeeds(self, client, make_product_type):
+        spare = make_product_type("Tabuleiro")
+        assert client.delete(f"/api/product-types/{spare['id']}").status_code == 200
+        assert client.get(f"/api/product-types/{spare['id']}").status_code == 404
 
 
 class TestProductVariants:
@@ -231,14 +247,15 @@ class TestProductSizes:
             is None
         )
 
-    def test_unknown_default_size_returns_404(self, client, make_category):
-        category = make_category("Madeira")
+    def test_unknown_default_size_returns_404(self, client, product_type, make_material):
+        material = make_material("Madeira")
         response = client.post(
             "/api/products/",
             json={
                 "name": "Ghost",
                 "description": "d",
-                "category_id": category["id"],
+                "type_id": product_type["id"],
+                "material_id": material["id"],
                 "default_size_id": 9999,
             },
         )
@@ -347,14 +364,15 @@ class TestProductCollection:
         body = client.get(f"/api/products/{product_id}").get_json()
         assert body["collection"]["name"] == "Barra da Saia"
 
-    def test_unknown_collection_returns_404(self, client, make_category):
-        category = make_category("Madeira")
+    def test_unknown_collection_returns_404(self, client, product_type, make_material):
+        material = make_material("Madeira")
         response = client.post(
             "/api/products/",
             json={
                 "name": "Ghost",
                 "description": "d",
-                "category_id": category["id"],
+                "type_id": product_type["id"],
+                "material_id": material["id"],
                 "collection_id": 9999,
             },
         )
@@ -368,13 +386,13 @@ class TestProductCollection:
         assert [p["name"] for p in body["products"]] == ["Caixa Redonda"]
         assert body["pagination"]["total"] == 1
 
-    def test_filter_by_category(self, client, make_category, make_product):
-        madeira = make_category("Madeira")
-        tecido = make_category("Tecido")
-        make_product("Caixa", category_id=madeira["id"])
-        make_product("Lenco", category_id=tecido["id"])
+    def test_filter_by_category(self, client, make_material, make_product):
+        madeira = make_material("Madeira")
+        tecido = make_material("Tecido")
+        make_product("Caixa", material_id=madeira["id"])
+        make_product("Lenco", material_id=tecido["id"])
 
-        body = client.get(f"/api/products/?category_id={madeira['id']}").get_json()
+        body = client.get(f"/api/products/?material_id={madeira['id']}").get_json()
         assert [p["name"] for p in body["products"]] == ["Caixa"]
 
     def test_search_matches_type_name(

@@ -9,28 +9,30 @@ class TestListProducts:
         assert body["products"] == []
         assert body["pagination"]["total"] == 0
 
-    def test_product_is_returned_with_nested_category(self, client, make_category, make_product):
-        category = make_category("Bebidas")
-        make_product("Vinho", category_id=category["id"])
+    def test_product_is_returned_with_nested_material(self, client, make_material, make_product):
+        material = make_material("Madeira")
+        make_product("Vinho", material_id=material["id"])
 
         product = client.get("/api/products/").get_json()["products"][0]
         assert product["name"] == "Vinho"
-        assert product["category"] == {"id": category["id"], "name": "Bebidas"}
+        assert product["material"] == {"id": material["id"], "name": "Madeira"}
 
     def test_search_matches_product_name(self, client, make_product):
         make_product("Vinho")
-        make_product("Cerveja", category_id=None)
+        make_product("Cerveja", material_id=None)
 
         body = client.get("/api/products/?q=Vin").get_json()
         assert [p["name"] for p in body["products"]] == ["Vinho"]
 
-    def test_search_matches_category_name(self, client, make_category, make_product):
-        bebidas = make_category("Bebidas")
-        doces = make_category("Doces")
-        make_product("Vinho", category_id=bebidas["id"])
-        make_product("Bolo", category_id=doces["id"])
+    def test_search_matches_the_type_name(self, client, make_product_type, make_product):
+        """Search covers the product and its type. Material is descriptive and
+        deliberately not searchable — a shopper looks for a heart, not for wood."""
+        heart = make_product_type("Coracao de Viana")
+        box = make_product_type("Caixa")
+        make_product("Vinho", type_id=heart["id"])
+        make_product("Bolo", type_id=box["id"])
 
-        body = client.get("/api/products/?q=Doces").get_json()
+        body = client.get("/api/products/?q=Caix").get_json()
         assert [p["name"] for p in body["products"]] == ["Bolo"]
 
     def test_search_does_not_500_on_the_joined_query(self, client, make_product):
@@ -41,67 +43,70 @@ class TestListProducts:
 
     def test_search_total_reflects_filter(self, client, make_product):
         make_product("Vinho")
-        make_product("Cerveja", category_id=None)
+        make_product("Cerveja", material_id=None)
 
         assert client.get("/api/products/?q=Vin").get_json()["pagination"]["total"] == 1
 
-    def test_pagination_splits_results(self, client, make_category, make_product):
-        category = make_category("Bebidas")
+    def test_pagination_splits_results(self, client, make_material, make_product):
+        material = make_material("Madeira")
         for name in ["A", "B", "C"]:
-            make_product(name, category_id=category["id"])
+            make_product(name, material_id=material["id"])
 
         body = client.get("/api/products/?page=2&limit=2").get_json()
         assert [p["name"] for p in body["products"]] == ["C"]
         assert body["pagination"] == {"total": 3, "page": 2, "pages": 2, "limit": 2}
 
     @pytest.mark.parametrize("query", ["?page=abc", "?limit=0", "?page=0"])
-    def test_invalid_pagination_returns_400(self, client, query):
+    def test_invalid_pagination_returns_400(self, client, product_type, query):
         assert client.get(f"/api/products/{query}").status_code == 400
 
 
 class TestCreateProduct:
-    def test_creates_and_returns_product(self, client, make_category):
-        category = make_category("Bebidas")
+    def test_creates_and_returns_product(self, client, product_type, make_material):
+        material = make_material("Madeira")
 
         response = client.post(
             "/api/products/",
-            json={"name": "Vinho", "description": "Tinto", "category_id": category["id"]},
+            json={"name": "Vinho", "description": "Tinto", "type_id": product_type["id"],
+                  "material_id": material["id"]},
         )
         assert response.status_code == 201
 
         body = response.get_json()
         assert body["name"] == "Vinho"
         assert body["description"] == "Tinto"
-        assert body["category"]["name"] == "Bebidas"
+        assert body["material"]["name"] == "Madeira"
 
-    def test_unknown_category_returns_404(self, client):
+    def test_unknown_material_returns_404(self, client, product_type):
         response = client.post(
             "/api/products/",
-            json={"name": "Vinho", "description": "Tinto", "category_id": 9999},
+            json={"name": "Vinho", "description": "Tinto", "type_id": product_type["id"],
+                  "material_id": 9999},
         )
         assert response.status_code == 404
 
-    def test_duplicate_name_returns_409(self, client, make_category, make_product):
-        category = make_category("Bebidas")
-        make_product("Vinho", category_id=category["id"])
+    def test_duplicate_name_returns_409(self, client, product_type, make_material, make_product):
+        material = make_material("Madeira")
+        make_product("Vinho", material_id=material["id"])
 
         response = client.post(
             "/api/products/",
-            json={"name": "Vinho", "description": "Outro", "category_id": category["id"]},
+            json={"name": "Vinho", "description": "Outro", "type_id": product_type["id"],
+                  "material_id": material["id"]},
         )
         assert response.status_code == 409
 
     @pytest.mark.parametrize(
         "payload",
         [
-            {"description": "Tinto", "category_id": 1},
-            {"name": "Vinho", "category_id": 1},
+            {"description": "Tinto", "material_id": 1},
+            {"name": "Vinho", "material_id": 1},
             {"name": "Vinho", "description": "Tinto"},
             {},
         ],
     )
-    def test_missing_fields_return_400(self, client, make_category, payload):
-        make_category("Bebidas")
+    def test_missing_fields_return_400(self, client, make_material, payload):
+        make_material("Madeira")
         assert client.post("/api/products/", json=payload).status_code == 400
 
 
@@ -112,73 +117,79 @@ class TestGetProduct:
         body = client.get(f"/api/products/{created['id']}").get_json()
         assert body["name"] == "Vinho"
 
-    def test_unknown_id_returns_404(self, client):
+    def test_unknown_id_returns_404(self, client, product_type):
         assert client.get("/api/products/9999").status_code == 404
 
 
 class TestUpdateProduct:
-    def test_updates_all_fields(self, client, make_category, make_product):
+    def test_updates_all_fields(self, client, product_type, make_material, make_product):
         created = make_product("Vinho")
-        other = make_category("Doces")
+        other = make_material("Tecido")
 
         response = client.put(
             f"/api/products/{created['id']}",
-            json={"name": "Bolo", "description": "Doce", "category_id": other["id"]},
+            json={"name": "Bolo", "description": "Doce", "type_id": product_type["id"],
+                  "material_id": other["id"]},
         )
         assert response.status_code == 200
 
         body = response.get_json()
         assert body["name"] == "Bolo"
         assert body["description"] == "Doce"
-        assert body["category"]["name"] == "Doces"
+        assert body["material"]["name"] == "Tecido"
 
-    def test_unknown_product_returns_404(self, client, make_category):
-        category = make_category("Bebidas")
+    def test_unknown_product_returns_404(self, client, product_type, make_material):
+        material = make_material("Madeira")
 
         response = client.put(
             "/api/products/9999",
-            json={"name": "Ghost", "description": "d", "category_id": category["id"]},
+            json={"name": "Ghost", "description": "d", "type_id": product_type["id"],
+                  "material_id": material["id"]},
         )
         assert response.status_code == 404
 
-    def test_unknown_product_does_not_return_a_null_body(self, client, make_category):
+    def test_unknown_product_does_not_return_a_null_body(self, client, product_type, make_material):
         """Regression: a missing product used to marshal to 200 with all-null fields."""
-        category = make_category("Bebidas")
+        material = make_material("Madeira")
 
         response = client.put(
             "/api/products/9999",
-            json={"name": "Ghost", "description": "d", "category_id": category["id"]},
+            json={"name": "Ghost", "description": "d", "type_id": product_type["id"],
+                  "material_id": material["id"]},
         )
         assert response.get_json().get("id") is None
         assert response.status_code != 200
 
-    def test_unknown_category_returns_404(self, client, make_product):
+    def test_unknown_material_returns_404(self, client, product_type, make_product):
         created = make_product("Vinho")
 
         response = client.put(
             f"/api/products/{created['id']}",
-            json={"name": "Vinho", "description": "d", "category_id": 9999},
+            json={"name": "Vinho", "description": "d", "type_id": product_type["id"],
+                  "material_id": 9999},
         )
         assert response.status_code == 404
 
-    def test_name_taken_by_another_returns_409(self, client, make_category, make_product):
-        category = make_category("Bebidas")
-        make_product("Vinho", category_id=category["id"])
-        other = make_product("Cerveja", category_id=category["id"])
+    def test_name_taken_by_another_returns_409(self, client, product_type, make_material, make_product):
+        material = make_material("Madeira")
+        make_product("Vinho", material_id=material["id"])
+        other = make_product("Cerveja", material_id=material["id"])
 
         response = client.put(
             f"/api/products/{other['id']}",
-            json={"name": "Vinho", "description": "d", "category_id": category["id"]},
+            json={"name": "Vinho", "description": "d", "type_id": product_type["id"],
+                  "material_id": material["id"]},
         )
         assert response.status_code == 409
 
-    def test_keeping_own_name_is_allowed(self, client, make_category, make_product):
-        category = make_category("Bebidas")
-        created = make_product("Vinho", category_id=category["id"])
+    def test_keeping_own_name_is_allowed(self, client, product_type, make_material, make_product):
+        material = make_material("Madeira")
+        created = make_product("Vinho", material_id=material["id"])
 
         response = client.put(
             f"/api/products/{created['id']}",
-            json={"name": "Vinho", "description": "novo", "category_id": category["id"]},
+            json={"name": "Vinho", "description": "novo", "type_id": product_type["id"],
+                  "material_id": material["id"]},
         )
         assert response.status_code == 200
 
@@ -206,7 +217,7 @@ class TestDeleteProduct:
     def test_unknown_id_returns_404(self, client):
         assert client.delete("/api/products/9999").status_code == 404
 
-    def test_404_message_names_the_product_not_a_category(self, client):
+    def test_404_message_names_the_product_not_a_material(self, client):
         """Regression: the message used to read 'Category #... not found'."""
         body = client.delete("/api/products/9999").get_json()
         assert "product" in body["message"].lower()

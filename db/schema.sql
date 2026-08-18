@@ -1,11 +1,13 @@
 -- CoisasComGosto catalog schema (MySQL 8).
 --
 -- Domain shape:
---   category            a product's taxonomy bucket (required, e.g. "Madeira")
 --   product type        what the object is (hairbrush, picture frame, wooden box).
---                       Types nest exactly one level: a "Coracao" type can have
---                       sub-types for how it is finished, e.g. "with string to
---                       hang" vs "base for mini figures".
+--                       Required: it is the one fact every piece has. Types nest
+--                       exactly one level, so a "Coracao" type can have sub-types
+--                       for how it is finished, e.g. "with string to hang" vs
+--                       "base for mini figures".
+--   material            what it is made of ("Madeira", "Tecido"). Optional, and
+--                       a lookup the owners maintain themselves.
 --   collection          a themed grouping (e.g. "Barra da Saia") that owns colour sets
 --   colour              a single named colour, optionally with a hex swatch
 --   colour set          a named combination of colours ("White and Green"), normally
@@ -34,10 +36,11 @@
 -- that is never searched by equality stays TEXT.
 --
 -- NOTE ON NULLS IN UNIQUE KEYS
--- MySQL treats NULLs as distinct inside a UNIQUE index, so
--- UNIQUE (parent_id, name) does NOT stop two top-level types sharing a name.
--- That gap is closed in ProductTypeRepository.name_exists, which compares with
--- the null-safe <=> operator.
+-- MySQL treats NULLs as distinct inside a UNIQUE index, so UNIQUE
+-- (parent_id, name) would constrain sub-types while letting two top-level types
+-- share a name. product_types therefore keys on a generated parent_key that
+-- folds NULL to 0. ProductTypeRepository.name_exists still checks first, with
+-- the null-safe <=> operator, so the API answers 409 rather than a driver error.
 --
 -- Dropped children-first so a re-run is always clean.
 DROP TABLE IF EXISTS events;
@@ -52,10 +55,13 @@ DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS product_types;
 DROP TABLE IF EXISTS sizes;
 DROP TABLE IF EXISTS collections;
-DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS materials;
 DROP TABLE IF EXISTS users;
 
-CREATE TABLE categories (
+-- What a piece is made of: "Madeira", "Tecido". A lookup the owners maintain
+-- themselves, and optional on a product — a piece that mixes materials, or one
+-- nobody has classified yet, simply has none.
+CREATE TABLE materials (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -92,7 +98,12 @@ CREATE TABLE product_types (
     -- Font Awesome class (e.g. 'fa-heart') drawn on products that have no
     -- photo yet. Null falls back to a keyword guess from the type name.
     icon VARCHAR(60),
-    UNIQUE KEY uq_product_types_parent_name (parent_id, name),
+    -- MySQL treats NULLs as distinct inside a UNIQUE index, so a key on
+    -- (parent_id, name) would constrain sub-types and let two top-level types
+    -- share a name. Folding NULL to 0 in a generated column closes that, and
+    -- makes the database enforce it rather than only the repository.
+    parent_key INT AS (IFNULL(parent_id, 0)) STORED,
+    UNIQUE KEY uq_product_types_parent_name (parent_key, name),
     KEY idx_product_types_parent (parent_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -116,15 +127,17 @@ CREATE TABLE color_set_colors (
     KEY idx_color_set_colors_color (color_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- type_id is required: what the object is, is the one fact every piece has.
+-- material_id is not — a piece may mix materials, or predate the list.
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    category_id INT NOT NULL,
-    type_id INT,
+    type_id INT NOT NULL,
+    material_id INT,
     collection_id INT,
     default_size_id INT,
     name VARCHAR(180) NOT NULL,
     description TEXT,
-    KEY idx_products_category (category_id),
+    KEY idx_products_material (material_id),
     KEY idx_products_type (type_id),
     KEY idx_products_collection (collection_id),
     KEY idx_products_default_size (default_size_id),
@@ -207,6 +220,7 @@ CREATE TABLE events (
 
 -- The standard size run. Seeded so the API is usable immediately.
 INSERT INTO sizes (name, position) VALUES ('S', 1), ('M', 2), ('L', 3);
+
 
 -- Seeded from the links already used across the site.
 INSERT INTO contacts (id, address, email, whatsapp, maps_url, facebook_url,

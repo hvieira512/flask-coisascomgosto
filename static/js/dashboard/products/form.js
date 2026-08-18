@@ -11,7 +11,7 @@ const option = (value, label, selected) =>
  * product id, which does not exist until the product is saved.
  */
 export async function productForm(product = null) {
-    const { categories, types, collections, sizes } = await reference();
+    const { materials, types, collections, sizes } = await reference();
     const selectedSizes = new Set((product?.sizes ?? []).map((s) => s.id));
 
     return `
@@ -35,23 +35,26 @@ export async function productForm(product = null) {
       <div class="columns is-mobile">
         <div class="column">
           <div class="field">
-            <label class="label is-small" for="pf-category">Categoria</label>
+            <label class="label is-small" for="pf-type">Tipo</label>
             <div class="select is-fullwidth">
-              <select id="pf-category" name="category_id" required>
-                ${categories.map((c) => option(c.id, c.name, product?.category?.id)).join("")}
+              <select id="pf-type" name="type_id" required>
+                <option value="">Escolher…</option>
+                ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
               </select>
             </div>
+            <p class="help">O que a peça é. Obrigatório.</p>
           </div>
         </div>
         <div class="column">
           <div class="field">
-            <label class="label is-small" for="pf-type">Tipo</label>
+            <label class="label is-small" for="pf-material">Material</label>
             <div class="select is-fullwidth">
-              <select id="pf-type" name="type_id">
+              <select id="pf-material" name="material_id">
                 <option value="">—</option>
-                ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
+                ${materials.map((m) => option(m.id, m.name, product?.material?.id)).join("")}
               </select>
             </div>
+            <p class="help">De que é feita. Opcional.</p>
           </div>
         </div>
       </div>
@@ -95,13 +98,14 @@ export async function submitProductForm(root = document) {
     const payload = {
         name: value("name"),
         description: value("description"),
-        category_id: Number(value("category_id")),
+        type_id: Number(value("type_id")),
     };
     // The API rejects an explicit null on these, so they are omitted instead.
-    if (value("type_id")) payload.type_id = Number(value("type_id"));
+    if (value("material_id")) payload.material_id = Number(value("material_id"));
     if (value("collection_id")) payload.collection_id = Number(value("collection_id"));
 
     if (!payload.name) throw new Error("O nome é obrigatório.");
+    if (!payload.type_id) throw new Error("O tipo é obrigatório.");
 
     const res = await fetch(
         id ? API.products.update(id) : API.products.create,

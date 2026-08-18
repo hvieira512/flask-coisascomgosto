@@ -109,9 +109,9 @@ when the MySQL volume is first created.
 A product sits at the centre of several independent layers.
 
 ```
-category ──────┐                        (required: what shelf it lives on)
-product type ──┤                        (optional: what the object IS)
+product type ──┐                        (required: what the object IS)
   └─ sub-type  │                          one level deep
+material ──────┤                        (optional: what it is made OF)
 collection ────┼──► product ──► variant ──► colour set ──► colours
                │        │                     ▲
 default size ──┘        └──► sizes            └── normally owned by a collection
@@ -119,8 +119,8 @@ default size ──┘        └──► sizes            └── normally o
 
 | Layer | Meaning | Example |
 |---|---|---|
-| **Category** | Required taxonomy bucket. | `Madeira` |
-| **Product type** | What the object *is*. | `Hairbrush`, `Picture frame`, `Wooden box`, `Coração` |
+| **Product type** | What the object *is*. Required. | `Caixa`, `Moldura`, `Coração`, `Presépio Minhoto` |
+| **Material** | What it is made *of*. Optional, and maintained by the owners. | `Madeira`, `Tecido` |
 | **Sub-type** | How that object is finished or used. Exactly one level deep. | A `Coração` **with string** to hang, or as a **base for mini figures** |
 | **Collection** | A themed grouping that owns colour sets. | `Barra da Saia` |
 | **Colour** | A single named swatch, optionally with a hex code. | `White`, `Green` |
@@ -150,13 +150,13 @@ Caixa Redonda
 The schema is **deliberately non-relational**: primary keys and indexes only,
 **no `FOREIGN KEY` constraints**. Relationships are plain integer columns with
 an index on each (13 explicit indexes; `EXPLAIN QUERY PLAN` confirms lookups
-like `products.category_id` use them).
+like `products.type_id` use them).
 
 **Every cascade lives in the repository layer**, not the database:
 
 | Deleting… | …does this, in `api/repositories/` |
 |---|---|
-| category | deletes its products (and their images, sizes, variants) |
+| material | clears `material_id` on the pieces made of it; they survive |
 | collection | clears `collection_id` on its colour sets and products |
 | colour | removes it from every colour set |
 | colour set | deletes variants using it, plus their images |
@@ -173,7 +173,10 @@ like `products.category_id` use them).
 
 ### Rules worth knowing
 
-- A product needs a **category**; type, collection and default size are optional.
+- A product needs a **product type** — the one fact every piece has. Material,
+  collection and default size are optional.
+- **Materials are a lookup the owners maintain** from the dashboard, so the list
+  grows with the workshop rather than with a migration.
 - **Types nest exactly one level.** Parenting a sub-type to another sub-type
   returns `400`. A type that already has sub-types cannot itself become one.
 - Filtering products by a **parent type** also returns products filed under its
@@ -343,7 +346,7 @@ clients never receive HTML.
 
 ### Catalog
 
-- Filters live in the sidebar: search, category, product type (with sub-types
+- Filters live in the sidebar: search, material, product type (with sub-types
   indented under their parent) and collection.
 - Every applied filter renders as a Bulma
   [delete-tag](https://bulma.io/documentation/elements/tag/#delete-tag) reading

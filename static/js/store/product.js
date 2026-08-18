@@ -30,7 +30,7 @@
         const meta = document.getElementById("product-meta");
         const rows = [];
 
-        if (product.category) rows.push(["Categoria", product.category.name]);
+        if (product.material) rows.push(["Material", product.material.name]);
         if (product.type) {
             const name = product.type.parent
                 ? `${product.type.parent.name} · ${product.type.name}`

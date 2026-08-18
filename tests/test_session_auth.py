@@ -43,7 +43,7 @@ class TestSigningIn:
 
     def test_the_session_authorises_a_write(self, client):
         """This is what lets the dashboard's fetch() calls stay plain."""
-        response = client.post("/api/categories/", json={"name": "Vidro"})
+        response = client.post("/api/materials/", json={"name": "Vidro"})
         assert response.status_code == 201
 
 
@@ -72,7 +72,7 @@ class TestGuards:
     def test_catalog_reads_stay_public(self, anon_client):
         """Guarding the writes must not lock the storefront out."""
         assert anon_client.get("/api/products/").status_code == 200
-        assert anon_client.get("/api/categories/").status_code == 200
+        assert anon_client.get("/api/materials/").status_code == 200
         assert anon_client.get("/api/collections/").status_code == 200
 
 

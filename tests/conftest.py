@@ -131,9 +131,9 @@ def cursor(app):
 
 
 @pytest.fixture()
-def make_category(client):
-    def _make(name="Bebidas"):
-        response = client.post("/api/categories/", json={"name": name})
+def make_material(client):
+    def _make(name="Madeira"):
+        response = client.post("/api/materials/", json={"name": name})
         assert response.status_code == 201, response.get_json()
         return response.get_json()
 
@@ -141,31 +141,40 @@ def make_category(client):
 
 
 @pytest.fixture()
-def make_product(client, make_category):
-    default_category = {}
+def product_type(make_product_type):
+    """A ready-made type, for tests that build a product payload by hand — a
+    product cannot be created without one.
 
+    Deliberately not a real domain name. product_types is utf8mb4_unicode_ci,
+    which is accent-insensitive, so a default of "Coracao" collided with a test
+    creating "Coração".
+    """
+    return make_product_type("Tipo de teste")
+
+
+@pytest.fixture()
+def make_product(client, product_type):
     def _make(
         name="Vinho",
         description="Tinto",
-        category_id=None,
         type_id=None,
+        material_id=None,
         collection_id=None,
         default_size_id=None,
     ):
-        if category_id is None:
-            # Reuse one default category so repeated calls don't collide on
-            # the categories.name unique constraint.
-            if "id" not in default_category:
-                default_category.update(make_category())
-            category_id = default_category["id"]
+        # A product must have a type. Both this and the `product_type` fixture
+        # lean on the same one, so a test using each does not collide on the
+        # sibling-name unique constraint.
+        if type_id is None:
+            type_id = product_type["id"]
 
         payload = {
             "name": name,
             "description": description,
-            "category_id": category_id,
+            "type_id": type_id,
         }
         for key, value in (
-            ("type_id", type_id),
+            ("material_id", material_id),
             ("collection_id", collection_id),
             ("default_size_id", default_size_id),
         ):

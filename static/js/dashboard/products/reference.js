@@ -1,7 +1,7 @@
 import { API } from "../../core/api.js";
 
 /**
- * The lookup lists every product form needs: categories, types, collections,
+ * The lookup lists every product form needs: types, materials, collections,
  * colour sets and sizes. Fetched once and reused, since they change rarely and
  * every modal would otherwise refetch them.
  */
@@ -16,15 +16,15 @@ const listOf = async (url, key) => {
 export async function reference({ refresh = false } = {}) {
     if (cache && !refresh) return cache;
 
-    const [categories, types, collections, colorSets, sizes] = await Promise.all([
-        listOf(API.categories.list, "categories"),
+    const [materials, types, collections, colorSets, sizes] = await Promise.all([
+        listOf(API.materials.list, "materials"),
         listOf(API.productTypes.list, "product_types"),
         listOf(API.collections.list, "collections"),
         listOf(API.colorSets.list, "color_sets"),
         listOf(API.sizes.list, "sizes"),
     ]);
 
-    cache = { categories, types, collections, colorSets, sizes };
+    cache = { materials, types, collections, colorSets, sizes };
     return cache;
 }
 

@@ -168,7 +168,7 @@ async function openView(id) {
             <h3 class="title is-5 mb-2">${escapeHtml(product.name)}</h3>
             <p class="has-text-grey mb-4">${escapeHtml(product.description ?? "")}</p>
             <dl class="dash-facts">
-              <dt>Categoria</dt><dd>${escapeHtml(product.category.name)}</dd>
+              <dt>Material</dt><dd>${escapeHtml(product.material?.name ?? "—")}</dd>
               <dt>Tipo</dt><dd>${escapeHtml(product.type?.name ?? "—")}</dd>
               <dt>Colecção</dt><dd>${escapeHtml(product.collection?.name ?? "—")}</dd>
               <dt>Tamanhos</dt><dd>${product.sizes.map((s) => escapeHtml(s.name)).join(", ") || "—"}</dd>

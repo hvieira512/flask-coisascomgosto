@@ -1,8 +1,8 @@
 """Products, plus their variants and available sizes.
 
-A product always has a category. It may also declare a product type (or
-sub-type), belong to a collection, name a default size, list the sizes it is
-available in, and carry one variant per colour set it is offered in.
+A product always has a product type (possibly a sub-type). It may also name
+what it is made of, belong to a collection, declare a default size, list the sizes
+it is available in, and carry one variant per colour set it is offered in.
 
 Sub-resources:
     /products/<id>/variants        the colour sets this product is offered in
@@ -40,7 +40,7 @@ from api.models.products import (
 from api.pagination import get_pagination_params, make_pagination
 from api.security import PROTECTED_DOC, auth_required
 from api.repositories import (
-    CategoryRepository,
+    MaterialRepository,
     CollectionRepository,
     ColorSetRepository,
     ProductImageRepository,
@@ -75,15 +75,15 @@ for model in [
 
 
 def _validate_refs(cursor, data):
-    """Reject unknown category, type, collection or default size before writing."""
-    category_id = data["category_id"]
-    if not CategoryRepository(cursor).exists(category_id):
-        ns.abort(404, f"The category #{category_id} does not exist.")
-
-    if (type_id := data.get("type_id")) is not None and not ProductTypeRepository(
-        cursor
-    ).exists(type_id):
+    """Reject an unknown type, material, collection or default size before writing."""
+    type_id = data["type_id"]
+    if not ProductTypeRepository(cursor).exists(type_id):
         ns.abort(404, f"The product type #{type_id} does not exist.")
+
+    if (material_id := data.get("material_id")) is not None and not MaterialRepository(
+        cursor
+    ).exists(material_id):
+        ns.abort(404, f"The material #{material_id} does not exist.")
 
     if (
         collection_id := data.get("collection_id")
@@ -99,8 +99,8 @@ def _validate_refs(cursor, data):
 @ns.route("/")
 class ProductList(Resource):
     @ns.marshal_with(product_list_model)
-    @ns.param("q", "Search term for product, category or type name (fuzzy search)")
-    @ns.param("category_id", "Only products in this category")
+    @ns.param("q", "Search term for product or type name (fuzzy search)")
+    @ns.param("material_id", "Only products made of this material")
     @ns.param("collection_id", "Only products in this collection")
     @ns.param(
         "type_id",
@@ -115,7 +115,7 @@ class ProductList(Resource):
         """List products with pagination, fuzzy search and filters."""
         page, limit, offset = get_pagination_params(request.args)
         search = request.args.get("q")
-        category_id = request.args.get("category_id", type=int)
+        material_id = request.args.get("material_id", type=int)
         collection_id = request.args.get("collection_id", type=int)
         type_id = request.args.get("type_id", type=int)
 
@@ -123,7 +123,7 @@ class ProductList(Resource):
             products = ProductRepository(cursor)
             filters = {
                 "search": search,
-                "category_id": category_id,
+                "material_id": material_id,
                 "collection_id": collection_id,
                 "type_id": type_id,
             }
@@ -139,7 +139,7 @@ class ProductList(Resource):
     @ns.marshal_with(product_model, code=201)
     @ns.response(201, "Product created")
     @ns.response(400, "Missing or invalid fields")
-    @ns.response(404, "Referenced category, type, collection or size not found")
+    @ns.response(404, "Referenced type, material, collection or size not found")
     @ns.response(409, "A product with that name already exists")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
@@ -156,10 +156,10 @@ class ProductList(Resource):
                 ns.abort(409, f"The product {name} already exists.")
 
             product_id = products.create(
-                category_id=data["category_id"],
+                type_id=data["type_id"],
+                material_id=data.get("material_id"),
                 name=name,
                 description=data["description"],
-                type_id=data.get("type_id"),
                 collection_id=data.get("collection_id"),
                 default_size_id=data.get("default_size_id"),
             )
@@ -185,7 +185,7 @@ class Product(Resource):
     @ns.marshal_with(product_model)
     @ns.response(200, "Product updated")
     @ns.response(400, "Missing or invalid fields")
-    @ns.response(404, "Product, category, type, collection or size not found")
+    @ns.response(404, "Product, type, material, collection or size not found")
     @ns.response(409, "Another product already uses that name")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
@@ -212,10 +212,10 @@ class Product(Resource):
 
             products.update(
                 product_id,
-                category_id=data["category_id"],
+                type_id=data["type_id"],
+                material_id=data.get("material_id"),
                 name=name,
                 description=data["description"],
-                type_id=data.get("type_id"),
                 collection_id=data.get("collection_id"),
                 default_size_id=data.get("default_size_id"),
             )

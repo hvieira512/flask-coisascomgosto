@@ -120,7 +120,7 @@ function renderMissingPhotos(products) {
                 <li class="panel-block px-0 is-justify-content-space-between">
                   <a href="/dashboard/products">${escapeHtml(p.name)}</a>
                   <span class="tag is-rounded chip is-quiet">
-                    ${escapeHtml(p.type?.name ?? p.category.name)}
+                    ${escapeHtml(p.type.name)}
                   </span>
                 </li>`)
               .join("")}</ul>`

@@ -17,11 +17,11 @@ from flask_restx import Api
 from api.security import AUTHORIZATIONS
 
 from .routes.auth import ns as auth_ns
-from .routes.categories import ns as categories_ns
 from .routes.collections import ns as collections_ns
 from .routes.color_sets import ns as color_sets_ns
 from .routes.contacts import ns as contacts_ns
 from .routes.events import ns as events_ns
+from .routes.materials import ns as materials_ns
 from .routes.colors import ns as colors_ns
 from .routes.product_types import ns as product_types_ns
 from .routes.products import ns as products_ns
@@ -33,8 +33,8 @@ api = Api(
     version="2.0",
     description=(
         "Catalog API for CoisasComGosto.\n\n"
-        "A product has a required **category** and may also have a **product "
-        "type** (with one level of sub-types), belong to a **collection**, "
+        "A product has a required **product type** (with one level of "
+        "sub-types) and may also name a **material**, belong to a **collection**, "
         "declare a **default size**, list the **sizes** it is available in, and "
         "carry **variants** — one per **colour set** it is offered in.\n\n"
         "Catalog reads are public. Every write, plus `/users` and `/contacts`, "
@@ -47,8 +47,8 @@ api = Api(
     authorizations=AUTHORIZATIONS,
 )
 
-api.add_namespace(categories_ns, path="/categories")
 api.add_namespace(product_types_ns, path="/product-types")
+api.add_namespace(materials_ns, path="/materials")
 api.add_namespace(collections_ns, path="/collections")
 api.add_namespace(colors_ns, path="/colors")
 api.add_namespace(color_sets_ns, path="/color-sets")

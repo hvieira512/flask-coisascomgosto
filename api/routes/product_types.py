@@ -149,13 +149,15 @@ class ProductType(Resource):
     @ns.marshal_with(product_type_model)
     @ns.response(200, "The deleted product type")
     @ns.response(404, "Product type not found")
+    @ns.response(409, "The type is still in use by at least one product")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def delete(self, type_id):
         """Delete a product type by ID.
 
-        Sub-types are deleted with it. Products of those types keep existing
-        with their type cleared.
+        Its sub-types go with it. A type still in use cannot be deleted: every
+        piece must have one, so there is nowhere for those pieces to land. Move
+        them to another type first.
         """
         with get_db_connection() as (_, cursor):
             types = ProductTypeRepository(cursor)
@@ -163,6 +165,15 @@ class ProductType(Resource):
             product_type = types.get(type_id)
             if not product_type:
                 ns.abort(404, f"Product type #{type_id} not found")
+
+            in_use = types.product_count(type_id)
+            if in_use:
+                noun = "product" if in_use == 1 else "products"
+                ns.abort(
+                    409,
+                    f"{in_use} {noun} still use this type. "
+                    "Move them to another type first.",
+                )
 
             types.delete(type_id)
             return product_type, 200

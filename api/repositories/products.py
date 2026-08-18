@@ -6,15 +6,16 @@ from typing import Optional, Tuple
 
 from pymysql.cursors import DictCursor
 
-# Every read resolves the category (required) plus the optional collection and
-# default size, so callers get one consistent product shape.
+# Every read resolves the type (required) plus the optional material, collection
+# and default size, so callers get one consistent product shape. The type join is
+# inner because type_id is NOT NULL; everything else is a LEFT JOIN.
 _FROM = """
     FROM products p
-    JOIN categories c ON p.category_id = c.id
+    JOIN product_types t ON p.type_id = t.id
+    LEFT JOIN product_types tp ON t.parent_id = tp.id
+    LEFT JOIN materials m ON p.material_id = m.id
     LEFT JOIN collections col ON p.collection_id = col.id
     LEFT JOIN sizes s ON p.default_size_id = s.id
-    LEFT JOIN product_types t ON p.type_id = t.id
-    LEFT JOIN product_types tp ON t.parent_id = tp.id
 """
 
 _SELECT = f"""
@@ -22,8 +23,8 @@ _SELECT = f"""
         p.id AS id,
         p.name AS name,
         p.description AS description,
-        c.id AS category_id,
-        c.name AS category_name,
+        m.id AS material_id,
+        m.name AS material_name,
         col.id AS collection_id,
         col.name AS collection_name,
         s.id AS default_size_id,
@@ -50,12 +51,12 @@ class ProductRepository:
         *,
         search: Optional[str] = None,
         collection_id: Optional[int] = None,
-        category_id: Optional[int] = None,
+        material_id: Optional[int] = None,
         type_id: Optional[int] = None,
         limit: int,
         offset: int,
     ) -> list[dict]:
-        where, params = self._filter(search, collection_id, category_id, type_id)
+        where, params = self._filter(search, collection_id, material_id, type_id)
         self._cursor.execute(
             f"{_SELECT} {where} ORDER BY p.id LIMIT %s OFFSET %s",
             params + [limit, offset],
@@ -71,15 +72,15 @@ class ProductRepository:
         *,
         search: Optional[str] = None,
         collection_id: Optional[int] = None,
-        category_id: Optional[int] = None,
+        material_id: Optional[int] = None,
         type_id: Optional[int] = None,
     ) -> int:
-        where, params = self._filter(search, collection_id, category_id, type_id)
+        where, params = self._filter(search, collection_id, material_id, type_id)
         self._cursor.execute(f"SELECT COUNT(*) AS total {_FROM} {where}", params)
         return self._cursor.fetchone()["total"]
 
     def get(self, product_id: int) -> Optional[dict]:
-        """Return a product with its category, collection, sizes and variants."""
+        """Return a product with its type, material, sizes and variants."""
         self._cursor.execute(f"{_SELECT} WHERE p.id = %s", (product_id,))
         row = self._cursor.fetchone()
         if not row:
@@ -109,20 +110,20 @@ class ProductRepository:
     def create(
         self,
         *,
-        category_id: int,
+        type_id: int,
         name: str,
         description: str,
-        type_id: Optional[int] = None,
+        material_id: Optional[int] = None,
         collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> int:
         self._cursor.execute(
             "INSERT INTO products "
-            "(category_id, type_id, collection_id, default_size_id, name, description) "
+            "(type_id, material_id, collection_id, default_size_id, name, description) "
             "VALUES (%s, %s, %s, %s, %s, %s)",
             (
-                category_id,
                 type_id,
+                material_id,
                 collection_id,
                 default_size_id,
                 name,
@@ -135,20 +136,20 @@ class ProductRepository:
         self,
         product_id: int,
         *,
-        category_id: int,
+        type_id: int,
         name: str,
         description: str,
-        type_id: Optional[int] = None,
+        material_id: Optional[int] = None,
         collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> None:
         """Overwrite a product's own fields (not its sizes or variants)."""
         self._cursor.execute(
-            "UPDATE products SET category_id = %s, type_id = %s, collection_id = %s, "
+            "UPDATE products SET type_id = %s, material_id = %s, collection_id = %s, "
             "default_size_id = %s, name = %s, description = %s WHERE id = %s",
             (
-                category_id,
                 type_id,
+                material_id,
                 collection_id,
                 default_size_id,
                 name,
@@ -327,23 +328,23 @@ class ProductRepository:
     def _filter(
         search: Optional[str],
         collection_id: Optional[int],
-        category_id: Optional[int],
+        material_id: Optional[int],
         type_id: Optional[int] = None,
     ) -> Tuple[str, list]:
         clauses, params = [], []
 
         if term := (search or "").strip():
             # Columns are qualified: an unqualified `name` is ambiguous here.
-            clauses.append("(p.name LIKE %s OR c.name LIKE %s OR t.name LIKE %s)")
-            params += [f"%{term}%", f"%{term}%", f"%{term}%"]
+            clauses.append("(p.name LIKE %s OR t.name LIKE %s)")
+            params += [f"%{term}%", f"%{term}%"]
 
         if collection_id is not None:
             clauses.append("p.collection_id = %s")
             params.append(collection_id)
 
-        if category_id is not None:
-            clauses.append("p.category_id = %s")
-            params.append(category_id)
+        if material_id is not None:
+            clauses.append("p.material_id = %s")
+            params.append(material_id)
 
         if type_id is not None:
             # Matching a parent type also returns products filed under its
@@ -359,7 +360,10 @@ class ProductRepository:
             "id": row["id"],
             "name": row["name"],
             "description": row["description"],
-            "category": {"id": row["category_id"], "name": row["category_name"]},
+            "material": (
+                {"id": row["material_id"], "name": row["material_name"]}
+                if row["material_id"] else None
+            ),
             "type": (
                 {
                     "id": row["type_id"],

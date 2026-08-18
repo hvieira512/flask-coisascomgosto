@@ -1,6 +1,6 @@
 """Shared reads for the lookup tables.
 
-categories, collections, colors and sizes are all "an id, a name, and maybe one
+materials, collections, colors and sizes are all "an id, a name, and maybe one
 more column", and all four listed, counted, fetched and name-checked with the
 same four statements. Only their writes genuinely differ — different columns,
 and a different set of rows to detach on delete — so those stay in the

@@ -15,7 +15,7 @@ Re-runnable: it clears the catalog tables first. Users are left alone.
 
 from api.db import get_db_connection
 from api.repositories import (
-    CategoryRepository,
+    MaterialRepository,
     CollectionRepository,
     ColorRepository,
     ColorSetRepository,
@@ -38,9 +38,11 @@ CATALOG_TABLES = [
     "colors",
     "product_types",
     "collections",
-    "categories",
+    "materials",
     "events",
 ]
+
+MATERIALS = ["Madeira", "Tecido"]
 
 COLORS = [
     ("Branco", "#F5F3EF"),
@@ -267,7 +269,6 @@ def seed():
         for table in CATALOG_TABLES:
             cursor.execute(f"TRUNCATE TABLE `{table}`")
 
-        categories = CategoryRepository(cursor)
         collections = CollectionRepository(cursor)
         colors = ColorRepository(cursor)
         color_sets = ColorSetRepository(cursor)
@@ -277,7 +278,10 @@ def seed():
         sizes = SizeRepository(cursor)
         events = EventRepository(cursor)
 
-        category_id = categories.create("Madeira")
+        materials = MaterialRepository(cursor)
+        material_ids = {name: materials.create(name) for name in MATERIALS}
+        # Every piece in this seed is wood; Tecido exists for the bastidores.
+        material_id = material_ids["Madeira"]
 
         color_ids = {name: colors.create(name=name, hex=hex_) for name, hex_ in COLORS}
 
@@ -313,7 +317,7 @@ def seed():
         for name, type_name, collection, description, set_names, size_names in PRODUCTS:
             product_id = products.create(
                 name=name,
-                category_id=category_id,
+                material_id=material_id,
                 type_id=type_ids[type_name],
                 collection_id=collection_ids[collection] if collection else None,
                 description=description,

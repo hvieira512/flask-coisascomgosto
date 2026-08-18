@@ -72,7 +72,7 @@ const row = (product) => {
         <td>
           <p class="has-text-weight-medium">${escapeHtml(product.name)}</p>
           <p class="is-size-7 has-text-grey">
-            ${escapeHtml(product.type?.name ?? product.category.name)}
+            ${escapeHtml(product.type.name)}
             ${product.collection ? ` · ${escapeHtml(product.collection.name)}` : ""}
           </p>
         </td>

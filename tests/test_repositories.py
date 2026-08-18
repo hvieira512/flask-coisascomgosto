@@ -2,12 +2,17 @@
 
 import pytest
 
-from api.repositories import CategoryRepository, ProductRepository, UserRepository
+from api.repositories import (
+    MaterialRepository,
+    ProductRepository,
+    ProductTypeRepository,
+    UserRepository,
+)
 
 
 @pytest.fixture()
-def categories(cursor):
-    return CategoryRepository(cursor)
+def materials(cursor):
+    return MaterialRepository(cursor)
 
 
 @pytest.fixture()
@@ -16,78 +21,84 @@ def products(cursor):
 
 
 @pytest.fixture()
+def wood(cursor):
+    """A type id. Every product needs one, so every products test needs this."""
+    return ProductTypeRepository(cursor).create(name="Caixa")
+
+
+@pytest.fixture()
 def users(cursor):
     return UserRepository(cursor)
 
 
-class TestCategoryRepository:
-    def test_create_returns_the_new_id(self, categories):
-        assert isinstance(categories.create("Bebidas"), int)
+class TestMaterialRepository:
+    def test_create_returns_the_new_id(self, materials):
+        assert isinstance(materials.create("Madeira"), int)
 
-    def test_get_round_trips_a_created_row(self, categories):
-        category_id = categories.create("Bebidas")
-        assert categories.get(category_id) == {"id": category_id, "name": "Bebidas"}
+    def test_get_round_trips_a_created_row(self, materials):
+        material_id = materials.create("Madeira")
+        assert materials.get(material_id) == {"id": material_id, "name": "Madeira"}
 
-    def test_get_returns_none_when_missing(self, categories):
-        assert categories.get(9999) is None
+    def test_get_returns_none_when_missing(self, materials):
+        assert materials.get(9999) is None
 
-    def test_exists_reflects_reality(self, categories):
-        category_id = categories.create("Bebidas")
-        assert categories.exists(category_id) is True
-        assert categories.exists(9999) is False
+    def test_exists_reflects_reality(self, materials):
+        material_id = materials.create("Madeira")
+        assert materials.exists(material_id) is True
+        assert materials.exists(9999) is False
 
-    def test_name_exists_detects_duplicates(self, categories):
-        categories.create("Bebidas")
-        assert categories.name_exists("Bebidas") is True
-        assert categories.name_exists("Doces") is False
+    def test_name_exists_detects_duplicates(self, materials):
+        materials.create("Madeira")
+        assert materials.name_exists("Madeira") is True
+        assert materials.name_exists("Tecido") is False
 
-    def test_name_exists_can_exclude_one_row(self, categories):
-        category_id = categories.create("Bebidas")
-        assert categories.name_exists("Bebidas", exclude_id=category_id) is False
+    def test_name_exists_can_exclude_one_row(self, materials):
+        material_id = materials.create("Madeira")
+        assert materials.name_exists("Madeira", exclude_id=material_id) is False
 
-    def test_update_changes_the_name(self, categories):
-        category_id = categories.create("Bebidas")
-        categories.update(category_id, "Doces")
-        assert categories.get(category_id)["name"] == "Doces"
+    def test_update_changes_the_name(self, materials):
+        material_id = materials.create("Madeira")
+        materials.update(material_id, "Tecido")
+        assert materials.get(material_id)["name"] == "Tecido"
 
-    def test_delete_removes_the_row(self, categories):
-        category_id = categories.create("Bebidas")
-        categories.delete(category_id)
-        assert categories.get(category_id) is None
+    def test_delete_removes_the_row(self, materials):
+        material_id = materials.create("Madeira")
+        materials.delete(material_id)
+        assert materials.get(material_id) is None
 
-    def test_list_applies_limit_and_offset(self, categories):
+    def test_list_applies_limit_and_offset(self, materials):
         for name in ["A", "B", "C"]:
-            categories.create(name)
+            materials.create(name)
 
-        page = categories.list(limit=2, offset=1)
+        page = materials.list(limit=2, offset=1)
         assert [c["name"] for c in page] == ["B", "C"]
 
-    def test_count_and_list_agree_under_search(self, categories):
-        for name in ["Bebidas", "Doces", "Bolos"]:
-            categories.create(name)
+    def test_count_and_list_agree_under_search(self, materials):
+        for name in ["Madeira", "Tecido", "Bolos"]:
+            materials.create(name)
 
-        assert categories.count(search="Bo") == 1
-        assert len(categories.list(search="Bo", limit=10, offset=0)) == 1
+        assert materials.count(search="Bo") == 1
+        assert len(materials.list(search="Bo", limit=10, offset=0)) == 1
 
     @pytest.mark.parametrize("blank", [None, "", "   "])
-    def test_blank_search_is_ignored(self, categories, blank):
-        categories.create("Bebidas")
-        assert categories.count(search=blank) == 1
+    def test_blank_search_is_ignored(self, materials, blank):
+        materials.create("Madeira")
+        assert materials.count(search=blank) == 1
 
 
 class TestProductRepository:
-    def test_get_nests_the_category(self, categories, products):
-        category_id = categories.create("Bebidas")
+    def test_get_nests_the_type_and_material(self, materials, products, wood):
+        material_id = materials.create("Madeira")
         product_id = products.create(
-            category_id=category_id, name="Vinho", description="Tinto"
+            type_id=wood, material_id=material_id, name="Vinho", description="Tinto"
         )
 
         assert products.get(product_id) == {
             "id": product_id,
             "name": "Vinho",
             "description": "Tinto",
-            "category": {"id": category_id, "name": "Bebidas"},
-            "type": None,
+            "material": {"id": material_id, "name": "Madeira"},
+            "type": {"id": wood, "name": "Caixa", "icon": None, "parent": None},
             "collection": None,
             "default_size": None,
             "sizes": [],
@@ -96,74 +107,76 @@ class TestProductRepository:
             "primary_image": None,
         }
 
-    def test_get_returns_none_when_missing(self, products):
+    def test_get_returns_none_when_missing(self, products, wood):
         assert products.get(9999) is None
 
-    def test_search_matches_the_category_name(self, categories, products):
-        bebidas = categories.create("Bebidas")
-        doces = categories.create("Doces")
-        products.create(category_id=bebidas, name="Vinho", description="")
-        products.create(category_id=doces, name="Bolo", description="")
+    def test_search_does_not_match_the_material_name(self, materials, products, wood):
+        """Material is descriptive, and searching it would surprise: a shopper
+        looking for "madeira" wants pieces named that, not every wooden thing."""
+        wood_id = materials.create("Madeira")
+        products.create(type_id=wood, material_id=wood_id, name="Vinho", description="")
 
-        found = products.list(search="Doces", limit=10, offset=0)
-        assert [p["name"] for p in found] == ["Bolo"]
+        assert products.list(search="Madeira", limit=10, offset=0) == []
 
-    def test_search_matches_the_product_name(self, categories, products):
-        category_id = categories.create("Bebidas")
-        products.create(category_id=category_id, name="Vinho", description="")
-        products.create(category_id=category_id, name="Cerveja", description="")
+    def test_search_matches_the_product_name(self, materials, products, wood):
+        material_id = materials.create("Madeira")
+        products.create(type_id=wood, material_id=material_id, name="Vinho", description="")
+        products.create(type_id=wood, material_id=material_id, name="Cerveja", description="")
 
         found = products.list(search="Vin", limit=10, offset=0)
         assert [p["name"] for p in found] == ["Vinho"]
 
-    def test_count_matches_search_results(self, categories, products):
-        category_id = categories.create("Bebidas")
-        products.create(category_id=category_id, name="Vinho", description="")
-        products.create(category_id=category_id, name="Cerveja", description="")
+    def test_count_matches_search_results(self, materials, products, wood):
+        material_id = materials.create("Madeira")
+        products.create(type_id=wood, material_id=material_id, name="Vinho", description="")
+        products.create(type_id=wood, material_id=material_id, name="Cerveja", description="")
 
         assert products.count(search="Vin") == 1
         assert products.count() == 2
 
-    def test_name_exists_can_exclude_one_row(self, categories, products):
-        category_id = categories.create("Bebidas")
-        product_id = products.create(
-            category_id=category_id, name="Vinho", description=""
+    def test_name_exists_can_exclude_one_row(self, materials, products, wood):
+        material_id = materials.create("Madeira")
+        product_id = products.create(type_id=wood, material_id=material_id, name="Vinho", description=""
         )
 
         assert products.name_exists("Vinho") is True
         assert products.name_exists("Vinho", exclude_id=product_id) is False
 
-    def test_update_overwrites_fields(self, categories, products):
-        bebidas = categories.create("Bebidas")
-        doces = categories.create("Doces")
-        product_id = products.create(
-            category_id=bebidas, name="Vinho", description="Tinto"
+    def test_update_overwrites_fields(self, materials, products, wood):
+        bebidas = materials.create("Madeira")
+        doces = materials.create("Tecido")
+        product_id = products.create(type_id=wood, material_id=bebidas, name="Vinho", description="Tinto"
         )
 
-        products.update(
-            product_id, category_id=doces, name="Bolo", description="Doce"
+        products.update(product_id, type_id=wood, material_id=doces, name="Bolo", description="Doce"
         )
 
         updated = products.get(product_id)
         assert updated["name"] == "Bolo"
-        assert updated["category"]["id"] == doces
+        assert updated["material"]["id"] == doces
 
-    def test_delete_removes_the_row(self, categories, products):
-        category_id = categories.create("Bebidas")
-        product_id = products.create(category_id=category_id, name="V", description="")
+    def test_delete_removes_the_row(self, materials, products, wood):
+        material_id = materials.create("Madeira")
+        product_id = products.create(type_id=wood, material_id=material_id, name="V", description="")
 
         products.delete(product_id)
         assert products.get(product_id) is None
 
-    def test_deleting_a_category_cascades(self, cursor, categories, products):
-        category_id = categories.create("Bebidas")
-        products.create(category_id=category_id, name="Vinho", description="")
+    def test_deleting_a_material_detaches_its_products(
+        self, cursor, materials, products, wood
+    ):
+        """Material is not structural: the piece survives, unclassified."""
+        material_id = materials.create("Madeira")
+        product_id = products.create(
+            type_id=wood, material_id=material_id, name="Vinho", description=""
+        )
 
-        categories.delete(category_id)
+        materials.delete(material_id)
 
-        assert products.count() == 0
-        cursor.execute("SELECT COUNT(*) AS total FROM products")
-        assert cursor.fetchone()["total"] == 0, "orphan row survived the cascade"
+        assert products.count() == 1
+        assert products.get(product_id)["material"] is None
+        cursor.execute("SELECT material_id FROM products WHERE id = %s", (product_id,))
+        assert cursor.fetchone()["material_id"] is None, "stale material_id left behind"
 
 
 class TestUserRepository:

@@ -10,7 +10,7 @@ window.StoreFilters = (function () {
     /** Filters that map straight onto /api/products query parameters. */
     const GROUPS = {
         q: { label: "Pesquisa" },
-        category_id: { label: "Categoria" },
+        material_id: { label: "Material" },
         type_id: { label: "Tipo" },
         collection_id: { label: "Coleção" },
     };

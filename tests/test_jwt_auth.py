@@ -69,7 +69,7 @@ class TestGuards:
 
     def test_a_bearer_token_authorises_a_write(self, anon_client, bearer):
         response = anon_client.post(
-            "/api/categories/", json={"name": "Cortiça"}, headers=bearer
+            "/api/materials/", json={"name": "Cortiça"}, headers=bearer
         )
         assert response.status_code == 201
 
@@ -88,7 +88,7 @@ class TestGuards:
     def test_catalog_reads_stay_public(self, anon_client):
         """Guarding the writes must not lock the storefront out."""
         assert anon_client.get("/api/products/").status_code == 200
-        assert anon_client.get("/api/categories/").status_code == 200
+        assert anon_client.get("/api/materials/").status_code == 200
         assert anon_client.get("/api/collections/").status_code == 200
 
 

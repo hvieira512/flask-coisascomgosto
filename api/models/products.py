@@ -1,13 +1,12 @@
 """Marshalling models for products.
 
-A product joins several catalog layers: a required category, an optional product
-type (possibly a sub-type), an optional collection, an optional default size, the
-sizes it is available in, and one variant per colour set it is sold in.
+A product joins several catalog layers: a required product type (possibly a
+sub-type), an optional material, an optional collection, an optional default size,
+the sizes it is available in, and one variant per colour set it is sold in.
 """
 
 from flask_restx import Model, fields
 
-from api.models.categories import category_model
 from api.models.catalog import (
     collection_ref_model,
     image_model,
@@ -16,6 +15,7 @@ from api.models.catalog import (
     variant_model,
 )
 from api.models.common import list_model
+from api.models.materials import material_model
 
 product_model = Model(
     "Product",
@@ -25,11 +25,14 @@ product_model = Model(
         "description": fields.String(
             required=True, description="Product Description"
         ),
-        "category": fields.Nested(category_model, description="Owning category"),
         "type": fields.Nested(
             product_type_nested_model,
-            allow_null=True,
             description="What the object is, e.g. a Coracao with a string",
+        ),
+        "material": fields.Nested(
+            material_model,
+            allow_null=True,
+            description="What it is made of; null when unclassified or mixed",
         ),
         "collection": fields.Nested(
             collection_ref_model,
@@ -70,8 +73,10 @@ product_create_model = Model(
     {
         "name": fields.String(required=True, description="Product Name"),
         "description": fields.String(required=True, description="Product Description"),
-        "category_id": fields.Integer(required=True, description="Product Category ID"),
-        "type_id": fields.Integer(description="Optional product type or sub-type ID"),
+        "type_id": fields.Integer(
+            required=True, description="Product type or sub-type ID"
+        ),
+        "material_id": fields.Integer(description="Optional material ID"),
         "collection_id": fields.Integer(description="Optional collection ID"),
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },
@@ -82,8 +87,10 @@ update_product_model = Model(
     {
         "name": fields.String(required=True, description="Product Name"),
         "description": fields.String(required=True, description="Product Description"),
-        "category_id": fields.Integer(required=True, description="Product Category ID"),
-        "type_id": fields.Integer(description="Optional product type or sub-type ID"),
+        "type_id": fields.Integer(
+            required=True, description="Product type or sub-type ID"
+        ),
+        "material_id": fields.Integer(description="Optional material ID"),
         "collection_id": fields.Integer(description="Optional collection ID"),
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },

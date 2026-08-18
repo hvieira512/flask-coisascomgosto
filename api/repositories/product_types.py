@@ -170,22 +170,33 @@ class ProductTypeRepository:
         )
         return self._cursor.fetchone() is not None
 
-    def delete(self, type_id: int) -> None:
-        """Delete a type and its sub-types, clearing the type on products.
-
-        Products of the deleted types survive with `type_id` cleared, which is
-        what the old ON DELETE SET NULL did.
-        """
+    def family(self, type_id: int) -> list[int]:
+        """The type and its sub-types — everything a delete would take with it."""
         self._cursor.execute(
             "SELECT id FROM product_types WHERE parent_id = %s", (type_id,)
         )
-        ids = [row["id"] for row in self._cursor.fetchall()] + [type_id]
+        return [row["id"] for row in self._cursor.fetchall()] + [type_id]
 
+    def product_count(self, type_id: int) -> int:
+        """How many pieces this type, or any of its sub-types, is filed under."""
+        ids = self.family(type_id)
         placeholders = ", ".join(["%s"] * len(ids))
         self._cursor.execute(
-            f"UPDATE products SET type_id = NULL WHERE type_id IN ({placeholders})",
+            f"SELECT COUNT(*) AS total FROM products WHERE type_id IN ({placeholders})",
             ids,
         )
+        return self._cursor.fetchone()["total"]
+
+    def delete(self, type_id: int) -> None:
+        """Delete a type and its sub-types.
+
+        Only safe once nothing references them: type_id is NOT NULL, so there is
+        no "unfile the product" state to fall back to the way there was when the
+        column was nullable. Callers check product_count first and refuse rather
+        than destroy pieces — see the 409 in routes/product_types.py.
+        """
+        ids = self.family(type_id)
+        placeholders = ", ".join(["%s"] * len(ids))
         self._cursor.execute(
             f"DELETE FROM product_types WHERE id IN ({placeholders})", ids
         )
