@@ -7,6 +7,8 @@ context processor, so those tests stay unauthenticated.
 
 import re
 
+import pytest
+
 
 class TestContactsApi:
     def test_schema_seeds_contact_details(self, auth_client):
@@ -361,3 +363,50 @@ class TestSocialHandleFilter:
 
     def test_none_is_empty(self, app):
         assert self._filter(app)(None) is None
+
+
+class TestContactInjection:
+    """web/__init__.py puts the shop's details on every rendered page.
+
+    It used to swallow every exception, so a database that was down rendered a
+    shop with no contact details and said nothing anywhere. Only the
+    table-does-not-exist case is tolerated now — the gap between a clone and the
+    first init-db.
+    """
+
+    def test_pages_render_before_the_table_exists(self, client):
+        from api.db import get_db_connection
+
+        with get_db_connection() as (_, cursor):
+            cursor.execute("DROP TABLE contacts")
+
+        try:
+            response = client.get("/")
+            assert response.status_code == 200
+            # The footer renders, just without any details in it.
+            assert "Coisas com Gosto" in response.get_data(as_text=True)
+        finally:
+            from api.db import SCHEMA_PATH, _statements
+
+            statements = _statements(SCHEMA_PATH.read_text())
+            with get_db_connection() as (_, cursor):
+                for statement in statements:
+                    if "CREATE TABLE contacts" in statement or (
+                        statement.upper().startswith("INSERT INTO CONTACTS")
+                    ):
+                        cursor.execute(statement)
+
+    def test_a_real_database_failure_is_not_hidden(self, client, monkeypatch):
+        """A page that renders anyway would hide the outage from the owners and
+        from us."""
+        import pymysql
+
+        from api.repositories import ContactRepository
+
+        def boom(self):
+            raise pymysql.err.OperationalError(2003, "Can't connect to MySQL server")
+
+        monkeypatch.setattr(ContactRepository, "get", boom)
+
+        with pytest.raises(pymysql.err.OperationalError):
+            client.get("/")

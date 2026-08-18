@@ -14,15 +14,28 @@ web_bp.register_blueprint(store_bp)
 
 @web_bp.app_context_processor
 def inject_contact():
+    """The shop's own details, on every rendered page: the footer and the landing
+    page's contact cards read them.
+
+    The one failure worth swallowing is the table not existing yet, between a
+    clone and the first init-db — a page still has to render, or the person
+    setting the project up sees a stack trace instead of a shop. Anything else,
+    a server that is down or a query that is wrong, propagates: a shop quietly
+    serving no contact details at all is worse than an error that says so.
+    """
+    from pymysql.constants import ER
+    from pymysql.err import ProgrammingError
+
     from api.db import get_db_connection
     from api.repositories import ContactRepository
 
     try:
         with get_db_connection() as (_, cursor):
             return {"contact": ContactRepository(cursor).get() or {}}
-    except Exception:
-        # Before init-db has run there is no table; pages must still render.
-        return {"contact": {}}
+    except ProgrammingError as error:
+        if error.args and error.args[0] == ER.NO_SUCH_TABLE:
+            return {"contact": {}}
+        raise
 
 
 @web_bp.route("/logout")
