@@ -31,6 +31,8 @@ from api.models.catalog import (
 )
 from api.models.common import pagination_model
 from api.models.products import (
+    facet_count_model,
+    facet_counts_model,
     product_create_model,
     product_list_model,
     product_model,
@@ -68,6 +70,8 @@ for model in [
     product_list_model,
     product_create_model,
     update_product_model,
+    facet_count_model,
+    facet_counts_model,
 ]:
     ns.models[model.name] = model
 
@@ -98,9 +102,13 @@ def _validate_refs(cursor, data):
 class ProductList(Resource):
     @ns.marshal_with(product_list_model)
     @ns.param("q", "Search term for product or type name (fuzzy search)")
-    @ns.param("material_id", "Only products made of this material")
-    @ns.param("collection_id", "Only products in this collection")
-    @ns.param("type_id", "Only products of this type")
+    @ns.param(
+        "material_id",
+        "Only products made of this material. Repeatable — several values read "
+        "as OR, while a different filter still narrows with AND.",
+    )
+    @ns.param("collection_id", "Only products in this collection. Repeatable.")
+    @ns.param("type_id", "Only products of this type. Repeatable.")
     @ns.param("page", "Page number, 1-based (default 1)")
     @ns.param("limit", "Items per page, max 100 (default 10)")
     @ns.param(
@@ -114,9 +122,11 @@ class ProductList(Resource):
         """List products with pagination, fuzzy search and filters."""
         page, limit, offset = get_pagination_params(request.args)
         search = request.args.get("q")
-        material_id = request.args.get("material_id", type=int)
-        collection_id = request.args.get("collection_id", type=int)
-        type_id = request.args.get("type_id", type=int)
+        # getlist, so ?type_id=1&type_id=5 asks for both families. A single value
+        # arrives as a one-item list, which is what the old callers send.
+        material_id = request.args.getlist("material_id", type=int)
+        collection_id = request.args.getlist("collection_id", type=int)
+        type_id = request.args.getlist("type_id", type=int)
         photographed_first = bool(request.args.get("photographed_first", type=int))
 
         with get_db_connection() as (_, cursor):
@@ -169,6 +179,20 @@ class ProductList(Resource):
                 default_size_id=data.get("default_size_id"),
             )
             return products.get(product_id), 201
+
+
+@ns.route("/facets")
+class ProductFacets(Resource):
+    @ns.marshal_with(facet_counts_model)
+    @ns.response(200, "How many products sit behind each filter option")
+    def get(self):
+        """Per-option product counts, for the catalogue's filter sidebar.
+
+        One request rather than a count on each of the three lookup endpoints,
+        because the answer is about products, not about types or materials.
+        """
+        with get_db_connection() as (_, cursor):
+            return ProductRepository(cursor).facet_counts()
 
 
 @ns.route("/<int:product_id>")

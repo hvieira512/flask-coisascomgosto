@@ -92,6 +92,48 @@ class TestListProducts:
             "Sem fotografia",
         ]
 
+    def test_several_type_ids_read_as_or(self, client, make_product, make_product_type):
+        """A shopper ticking Caixa and Moldura wants both families."""
+        box = make_product_type("Caixa")
+        frame = make_product_type("Moldura")
+        make_product("Caixa de Joias", type_id=box["id"])
+        make_product("Moldura Oval", type_id=frame["id"])
+        make_product("Outra coisa")
+
+        body = client.get(
+            f"/api/products/?type_id={box['id']}&type_id={frame['id']}"
+        ).get_json()
+        assert sorted(p["name"] for p in body["products"]) == [
+            "Caixa de Joias",
+            "Moldura Oval",
+        ]
+        assert body["pagination"]["total"] == 2
+
+    def test_a_single_type_id_still_works(self, client, make_product, make_product_type):
+        """The dashboard and every shared link send one value."""
+        box = make_product_type("Caixa")
+        make_product("Caixa de Joias", type_id=box["id"])
+        make_product("Outra coisa")
+
+        body = client.get(f"/api/products/?type_id={box['id']}").get_json()
+        assert [p["name"] for p in body["products"]] == ["Caixa de Joias"]
+
+    def test_different_filters_still_narrow_with_and(
+        self, client, make_product, make_product_type, make_collection
+    ):
+        """OR inside a filter, AND between them."""
+        box = make_product_type("Caixa")
+        frame = make_product_type("Moldura")
+        filigrana = make_collection("Filigrana")
+        make_product("Caixa Filigrana", type_id=box["id"], collection_id=filigrana["id"])
+        make_product("Moldura sem colecção", type_id=frame["id"])
+
+        body = client.get(
+            f"/api/products/?type_id={box['id']}&type_id={frame['id']}"
+            f"&collection_id={filigrana['id']}"
+        ).get_json()
+        assert [p["name"] for p in body["products"]] == ["Caixa Filigrana"]
+
     def test_photographed_first_still_paginates(self, client, make_product):
         """The reorder must not double-count or drop rows: total is unchanged."""
         make_product("A")
@@ -313,3 +355,45 @@ class TestDashboardFilterQueries:
         response = client.get("/api/products/?q=zzzz&limit=100")
         assert response.status_code == 200
         assert response.get_json()["products"] == []
+
+
+class TestProductFacets:
+    """Per-option counts for the catalogue sidebar."""
+
+    def test_counts_products_per_type(self, client, make_product, make_product_type):
+        box = make_product_type("Caixa")
+        frame = make_product_type("Moldura")
+        make_product("Caixa de Joias", type_id=box["id"])
+        make_product("Caixa de Garrafa", type_id=box["id"])
+        make_product("Moldura Oval", type_id=frame["id"])
+
+        facets = client.get("/api/products/facets").get_json()
+        counts = {row["id"]: row["count"] for row in facets["types"]}
+        assert counts[box["id"]] == 2
+        assert counts[frame["id"]] == 1
+
+    def test_an_option_with_no_products_is_absent(self, client, make_product_type):
+        """The sidebar reads a missing id as zero and greys the entry out."""
+        spare = make_product_type("Tabuleiro")
+
+        facets = client.get("/api/products/facets").get_json()
+        assert spare["id"] not in {row["id"] for row in facets["types"]}
+
+    def test_collections_and_materials_are_counted_too(
+        self, client, make_product, make_collection, make_material
+    ):
+        collection = make_collection("Filigrana")
+        material = make_material("Madeira")
+        make_product("Caixa", collection_id=collection["id"], material_id=material["id"])
+
+        facets = client.get("/api/products/facets").get_json()
+        assert {row["id"]: row["count"] for row in facets["collections"]} == {
+            collection["id"]: 1
+        }
+        assert {row["id"]: row["count"] for row in facets["materials"]} == {
+            material["id"]: 1
+        }
+
+    def test_facets_are_public(self, anon_client):
+        """The storefront reads them with no session and no token."""
+        assert anon_client.get("/api/products/facets").status_code == 200

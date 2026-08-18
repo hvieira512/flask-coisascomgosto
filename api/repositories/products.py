@@ -36,6 +36,16 @@ _SELECT = f"""
 """
 
 
+def _as_ids(value) -> list[int]:
+    """One id, a list of them, or nothing at all — callers pass whichever they
+    have and the filter builder sees a list either way."""
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return [int(v) for v in value if v is not None]
+    return [int(value)]
+
+
 class ProductRepository:
     """All SQL touching products, product_sizes and product_variants lives here."""
 
@@ -46,9 +56,9 @@ class ProductRepository:
         self,
         *,
         search: Optional[str] = None,
-        collection_id: Optional[int] = None,
-        material_id: Optional[int] = None,
-        type_id: Optional[int] = None,
+        collection_id: Optional[int | list[int]] = None,
+        material_id: Optional[int | list[int]] = None,
+        type_id: Optional[int | list[int]] = None,
         limit: int,
         offset: int,
         photographed_first: bool = False,
@@ -78,9 +88,9 @@ class ProductRepository:
         self,
         *,
         search: Optional[str] = None,
-        collection_id: Optional[int] = None,
-        material_id: Optional[int] = None,
-        type_id: Optional[int] = None,
+        collection_id: Optional[int | list[int]] = None,
+        material_id: Optional[int | list[int]] = None,
+        type_id: Optional[int | list[int]] = None,
     ) -> int:
         where, params = self._filter(search, collection_id, material_id, type_id)
         self._cursor.execute(f"SELECT COUNT(*) AS total {_FROM} {where}", params)
@@ -334,10 +344,13 @@ class ProductRepository:
     @staticmethod
     def _filter(
         search: Optional[str],
-        collection_id: Optional[int],
-        material_id: Optional[int],
-        type_id: Optional[int] = None,
+        collection_id: Optional[int | list[int]],
+        material_id: Optional[int | list[int]],
+        type_id: Optional[int | list[int]] = None,
     ) -> Tuple[str, list]:
+        """Each id filter takes one value or several. Several read as OR — a
+        shopper ticking Caixa and Moldura wants both families, not the pieces
+        that are somehow each — while separate filters still narrow with AND."""
         clauses, params = [], []
 
         if term := (search or "").strip():
@@ -345,19 +358,36 @@ class ProductRepository:
             clauses.append("(p.name LIKE %s OR t.name LIKE %s)")
             params += [f"%{term}%", f"%{term}%"]
 
-        if collection_id is not None:
-            clauses.append("p.collection_id = %s")
-            params.append(collection_id)
-
-        if material_id is not None:
-            clauses.append("p.material_id = %s")
-            params.append(material_id)
-
-        if type_id is not None:
-            clauses.append("p.type_id = %s")
-            params.append(type_id)
+        for column, value in (
+            ("p.collection_id", collection_id),
+            ("p.material_id", material_id),
+            ("p.type_id", type_id),
+        ):
+            ids = _as_ids(value)
+            if not ids:
+                continue
+            placeholders = ", ".join(["%s"] * len(ids))
+            clauses.append(f"{column} IN ({placeholders})")
+            params += ids
 
         return ("WHERE " + " AND ".join(clauses) if clauses else ""), params
+
+    def facet_counts(self) -> dict[str, list[dict]]:
+        """How many pieces sit behind each filter option, so the sidebar can say
+        so before it is clicked. Deliberately unfiltered: a count that moved
+        every time another filter changed would be a different question."""
+        facets = {}
+        for key, column in (
+            ("types", "type_id"),
+            ("materials", "material_id"),
+            ("collections", "collection_id"),
+        ):
+            self._cursor.execute(
+                f"SELECT {column} AS id, COUNT(*) AS count FROM products "
+                f"WHERE {column} IS NOT NULL GROUP BY {column}"
+            )
+            facets[key] = [dict(row) for row in self._cursor.fetchall()]
+        return facets
 
     @staticmethod
     def _to_dict(row) -> dict:

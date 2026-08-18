@@ -9,7 +9,11 @@ window.StoreApi = (function () {
         const url = new URL(path, window.location.origin);
 
         Object.entries(params || {}).forEach(([key, value]) => {
-            if (value !== null && value !== undefined && value !== "") {
+            // A list becomes repeated keys — ?type_id=1&type_id=5 — which is how
+            // the API takes several values for one filter.
+            if (Array.isArray(value)) {
+                value.forEach((one) => url.searchParams.append(key, one));
+            } else if (value !== null && value !== undefined && value !== "") {
                 url.searchParams.set(key, value);
             }
         });

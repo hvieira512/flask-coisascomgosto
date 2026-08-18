@@ -95,3 +95,21 @@ update_product_model = Model(
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },
 )
+
+# One entry per filter option that has at least one product behind it.
+facet_count_model = Model(
+    "FacetCount",
+    {
+        "id": fields.Integer(description="The option's ID"),
+        "count": fields.Integer(description="Products behind that option"),
+    },
+)
+
+facet_counts_model = Model(
+    "FacetCounts",
+    {
+        "types": fields.List(fields.Nested(facet_count_model)),
+        "materials": fields.List(fields.Nested(facet_count_model)),
+        "collections": fields.List(fields.Nested(facet_count_model)),
+    },
+)

@@ -13,18 +13,54 @@
     const clearButton = document.getElementById("clear-filters");
     const searchInput = document.getElementById("filter-search");
     const pagination = document.getElementById("pagination");
-    const pageIndicator = document.getElementById("page-indicator");
+    const pageList = document.getElementById("page-list");
 
     let page = 1;
     let totalPages = 1;
+    /** option id -> how many products, per group. Filled once, before the lists. */
+    let facets = {};
+    /** collection id -> its colour sets, so a collection reads as its colours. */
+    let setsByCollection = new Map();
 
     // ----------------------------------------------------------------
     // Sidebar
     // ----------------------------------------------------------------
 
+    /** Per-option product counts, so an entry can say what it holds. */
+    async function loadFacets() {
+        try {
+            const payload = await StoreApi.get("/api/products/facets");
+            facets = Object.fromEntries(
+                Object.entries(payload).map(([key, rows]) => [
+                    key,
+                    new Map(rows.map((row) => [row.id, row.count])),
+                ])
+            );
+        } catch (error) {
+            facets = {};
+        }
+    }
+
+    /** The colour sets behind each collection — a collection is its colours. */
+    async function loadColorSets() {
+        try {
+            const { color_sets: sets } = await StoreApi.get("/api/color-sets/", {
+                limit: 100,
+            });
+            setsByCollection = sets.reduce((map, set) => {
+                if (!set.collection) return map;
+                const current = map.get(set.collection.id) ?? [];
+                return map.set(set.collection.id, [...current, set]);
+            }, new Map());
+        } catch (error) {
+            setsByCollection = new Map();
+        }
+    }
+
     /** Fill one sidebar group from its API endpoint. */
     async function loadGroup(list) {
-        const { filterGroup, endpoint, collectionKey } = list.dataset;
+        const { filterGroup, endpoint, collectionKey, facet, withColorSets } =
+            list.dataset;
 
         let payload;
         try {
@@ -35,7 +71,10 @@
         }
 
         const items = payload[collectionKey] || [];
-        list.innerHTML = items.map((item) => renderEntry(filterGroup, item)).join("");
+        const counts = facets[facet] ?? new Map();
+        list.innerHTML = items
+            .map((item) => renderEntry(filterGroup, item, counts, withColorSets))
+            .join("");
 
         // Cache names so badges can render before the sidebar is consulted.
         items.forEach((item) =>
@@ -43,21 +82,44 @@
         );
     }
 
-    function renderEntry(group, item) {
+    /**
+     * One entry: a checkbox, the name, and how many pieces are behind it. The box
+     * is what says these are cumulative — before it, a second click looked like
+     * it had undone the first.
+     */
+    function renderEntry(group, item, counts, withColorSets) {
+        const count = counts.get(item.id) ?? 0;
+        const sets = withColorSets ? setsByCollection.get(item.id) ?? [] : [];
+        const badges = sets.map((set) => window.ColorSet.badge(set)).join("");
+        // Kept visible but not clickable: it is part of the workshop's
+        // vocabulary, and ticking it could only ever empty the grid.
+        const empty = count === 0;
+
         return `
           <li>
-            <a data-filter-group="${group}" data-filter-value="${item.id}"
-               data-filter-label="${escapeHtml(item.name)}">
-              <span>${escapeHtml(item.name)}</span>
+            <a class="filter-entry${empty ? " is-empty" : ""}"
+               data-filter-group="${group}" data-filter-value="${item.id}"
+               data-filter-label="${escapeHtml(item.name)}"
+               ${empty ? 'aria-disabled="true" title="Sem peças"' : ""}>
+              <span class="filter-line">
+                <span class="filter-box" aria-hidden="true">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+                <span class="filter-name">${escapeHtml(item.name)}</span>
+                <span class="filter-count">${count}</span>
+              </span>
+              ${badges ? `<span class="filter-sets swatch-row">${badges}</span>` : ""}
             </a>
           </li>`;
     }
 
-    /** Highlight whichever sidebar entries match the current state. */
+    /** Tick whichever sidebar entries are selected. */
     function syncSidebar() {
         document.querySelectorAll("#filter-groups a[data-filter-group]").forEach((link) => {
             const { filterGroup, filterValue } = link.dataset;
-            link.classList.toggle("is-active", StoreFilters.get(filterGroup) === filterValue);
+            const on = StoreFilters.isSelected(filterGroup, filterValue);
+            link.classList.toggle("is-active", on);
+            link.setAttribute("aria-pressed", String(on));
         });
     }
 
@@ -66,6 +128,7 @@
         if (!link) return;
 
         event.preventDefault();
+        if (link.classList.contains("is-empty")) return;
         StoreFilters.toggle(
             link.dataset.filterGroup,
             link.dataset.filterValue,
@@ -78,36 +141,39 @@
     // ----------------------------------------------------------------
 
     /**
-     * One Bulma tag per active filter, shaped "Group: Value ×".
-     * Clicking anywhere on the tag removes that filter.
+     * One Bulma tag per selected value, shaped "Group: Value ×" — three ticked
+     * types are three tags, each removable on its own.
      */
-    function renderBadges(activeFilters) {
-        const entries = Object.entries(activeFilters);
-        badgeRow.hidden = entries.length === 0;
-        clearButton.hidden = entries.length === 0;
+    function renderBadges() {
+        const chosen = StoreFilters.selections();
+        badgeRow.hidden = chosen.length === 0;
+        clearButton.hidden = chosen.length === 0;
 
-        badgeRow.innerHTML = entries
-            .map(([group, value]) => {
+        badgeRow.innerHTML = chosen
+            .map(({ group, value }) => {
                 const groupLabel = StoreFilters.GROUPS[group].label;
                 const valueLabel = StoreFilters.labelFor(group, value);
                 return `
-                  <span class="tag is-dark is-medium filter-badge" data-remove-filter="${group}"
+                  <span class="tag is-dark is-medium filter-badge"
+                        data-remove-filter="${group}" data-remove-value="${escapeHtml(value)}"
                         role="button" tabindex="0"
-                        title="Remover filtro ${escapeHtml(groupLabel)}">
+                        title="Remover ${escapeHtml(valueLabel)}">
                     ${escapeHtml(groupLabel)}: ${escapeHtml(valueLabel)}
-                    <button class="delete is-small" aria-label="Remover ${escapeHtml(groupLabel)}"></button>
+                    <button class="delete is-small" aria-label="Remover ${escapeHtml(valueLabel)}"></button>
                   </span>`;
             })
             .join("");
     }
 
+    function removeBadge(badge) {
+        const { removeFilter: group, removeValue: value } = badge.dataset;
+        StoreFilters.clear(group, value ?? null);
+        if (group === "q") searchInput.value = "";
+    }
+
     badgeRow.addEventListener("click", (event) => {
         const badge = event.target.closest("[data-remove-filter]");
-        if (!badge) return;
-
-        const group = badge.dataset.removeFilter;
-        StoreFilters.clear(group);
-        if (group === "q") searchInput.value = "";
+        if (badge) removeBadge(badge);
     });
 
     // Keyboard parity: the badge is focusable, so Enter/Space must remove it too.
@@ -118,9 +184,7 @@
         if (!badge) return;
 
         event.preventDefault();
-        const group = badge.dataset.removeFilter;
-        StoreFilters.clear(group);
-        if (group === "q") searchInput.value = "";
+        removeBadge(badge);
     });
 
     clearButton.addEventListener("click", () => {
@@ -219,46 +283,109 @@
         totalPages = pages || 1;
         resultCount.textContent = total === 1 ? "1 produto" : `${total} produtos`;
 
-        pagination.hidden = totalPages <= 1;
-        pageIndicator.textContent = `${page} / ${totalPages}`;
-        pagination.querySelector("[data-page-prev]").disabled = page <= 1;
-        pagination.querySelector("[data-page-next]").disabled = page >= totalPages;
+        renderPagination();
     }
 
-    pagination.querySelector("[data-page-prev]").addEventListener("click", () => {
-        if (page > 1) {
-            page -= 1;
-            loadProducts();
-        }
-    });
+    // ----------------------------------------------------------------
+    // Pagination
+    // ----------------------------------------------------------------
 
-    pagination.querySelector("[data-page-next]").addEventListener("click", () => {
-        if (page < totalPages) {
-            page += 1;
-            loadProducts();
+    /** Above this many pages the middle is elided rather than listed. */
+    const MAX_PAGE_BUTTONS = 7;
+
+    /**
+     * The page numbers to draw, with null standing for an ellipsis. Always keeps
+     * the first, the last and the current page's neighbours, so the row never
+     * changes width as you walk through it.
+     */
+    function pageWindow() {
+        if (totalPages <= MAX_PAGE_BUTTONS) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
+
+        const around = [page - 1, page, page + 1].filter(
+            (n) => n > 1 && n < totalPages
+        );
+        const numbers = [1, ...around, totalPages];
+
+        return numbers.flatMap((n, i) =>
+            i > 0 && n - numbers[i - 1] > 1 ? [null, n] : [n]
+        );
+    }
+
+    const arrow = (icon, label, target, disabled) => `
+      <li>
+        <button class="pagination-link" type="button" data-page="${target}"
+                aria-label="${label}"${disabled ? " disabled" : ""}>
+          <span class="icon is-small"><i class="fa-solid ${icon}"></i></span>
+        </button>
+      </li>`;
+
+    function renderPagination() {
+        pagination.hidden = totalPages <= 1;
+        if (pagination.hidden) {
+            pageList.innerHTML = "";
+            return;
+        }
+
+        const numbers = pageWindow()
+            .map((number) =>
+                number === null
+                    ? `<li><span class="pagination-ellipsis">&hellip;</span></li>`
+                    : `<li>
+                         <button class="pagination-link${number === page ? " is-current" : ""}"
+                                 type="button" data-page="${number}"
+                                 aria-label="Página ${number}"
+                                 ${number === page ? 'aria-current="page"' : ""}>
+                           ${number}
+                         </button>
+                       </li>`
+            )
+            .join("");
+
+        pageList.innerHTML =
+            arrow("fa-chevron-left", "Página anterior", page - 1, page <= 1) +
+            numbers +
+            arrow("fa-chevron-right", "Página seguinte", page + 1, page >= totalPages);
+    }
+
+    pageList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-page]");
+        if (!button || button.disabled) return;
+
+        const wanted = Number(button.dataset.page);
+        if (wanted === page || wanted < 1 || wanted > totalPages) return;
+
+        page = wanted;
+        loadProducts();
+        // The grid starts above the fold on a filtered view; without this the
+        // second page loads with its first row already scrolled past.
+        document.getElementById("product-grid").scrollIntoView({ block: "start" });
     });
 
     // ----------------------------------------------------------------
     // Wiring
     // ----------------------------------------------------------------
 
-    StoreFilters.onChange((activeFilters) => {
+    StoreFilters.onChange(() => {
         page = 1; // a changed filter invalidates the current page number
         syncSidebar();
-        renderBadges(activeFilters);
+        renderBadges();
         loadProducts();
     });
 
     (async function init() {
         searchInput.value = StoreFilters.get("q") || "";
 
+        // Counts and colour sets first: the entries are rendered with them, not
+        // patched afterwards.
+        await Promise.all([loadFacets(), loadColorSets()]);
         await Promise.all(
             [...document.querySelectorAll("#filter-groups [data-filter-group]")].map(loadGroup)
         );
 
         syncSidebar();
-        renderBadges(StoreFilters.active());
+        renderBadges();
         loadProducts();
     })();
 })();

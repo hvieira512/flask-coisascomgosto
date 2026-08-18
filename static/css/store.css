@@ -434,10 +434,7 @@ a.card:hover {
 /* Bulma 1.x gives menu items a solid background, which turns the sidebar into
    a stack of white pills. Transparent keeps the filter list quiet. */
 .filters-panel .menu-list a {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: .5rem;
+    display: block;
     background: transparent;
 }
 
@@ -445,15 +442,82 @@ a.card:hover {
     background: var(--ccg-blue-50);
 }
 
+/* Filters are cumulative, so a selected entry is marked by its ticked box, not
+   by inverting the whole row: five inverted rows read as one giant selection and
+   left no room for the colour badges to be legible. */
 .filters-panel .menu-list a.is-active {
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-900);
+}
+
+.filter-line {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+}
+
+/* Nothing behind it: still listed, because it is part of the vocabulary, but
+   ticking it could only empty the grid. */
+.filters-panel .menu-list a.is-empty {
+    color: var(--ccg-ink-faint);
+    cursor: default;
+}
+
+.filters-panel .menu-list a.is-empty:hover {
+    background: transparent;
+}
+
+/* Square, so it is not mistaken for a radio: these add up. */
+.filter-box {
+    flex: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    border: 1px solid var(--bulma-border);
+    border-radius: 4px;
+    background: var(--ccg-surface);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .58rem;
+    color: transparent;
+    transition: background-color .12s ease, border-color .12s ease;
+}
+
+.is-active .filter-box {
     background: var(--ccg-blue-800);
+    border-color: var(--ccg-blue-800);
     color: #fff;
 }
 
-/* Sub-types sit indented under their parent type. */
-.filters-panel .menu-list ul {
-    margin-right: 0;
-    border-left: 1px solid var(--bulma-border);
+.filter-name {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Tabular figures so the column of counts lines up down the sidebar. */
+.filter-count {
+    flex: none;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: .72rem;
+    color: var(--ccg-ink-faint);
+}
+
+.is-active .filter-count {
+    color: var(--ccg-blue-700);
+}
+
+/* The colour sets a collection is made of, under its name. Indented to the
+   name's own left edge, past the checkbox.
+
+   One per row, unlike the cards': the sidebar column is ~215px and two abreast
+   truncated every name to "Branco e Dou…", which is the half of the badge that
+   carries the meaning. */
+.filter-sets {
+    display: grid;
+    grid-template-columns: minmax(0, max-content);
+    gap: .25rem;
+    margin: .45rem 0 .15rem 1.6rem;
 }
 
 .filter-badge {

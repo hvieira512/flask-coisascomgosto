@@ -31,19 +31,22 @@
                 </div>
             </div>
 
-            {# Each group is populated from its API endpoint by filters.js #}
+            {# Each group is populated from its API endpoint by products.js.
+               data-facet names the key under /api/products/facets that carries
+               this group's per-option counts. #}
             <nav class="menu" id="filter-groups">
-                <p class="menu-label">Material</p>
-                <ul class="menu-list" data-filter-group="material_id" data-endpoint="/api/materials/"
-                    data-collection-key="materials"></ul>
-
                 <p class="menu-label">Tipo</p>
                 <ul class="menu-list" data-filter-group="type_id" data-endpoint="/api/product-types/"
-                    data-collection-key="product_types"></ul>
+                    data-collection-key="product_types" data-facet="types"></ul>
 
                 <p class="menu-label">Colecção</p>
                 <ul class="menu-list" data-filter-group="collection_id" data-endpoint="/api/collections/"
-                    data-collection-key="collections"></ul>
+                    data-collection-key="collections" data-facet="collections"
+                    data-with-color-sets="1"></ul>
+
+                <p class="menu-label">Material</p>
+                <ul class="menu-list" data-filter-group="material_id" data-endpoint="/api/materials/"
+                    data-collection-key="materials" data-facet="materials"></ul>
             </nav>
         </div>
     </aside>
@@ -76,12 +79,11 @@
             Nenhum produto corresponde aos filtros escolhidos.
         </div>
 
-        <nav id="pagination" class="pagination is-centered mt-5" role="navigation" aria-label="pagination" hidden>
-            <button class="pagination-previous" data-page-prev type="button">Anterior</button>
-            <button class="pagination-next" data-page-next type="button">Seguinte</button>
-            <ul class="pagination-list">
-                <li><span class="pagination-link is-current" id="page-indicator"></span></li>
-            </ul>
+        {# One row: previous, every page number, next. products.js fills it, so
+           the arrows sit beside the numbers rather than at opposite edges. #}
+        <nav id="pagination" class="pagination is-centered mt-5" role="navigation"
+             aria-label="Paginação" hidden>
+            <ul class="pagination-list" id="page-list"></ul>
         </nav>
     </section>
 </div>
