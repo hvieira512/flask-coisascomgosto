@@ -2,6 +2,7 @@
 
 import re
 from datetime import date
+from urllib.parse import urlsplit
 
 _MONTHS_PT = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -78,7 +79,19 @@ def event_dates(starts_on, ends_on=None):
     return f"{start.day} - {end.day} de {_MONTHS_PT[start.month - 1]} de {start.year}"
 
 
+def social_handle(url):
+    """The profile name out of a social URL: "coisascomgosto.vianadocastelo".
+
+    The contact cards used to carry these as literals in the template, so
+    changing the Instagram link in the dashboard left the shop showing the old
+    handle. static/js/dashboard/contacts.js mirrors this so its preview agrees.
+    """
+    path = urlsplit(str(url or "")).path.strip("/")
+    return path.rsplit("/", 1)[-1] or url
+
+
 def register(app):
     app.jinja_env.filters["type_icon"] = type_icon
     app.jinja_env.filters["event_dates"] = event_dates
+    app.jinja_env.filters["social_handle"] = social_handle
     app.jinja_env.globals["year"] = date.today().strftime("%Y")

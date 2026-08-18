@@ -153,6 +153,21 @@ h3 {
     flex: none;
 }
 
+/* Label over value. min-width: 0 so a long street address or handle wraps
+   inside the card rather than widening it out of its grid track. */
+.contact-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.contact-value {
+    font-size: .9rem;
+    line-height: 1.4;
+    color: var(--ccg-ink);
+    overflow-wrap: anywhere;
+}
+
 /* Used by the storefront's contact cards and by the dashboard's preview of
    them, so it cannot live in store.css — the dashboard does not load it, and
    the preview icons were rendering unstyled. */

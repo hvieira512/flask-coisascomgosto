@@ -18,20 +18,31 @@ const whatsappUrl = (number) => {
     return digits ? `https://wa.me/${digits}` : "";
 };
 
+/** The shop shows the profile name, not the whole URL. Mirrors the
+ *  `social_handle` filter in web/filters.py — keep them in step. */
+const socialHandle = (url) => {
+    const path = String(url ?? "").replace(/^https?:\/\/[^/]+/i, "").split("?")[0];
+    const handle = path.replace(/^\/+|\/+$/g, "").split("/").pop();
+    return handle || url;
+};
+
 function renderPreview() {
     const cards = [
         { label: "Morada", value: field("address").value, icon: "fa-solid fa-location-dot" },
         { label: "E-mail", value: field("email").value, icon: "fa-solid fa-envelope" },
         { label: "WhatsApp", value: field("whatsapp").value, icon: "fa-brands fa-whatsapp" },
-        { label: "Facebook", value: field("facebook_url").value, icon: "fa-brands fa-facebook-f" },
-        { label: "Instagram", value: field("instagram_url").value, icon: "fa-brands fa-instagram" },
+        { label: "Facebook", value: socialHandle(field("facebook_url").value), icon: "fa-brands fa-facebook-f" },
+        { label: "Instagram", value: socialHandle(field("instagram_url").value), icon: "fa-brands fa-instagram" },
     ].filter((card) => card.value.trim());
 
     document.getElementById("contact-preview").innerHTML = cards.length
         ? `<ul class="panel is-shadowless mb-0">${cards.map((card) => `
              <li class="panel-block px-0">
                <span class="disc contact-icon mr-3"><i class="${card.icon}"></i></span>
-               <span class="eyebrow mb-0">${escapeHtml(card.label)}</span>
+               <span class="contact-body">
+                 <span class="eyebrow mb-0">${escapeHtml(card.label)}</span>
+                 <span class="contact-value">${escapeHtml(card.value.trim())}</span>
+               </span>
              </li>`).join("")}</ul>`
         : `<p class="has-text-grey is-size-7">Sem contactos preenchidos.</p>`;
 

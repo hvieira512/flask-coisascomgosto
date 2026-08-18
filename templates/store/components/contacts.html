@@ -7,8 +7,12 @@
     {%- if href %} href="{{ href }}"{% endif %}
     {%- if external %} target="_blank" rel="noopener"{% endif %}>
     <span class="disc contact-icon mr-3"><i class="{{ icon }}"></i></span>
-    <span class="eyebrow mb-0">{{ label }}</span>
-    <span class="is-sr-only">{{ value }}</span>
+    {# The value was sr-only, so a sighted visitor read "MORADA" and had to
+       click to find out where the workshop is. #}
+    <span class="contact-body">
+        <span class="eyebrow mb-0">{{ label }}</span>
+        <span class="contact-value">{{ value }}</span>
+    </span>
 </{{ tag }}>
 {%- endmacro %}
 
@@ -23,7 +27,9 @@
             </p>
         </header>
 
-        <div class="grid is-col-min-10">
+        {# Wider tracks than the labels alone needed: a card now carries a
+           street address or a long social handle. #}
+        <div class="grid is-col-min-14">
             {% if contact.address %}
             {{ contact_card('fa-solid fa-location-dot', 'Morada',
                             contact.address, contact.maps_url, external=true) }}
@@ -41,14 +47,14 @@
 
             {% if contact.facebook_url %}
             {{ contact_card('fa-brands fa-facebook-f', 'Facebook',
-                            'coisascomgosto.vianadocastelo', contact.facebook_url,
-                            external=true) }}
+                            contact.facebook_url | social_handle,
+                            contact.facebook_url, external=true) }}
             {% endif %}
 
             {% if contact.instagram_url %}
             {{ contact_card('fa-brands fa-instagram', 'Instagram',
-                            'coisascomgostovc', contact.instagram_url,
-                            external=true) }}
+                            contact.instagram_url | social_handle,
+                            contact.instagram_url, external=true) }}
             {% endif %}
         </div>
     </div>

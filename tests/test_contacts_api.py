@@ -141,21 +141,21 @@ class TestLandingPage:
         )
         return re.sub(r"<[^>]+>", " ", without_sr)
 
-    def test_cards_show_only_an_icon_and_a_label(self, client):
-        """The values are noise on the card — five wrapping handles in a row."""
-        contacts = self._contacts_section(client)
-        visible = self._visible_text(contacts)
+    def test_cards_show_the_value_not_just_the_label(self, client):
+        """A contacts section that hides the contacts asks the visitor to click
+        each card to find out where the workshop is."""
+        visible = self._visible_text(self._contacts_section(client))
 
-        for value in ["geral@coisascomgosto.pt", "939320334",
-                      "coisascomgostovc"]:
-            assert value in contacts, f"{value} must stay in the markup"
-            assert value not in visible, f"{value} is rendered visibly"
+        for value in ["geral@coisascomgosto.pt", "939320334"]:
+            assert value in visible, f"{value} is not rendered visibly"
 
-    def test_values_remain_the_accessible_name(self, client):
-        """A label alone would announce as "E-mail" with no address behind it."""
-        contacts = self._contacts_section(client)
+    def test_social_cards_show_the_handle_not_the_url(self, client):
+        """"https://www.instagram.com/coisascomgosto.vianadocastelo/" is not a
+        thing anybody reads off a card."""
+        visible = self._visible_text(self._contacts_section(client))
 
-        assert '<span class="is-sr-only">geral@coisascomgosto.pt</span>' in contacts
+        assert "coisascomgosto.vianadocastelo" in visible
+        assert "https://www.instagram.com" not in visible
 
     def test_labels_are_still_visible(self, client):
         visible = self._visible_text(self._contacts_section(client))
@@ -333,3 +333,33 @@ class TestContactUpdateSemantics:
 
         assert client.get("/api/contacts/").get_json()["whatsapp_url"] == \
             "https://wa.me/351939320334"
+
+
+class TestSocialHandleFilter:
+    """Strips a profile URL down to the name the contact cards show."""
+
+    def _filter(self, app):
+        return app.jinja_env.filters["social_handle"]
+
+    def test_instagram_url(self, app):
+        assert self._filter(app)(
+            "https://www.instagram.com/coisascomgosto.vianadocastelo/"
+        ) == "coisascomgosto.vianadocastelo"
+
+    def test_facebook_url_without_a_trailing_slash(self, app):
+        assert self._filter(app)(
+            "https://www.facebook.com/coisascomgosto.vianadocastelo"
+        ) == "coisascomgosto.vianadocastelo"
+
+    def test_nested_path_takes_the_last_segment(self, app):
+        assert self._filter(app)("https://facebook.com/pages/loja") == "loja"
+
+    def test_a_bare_handle_passes_through(self, app):
+        assert self._filter(app)("coisascomgostovc") == "coisascomgostovc"
+
+    def test_a_domain_with_no_path_falls_back_to_the_url(self, app):
+        """Better a visible URL than an empty card."""
+        assert self._filter(app)("https://facebook.com") == "https://facebook.com"
+
+    def test_none_is_empty(self, app):
+        assert self._filter(app)(None) is None
