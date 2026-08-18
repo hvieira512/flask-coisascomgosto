@@ -52,19 +52,11 @@ class TestProductType:
         product = make_product("Escova", type_id=product_type["id"])
 
         body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["type"]["name"] == "Hairbrush"
-        assert body["type"]["parent"] is None
-
-    def test_sub_type_exposes_its_parent(
-        self, client, make_product, make_product_type
-    ):
-        parent = make_product_type("Coracao de Viana")
-        sub = make_product_type("With string", parent_id=parent["id"])
-        product = make_product("Coracao pendurado", type_id=sub["id"])
-
-        body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["type"]["name"] == "With string"
-        assert body["type"]["parent"]["name"] == "Coracao de Viana"
+        assert body["type"] == {
+            "id": product_type["id"],
+            "name": "Hairbrush",
+            "icon": None,
+        }
 
     def test_type_is_required(self, client, make_material):
         """Every piece is something; there is no untyped state."""
@@ -97,18 +89,21 @@ class TestProductType:
         body = client.get(f"/api/products/?type_id={brush['id']}").get_json()
         assert [p["name"] for p in body["products"]] == ["Escova"]
 
-    def test_filtering_by_parent_type_includes_sub_typed_products(
+    def test_filtering_by_type_returns_every_piece_of_that_family(
         self, client, make_product, make_product_type
     ):
-        parent = make_product_type("Coracao de Viana")
-        with_string = make_product_type("With string", parent_id=parent["id"])
-        base = make_product_type("Base for mini figures", parent_id=parent["id"])
-        make_product("Pendurado", type_id=with_string["id"])
-        make_product("Base", type_id=base["id"])
+        """A family holds the pieces directly — "Caixa" is the type, and
+        "Caixa rectangular" is one of its pieces."""
+        box = make_product_type("Caixa")
+        make_product("Caixa rectangular", type_id=box["id"])
+        make_product("Caixa de Joias", type_id=box["id"])
         make_product("Escova")  # the shared default type, must not appear
 
-        body = client.get(f"/api/products/?type_id={parent['id']}").get_json()
-        assert sorted(p["name"] for p in body["products"]) == ["Base", "Pendurado"]
+        body = client.get(f"/api/products/?type_id={box['id']}").get_json()
+        assert sorted(p["name"] for p in body["products"]) == [
+            "Caixa de Joias",
+            "Caixa rectangular",
+        ]
         assert body["pagination"]["total"] == 2
 
     def test_deleting_a_type_still_in_use_returns_409(
@@ -429,14 +424,3 @@ class TestTypeDeletionGuard:
         body = client.delete(f"/api/product-types/{brush['id']}").get_json()
         assert "2 products still use" in body["message"]
 
-    def test_a_sub_types_products_also_block_the_parent(
-        self, client, make_product, make_product_type
-    ):
-        """Deleting a parent takes its sub-types with it, so pieces filed under
-        one of those sub-types have to count too."""
-        parent = make_product_type("Moldura de parede")
-        sub = make_product_type("Oval", parent_id=parent["id"])
-        make_product("Moldura oval", type_id=sub["id"])
-
-        assert client.delete(f"/api/product-types/{parent['id']}").status_code == 409
-        assert client.get(f"/api/product-types/{sub['id']}").status_code == 200

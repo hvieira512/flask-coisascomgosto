@@ -233,10 +233,8 @@ def make_color_set(client, make_color):
 
 @pytest.fixture()
 def make_product_type(client):
-    def _make(name="Coracao", parent_id=None, description=None, icon=None):
+    def _make(name="Coracao", description=None, icon=None):
         payload = {"name": name}
-        if parent_id is not None:
-            payload["parent_id"] = parent_id
         if description is not None:
             payload["description"] = description
         if icon is not None:

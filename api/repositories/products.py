@@ -12,7 +12,6 @@ from pymysql.cursors import DictCursor
 _FROM = """
     FROM products p
     JOIN product_types t ON p.type_id = t.id
-    LEFT JOIN product_types tp ON t.parent_id = tp.id
     LEFT JOIN materials m ON p.material_id = m.id
     LEFT JOIN collections col ON p.collection_id = col.id
     LEFT JOIN sizes s ON p.default_size_id = s.id
@@ -32,10 +31,7 @@ _SELECT = f"""
         s.position AS default_size_position,
         t.id AS type_id,
         t.name AS type_name,
-        t.icon AS type_icon,
-        tp.id AS type_parent_id,
-        tp.name AS type_parent_name,
-        tp.icon AS type_parent_icon
+        t.icon AS type_icon
     {_FROM}
 """
 
@@ -358,10 +354,8 @@ class ProductRepository:
             params.append(material_id)
 
         if type_id is not None:
-            # Matching a parent type also returns products filed under its
-            # sub-types, so filtering by "Coracao" includes both finishes.
-            clauses.append("(p.type_id = %s OR t.parent_id = %s)")
-            params += [type_id, type_id]
+            clauses.append("p.type_id = %s")
+            params.append(type_id)
 
         return ("WHERE " + " AND ".join(clauses) if clauses else ""), params
 
@@ -379,17 +373,7 @@ class ProductRepository:
                 {
                     "id": row["type_id"],
                     "name": row["type_name"],
-                    # A sub-type inherits its parent's icon when it has none.
-                    "icon": row["type_icon"] or row["type_parent_icon"],
-                    "parent": (
-                        {
-                            "id": row["type_parent_id"],
-                            "name": row["type_parent_name"],
-                            "icon": row["type_parent_icon"],
-                        }
-                        if row["type_parent_id"] is not None
-                        else None
-                    ),
+                    "icon": row["type_icon"],
                 }
                 if row["type_id"] is not None
                 else None

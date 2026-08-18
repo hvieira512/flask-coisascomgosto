@@ -166,12 +166,6 @@
                         {% if type.description %}
                         <p class="has-text-grey is-size-6">{{ type.description }}</p>
                         {% endif %}
-
-                        {% if type.sub_types %}
-                        <p class="is-size-7 has-text-grey mt-3">
-                            {{ type.sub_types | map(attribute='name') | join(' · ') }}
-                        </p>
-                        {% endif %}
                     </div>
                 </a>
                 {% endfor %}

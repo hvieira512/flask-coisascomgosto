@@ -7,10 +7,10 @@ import {
 /**
  * Tipos e materiais.
  *
- * The type tree is the page's subject — every piece must have a type — so it
- * takes the table. Sub-types are shown indented under their parent rather than in
- * a separate list, because "Caixa redonda" means nothing without "Caixa" above
- * it. Materials are a short lookup edited in place beside it.
+ * Types are the page's subject — every piece must have one — so they take the
+ * table. The list is flat: a type is the family ("Caixa"), and the shape lives
+ * in the piece's own name. Materials are a short lookup edited in place beside
+ * it.
  */
 
 // Enough to cover the workshop's vocabulary without a picker.
@@ -23,28 +23,18 @@ const ICONS = [
 let types = [];
 let pieceCounts = new Map();
 
-function typeRow(type, { parent = null } = {}) {
+function typeRow(type) {
     const pieces = type.pieces ?? 0;
-    const isSub = Boolean(parent);
 
     return `
       <tr data-type-id="${type.id}">
         <td>
           <span class="disc dash-type-icon">
-            <i class="fa-solid ${escapeHtml(type.icon || parent?.icon || "fa-tag")}"></i>
+            <i class="fa-solid ${escapeHtml(type.icon || "fa-tag")}"></i>
           </span>
         </td>
         <td>
-          <p class="has-text-weight-medium${isSub ? " dash-subtype" : ""}">
-            ${escapeHtml(type.name)}
-          </p>
-          ${isSub
-              ? `<p class="is-size-7 has-text-grey dash-subtype">em ${escapeHtml(parent.name)}</p>`
-              : `<p class="is-size-7 has-text-grey">
-                   ${type.sub_types?.length
-                       ? `${type.sub_types.length} ${type.sub_types.length === 1 ? "sub-tipo" : "sub-tipos"}`
-                       : "Sem sub-tipos"}
-                 </p>`}
+          <p class="has-text-weight-medium">${escapeHtml(type.name)}</p>
         </td>
         <td class="is-size-7 has-text-grey">${escapeHtml(type.description ?? "—")}</td>
         <td>
@@ -54,12 +44,6 @@ function typeRow(type, { parent = null } = {}) {
         </td>
         <td class="dash-col-actions">
           <span class="dash-row-actions is-flex is-gap-1">
-            ${isSub ? "" : `
-              <button class="button is-small is-ghost" data-type-action="add-sub"
-                      data-type-id="${type.id}" title="Adicionar sub-tipo"
-                      aria-label="Adicionar sub-tipo a ${escapeHtml(type.name)}">
-                <span class="icon"><i class="fa-solid fa-plus"></i></span>
-              </button>`}
             <button class="button is-small is-ghost" data-type-action="edit"
                     data-type-id="${type.id}" title="Editar"
                     aria-label="Editar ${escapeHtml(type.name)}">
@@ -76,57 +60,39 @@ function typeRow(type, { parent = null } = {}) {
 }
 
 async function loadTypes() {
-    const [roots, counts] = await Promise.all([listTypes(), countByType()]);
+    const [all, counts] = await Promise.all([listTypes(), countByType()]);
     pieceCounts = counts;
+    types = all;
 
-    // Flattened for the table, but each sub-type keeps a reference to its parent
-    // so a row can show where it belongs and hide the actions that make no sense.
-    types = roots;
-    const rows = roots.flatMap((root) => [
-        typeRow({ ...root, pieces: counts.get(root.id) ?? 0 }),
-        ...(root.sub_types ?? []).map((sub) =>
-            typeRow({ ...sub, pieces: counts.get(sub.id) ?? 0 }, { parent: root })
-        ),
-    ]);
+    const rows = all.map((type) =>
+        typeRow({ ...type, pieces: counts.get(type.id) ?? 0 })
+    );
 
     document.getElementById("type-rows").innerHTML = rows.length
         ? rows.join("")
         : `<tr><td colspan="5" class="has-text-centered has-text-grey py-6">
              Ainda não há tipos. Cada peça precisa de um.</td></tr>`;
 
-    const total = roots.length + roots.reduce((n, r) => n + (r.sub_types?.length ?? 0), 0);
     document.getElementById("type-count").textContent =
-        `${total} ${total === 1 ? "tipo" : "tipos"}`;
+        `${all.length} ${all.length === 1 ? "tipo" : "tipos"}`;
 }
 
-function findType(id) {
-    const wanted = Number(id);
-    for (const root of types) {
-        if (root.id === wanted) return { type: root, parent: null };
-        const sub = (root.sub_types ?? []).find((s) => s.id === wanted);
-        if (sub) return { type: sub, parent: root };
-    }
-    return { type: null, parent: null };
-}
+const findType = (id) => types.find((type) => type.id === Number(id)) ?? null;
 
-function typeForm(type = null, parent = null) {
+function typeForm(type = null) {
     const iconOptions = ICONS.map((icon) =>
         `<option value="${icon}"${type?.icon === icon ? " selected" : ""}>${icon}</option>`
     ).join("");
 
     return `
-    <form id="type-form" data-type-id="${type?.id ?? ""}" data-parent-id="${parent?.id ?? ""}">
-      ${parent
-          ? `<p class="mb-4 is-size-7 has-text-grey">
-               Sub-tipo de <strong>${escapeHtml(parent.name)}</strong>.
-             </p>`
-          : ""}
-
+    <form id="type-form" data-type-id="${type?.id ?? ""}">
       <div class="field">
         <label class="label is-small" for="tf-name">Nome</label>
         <input class="input" id="tf-name" name="name" required
-               value="${escapeHtml(type?.name ?? "")}"
-               placeholder="${parent ? "Caixa redonda" : "Caixa"}">
+               value="${escapeHtml(type?.name ?? "")}" placeholder="Caixa">
+        <p class="help">
+          A família da peça. A forma vai no nome da peça — "Caixa rectangular".
+        </p>
       </div>
 
       <div class="field">
@@ -140,7 +106,7 @@ function typeForm(type = null, parent = null) {
         <label class="label is-small" for="tf-icon">Ícone</label>
         <div class="select is-fullwidth">
           <select id="tf-icon" name="icon">
-            <option value="">${parent ? "Herdar do tipo acima" : "Adivinhar pelo nome"}</option>
+            <option value="">Adivinhar pelo nome</option>
             ${iconOptions}
           </select>
         </div>
@@ -175,13 +141,12 @@ function payloadFrom(modalId) {
     // The API rejects an explicit null, so an empty field is omitted instead.
     if (value("description")) payload.description = value("description");
     if (value("icon")) payload.icon = value("icon");
-    if (form.dataset.parentId) payload.parent_id = Number(form.dataset.parentId);
 
     return { id: form.dataset.typeId, payload };
 }
 
-function openTypeForm({ modalId, type = null, parent = null }) {
-    bodyOf(modalId).innerHTML = typeForm(type, parent);
+function openTypeForm({ modalId, type = null }) {
+    bodyOf(modalId).innerHTML = typeForm(type);
     footOf(modalId).innerHTML = `
         <button class="button" data-modal-close>Cancelar</button>
         <button class="button is-dark" id="type-submit">
@@ -204,21 +169,11 @@ function openTypeForm({ modalId, type = null, parent = null }) {
         });
 }
 
-/** Pieces filed under a type or any of its sub-types — what a delete blocks. */
-function piecesUnder(type) {
-    const own = pieceCounts.get(type.id) ?? 0;
-    const subs = (type.sub_types ?? []).reduce(
-        (n, sub) => n + (pieceCounts.get(sub.id) ?? 0), 0
-    );
-    return own + subs;
-}
-
 async function openDeleteType(id) {
-    const { type } = findType(id);
+    const type = findType(id);
     if (!type) return;
 
-    const subs = type.sub_types?.length ?? 0;
-    const pieces = piecesUnder(type);
+    const pieces = pieceCounts.get(type.id) ?? 0;
 
     // A type in use cannot be deleted — every piece needs one. Saying so here,
     // and withholding the button, beats offering an action that can only fail
@@ -238,13 +193,8 @@ async function openDeleteType(id) {
         return;
     }
 
-    bodyOf("deleteTypeModal").innerHTML = `
-        <p>Apagar <strong>${escapeHtml(type.name)}</strong>?</p>
-        ${subs
-            ? `<p class="has-text-grey is-size-7 mt-2">
-                 Apaga também ${subs === 1 ? "o seu sub-tipo" : `os seus ${subs} sub-tipos`}.
-               </p>`
-            : ""}`;
+    bodyOf("deleteTypeModal").innerHTML =
+        `<p>Apagar <strong>${escapeHtml(type.name)}</strong>?</p>`;
     footOf("deleteTypeModal").innerHTML = `
         <button class="button" data-modal-close>Cancelar</button>
         <button class="button is-danger" id="type-delete">Apagar</button>`;
@@ -345,18 +295,15 @@ document.getElementById("type-rows").addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-type-action]");
     if (trigger) {
         const { typeAction: action, typeId: id } = trigger.dataset;
-        const { type, parent } = findType(id);
 
-        if (action === "edit") openTypeForm({ modalId: "editTypeModal", type, parent });
-        if (action === "add-sub") openTypeForm({ modalId: "newTypeModal", parent: type });
+        if (action === "edit") openTypeForm({ modalId: "editTypeModal", type: findType(id) });
         if (action === "delete") openDeleteType(id);
         return;
     }
 
     const row = event.target.closest("tr[data-type-id]");
     if (row) {
-        const { type, parent } = findType(row.dataset.typeId);
-        openTypeForm({ modalId: "editTypeModal", type, parent });
+        openTypeForm({ modalId: "editTypeModal", type: findType(row.dataset.typeId) });
     }
 });
 

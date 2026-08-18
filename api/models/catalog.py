@@ -142,37 +142,18 @@ product_sizes_write_model = Model(
 # Product types
 # ----------------
 
-product_type_ref_model = Model(
-    "ProductTypeRef",
-    {
-        "id": fields.Integer(description="Product type ID"),
-        "name": fields.String(description="Product type name"),
-        "description": fields.String(description="Optional description"),
-        "icon": fields.String(
-            description="Font Awesome class drawn on products with no photo"
-        ),
-    },
-)
-
 product_type_model = Model(
     "ProductType",
     {
         "id": fields.Integer(readOnly=True, description="Product type ID"),
         "name": fields.String(
             required=True,
-            description="What the object is, e.g. 'Hairbrush', 'Coracao'",
+            description="The family a piece belongs to, e.g. 'Caixa', 'Moldura'",
         ),
         "description": fields.String(description="Optional description"),
-        "parent_id": fields.Integer(
-            description="Parent type ID; null for a top-level type"
-        ),
         "icon": fields.String(
             description="Font Awesome class, e.g. 'fa-heart'. Drawn on products "
             "that have no photo yet; null falls back to a guess from the name."
-        ),
-        "sub_types": fields.List(
-            fields.Nested(product_type_ref_model),
-            description="Sub-types, e.g. 'With string' and 'Base for mini figures'",
         ),
     },
 )
@@ -186,17 +167,13 @@ product_type_write_model = Model(
     {
         "name": fields.String(required=True, description="Product type name"),
         "description": fields.String(description="Optional description"),
-        "parent_id": fields.Integer(
-            description="Parent type ID. Types nest exactly one level, so the "
-            "parent must itself be a top-level type."
-        ),
         "icon": fields.String(
             description="Font Awesome class, e.g. 'fa-heart' or 'fa-box'"
         ),
     },
 )
 
-# Nested inside a product: the type plus the type it sits under.
+# Nested inside a product.
 product_type_nested_model = Model(
     "ProductTypeNested",
     {
@@ -204,11 +181,6 @@ product_type_nested_model = Model(
         "name": fields.String(description="Product type name"),
         "icon": fields.String(
             description="Font Awesome class drawn on products with no photo"
-        ),
-        "parent": fields.Nested(
-            product_type_ref_model,
-            allow_null=True,
-            description="Parent type when this is a sub-type",
         ),
     },
 )
@@ -286,7 +258,6 @@ CATALOG_MODELS = [
     size_list_model,
     size_write_model,
     product_sizes_write_model,
-    product_type_ref_model,
     product_type_model,
     product_type_list_model,
     product_type_write_model,

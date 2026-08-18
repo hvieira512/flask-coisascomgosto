@@ -223,16 +223,14 @@ class TestLandingPage:
         html = client.get("/").get_data(as_text=True)
         assert f'/products?type_id={product_type["id"]}' in html
 
-    def test_sub_types_are_not_listed_as_cards(self, client, make_product_type):
-        """Sub-types are a catalog distinction, not a first look at the range."""
-        parent = make_product_type("Coracao")
-        make_product_type("Com fio", parent_id=parent["id"])
+    def test_each_type_card_links_to_its_filtered_catalogue(
+        self, client, make_product_type
+    ):
+        created = make_product_type("Coracao")
 
         html = client.get("/").get_data(as_text=True)
         section = html[html.index("O que fazemos"):html.index('id="contacts"')]
-        assert f'/products?type_id={parent["id"]}' in section
-        # It may still appear as a sub-title on the parent's card, never a link.
-        assert "?type_id=" not in section.split("Com fio")[1].split("</a>")[0]
+        assert f'/products?type_id={created["id"]}' in section
 
     def test_empty_catalog_does_not_break_the_page(self, client):
         """With no types the section is simply omitted, not empty."""

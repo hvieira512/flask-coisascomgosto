@@ -24,7 +24,7 @@
 
     /** Fill one sidebar group from its API endpoint. */
     async function loadGroup(list) {
-        const { filterGroup, endpoint, collectionKey, nested } = list.dataset;
+        const { filterGroup, endpoint, collectionKey } = list.dataset;
 
         let payload;
         try {
@@ -35,37 +35,21 @@
         }
 
         const items = payload[collectionKey] || [];
-        list.innerHTML = items.map((item) => renderEntry(filterGroup, item, nested)).join("");
+        list.innerHTML = items.map((item) => renderEntry(filterGroup, item)).join("");
 
         // Cache names so badges can render before the sidebar is consulted.
-        items.forEach((item) => {
-            StoreFilters.registerLabel(filterGroup, item.id, item.name);
-            (item[nested] || []).forEach((child) =>
-                StoreFilters.registerLabel(filterGroup, child.id, `${item.name} · ${child.name}`)
-            );
-        });
+        items.forEach((item) =>
+            StoreFilters.registerLabel(filterGroup, item.id, item.name)
+        );
     }
 
-    function renderEntry(group, item, nestedKey) {
-        const children = (item[nestedKey] || [])
-            .map(
-                (child) => `
-                <li>
-                  <a data-filter-group="${group}" data-filter-value="${child.id}"
-                     data-filter-label="${escapeHtml(item.name)} · ${escapeHtml(child.name)}">
-                    <span>${escapeHtml(child.name)}</span>
-                  </a>
-                </li>`
-            )
-            .join("");
-
+    function renderEntry(group, item) {
         return `
           <li>
             <a data-filter-group="${group}" data-filter-value="${item.id}"
                data-filter-label="${escapeHtml(item.name)}">
               <span>${escapeHtml(item.name)}</span>
             </a>
-            ${children ? `<ul>${children}</ul>` : ""}
           </li>`;
     }
 

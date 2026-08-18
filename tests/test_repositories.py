@@ -99,7 +99,7 @@ class TestProductRepository:
             "name": "Vinho",
             "description": "Tinto",
             "material": {"id": material_id, "name": "Madeira"},
-            "type": {"id": wood, "name": "Caixa", "icon": None, "parent": None},
+            "type": {"id": wood, "name": "Caixa", "icon": None},
             "collection": None,
             "default_size": None,
             "sizes": [],
@@ -181,7 +181,7 @@ class TestProductRepository:
 
 
 class TestProductTypeCovers:
-    """The landing page's type cards. A family with nothing photographed gets no
+    """The landing page's type cards. A type with nothing photographed gets no
     cover and falls back to its icon."""
 
     @pytest.fixture()
@@ -205,15 +205,6 @@ class TestProductTypeCovers:
         assert types.cover_images([box]) == {
             box: {"url": "/cover.jpg", "alt": "Uma caixa"}
         }
-
-    def test_a_sub_types_photograph_covers_its_parent(self, types, products, images):
-        box = types.create(name="Caixa")
-        tall = types.create(name="Caixa alta", parent_id=box)
-        product_id = products.create(type_id=tall, name="Caixa de joias", description="")
-        images.create(product_id=product_id, url="/tall.jpg")
-
-        covers = types.cover_images([box])
-        assert covers[box]["url"] == "/tall.jpg"
 
     def test_the_alt_falls_back_to_the_piece_name(self, types, products, images):
         box = types.create(name="Caixa")

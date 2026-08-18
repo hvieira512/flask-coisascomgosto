@@ -14,9 +14,8 @@ async function send(url, method, body) {
     return res.status === 200 || res.status === 201 ? res.json() : null;
 }
 
-/** Top-level types, each with its sub-types resolved by the API. */
 export async function listTypes() {
-    const res = await fetch(`${API.productTypes.list}?roots_only=1&limit=100`);
+    const res = await fetch(`${API.productTypes.list}?limit=100`);
     if (!res.ok) throw new Error("Erro ao carregar os tipos.");
     return (await res.json()).product_types;
 }

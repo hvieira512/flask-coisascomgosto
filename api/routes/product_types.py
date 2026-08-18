@@ -1,34 +1,28 @@
-"""Product types: what an object is, plus one level of sub-types.
+"""Product types: the family a piece belongs to.
 
-Top-level types describe the object — a hairbrush, a picture frame, a wooden
-box, a Coracao (a wooden plaque cut in the shape of the regional Viana heart).
-Sub-types describe how that object is finished or used: the same Coracao may be
-sold with a string so it can be hung, or as a base for mini figures displayed
-on top.
-
-Types nest exactly one level: a sub-type cannot itself have sub-types.
+A type is broad — a box, a heart, a picture frame, a Christmas ornament. What
+shape it is and how it is finished live in the product's own name, so "Caixa" is
+the type and "Caixa rectangular" and "Caixa de Joias" are two products of it.
+The list is flat: there is no level between the family and the piece.
 """
 
-from flask import request
 from flask_restx import Namespace, Resource
 
 from api.db import get_db_connection
 from api.models.catalog import (
     product_type_list_model,
     product_type_model,
-    product_type_ref_model,
     product_type_write_model,
 )
 from api.models.common import pagination_model
 from api.routes.crud import page_of
 from api.security import PROTECTED_DOC, auth_required
-from api.repositories import NestingTooDeepError, ProductTypeRepository
+from api.repositories import ProductTypeRepository
 
 ns = Namespace("product-types", description="Product type operations")
 
 for model in [
     pagination_model,
-    product_type_ref_model,
     product_type_model,
     product_type_list_model,
     product_type_write_model,
@@ -40,55 +34,38 @@ for model in [
 class ProductTypeList(Resource):
     @ns.marshal_with(product_type_list_model)
     @ns.param("q", "Search term for type name (fuzzy search)")
-    @ns.param("parent_id", "Only sub-types of this type")
-    @ns.param("roots_only", "Set to 1 to return only top-level types")
     @ns.param("page", "Page number, 1-based (default 1)")
     @ns.param("limit", "Items per page, max 100 (default 10)")
-    @ns.response(200, "A page of product types, each with its sub-types")
+    @ns.response(200, "A page of product types")
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
-        """List product types with pagination, search and hierarchy filters."""
+        """List product types with pagination and search."""
         with get_db_connection() as (_, cursor):
-            return page_of(
-                ProductTypeRepository(cursor),
-                "product_types",
-                parent_id=request.args.get("parent_id", type=int),
-                roots_only=request.args.get("roots_only") in {"1", "true", "True"},
-            )
+            return page_of(ProductTypeRepository(cursor), "product_types")
 
     @ns.expect(product_type_write_model, validate=True)
     @ns.marshal_with(product_type_model, code=201)
     @ns.response(201, "Product type created")
-    @ns.response(400, "Missing fields, or the parent is already a sub-type")
-    @ns.response(404, "Parent type not found")
-    @ns.response(409, "A sibling type already uses that name")
+    @ns.response(400, "Missing fields")
+    @ns.response(409, "A type already uses that name")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def post(self):
-        """Create a product type, or a sub-type by supplying parent_id."""
+        """Create a product type."""
         data = ns.payload
         name = data["name"]
-        parent_id = data.get("parent_id")
 
         with get_db_connection() as (_, cursor):
             types = ProductTypeRepository(cursor)
 
-            if parent_id is not None and not types.exists(parent_id):
-                ns.abort(404, f"The product type #{parent_id} does not exist.")
+            if types.name_exists(name):
+                ns.abort(409, f"The product type '{name}' already exists.")
 
-            if types.name_exists(name, parent_id=parent_id):
-                ns.abort(409, f"The product type '{name}' already exists here.")
-
-            try:
-                type_id = types.create(
-                    name=name,
-                    parent_id=parent_id,
-                    description=data.get("description"),
-                    icon=data.get("icon"),
-                )
-            except NestingTooDeepError as exc:
-                ns.abort(400, str(exc))
-
+            type_id = types.create(
+                name=name,
+                description=data.get("description"),
+                icon=data.get("icon"),
+            )
             return types.get(type_id), 201
 
 
@@ -96,7 +73,7 @@ class ProductTypeList(Resource):
 @ns.param("type_id", "The product type identifier")
 class ProductType(Resource):
     @ns.marshal_with(product_type_model)
-    @ns.response(200, "The product type with its sub-types")
+    @ns.response(200, "The product type")
     @ns.response(404, "Product type not found")
     def get(self, type_id):
         """Get a product type by ID."""
@@ -110,16 +87,14 @@ class ProductType(Resource):
     @ns.expect(product_type_write_model, validate=True)
     @ns.marshal_with(product_type_model)
     @ns.response(200, "Product type updated")
-    @ns.response(400, "The move would nest types more than one level deep")
-    @ns.response(404, "Product type or parent not found")
-    @ns.response(409, "A sibling type already uses that name")
+    @ns.response(404, "Product type not found")
+    @ns.response(409, "Another type already uses that name")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def put(self, type_id):
-        """Update a product type, including where it sits in the hierarchy."""
+        """Update a product type."""
         data = ns.payload
         name = data["name"]
-        parent_id = data.get("parent_id")
 
         with get_db_connection() as (_, cursor):
             types = ProductTypeRepository(cursor)
@@ -127,23 +102,15 @@ class ProductType(Resource):
             if not types.exists(type_id):
                 ns.abort(404, f"Product type #{type_id} not found")
 
-            if parent_id is not None and not types.exists(parent_id):
-                ns.abort(404, f"The product type #{parent_id} does not exist.")
+            if types.name_exists(name, exclude_id=type_id):
+                ns.abort(409, f"The product type '{name}' already exists.")
 
-            if types.name_exists(name, parent_id=parent_id, exclude_id=type_id):
-                ns.abort(409, f"The product type '{name}' already exists here.")
-
-            try:
-                types.update(
-                    type_id,
-                    name=name,
-                    parent_id=parent_id,
-                    description=data.get("description"),
-                    icon=data.get("icon"),
-                )
-            except NestingTooDeepError as exc:
-                ns.abort(400, str(exc))
-
+            types.update(
+                type_id,
+                name=name,
+                description=data.get("description"),
+                icon=data.get("icon"),
+            )
             return types.get(type_id), 200
 
     @ns.marshal_with(product_type_model)
@@ -155,9 +122,8 @@ class ProductType(Resource):
     def delete(self, type_id):
         """Delete a product type by ID.
 
-        Its sub-types go with it. A type still in use cannot be deleted: every
-        piece must have one, so there is nowhere for those pieces to land. Move
-        them to another type first.
+        A type still in use cannot be deleted: every piece must have one, so
+        there is nowhere for those pieces to land. Move them first.
         """
         with get_db_connection() as (_, cursor):
             types = ProductTypeRepository(cursor)

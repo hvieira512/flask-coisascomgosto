@@ -14,10 +14,7 @@ from api.repositories.colors import ColorRepository
 from api.repositories.events import EventRepository
 from api.repositories.images import ProductImageRepository
 from api.repositories.materials import MaterialRepository
-from api.repositories.product_types import (
-    NestingTooDeepError,
-    ProductTypeRepository,
-)
+from api.repositories.product_types import ProductTypeRepository
 from api.repositories.products import ProductRepository
 from api.repositories.sizes import SizeRepository
 from api.repositories.users import UserRepository
@@ -30,7 +27,6 @@ __all__ = [
     "ContactRepository",
     "EventRepository",
     "MaterialRepository",
-    "NestingTooDeepError",
     "ProductImageRepository",
     "ProductRepository",
     "ProductTypeRepository",

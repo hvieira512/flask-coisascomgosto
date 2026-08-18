@@ -28,14 +28,6 @@ export async function reference({ refresh = false } = {}) {
     return cache;
 }
 
-/** Flattens the type tree into "Caixa · Caixa redonda" options. */
 export function typeOptions(types) {
-    const options = [];
-    types.forEach((type) => {
-        options.push({ id: type.id, label: type.name });
-        (type.sub_types ?? []).forEach((sub) =>
-            options.push({ id: sub.id, label: `${type.name} · ${sub.name}` })
-        );
-    });
-    return options;
+    return types.map((type) => ({ id: type.id, label: type.name }));
 }

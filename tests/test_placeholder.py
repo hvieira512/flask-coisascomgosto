@@ -36,33 +36,16 @@ class TestProductTypeIcon:
         body = client.get(f"/api/products/{product['id']}").get_json()
         assert body["type"]["icon"] == "fa-box"
 
-    def test_sub_type_inherits_the_parent_icon(self, client, make_product):
-        """A sub-type with no icon of its own falls back to its parent's."""
-        parent = client.post(
-            "/api/product-types/", json={"name": "Coração", "icon": "fa-heart"}
+    def test_type_without_an_icon_exposes_null(self, client, make_product):
+        """The front end guesses from the name in that case — there is no parent
+        type to inherit one from."""
+        product_type = client.post(
+            "/api/product-types/", json={"name": "Coração"}
         ).get_json()
-        sub = client.post(
-            "/api/product-types/",
-            json={"name": "Com fio", "parent_id": parent["id"]},
-        ).get_json()
-        assert sub["icon"] is None
+        product = make_product("Coração de Viana", type_id=product_type["id"])
 
-        product = make_product("Coração de Viana", type_id=sub["id"])
         body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["type"]["icon"] == "fa-heart"
-
-    def test_sub_type_icon_wins_over_the_parent(self, client, make_product):
-        parent = client.post(
-            "/api/product-types/", json={"name": "Caixa", "icon": "fa-box"}
-        ).get_json()
-        sub = client.post(
-            "/api/product-types/",
-            json={"name": "Redonda", "parent_id": parent["id"], "icon": "fa-circle-dot"},
-        ).get_json()
-
-        product = make_product("Caixa Redonda", type_id=sub["id"])
-        body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["type"]["icon"] == "fa-circle-dot"
+        assert body["type"]["icon"] is None
 
 
 class TestTypeIconFilter:
@@ -88,10 +71,6 @@ class TestTypeIconFilter:
 
     def test_guess_is_accent_and_case_insensitive(self, app):
         assert self._icon(app, {"name": "CORACAO"}) == "fa-heart"
-
-    def test_falls_back_to_the_parent_name(self, app):
-        sub = {"name": "Com fio", "parent": {"name": "Coração"}}
-        assert self._icon(app, sub) == "fa-heart"
 
     def test_unknown_name_gets_the_default(self, app):
         assert self._icon(app, {"name": "Qualquer coisa"}) == "fa-gift"

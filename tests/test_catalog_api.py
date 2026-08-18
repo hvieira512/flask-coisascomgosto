@@ -244,119 +244,64 @@ class TestSizes:
 
 
 class TestProductTypes:
-    def test_create_top_level_type(self, client):
-        response = client.post("/api/product-types/", json={"name": "Hairbrush"})
+    """Types are flat: the family is the type, the shape is the piece's name."""
+
+    def test_create_a_type(self, client):
+        response = client.post("/api/product-types/", json={"name": "Caixa"})
         assert response.status_code == 201
+        assert response.get_json()["name"] == "Caixa"
 
-        body = response.get_json()
-        assert body["name"] == "Hairbrush"
-        assert body["parent_id"] is None
-        assert body["sub_types"] == []
+    def test_a_type_has_no_hierarchy_fields(self, client, make_product_type):
+        """Nothing nests. A parent_id would be a level the owners do not use."""
+        body = client.get(
+            f"/api/product-types/{make_product_type('Caixa')['id']}"
+        ).get_json()
 
-    def test_create_sub_type(self, client, make_product_type):
-        parent = make_product_type("Coracao")
+        assert "parent_id" not in body
+        assert "sub_types" not in body
+
+    def test_parent_id_in_the_payload_is_ignored(self, client, make_product_type):
+        """The field is gone from the model, so flask-restx drops it rather than
+        quietly storing a relationship the schema no longer has."""
+        parent = make_product_type("Caixa")
 
         response = client.post(
             "/api/product-types/",
-            json={"name": "With string", "parent_id": parent["id"]},
+            json={"name": "Caixa redonda", "parent_id": parent["id"]},
         )
         assert response.status_code == 201
-        assert response.get_json()["parent_id"] == parent["id"]
+        assert "parent_id" not in response.get_json()
 
-    def test_parent_lists_its_sub_types(self, client, make_product_type):
-        parent = make_product_type("Coracao")
-        make_product_type("With string", parent_id=parent["id"])
-        make_product_type("Base for mini figures", parent_id=parent["id"])
+    def test_duplicate_name_returns_409(self, client, make_product_type):
+        make_product_type("Caixa")
 
-        body = client.get(f"/api/product-types/{parent['id']}").get_json()
-        assert [s["name"] for s in body["sub_types"]] == [
-            "With string",
-            "Base for mini figures",
-        ]
+        response = client.post("/api/product-types/", json={"name": "Caixa"})
+        assert response.status_code == 409
 
-    def test_sub_type_of_a_sub_type_returns_400(self, client, make_product_type):
-        parent = make_product_type("Coracao")
-        child = make_product_type("With string", parent_id=parent["id"])
+    def test_rename_keeps_the_name_unique(self, client, make_product_type):
+        make_product_type("Caixa")
+        other = make_product_type("Moldura")
 
-        response = client.post(
-            "/api/product-types/", json={"name": "Too deep", "parent_id": child["id"]}
-        )
-        assert response.status_code == 400
-
-    def test_unknown_parent_returns_404(self, client):
-        response = client.post(
-            "/api/product-types/", json={"name": "Orphan", "parent_id": 9999}
-        )
-        assert response.status_code == 404
-
-    def test_same_sub_type_name_allowed_under_different_parents(
-        self, client, make_product_type
-    ):
-        first = make_product_type("Coracao")
-        second = make_product_type("Picture frame")
-
-        a = client.post(
-            "/api/product-types/", json={"name": "Small", "parent_id": first["id"]}
-        )
-        b = client.post(
-            "/api/product-types/", json={"name": "Small", "parent_id": second["id"]}
-        )
-        assert a.status_code == 201
-        assert b.status_code == 201
-
-    def test_duplicate_sibling_name_returns_409(self, client, make_product_type):
-        parent = make_product_type("Coracao")
-        make_product_type("With string", parent_id=parent["id"])
-
-        response = client.post(
-            "/api/product-types/",
-            json={"name": "With string", "parent_id": parent["id"]},
+        response = client.put(
+            f"/api/product-types/{other['id']}", json={"name": "Caixa"}
         )
         assert response.status_code == 409
 
-    def test_roots_only_filter(self, client, make_product_type):
-        parent = make_product_type("Coracao")
-        make_product_type("With string", parent_id=parent["id"])
+    def test_search_matches_the_name(self, client, make_product_type):
+        make_product_type("Caixa")
+        make_product_type("Moldura")
 
-        body = client.get("/api/product-types/?roots_only=1").get_json()
-        assert [t["name"] for t in body["product_types"]] == ["Coracao"]
+        body = client.get("/api/product-types/?q=Mold").get_json()
+        assert [t["name"] for t in body["product_types"]] == ["Moldura"]
 
-    def test_parent_id_filter_returns_sub_types(self, client, make_product_type):
-        parent = make_product_type("Coracao")
-        make_product_type("With string", parent_id=parent["id"])
+    def test_delete_removes_the_type(self, client, make_product_type):
+        created = make_product_type("Caixa")
 
-        body = client.get(f"/api/product-types/?parent_id={parent['id']}").get_json()
-        assert [t["name"] for t in body["product_types"]] == ["With string"]
+        assert client.delete(f"/api/product-types/{created['id']}").status_code == 200
+        assert client.get(f"/api/product-types/{created['id']}").status_code == 404
 
-    def test_a_type_cannot_become_its_own_parent(self, client, make_product_type):
-        created = make_product_type("Coracao")
-
-        response = client.put(
-            f"/api/product-types/{created['id']}",
-            json={"name": "Coracao", "parent_id": created["id"]},
-        )
-        assert response.status_code == 400
-
-    def test_a_type_with_children_cannot_become_a_sub_type(
-        self, client, make_product_type
-    ):
-        parent = make_product_type("Coracao")
-        make_product_type("With string", parent_id=parent["id"])
-        other = make_product_type("Wooden box")
-
-        response = client.put(
-            f"/api/product-types/{parent['id']}",
-            json={"name": "Coracao", "parent_id": other["id"]},
-        )
-        assert response.status_code == 400
-
-    def test_deleting_a_type_cascades_to_sub_types(self, client, make_product_type):
-        parent = make_product_type("Coracao")
-        child = make_product_type("With string", parent_id=parent["id"])
-
-        client.delete(f"/api/product-types/{parent['id']}")
-
-        assert client.get(f"/api/product-types/{child['id']}").status_code == 404
+    def test_unknown_id_returns_404(self, client):
+        assert client.get("/api/product-types/9999").status_code == 404
 
     @pytest.mark.parametrize("query", ["?page=abc", "?limit=0"])
     def test_invalid_pagination_returns_400(self, client, query):

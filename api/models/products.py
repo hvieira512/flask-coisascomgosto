@@ -1,7 +1,7 @@
 """Marshalling models for products.
 
-A product joins several catalog layers: a required product type (possibly a
-sub-type), an optional material, an optional collection, an optional default size,
+A product joins several catalog layers: a required product type, an optional
+material, an optional collection, an optional default size,
 the sizes it is available in, and one variant per colour set it is sold in.
 """
 
@@ -74,7 +74,7 @@ product_create_model = Model(
         "name": fields.String(required=True, description="Product Name"),
         "description": fields.String(required=True, description="Product Description"),
         "type_id": fields.Integer(
-            required=True, description="Product type or sub-type ID"
+            required=True, description="Product type ID"
         ),
         "material_id": fields.Integer(description="Optional material ID"),
         "collection_id": fields.Integer(description="Optional collection ID"),
@@ -88,7 +88,7 @@ update_product_model = Model(
         "name": fields.String(required=True, description="Product Name"),
         "description": fields.String(required=True, description="Product Description"),
         "type_id": fields.Integer(
-            required=True, description="Product type or sub-type ID"
+            required=True, description="Product type ID"
         ),
         "material_id": fields.Integer(description="Optional material ID"),
         "collection_id": fields.Integer(description="Optional collection ID"),

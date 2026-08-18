@@ -31,12 +31,7 @@
         const rows = [];
 
         if (product.material) rows.push(["Material", product.material.name]);
-        if (product.type) {
-            const name = product.type.parent
-                ? `${product.type.parent.name} · ${product.type.name}`
-                : product.type.name;
-            rows.push(["Tipo", name]);
-        }
+        if (product.type) rows.push(["Tipo", product.type.name]);
         if (product.collection) rows.push(["Colecção", product.collection.name]);
         if (product.default_size) rows.push(["Tamanho base", product.default_size.name]);
 

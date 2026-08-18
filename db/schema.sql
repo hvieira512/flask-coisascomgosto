@@ -35,13 +35,6 @@
 -- VARCHAR: MySQL cannot index a TEXT column without a prefix length. Free prose
 -- that is never searched by equality stays TEXT.
 --
--- NOTE ON NULLS IN UNIQUE KEYS
--- MySQL treats NULLs as distinct inside a UNIQUE index, so UNIQUE
--- (parent_id, name) would constrain sub-types while letting two top-level types
--- share a name. product_types therefore keys on a generated parent_key that
--- folds NULL to 0. ProductTypeRepository.name_exists still checks first, with
--- the null-safe <=> operator, so the API answers 409 rather than a driver error.
---
 -- Dropped children-first so a re-run is always clean.
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS contacts;
@@ -87,24 +80,16 @@ CREATE TABLE sizes (
     position INT NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- What the object is: "Hairbrush", "Picture frame", "Wooden box", "Coracao".
--- parent_id nests sub-types exactly one level deep. The one-level rule is
--- enforced by ProductTypeRepository.
+-- The family a piece belongs to: "Caixa", "Coração", "Moldura". Flat by
+-- design — the shape lives in the product's own name ("Caixa rectangular",
+-- "Caixa de Joias"), so there is no level between the family and the piece.
 CREATE TABLE product_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    parent_id INT,
-    name VARCHAR(120) NOT NULL,
+    name VARCHAR(120) NOT NULL UNIQUE,
     description TEXT,
     -- Font Awesome class (e.g. 'fa-heart') drawn on products that have no
     -- photo yet. Null falls back to a keyword guess from the type name.
-    icon VARCHAR(60),
-    -- MySQL treats NULLs as distinct inside a UNIQUE index, so a key on
-    -- (parent_id, name) would constrain sub-types and let two top-level types
-    -- share a name. Folding NULL to 0 in a generated column closes that, and
-    -- makes the database enforce it rather than only the repository.
-    parent_key INT AS (IFNULL(parent_id, 0)) STORED,
-    UNIQUE KEY uq_product_types_parent_name (parent_key, name),
-    KEY idx_product_types_parent (parent_id)
+    icon VARCHAR(60)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- A named combination of colours, e.g. "White and Green".

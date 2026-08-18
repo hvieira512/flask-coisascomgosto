@@ -76,44 +76,36 @@ COLOR_SETS = [
     ("Lenços", "Vermelho Floral", ["Vermelho", "Branco", "Verde"]),
 ]
 
-# (name, icon, description, [sub-types]) — sub-types nest exactly one level.
+# (name, icon, description). Flat: the family is the type, and the shape is part
+# of the piece's own name.
 PRODUCT_TYPES = [
     ("Caixa", "fa-box",
      "Caixas de madeira pintadas à mão, de guardar joias, missangas ou "
-     "recordações.",
-     [("Caixa redonda", "fa-circle-dot", "Tampa redonda, muitas vezes com "
-                                         "boneco no topo."),
-      ("Caixa rectangular", "fa-box", "A forma clássica, em vários tamanhos."),
-      ("Caixa alta", "fa-box-archive", "Mais funda, para garrafas ou canetas.")]),
+     "recordações."),
 
     ("Coração", "fa-heart",
-     "O coração de Viana recortado em madeira.",
-     [("Coração de pendurar", "fa-heart", "Com fita, para pendurar à parede."),
-      ("Coração com base", "fa-heart", "De pé, como peça de mesa.")]),
+     "O coração de Viana recortado em madeira, de pendurar ou de pé."),
 
     ("Moldura", "fa-image",
-     "Molduras de fotografia com janela recta ou oval.", []),
+     "Molduras de fotografia com janela recta ou oval."),
 
     ("Bastidor", "fa-circle-notch",
-     "O bastidor de bordar, pintado ou com letras à mão.", []),
+     "O bastidor de bordar, pintado ou com letras à mão."),
 
     ("Enfeite de Natal", "fa-gift",
-     "Enfeites de árvore, personalizados com o nome.",
-     [("Coração de Natal", "fa-heart", "Coração pequeno com fita."),
-      ("Bola de Natal", "fa-circle", "Bola achatada em madeira.")]),
+     "Enfeites de árvore, personalizados com o nome."),
 
     ("Presépio Minhoto", "fa-star",
-     "O presépio em traje minhoto — Manel e Maria sobre uma base recortada.",
-     []),
+     "O presépio em traje minhoto — Manel e Maria sobre uma base recortada."),
 
     ("Abre-cápsulas", "fa-wine-bottle",
-     "Abre-cápsulas de madeira com pega decorada.", []),
+     "Abre-cápsulas de madeira com pega decorada."),
 ]
 
-# (name, sub-type, collection, description, colour sets, sizes)
+# (name, type, collection, description, colour sets, sizes)
 # collection is the product's own; None exercises the nullable column.
 PRODUCTS = [
-    ("Caixa Redonda Filigrana", "Caixa redonda", "Filigrana",
+    ("Caixa Redonda Filigrana", "Caixa", "Filigrana",
      "Caixa redonda com a filigrana desenhada a pincel na tampa.",
      ["Branco e Dourado", "Preto e Dourado", "Preto e Branco",
       "Vermelho e Branco", "Azul e Branco"],
@@ -123,25 +115,25 @@ PRODUCTS = [
      "Presépio minhoto: Manel e Maria em traje sobre um coração dourado.",
      ["Vermelho e Branco", "Preto e Branco"], ["M"]),
 
-    ("Caixa de Joias", "Caixa rectangular", "Filigrana",
+    ("Caixa de Joias", "Caixa", "Filigrana",
      "Caixa rectangular forrada, para joias e missangas.",
      ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco"],
      ["S", "M", "L"]),
 
-    ("Caixa Lenço dos Namorados", "Caixa rectangular", "Lenços",
+    ("Caixa Lenço dos Namorados", "Caixa", "Lenços",
      "Tampa com as flores do Lenço dos Namorados.",
      ["Preto Floral", "Vermelho Floral"], ["M"]),
 
-    ("Caixa de Garrafa", "Caixa alta", "Filigrana",
+    ("Caixa de Garrafa", "Caixa", "Filigrana",
      "Caixa alta para uma garrafa, decorada nas quatro faces.",
      ["Preto e Dourado", "Azul e Branco"], []),
 
-    ("Coração de Viana", "Coração de pendurar", "Filigrana",
+    ("Coração de Viana", "Coração", "Filigrana",
      "Coração recortado em madeira, com fita para pendurar.",
      ["Branco e Dourado", "Preto e Dourado", "Azul e Branco",
       "Vermelho e Branco"], ["S", "M"]),
 
-    ("Coração de Mesa", "Coração com base", "Filigrana",
+    ("Coração de Mesa", "Coração", "Filigrana",
      "Coração assente numa base, para ficar de pé.",
      ["Branco e Dourado", "Preto e Branco"], ["M"]),
 
@@ -162,11 +154,11 @@ PRODUCTS = [
      "Bastidor com os motivos dos bordados de Viana.",
      ["Branco e Azul", "Verde e Dourado"], ["S", "M"]),
 
-    ("Coração de Natal", "Coração de Natal", None,
+    ("Coração de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em coração, personalizado com o nome.",
      ["Vermelho e Branco", "Branco e Dourado"], ["S"]),
 
-    ("Bola de Natal", "Bola de Natal", None,
+    ("Bola de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em bola achatada, personalizado com o nome.",
      ["Vermelho e Branco", "Branco e Dourado"], ["S"]),
 
@@ -299,16 +291,10 @@ def seed():
             )
 
         type_ids = {}
-        for name, icon, description, sub_types in PRODUCT_TYPES:
-            parent_id = types.create(name=name, icon=icon, description=description)
-            type_ids[name] = parent_id
-            for sub_name, sub_icon, sub_description in sub_types:
-                type_ids[sub_name] = types.create(
-                    name=sub_name,
-                    parent_id=parent_id,
-                    icon=sub_icon,
-                    description=sub_description,
-                )
+        for name, icon, description in PRODUCT_TYPES:
+            type_ids[name] = types.create(
+                name=name, icon=icon, description=description
+            )
 
         size_ids = {s["name"]: s["id"] for s in sizes.list(limit=50, offset=0)}
 

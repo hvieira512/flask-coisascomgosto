@@ -22,8 +22,7 @@ window.ProductPlaceholder = (function () {
         const type = product.type;
         if (type?.icon) return type.icon;
 
-        const names = [type?.name, type?.parent?.name].filter(Boolean).join(" ");
-        const match = KEYWORD_ICONS.find(([pattern]) => pattern.test(names));
+        const match = KEYWORD_ICONS.find(([pattern]) => pattern.test(type?.name || ""));
         return match ? match[1] : DEFAULT_ICON;
     }
 

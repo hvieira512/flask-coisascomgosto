@@ -33,8 +33,8 @@ api = Api(
     version="2.0",
     description=(
         "Catalog API for CoisasComGosto.\n\n"
-        "A product has a required **product type** (with one level of "
-        "sub-types) and may also name a **material**, belong to a **collection**, "
+        "A product has a required **product type** and may also name a "
+        "**material**, belong to a **collection**, "
         "declare a **default size**, list the **sizes** it is available in, and "
         "carry **variants** — one per **colour set** it is offered in.\n\n"
         "Catalog reads are public. Every write, plus `/users` and `/contacts`, "

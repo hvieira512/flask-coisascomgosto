@@ -1,6 +1,6 @@
 """Products, plus their variants and available sizes.
 
-A product always has a product type (possibly a sub-type). It may also name
+A product always has a product type. It may also name
 what it is made of, belong to a collection, declare a default size, list the sizes
 it is available in, and carry one variant per colour set it is offered in.
 
@@ -24,7 +24,6 @@ from api.models.catalog import (
     image_write_model,
     product_sizes_write_model,
     product_type_nested_model,
-    product_type_ref_model,
     size_model,
     variant_list_model,
     variant_model,
@@ -58,7 +57,6 @@ for model in [
     color_model,
     color_set_model,
     size_model,
-    product_type_ref_model,
     product_type_nested_model,
     variant_model,
     variant_list_model,
@@ -102,11 +100,7 @@ class ProductList(Resource):
     @ns.param("q", "Search term for product or type name (fuzzy search)")
     @ns.param("material_id", "Only products made of this material")
     @ns.param("collection_id", "Only products in this collection")
-    @ns.param(
-        "type_id",
-        "Only products of this type. Matching a top-level type also returns "
-        "products filed under its sub-types.",
-    )
+    @ns.param("type_id", "Only products of this type")
     @ns.param("page", "Page number, 1-based (default 1)")
     @ns.param("limit", "Items per page, max 100 (default 10)")
     @ns.param(

@@ -27,20 +27,16 @@ _TYPE_ICONS = [
 
 
 def type_icon(product_type):
-    """An explicit icon wins; otherwise guess from the type's name, then its
-    parent's, so a sub-type inherits the shape."""
+    """An explicit icon wins; otherwise guess from the type's name."""
     if not product_type:
         return DEFAULT_TYPE_ICON
 
     if icon := (product_type.get("icon") or ""):
         return icon
 
-    parent = product_type.get("parent") or {}
-    names = " ".join(
-        part for part in (product_type.get("name"), parent.get("name")) if part
-    )
+    name = product_type.get("name") or ""
     for pattern, icon in _TYPE_ICONS:
-        if pattern.search(names):
+        if pattern.search(name):
             return icon
     return DEFAULT_TYPE_ICON
 

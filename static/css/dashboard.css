@@ -366,19 +366,3 @@
     color: var(--ccg-blue-600);
     font-size: .8rem;
 }
-
-/* Sub-types are indented under their parent: "Caixa redonda" on its own says
-   less than it does sitting beneath "Caixa". */
-.dash-subtype {
-    padding-left: 1.25rem;
-    position: relative;
-}
-
-.dash-subtype::before {
-    content: "";
-    position: absolute;
-    left: .35rem;
-    top: .65em;
-    width: .5rem;
-    border-top: 1px solid var(--bulma-border);
-}

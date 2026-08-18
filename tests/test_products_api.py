@@ -278,16 +278,15 @@ class TestDashboardFilterQueries:
         body = client.get("/api/products/?q=bastidor&limit=100").get_json()
         assert [p["name"] for p in body["products"]] == ["Bastidor Bordado"]
 
-    def test_type_filter_includes_sub_types(self, client, make_product,
-                                            make_product_type):
-        parent = make_product_type("Caixa")
-        sub = make_product_type("Caixa redonda", parent_id=parent["id"])
-        make_product("Caixa Redonda Filigrana", type_id=sub["id"])
+    def test_type_filter_narrows_to_that_family(self, client, make_product,
+                                                make_product_type):
+        box = make_product_type("Caixa")
+        make_product("Caixa Redonda Filigrana", type_id=box["id"])
         make_product("Outra")
 
-        by_parent = client.get(
-            f"/api/products/?type_id={parent['id']}&limit=100").get_json()
-        assert [p["name"] for p in by_parent["products"]] == ["Caixa Redonda Filigrana"]
+        body = client.get(
+            f"/api/products/?type_id={box['id']}&limit=100").get_json()
+        assert [p["name"] for p in body["products"]] == ["Caixa Redonda Filigrana"]
 
     def test_collection_filter_narrows(self, client, make_product, make_collection):
         collection = make_collection("Bordados")

@@ -15,7 +15,7 @@ TIMELINE_LIMIT = 12
 def home():
     with get_db_connection() as (_, cursor):
         types = ProductTypeRepository(cursor)
-        product_types = types.list(roots_only=True, limit=TYPES_LIMIT, offset=0)
+        product_types = types.list(limit=TYPES_LIMIT, offset=0)
         covers = types.cover_images([t["id"] for t in product_types])
         for product_type in product_types:
             product_type["cover"] = covers.get(product_type["id"])
