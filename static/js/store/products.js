@@ -159,12 +159,28 @@
     // Grid
     // ----------------------------------------------------------------
 
-    function renderColorSets(product) {
-        const badges = product.variants
-            .map((variant) => window.ColorSet.badge(variant.color_set))
-            .join("");
+    /** Two rows of two. A fifth colour set added a third row to one card and
+     *  left it taller than its neighbours; the rest are on the product page. */
+    const MAX_BADGES = 4;
 
-        return badges ? `<div class="swatch-row">${badges}</div>` : "";
+    function renderColorSets(product) {
+        const sets = product.variants.map((variant) => variant.color_set).filter(Boolean);
+        if (!sets.length) return "";
+
+        const overflows = sets.length > MAX_BADGES;
+        const visible = overflows ? MAX_BADGES - 1 : sets.length;
+        const cells = sets.slice(0, visible).map(window.ColorSet.badge);
+
+        if (overflows) {
+            const rest = sets.length - visible;
+            cells.push(
+                `<span class="tag is-rounded color-set-more">+${rest} ${
+                    rest === 1 ? "cor" : "cores"
+                }</span>`
+            );
+        }
+
+        return `<div class="swatch-row">${cells.join("")}</div>`;
     }
 
     function renderCard(product) {
@@ -192,7 +208,12 @@
     }
 
     async function loadProducts() {
-        const params = { ...StoreFilters.active(), page, limit: 9 };
+        const params = {
+            ...StoreFilters.active(),
+            page,
+            limit: 9,
+            photographed_first: 1,
+        };
 
         let payload;
         try {

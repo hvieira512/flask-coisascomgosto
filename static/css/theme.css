@@ -222,6 +222,16 @@ h3 {
     justify-content: flex-start;
 }
 
+/* Sits in the fourth cell when a card has more colour sets than fit, so it
+   matches the badges' size rather than Bulma's default tag. */
+.swatch-row .color-set-more {
+    font-size: .68rem;
+    background: var(--ccg-paper-deep);
+    color: var(--ccg-ink-soft);
+    border: 1px solid var(--bulma-border);
+    justify-content: flex-start;
+}
+
 .swatch-row .swatch {
     width: 11px;
     height: 11px;

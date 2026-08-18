@@ -109,6 +109,11 @@ class ProductList(Resource):
     )
     @ns.param("page", "Page number, 1-based (default 1)")
     @ns.param("limit", "Items per page, max 100 (default 10)")
+    @ns.param(
+        "photographed_first",
+        "Return pieces that have photographs before those that do not, as the "
+        "storefront does. Off by default, which is insertion order.",
+    )
     @ns.response(200, "A page of products")
     @ns.response(400, "Invalid pagination parameters")
     def get(self):
@@ -118,6 +123,7 @@ class ProductList(Resource):
         material_id = request.args.get("material_id", type=int)
         collection_id = request.args.get("collection_id", type=int)
         type_id = request.args.get("type_id", type=int)
+        photographed_first = bool(request.args.get("photographed_first", type=int))
 
         with get_db_connection() as (_, cursor):
             products = ProductRepository(cursor)
@@ -129,7 +135,12 @@ class ProductList(Resource):
             }
 
             return {
-                "products": products.list(**filters, limit=limit, offset=offset),
+                "products": products.list(
+                    **filters,
+                    limit=limit,
+                    offset=offset,
+                    photographed_first=photographed_first,
+                ),
                 "pagination": make_pagination(
                     products.count(**filters), page, limit
                 ),

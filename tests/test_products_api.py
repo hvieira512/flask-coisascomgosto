@@ -60,6 +60,47 @@ class TestListProducts:
     def test_invalid_pagination_returns_400(self, client, product_type, query):
         assert client.get(f"/api/products/{query}").status_code == 400
 
+    def test_default_order_is_insertion_order(self, client, make_product):
+        """What the dashboard wants: an unphotographed piece stays where the
+        owners left it, so it is findable."""
+        make_product("Sem fotografia")
+        photographed = make_product("Com fotografia")
+        client.post(
+            f"/api/products/{photographed['id']}/images", json={"url": "/a.jpg"}
+        )
+
+        body = client.get("/api/products/").get_json()
+        assert [p["name"] for p in body["products"]] == [
+            "Sem fotografia",
+            "Com fotografia",
+        ]
+
+    def test_photographed_first_puts_pieces_with_photographs_ahead(
+        self, client, make_product
+    ):
+        """What the storefront wants: nobody should have to page past pieces
+        with nothing to look at."""
+        make_product("Sem fotografia")
+        photographed = make_product("Com fotografia")
+        client.post(
+            f"/api/products/{photographed['id']}/images", json={"url": "/a.jpg"}
+        )
+
+        body = client.get("/api/products/?photographed_first=1").get_json()
+        assert [p["name"] for p in body["products"]] == [
+            "Com fotografia",
+            "Sem fotografia",
+        ]
+
+    def test_photographed_first_still_paginates(self, client, make_product):
+        """The reorder must not double-count or drop rows: total is unchanged."""
+        make_product("A")
+        make_product("B")
+
+        body = client.get("/api/products/?photographed_first=1&limit=1").get_json()
+        assert body["pagination"]["total"] == 2
+        assert len(body["products"]) == 1
+
 
 class TestCreateProduct:
     def test_creates_and_returns_product(self, client, product_type, make_material):

@@ -55,10 +55,21 @@ class ProductRepository:
         type_id: Optional[int] = None,
         limit: int,
         offset: int,
+        photographed_first: bool = False,
     ) -> list[dict]:
+        """`photographed_first` is the storefront's order: a shopper scanning a
+        grid should not have to page past pieces with nothing to look at. The
+        dashboard keeps insertion order, where an unphotographed piece is the
+        one the owners are looking for."""
         where, params = self._filter(search, collection_id, material_id, type_id)
+        order = "p.id"
+        if photographed_first:
+            order = (
+                "EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id) "
+                "DESC, p.id"
+            )
         self._cursor.execute(
-            f"{_SELECT} {where} ORDER BY p.id LIMIT %s OFFSET %s",
+            f"{_SELECT} {where} ORDER BY {order} LIMIT %s OFFSET %s",
             params + [limit, offset],
         )
         products = [self._to_dict(row) for row in self._cursor.fetchall()]

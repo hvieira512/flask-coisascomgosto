@@ -50,7 +50,7 @@
 
     {# ---------------- Product grid ---------------- #}
     <section class="column">
-        <div class="level is-mobile mb-3">
+        <div class="level is-mobile mb-2">
             <div class="level-left">
                 <h1 class="title is-4 mb-0">Catálogo</h1>
             </div>
@@ -58,6 +58,14 @@
                 <span id="result-count" class="is-size-7 has-text-grey"></span>
             </div>
         </div>
+
+        {# There are no prices anywhere in the shop: everything is made to order
+           and quoted by message. Saying so once, here, answers the question the
+           cards otherwise leave open. #}
+        <p class="is-size-7 has-text-grey mb-4">
+            Peças feitas à mão por encomenda. Preços sob consulta — fale
+            connosco e dizemos-lhe tudo.
+        </p>
 
         {# Applied filters: one Bulma delete-tag per active filter #}
         <div id="active-filters" class="tags mb-4" hidden></div>
