@@ -1,53 +1,51 @@
-from functools import wraps
+"""The dashboard's pages.
+
+Each one is a shell: the template renders the chrome and an empty container, and
+the page's own module fills it from the API. So there is nothing here but the
+guard and five render_templates.
+"""
 
 from flask import Blueprint, redirect, render_template, session, url_for
 
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 
-def login_required(view):
-    """Redirect anonymous visitors to the login page."""
+@bp.before_request
+def require_login():
+    """Anonymous visitors go to the login page.
 
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if "user" not in session:
-            return redirect(url_for("web.auth.home"))
-        return view(*args, **kwargs)
-
-    return wrapped
+    On the blueprint rather than on each view: a decorator per route means the
+    seventh page can be added without one and nobody notices until it is public.
+    """
+    if "user" not in session:
+        return redirect(url_for("web.auth.home"))
 
 
 @bp.route("/")
-@login_required
 def index():
     return redirect(url_for("web.dashboard.home"))
 
 
 @bp.route("/home")
-@login_required
 def home():
     return render_template("dashboard/home.html")
 
 
 @bp.route("/products")
-@login_required
 def products():
     return render_template("dashboard/products.html")
 
 
 @bp.route("/events")
-@login_required
 def events():
     return render_template("dashboard/events.html")
 
 
 @bp.route("/types")
-@login_required
 def types():
     return render_template("dashboard/types.html")
 
 
 @bp.route("/contacts")
-@login_required
 def contacts():
     return render_template("dashboard/contacts.html")

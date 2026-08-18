@@ -116,3 +116,36 @@ class TestDocumentedStatusCodes:
     def test_public_endpoint_documents_no_401(self, client):
         schema = client.get("/api/swagger.json").get_json()
         assert "401" not in schema["paths"]["/products/"]["get"]["responses"]
+
+
+class TestDashboardPagesAreGuarded:
+    """The guard is a blueprint-wide before_request rather than a decorator per
+    view, so these walk the routes the app actually has: a page added without a
+    guard fails here instead of shipping public."""
+
+    @staticmethod
+    def _dashboard_paths(app):
+        return sorted(
+            rule.rule
+            for rule in app.url_map.iter_rules()
+            if rule.endpoint.startswith("web.dashboard.")
+            and "GET" in (rule.methods or set())
+        )
+
+    def test_there_are_pages_to_guard(self, app):
+        assert len(self._dashboard_paths(app)) >= 5
+
+    def test_every_page_sends_an_anonymous_visitor_to_the_login(self, app, anon_client):
+        for path in self._dashboard_paths(app):
+            response = anon_client.get(path)
+            assert response.status_code == 302, path
+            assert "/auth" in response.headers["Location"], path
+
+    def test_a_signed_in_visitor_gets_the_page(self, app, client):
+        for path in self._dashboard_paths(app):
+            response = client.get(path)
+            # /dashboard itself redirects to /dashboard/home, which is not the
+            # login page — that is the one legitimate redirect here.
+            assert response.status_code in (200, 302), path
+            if response.status_code == 302:
+                assert "/auth" not in response.headers["Location"], path
