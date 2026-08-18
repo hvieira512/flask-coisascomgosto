@@ -315,7 +315,11 @@
     transition: opacity .12s ease;
 }
 
-.dash-table tbody tr:hover .dash-row-actions,
+/* Any row, not just a table's. The rule used to name .dash-table tbody tr, so the
+   materials list — panel-blocks, not table rows — kept its rename and delete
+   buttons at opacity 0 at every mouse position: present, clickable, invisible.
+   The owners could add a material and nothing else. */
+:is(tr, li):hover .dash-row-actions,
 .dash-row-actions:focus-within {
     opacity: 1;
 }

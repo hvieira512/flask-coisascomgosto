@@ -30,7 +30,12 @@ export async function request(url, { method = "GET", body, fallback } = {}) {
 
     if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.message || fallback || "Não foi possível concluir.");
+        const error = new Error(payload.message || fallback || "Não foi possível concluir.");
+        // The API answers in English, by design — it is a documented REST API. A
+        // caller that would rather say it in Portuguese needs to know which
+        // failure this was.
+        error.status = response.status;
+        throw error;
     }
 
     // 204 and an empty 200 have nothing to parse; a DELETE returning the row does.

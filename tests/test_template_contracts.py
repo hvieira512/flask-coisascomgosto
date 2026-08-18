@@ -484,3 +484,33 @@ class TestOneModuleSystem:
                 if "sweetalert2" in tag or "fontawesome" in tag:
                     continue
                 assert 'type="module"' in tag, f"{page}: {tag}"
+
+
+def test_row_actions_reveal_on_any_row_not_only_a_table():
+    """The rename and delete buttons on a row are hidden until it is hovered.
+
+    The reveal used to name `.dash-table tbody tr:hover`, so the materials list —
+    panel-blocks, not table rows — kept its buttons at opacity 0 at every mouse
+    position. They were in the DOM and clickable, which is why nothing else
+    noticed: the owners could add a material and never rename or delete one.
+    """
+    css = pathlib.Path("static/css/dashboard.css").read_text(encoding="utf-8")
+
+    assert ":is(tr, li):hover .dash-row-actions" in css
+    assert ".dash-table tbody tr:hover .dash-row-actions" not in css, (
+        "scoping the reveal to one container is what broke it"
+    )
+
+
+def test_the_materials_panel_offers_the_full_set(client, make_user):
+    """Adding, renaming and deleting a material all live on /dashboard/types."""
+    make_user("dash", password="pw")
+    client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+    html = client.get("/dashboard/types").get_data(as_text=True)
+
+    for hook in ["material-form", "material-name", "material-rows", "material-count"]:
+        assert f'id="{hook}"' in html, hook
+
+    source = pathlib.Path("static/js/dashboard/types/main.js").read_text(encoding="utf-8")
+    for call in ["createMaterial", "updateMaterial", "deleteMaterial", "listMaterials"]:
+        assert call in source, call

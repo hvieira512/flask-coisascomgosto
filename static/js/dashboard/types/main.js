@@ -224,12 +224,24 @@ async function loadMaterials() {
     document.getElementById("material-count").textContent = String(materials.length);
 }
 
+/** The API answers a duplicate in English; the owners read Portuguese. */
+const materialError = (error) =>
+    error.status === 409
+        ? "Já existe um material com esse nome."
+        : error.message;
+
 document.getElementById("material-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const input = document.getElementById("material-name");
+    const name = input.value.trim();
+    if (!name) return;
 
     return submitting(event.submitter ?? event.target.querySelector("button"), async () => {
-        await createMaterial(input.value.trim());
+        try {
+            await createMaterial(name);
+        } catch (error) {
+            throw new Error(materialError(error));
+        }
         input.value = "";
         Notify.success("Material adicionado.");
         await loadMaterials();
@@ -246,14 +258,14 @@ document.getElementById("material-rows").addEventListener("click", async (event)
         .textContent.trim();
 
     if (action === "rename") {
-        const name = await Notify.prompt("Novo nome", { value: current });
-        if (!name || name === current) return;
+        const name = await Notify.prompt("Novo nome do material", { value: current });
+        if (!name || name.trim() === current) return;
         try {
-            await updateMaterial(id, name);
+            await updateMaterial(id, name.trim());
             Notify.success("Material actualizado.");
             await loadMaterials();
         } catch (error) {
-            Notify.error(error.message);
+            Notify.error(materialError(error));
         }
         return;
     }
