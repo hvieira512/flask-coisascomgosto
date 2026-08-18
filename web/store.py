@@ -12,9 +12,12 @@ TIMELINE_LIMIT = 12
 @bp.route("/")
 def home():
     with get_db_connection() as (_, cursor):
-        product_types = ProductTypeRepository(cursor).list(
-            roots_only=True, limit=TYPES_LIMIT, offset=0
-        )
+        types = ProductTypeRepository(cursor)
+        product_types = types.list(roots_only=True, limit=TYPES_LIMIT, offset=0)
+        covers = types.cover_images([t["id"] for t in product_types])
+        for product_type in product_types:
+            product_type["cover"] = covers.get(product_type["id"])
+
         events = EventRepository(cursor).list(limit=TIMELINE_LIMIT, offset=0)
 
     return render_template(

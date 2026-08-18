@@ -149,23 +149,32 @@
         <div class="fixed-grid has-1-cols-mobile has-3-cols-tablet">
             <div class="grid">
                 {% for type in product_types %}
-                <a class="cell card p-5 mb-0 type-card"
+                <a class="cell card mb-0 type-card"
                    href="{{ url_for('web.store.products', type_id=type.id) }}">
-                    <span class="disc type-card-icon mb-4">
-                        <i class="fa-solid {{ type | type_icon }}"></i>
+                    {% if type.cover %}
+                    <img class="type-card-media" src="{{ type.cover.url }}"
+                         alt="{{ type.cover.alt }}" loading="lazy">
+                    {% else %}
+                    <span class="type-card-media type-card-media--empty" aria-hidden="true">
+                        <span class="disc type-card-icon">
+                            <i class="fa-solid {{ type | type_icon }}"></i>
+                        </span>
                     </span>
-
-                    <h3 class="title is-5 mb-2">{{ type.name }}</h3>
-
-                    {% if type.description %}
-                    <p class="has-text-grey is-size-6">{{ type.description }}</p>
                     {% endif %}
 
-                    {% if type.sub_types %}
-                    <p class="is-size-7 has-text-grey mt-3">
-                        {{ type.sub_types | map(attribute='name') | join(' · ') }}
-                    </p>
-                    {% endif %}
+                    <div class="p-5">
+                        <h3 class="title is-5 mb-2">{{ type.name }}</h3>
+
+                        {% if type.description %}
+                        <p class="has-text-grey is-size-6">{{ type.description }}</p>
+                        {% endif %}
+
+                        {% if type.sub_types %}
+                        <p class="is-size-7 has-text-grey mt-3">
+                            {{ type.sub_types | map(attribute='name') | join(' · ') }}
+                        </p>
+                        {% endif %}
+                    </div>
                 </a>
                 {% endfor %}
             </div>

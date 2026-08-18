@@ -146,19 +146,36 @@ a.card:hover {
 .type-card {
     color: inherit;
     display: block;
+    overflow: hidden;
+}
+
+/* A photographed family and an unphotographed one occupy the same box, so the
+   row keeps one baseline whatever the owners have got round to shooting. */
+.type-card-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: var(--ccg-paper-deep);
+}
+
+.type-card-media--empty {
+    background: var(--ccg-blue-50);
 }
 
 /* Geometry comes from .disc in theme.css. */
 .type-card-icon {
     width: 3rem;
     height: 3rem;
-    background: var(--ccg-blue-50);
+    background: var(--ccg-blue-100);
     color: var(--ccg-blue-500);
     font-size: 1.15rem;
 }
 
 .type-card:hover .type-card-icon {
-    background: var(--ccg-blue-100);
+    background: var(--ccg-blue-200);
 }
 
 /* Timeline. The connecting line is each entry's top border, so the entries

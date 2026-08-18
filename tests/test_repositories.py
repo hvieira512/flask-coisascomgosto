@@ -4,6 +4,7 @@ import pytest
 
 from api.repositories import (
     MaterialRepository,
+    ProductImageRepository,
     ProductRepository,
     ProductTypeRepository,
     UserRepository,
@@ -177,6 +178,58 @@ class TestProductRepository:
         assert products.get(product_id)["material"] is None
         cursor.execute("SELECT material_id FROM products WHERE id = %s", (product_id,))
         assert cursor.fetchone()["material_id"] is None, "stale material_id left behind"
+
+
+class TestProductTypeCovers:
+    """The landing page's type cards. A family with nothing photographed gets no
+    cover and falls back to its icon."""
+
+    @pytest.fixture()
+    def types(self, cursor):
+        return ProductTypeRepository(cursor)
+
+    @pytest.fixture()
+    def images(self, cursor):
+        return ProductImageRepository(cursor)
+
+    def test_the_first_photograph_of_the_earliest_piece_wins(
+        self, types, products, images
+    ):
+        box = types.create(name="Caixa")
+        first = products.create(type_id=box, name="Caixa alta", description="")
+        second = products.create(type_id=box, name="Caixa baixa", description="")
+        images.create(product_id=second, url="/second.jpg", position=0)
+        images.create(product_id=first, url="/late.jpg", position=3)
+        images.create(product_id=first, url="/cover.jpg", alt="Uma caixa", position=1)
+
+        assert types.cover_images([box]) == {
+            box: {"url": "/cover.jpg", "alt": "Uma caixa"}
+        }
+
+    def test_a_sub_types_photograph_covers_its_parent(self, types, products, images):
+        box = types.create(name="Caixa")
+        tall = types.create(name="Caixa alta", parent_id=box)
+        product_id = products.create(type_id=tall, name="Caixa de joias", description="")
+        images.create(product_id=product_id, url="/tall.jpg")
+
+        covers = types.cover_images([box])
+        assert covers[box]["url"] == "/tall.jpg"
+
+    def test_the_alt_falls_back_to_the_piece_name(self, types, products, images):
+        box = types.create(name="Caixa")
+        product_id = products.create(type_id=box, name="Caixa de joias", description="")
+        images.create(product_id=product_id, url="/x.jpg")
+
+        assert types.cover_images([box])[box]["alt"] == "Caixa de joias"
+
+    def test_a_type_with_no_photographs_is_absent(self, types, products):
+        box = types.create(name="Caixa")
+        products.create(type_id=box, name="Caixa de joias", description="")
+
+        assert types.cover_images([box]) == {}
+
+    def test_no_types_asks_nothing_of_the_database(self, types):
+        assert types.cover_images([]) == {}
 
 
 class TestUserRepository:

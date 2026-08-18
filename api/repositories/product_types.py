@@ -177,6 +177,37 @@ class ProductTypeRepository:
         )
         return [row["id"] for row in self._cursor.fetchall()] + [type_id]
 
+    def cover_images(self, type_ids: list[int]) -> dict[int, dict]:
+        """One photograph per type, to stand for the whole family on the landing
+        page. Sub-types count towards their parent, so a type whose pieces are
+        all filed under sub-types still gets a cover.
+
+        Ranked rather than grouped so the choice is stable across requests: the
+        first photograph of the earliest piece wins.
+        """
+        if not type_ids:
+            return {}
+
+        placeholders = ", ".join(["%s"] * len(type_ids))
+        self._cursor.execute(
+            "SELECT root_id, url, alt FROM ("
+            "  SELECT IFNULL(t.parent_id, t.id) AS root_id, i.url,"
+            "         IFNULL(i.alt, p.name) AS alt,"
+            "         ROW_NUMBER() OVER ("
+            "           PARTITION BY IFNULL(t.parent_id, t.id)"
+            "           ORDER BY i.product_id, i.position, i.id) AS rank_in_type"
+            "  FROM product_images i"
+            "  JOIN products p ON p.id = i.product_id"
+            "  JOIN product_types t ON t.id = p.type_id"
+            f"  WHERE IFNULL(t.parent_id, t.id) IN ({placeholders})"
+            ") ranked WHERE rank_in_type = 1",
+            type_ids,
+        )
+        return {
+            row["root_id"]: {"url": row["url"], "alt": row["alt"]}
+            for row in self._cursor.fetchall()
+        }
+
     def product_count(self, type_id: int) -> int:
         """How many pieces this type, or any of its sub-types, is filed under."""
         ids = self.family(type_id)
