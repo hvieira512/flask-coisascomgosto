@@ -344,7 +344,6 @@ def seed():
         ContactRepository(cursor).update(**CONTACT)
 
     print(
-        f"Seeded {len(PRODUCTS)} products, "
-        f"{sum(1 + len(t[3]) for t in PRODUCT_TYPES)} product types, "
+        f"Seeded {len(PRODUCTS)} products, {len(PRODUCT_TYPES)} product types, "
         f"{len(COLOR_SETS)} colour sets, {len(IMAGES)} images, {len(EVENTS)} event."
     )

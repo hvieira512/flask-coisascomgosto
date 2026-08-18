@@ -24,7 +24,9 @@ if not _name.endswith("_test"):
 def database():
     from api.db import init_db
 
-    init_db()
+    # The suite wants a blank slate; init_db otherwise carries accounts across a
+    # schema rebuild, which is what keeps the owners logged in on a real database.
+    init_db(keep_users=False)
     return os.environ["MYSQL_DATABASE"]
 
 

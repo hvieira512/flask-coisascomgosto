@@ -73,8 +73,51 @@ def wait_for_mysql(timeout=60):
     raise RuntimeError(f"MySQL not reachable after {timeout}s: {last_error}")
 
 
-def init_db():
-    """(Re)create the database and every table, dropping what is there."""
+def _read_users(cursor):
+    """The accounts as they stand, or nothing if there is no table yet."""
+    try:
+        cursor.execute("SELECT * FROM users")
+        return cursor.fetchall()
+    except pymysql.Error:
+        return []
+
+
+def _restore_users(cursor, rows):
+    """Put the saved accounts back after the schema has been recreated.
+
+    Only the columns the new users table actually has: a schema change that adds
+    or drops one must not be the thing that loses the accounts. Ids come back
+    with them, so anything referring to a user still points at the same person.
+    """
+    if not rows:
+        return 0
+
+    cursor.execute("SHOW COLUMNS FROM users")
+    columns = [row["Field"] for row in cursor.fetchall()]
+
+    restored = 0
+    for row in rows:
+        keep = {c: row[c] for c in columns if c in row}
+        if not keep:
+            continue
+        names = ", ".join(f"`{c}`" for c in keep)
+        placeholders = ", ".join(["%s"] * len(keep))
+        cursor.execute(
+            f"INSERT INTO users ({names}) VALUES ({placeholders})", list(keep.values())
+        )
+        restored += 1
+    return restored
+
+
+def init_db(*, keep_users=True):
+    """(Re)create the database and every table, dropping what is there.
+
+    The accounts survive by default. schema.sql drops every table and seeds only
+    the catalog's own lookups, so re-running this to pick up a schema change used
+    to silently log the owners out of their own dashboard with no way back —
+    which is exactly what happened on 2026-08-18. Pass keep_users=False for a
+    genuinely empty database, as the test suite does.
+    """
     wait_for_mysql()
 
     conn = connect(database=False)
@@ -91,10 +134,16 @@ def init_db():
     conn = connect()
     try:
         with conn.cursor() as cursor:
+            saved = _read_users(cursor) if keep_users else []
+
             for statement in _statements(SCHEMA_PATH.read_text()):
                 cursor.execute(statement)
+
+            restored = _restore_users(cursor, saved)
         conn.commit()
     finally:
         conn.close()
 
     print(f"Database initialized: {Config.MYSQL_DATABASE}")
+    if saved:
+        print(f"Accounts preserved: {restored} of {len(saved)}")
