@@ -807,13 +807,18 @@ a.card:hover {
 /* Equal cells, not content-sized chips. Sized to their names, the five sets of
    one box came out 183, 190, 200, 212 and 216px wide and wrapped 3 + 2, so the
    group looked like a mistake rather than a set of options. A grid gives every
-   option the same box and lines both rows up.
+   option the same box and lines the rows up.
 
-   min(100%, 14rem) rather than a bare 14rem: below that width the track would
+   11.5rem is what puts three across the 630px panel; auto-fill then drops to two
+   and to one as the panel narrows, with no breakpoints to keep in step. The
+   chip's own metrics below are trimmed to fit the resulting 204px track without
+   truncating "Vermelho e Branco", the longest name the workshop uses.
+
+   min(100%, ...) rather than a bare 11.5rem: below that width the track would
    overflow its column instead of collapsing to one per row. */
 .variant-options {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11.5rem), 1fr));
     gap: .6rem;
 }
 
@@ -823,21 +828,21 @@ a.card:hover {
 .variant-option {
     cursor: pointer;
     min-height: 2.75rem;
-    padding: .45rem 1rem;
-    gap: .55rem;
-    font-size: .9rem;
+    padding: .45rem .75rem;
+    gap: .45rem;
+    font-size: .875rem;
     /* Bulma's .tag centres its content, which in a fixed-width cell put every
        name at a different offset and made the swatches zigzag down the column. */
     justify-content: flex-start;
 }
 
 .variant-option .swatch {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
 }
 
 .variant-option .swatch + .swatch {
-    margin-left: -7px;
+    margin-left: -6px;
 }
 
 .variant-option:hover {
