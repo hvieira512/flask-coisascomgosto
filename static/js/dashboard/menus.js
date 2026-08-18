@@ -76,10 +76,13 @@
             return;
         }
 
-        // A click that lands on the dialog itself rather than on the card is a
-        // click on the backdrop: the card covers the whole of the dialog box.
-        // ::backdrop is not an element, so it has no click of its own.
-        const dialog = event.target.closest("dialog.dash-dialog");
-        if (dialog && !event.target.closest(".modal-card")) dialog.close();
+        // A click on the backdrop reports the dialog itself as its target, since
+        // ::backdrop is not an element and the card covers the whole dialog box.
+        //
+        // Deliberately an identity check rather than "anything that is not inside
+        // .modal-card": a confirmation raised from inside a dialog renders as a
+        // sibling of the card, so the loose test read Cancelar as a backdrop click
+        // and closed the form behind the question.
+        if (event.target.matches("dialog.dash-dialog")) event.target.close();
     });
 })();

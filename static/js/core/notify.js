@@ -12,6 +12,24 @@ const Notify = (function () {
     const BRAND = "#4472C4";   // --ccg-blue-500
     const DANGER = "#C62828";
 
+    /**
+     * Where to render, which is not always <body>.
+     *
+     * A dialog opened with showModal() is promoted to the browser's top layer,
+     * and the top layer paints above every z-index there is — so a toast appended
+     * to <body> came out *behind* the dialog's own backdrop. Filling in a form and
+     * being told nothing was wrong, while the reason sat invisible behind the
+     * overlay, is the worst version of this.
+     *
+     * Rendering inside the open dialog puts the toast in the top layer with it.
+     * The last open one wins: creating a product opens the edit dialog over the
+     * wizard, and the message belongs to whichever is on top.
+     */
+    const host = () => {
+        const dialogs = document.querySelectorAll("dialog[open]");
+        return dialogs.length ? dialogs[dialogs.length - 1] : document.body;
+    };
+
     const TOAST_DEFAULTS = {
         toast: true,
         position: "top-end",
@@ -26,7 +44,7 @@ const Notify = (function () {
 
     function toast(icon, title) {
         if (typeof Swal === "undefined") return Promise.resolve();
-        return Swal.fire({ ...TOAST_DEFAULTS, icon, title });
+        return Swal.fire({ ...TOAST_DEFAULTS, icon, title, target: host() });
     }
 
     return {
@@ -38,6 +56,7 @@ const Notify = (function () {
             if (typeof Swal === "undefined") return null;
 
             const result = await Swal.fire({
+                target: host(),
                 title,
                 input: "text",
                 inputValue: value,
@@ -59,6 +78,7 @@ const Notify = (function () {
             if (typeof Swal === "undefined") return false;
 
             const result = await Swal.fire({
+                target: host(),
                 title,
                 text,
                 icon: danger ? "warning" : "question",

@@ -146,6 +146,38 @@ class TestStepDialog:
         assert "tipo é obrigatório" in page.locator(".swal2-container").inner_text()
         assert "Passo 1 de 2" in dialog.locator("[data-step-label]").text_content()
 
+    def test_the_error_lands_in_front_of_the_dialog_not_behind_it(self, products_page):
+        """A showModal() dialog is in the top layer, which paints above every
+        z-index — so a toast appended to <body> came out behind its own backdrop.
+        The owner picked a type, left the name empty, was refused, and could not
+        see why.
+
+        elementFromPoint is the only assertion that catches this: the toast is
+        present, sized and styled either way. The question is what a person
+        actually sees at those coordinates.
+        """
+        page, _ = products_page
+        dialog = _open_wizard(page)
+
+        dialog.locator('[name="type_id"]').select_option(label="Caixa")
+        dialog.locator("[data-step-next]").click()
+        page.wait_for_selector(".swal2-container")
+
+        on_top = page.evaluate(
+            """() => {
+                // The popup, not the container: the container is a full-height
+                // pointer-events:none frame, so its centre is empty air and would
+                // report the dialog behind it either way.
+                const toast = document.querySelector('.swal2-popup');
+                const box = toast.getBoundingClientRect();
+                const hit = document.elementFromPoint(
+                    box.x + box.width / 2, box.y + box.height / 2);
+                return { covered: !toast.contains(hit), inTopLayer: !!toast.closest('dialog') };
+            }"""
+        )
+        assert not on_top["covered"], "the message is painting behind the dialog"
+        assert on_top["inTopLayer"], "only the top layer can sit above a modal dialog"
+
     def test_advancing_swaps_which_group_is_on_screen(self, products_page):
         page, _ = products_page
         dialog = _open_wizard(page)
@@ -246,6 +278,90 @@ class TestStepDialog:
         assert edit.locator("[data-step-label]").count() == 0
 
 
+class TestConfirmRaisedFromInsideADialog:
+    """Removing a colour asks "Remover esta cor?" while the edit dialog is open.
+
+    The question is rendered inside that dialog so it is not painted behind the
+    backdrop, which means two overlay systems are nested and both listen for
+    Escape. Whatever happens, the caller must not be left awaiting a promise that
+    never settles.
+    """
+
+    def _confirm_over_the_edit_dialog(self, page, live_server):
+        page.goto(f"{live_server}/dashboard/products")
+        page.wait_for_selector("#product-list tr[data-product-id]")
+        page.locator("#product-list tr[data-product-id]").first.click()
+
+        edit = page.locator("#editProductModal")
+        edit.wait_for(state="visible")
+        page.evaluate(
+            """async () => {
+                const { Notify } = await import('/static/js/core/notify.js');
+                window.__answer = 'pending';
+                Notify.confirm('Remover esta cor?', { danger: true })
+                    .then(value => { window.__answer = value; });
+            }"""
+        )
+        page.wait_for_selector(".swal2-popup")
+        return edit
+
+    def test_it_paints_over_the_dialog_it_was_raised_from(
+        self, signed_in, live_server, make_product
+    ):
+        make_product("Caixa Redonda")
+        page, _ = signed_in
+        self._confirm_over_the_edit_dialog(page, live_server)
+
+        state = page.evaluate(
+            """() => {
+                const popup = document.querySelector('.swal2-popup');
+                const box = popup.getBoundingClientRect();
+                const hit = document.elementFromPoint(
+                    box.x + box.width / 2, box.y + box.height / 2);
+                const button = [...popup.querySelectorAll('button')]
+                    .find(b => b.textContent.trim() === 'Confirmar' ||
+                               b.textContent.trim() === 'Cancelar');
+                const rect = button.getBoundingClientRect();
+                const overButton = document.elementFromPoint(
+                    rect.x + rect.width / 2, rect.y + rect.height / 2);
+                return {
+                    covered: !popup.contains(hit),
+                    buttonReachable: button.contains(overButton) || button === overButton,
+                };
+            }"""
+        )
+        assert not state["covered"]
+        assert state["buttonReachable"], "a question nobody can answer is worse than none"
+
+    def test_escape_settles_the_promise_instead_of_stranding_it(
+        self, signed_in, live_server, make_product
+    ):
+        """Both overlays listen for Escape. If the dialog wins and takes the
+        question down with it, the await never returns and the caller is wedged
+        forever with no way to retry."""
+        make_product("Caixa Redonda")
+        page, _ = signed_in
+        self._confirm_over_the_edit_dialog(page, live_server)
+
+        page.keyboard.press("Escape")
+        page.wait_for_function("() => window.__answer !== 'pending'")
+
+        assert page.evaluate("window.__answer") is False, "Escape means no"
+
+    def test_cancel_settles_the_promise_and_leaves_the_dialog_open(
+        self, signed_in, live_server, make_product
+    ):
+        make_product("Caixa Redonda")
+        page, _ = signed_in
+        edit = self._confirm_over_the_edit_dialog(page, live_server)
+
+        page.locator(".swal2-cancel").click()
+        page.wait_for_function("() => window.__answer !== 'pending'")
+
+        assert page.evaluate("window.__answer") is False
+        assert edit.is_visible(), "answering the question must not close the form"
+
+
 @pytest.fixture()
 def types_page(signed_in, live_server):
     page, errors = signed_in
@@ -280,6 +396,28 @@ class TestModalHelpers:
         dialog.wait_for(state="hidden")
         assert dialog.count() == 1
         assert page.evaluate("document.getElementById('newTypeModal').open") is False
+
+    def test_a_click_on_the_backdrop_still_closes_it(self, types_page):
+        """The other half of the rule that closing Cancelar broke: a click beside
+        the card is a dismissal, and ::backdrop has no click of its own."""
+        page, _ = types_page
+        page.click("#new-type")
+        dialog = page.locator("#newTypeModal")
+        dialog.wait_for(state="visible")
+
+        page.mouse.click(8, 8)
+        dialog.wait_for(state="hidden")
+        assert page.evaluate("document.getElementById('newTypeModal').open") is False
+
+    def test_a_click_inside_the_card_does_not_close_it(self, types_page):
+        page, _ = types_page
+        page.click("#new-type")
+        dialog = page.locator("#newTypeModal")
+        dialog.wait_for(state="visible")
+
+        dialog.locator(".modal-card-body").click(position={"x": 4, "y": 4})
+        page.wait_for_timeout(200)
+        assert dialog.is_visible()
 
     def test_the_create_and_edit_dialogs_do_not_read_each_others_fields(
         self, types_page, live_server
