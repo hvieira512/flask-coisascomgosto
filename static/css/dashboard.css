@@ -335,8 +335,82 @@
 }
 
 /* ----------------------------------------------------------------
-   Modals
+   Modals — a native <dialog>
    ---------------------------------------------------------------- */
+
+/* The dialog box itself is only a frame around .modal-card, which keeps Bulma's
+   layout. The browser centres it in the top layer, so there is no positioning
+   here beyond the margin auto that centring needs. */
+.dash-dialog {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    max-width: min(46rem, calc(100vw - 2rem));
+    width: 100%;
+    max-height: calc(100vh - 3rem);
+    overflow: visible;
+    margin: auto;
+}
+
+.dash-dialog .modal-card {
+    background: var(--ccg-surface);
+    border-radius: var(--radius-lg);
+    /* Two shadows: a tight one to seat the card, a broad soft one for depth.
+       Bulma's single hard shadow made it look pasted on. */
+    box-shadow:
+        0 1px 2px rgba(31, 56, 100, .08),
+        0 24px 48px -12px rgba(31, 56, 100, .22);
+    overflow: hidden;
+}
+
+/* Compact head. Bulma pads it by 2rem and sets the title to size-4 (1.5rem),
+   which on a form dialog gave the word "Editar produto" more room than the
+   fields under it. */
+.dash-dialog .modal-card-head {
+    padding: .9rem 1rem .9rem 1.25rem;
+    background: var(--ccg-surface);
+    border-bottom: 1px solid var(--dash-border);
+    box-shadow: none;
+}
+
+.dash-dialog .modal-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ccg-blue-900);
+}
+
+/* Bulma's .delete is a grey disc with a cut-out cross, which reads as a badge
+   being dismissed rather than a window being closed. A square ghost button with
+   the same icon set as the rest of the dashboard reads as a control. */
+.dash-dialog-close {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--bulma-radius);
+    background: transparent;
+    color: var(--ccg-ink-faint);
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.dash-dialog-close:hover {
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-800);
+}
+
+.dash-dialog-close:focus-visible {
+    outline: 2px solid var(--ccg-blue-400);
+    outline-offset: 2px;
+}
+
+.dash-dialog .modal-card-body {
+    padding: 1.25rem;
+}
 
 /* Bulma 1.0's .modal-card-foot is justify-content: flex-start and has no gap —
    0.9's `.button:not(:last-child) { margin-right: .5rem }` went away with it —
@@ -345,6 +419,62 @@
 .modal-card-foot {
     justify-content: flex-end;
     gap: .75rem;
+}
+
+.dash-dialog .modal-card-foot {
+    padding: .9rem 1.25rem;
+    background: var(--ccg-paper);
+    border-top: 1px solid var(--dash-border);
+}
+
+/* Motion. It used to appear instantly, because a display: none -> block switch
+   has nothing to transition.
+
+   Keyframes rather than a transition with @starting-style and
+   `display .18s allow-discrete`: that combination held the closed dialog at
+   display: block after the first close, so the element was never newly rendered
+   again, @starting-style stopped applying and nothing animated at all — a
+   silent, self-inflicted regression. An animation on [open] simply runs when the
+   element becomes rendered, every time. The dismissal is deliberately instant:
+   a fade-out would need the close deferred behind an animationend, and Escape
+   closes natively without passing through our code. */
+/* No fill mode on purpose. `both` holds the from-value whenever the animation is
+   applied but never advances — a tab the compositor is not painting — which
+   leaves the dialog open and completely invisible. Without it that case
+   degrades to the old instant appearance, which is merely unpolished. */
+.dash-dialog[open] {
+    animation: dialog-in .18s cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.985);
+    }
+}
+
+/* Ink rather than Bulma's near-black at 86%, and a touch of blur so the desk
+   behind reads as out of focus instead of merely dark. */
+.dash-dialog::backdrop {
+    background: rgba(22, 39, 69, .42);
+    backdrop-filter: blur(2px);
+}
+
+.dash-dialog[open]::backdrop {
+    animation: backdrop-in .18s ease;
+}
+
+@keyframes backdrop-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-dialog[open],
+    .dash-dialog[open]::backdrop {
+        animation-duration: .01ms;
+    }
 }
 
 .dash-thumb {

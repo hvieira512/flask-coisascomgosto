@@ -1,12 +1,30 @@
 /**
- * Bulma modals: a modal is open when it carries .is-active, and both dashboard
- * pages fill the same two slots. `submitting` wraps the button handlers.
+ * Native <dialog> modals. Every dashboard page fills the same two slots, and
+ * `submitting` wraps the button handlers.
+ *
+ * showModal() is what buys the focus trap, Escape, the backdrop and returning
+ * focus to whatever opened it; the enter and leave animations are CSS. Calling
+ * it on an already-open dialog throws, hence the guards.
  */
 export const modal = (id) => document.getElementById(id);
 export const bodyOf = (id) => modal(id).querySelector(".modal-card-body");
 export const footOf = (id) => modal(id).querySelector(".modal-card-foot");
-export const open = (id) => modal(id).classList.add("is-active");
-export const close = (id) => modal(id).classList.remove("is-active");
+
+export const open = (id) => {
+    const dialog = modal(id);
+    if (!dialog || dialog.open) return;
+
+    dialog.showModal();
+    // The browser focuses the first focusable thing, which is the × — leaving
+    // Enter wired to "close the dialog I have just opened". A form dialog starts
+    // in its first field instead; one with no fields keeps the default.
+    dialog.querySelector(".modal-card-body :is(input, textarea, select)")?.focus();
+};
+
+export const close = (id) => {
+    const dialog = modal(id);
+    if (dialog?.open) dialog.close();
+};
 
 /**
  * Run a click handler with the button spinning, surfacing any failure as a

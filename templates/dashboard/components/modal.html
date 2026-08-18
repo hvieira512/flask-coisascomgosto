@@ -1,12 +1,19 @@
-{# Bulma modal. Opened by any element carrying data-modal-target="<id>", and
-   closed by the background, the × or any data-modal-close element — all wired
-   in static/js/dashboard/menus.js. #}
-<div class="modal" id="{{ modal_id }}" aria-labelledby="{{ modal_id }}-title">
-    <div class="modal-background" data-modal-close></div>
+{# A native <dialog>, opened by any element carrying data-modal-target="<id>" and
+   closed by the backdrop, the × or any data-modal-close element — all wired in
+   static/js/dashboard/menus.js.
+
+   Native rather than Bulma's .modal div: the browser then supplies the top
+   layer, ::backdrop, the focus trap, Escape and returning focus to whatever
+   opened it. The inner .modal-card* classes stay, so Bulma's card layout and
+   everything already selecting on those slots keep working. #}
+<dialog class="dash-dialog" id="{{ modal_id }}" aria-labelledby="{{ modal_id }}-title">
     <div class="modal-card">
         <header class="modal-card-head">
             <p class="modal-card-title" id="{{ modal_id }}-title">{{ modal_title }}</p>
-            <button class="delete" aria-label="Fechar" data-modal-close></button>
+            <button class="dash-dialog-close" type="button" data-modal-close
+                    aria-label="Fechar">
+                <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+            </button>
         </header>
         <section class="modal-card-body">
             {{ modal_content | safe }}
@@ -15,4 +22,4 @@
             {{ modal_footer | safe }}
         </footer>
     </div>
-</div>
+</dialog>

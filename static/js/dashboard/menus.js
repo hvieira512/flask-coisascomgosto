@@ -53,30 +53,27 @@
         });
     });
 
-    // Any click outside, or Escape, dismisses whatever is open.
+    // Any click outside, or Escape, dismisses whatever is open. Escape inside a
+    // dialog is the browser's own business — it fires `cancel` there.
     document.addEventListener("click", () => closeDropdowns(null));
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            closeDropdowns(null);
-            closeModals();
-        }
+        if (event.key === "Escape") closeDropdowns(null);
     });
 
     // ----------------------------------------------------------------
-    // Modals
+    // Modals — native <dialog>
     // ----------------------------------------------------------------
 
     function openModal(id) {
-        document.getElementById(id)?.classList.add("is-active");
+        const dialog = document.getElementById(id);
+        if (dialog && !dialog.open) dialog.showModal();
     }
 
     function closeModals() {
-        document
-            .querySelectorAll(".modal.is-active")
-            .forEach((modal) => modal.classList.remove("is-active"));
+        document.querySelectorAll("dialog.dash-dialog[open]").forEach((d) => d.close());
     }
 
-    // Delegated so buttons rendered later (product cards) work without rebinding.
+    // Delegated so buttons rendered later (table rows) work without rebinding.
     document.addEventListener("click", (event) => {
         const opener = event.target.closest("[data-modal-target]");
         if (opener) {
@@ -87,8 +84,15 @@
 
         if (event.target.closest("[data-modal-close]")) {
             event.preventDefault();
-            closeModals();
+            event.target.closest("dialog")?.close();
+            return;
         }
+
+        // A click that lands on the dialog itself rather than on the card is a
+        // click on the backdrop: the card covers the whole of the dialog box.
+        // ::backdrop is not an element, so it has no click of its own.
+        const dialog = event.target.closest("dialog.dash-dialog");
+        if (dialog && !event.target.closest(".modal-card")) dialog.close();
     });
 
     window.DashboardModals = { open: openModal, close: closeModals };

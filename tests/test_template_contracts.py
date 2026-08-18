@@ -72,6 +72,29 @@ class TestDashboardHooks:
         assert "data-modal-close" in html
         assert "data-bs-" not in html
 
+    def test_modals_are_native_dialogs(self, client, make_user):
+        """A <dialog> is what supplies the top layer, the backdrop, the focus
+        trap, Escape and returning focus to whatever opened it. Bulma's .modal
+        div supplied none of that, and its display: none could not animate."""
+        self._login(client, make_user)
+        html = client.get("/dashboard/products").get_data(as_text=True)
+
+        assert '<dialog class="dash-dialog"' in html
+        # The old div-based markup, including the backdrop element a <dialog>
+        # replaces with ::backdrop.
+        assert 'class="modal-background"' not in html
+        assert '<div class="modal "' not in html
+
+    def test_the_close_control_is_a_button_with_an_icon(self, client, make_user):
+        """Bulma's .delete disc reads as dismissing a badge, not closing a
+        window, and carried no accessible name."""
+        self._login(client, make_user)
+        html = client.get("/dashboard/products").get_data(as_text=True)
+
+        assert 'class="dash-dialog-close"' in html
+        assert 'aria-label="Fechar"' in html
+        assert 'class="delete"' not in html
+
     def test_no_token_helper_is_loaded(self, client, make_user):
         """The page modules call fetch() directly; the cookie rides along."""
         self._login(client, make_user)

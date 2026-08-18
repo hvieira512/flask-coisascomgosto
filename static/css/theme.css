@@ -103,6 +103,48 @@
     --bulma-card-background-color: var(--ccg-surface);
     --bulma-card-shadow: none;
     --bulma-card-radius: var(--radius);
+
+    /* Fields, retinted through Bulma's own variables so the storefront's search
+       box, the login form and every dashboard dialog share one treatment rather
+       than three. Bulma's defaults are a cool grey border, a 4px radius and an
+       inset shadow that reads as a dent — generic in a way the rest of this
+       palette is not.
+
+       The border sits in the paper family (h 35 / s 22%) instead, the corners
+       match everything else at 10px, the dent goes, and focus is a hairline in
+       brand blue with a soft ring rather than a heavy glow. */
+    --bulma-input-h: 35;
+    --bulma-input-s: 22%;
+    --bulma-input-border-l: 88%;
+    --bulma-input-hover-border-l-delta: -8%;
+    --bulma-input-radius: var(--radius);
+    --bulma-input-shadow: none;
+    --bulma-input-placeholder-color: var(--ccg-ink-faint);
+
+    --bulma-input-focus-h: 218deg;
+    --bulma-input-focus-s: 52%;
+    --bulma-input-focus-l: 52%;
+    --bulma-input-focus-shadow-size: 0 0 0 3px;
+    --bulma-input-focus-shadow-alpha: .13;
+
+    /* The select's chevron, which Bulma draws in the link colour. */
+    --bulma-input-arrow: var(--ccg-blue-600);
+
+    --bulma-label-color: var(--ccg-blue-900);
+    --bulma-label-weight: 600;
+}
+
+/* Bulma puts the inset shadow on a second rule that its own variable does not
+   reach, so the dent survives --bulma-input-shadow: none. */
+.input,
+.textarea {
+    box-shadow: none;
+}
+
+/* A field's own label and its help text are a pair; the help sits quiet under
+   it rather than competing at full ink. */
+.help {
+    color: var(--ccg-ink-soft);
 }
 
 html {
