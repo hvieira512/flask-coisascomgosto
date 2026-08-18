@@ -520,6 +520,104 @@ a.card:hover {
     margin: .45rem 0 .15rem 1.6rem;
 }
 
+/* The collection rail above the grid. auto-fit rather than a fixed count so the
+   four cards fill the column at any width, and a scroll-snapping row once the
+   column is too narrow to hold them — which is the behaviour every phone shop
+   has trained people to expect. */
+.collection-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: .75rem;
+    list-style: none;
+    margin: 0;
+}
+
+@media screen and (max-width: 768px) {
+    .collection-strip {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        /* Room for the focus ring, which a clipping scrollport would cut off. */
+        padding-bottom: .35rem;
+    }
+
+    .collection-strip > li {
+        flex: 0 0 8.5rem;
+        scroll-snap-align: start;
+    }
+}
+
+.collection-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    gap: .1rem;
+    padding: 0 0 .6rem;
+    background: var(--ccg-surface);
+    border: 1px solid var(--ccg-line);
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: left;
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.collection-card:hover {
+    border-color: var(--ccg-blue-300);
+}
+
+/* The same inset outline the variant buttons use for "this one is chosen", so
+   the two selected states in the shop read as one idea. */
+.collection-card.is-active {
+    border-color: var(--ccg-blue-500);
+    box-shadow: inset 0 0 0 2px var(--ccg-blue-500);
+}
+
+/* The frame decides the shape, not what is inside it. A cover is either a
+   photograph or the grid's no-photograph tile, and that tile carries its own
+   square aspect-ratio — so with the ratio on the wrapper alone the photographed
+   collections came out taller than the rest and every card's name sat at a
+   different height. Absolute children ignore their own sizing entirely. */
+.collection-cover {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    margin-bottom: .5rem;
+    overflow: hidden;
+    background: var(--ccg-paper-deep);
+}
+
+.collection-cover > * {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.collection-cover-all {
+    border-radius: 0;
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-600);
+    font-size: 1.25rem;
+}
+
+.collection-card-name {
+    padding: 0 .6rem;
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--ccg-blue-900);
+    line-height: 1.25;
+}
+
+.collection-card-detail {
+    padding: 0 .6rem;
+    font-size: .72rem;
+    color: var(--ccg-ink-soft);
+}
+
 .filter-badge {
     cursor: pointer;
 }

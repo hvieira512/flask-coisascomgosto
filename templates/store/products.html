@@ -70,6 +70,17 @@
             connosco e dizemos-lhe tudo.
         </p>
 
+        {# The collections, offered first: the owners say people ask for their work
+           by collection rather than by the kind of object. A rail and not a gate —
+           the grid underneath is already full, so choosing is an invitation rather
+           than a toll. Filled by js/store/products.js, and hidden until there is
+           more than one collection to choose between, because a single card is not
+           a choice. #}
+        <nav id="collection-rail" class="mb-5" aria-label="Colecções" hidden>
+            <p class="eyebrow mb-2">Colecções</p>
+            <ul id="collection-strip" class="collection-strip"></ul>
+        </nav>
+
         {# Applied filters: one Bulma delete-tag per active filter #}
         <div id="active-filters" class="tags mb-4" hidden></div>
 

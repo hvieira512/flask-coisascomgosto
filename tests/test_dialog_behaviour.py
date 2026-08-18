@@ -16,49 +16,11 @@ Requires `playwright install chromium`; the whole module skips without it.
 """
 
 import json
-import threading
 
 import pytest
 
-sync_api = pytest.importorskip("playwright.sync_api")
-
-
-@pytest.fixture(scope="session")
-def live_server(database):
-    """The app on a real socket, in a thread, against the test database.
-
-    Werkzeug rather than gunicorn: this only has to answer one browser, and
-    port 0 lets the OS pick so a developer's own `flask run` is not in the way.
-    """
-    from werkzeug.serving import make_server
-
-    from app import app as flask_app
-
-    flask_app.config.update(
-        TESTING=True,
-        SECRET_KEY="test-secret",
-        JWT_SECRET_KEY="test-jwt-secret-key-at-least-32-bytes-long",
-    )
-
-    server = make_server("127.0.0.1", 0, flask_app, threaded=True)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.port}"
-    finally:
-        server.shutdown()
-        thread.join(timeout=5)
-
-
-@pytest.fixture(scope="session")
-def browser():
-    with sync_api.sync_playwright() as playwright:
-        try:
-            instance = playwright.chromium.launch()
-        except Exception as error:  # the browser binary was never downloaded
-            pytest.skip(f"chromium unavailable: {error}")
-        yield instance
-        instance.close()
+# `live_server` and `browser` are in conftest.py, shared with the storefront tests.
+pytest.importorskip("playwright.sync_api")
 
 
 @pytest.fixture()

@@ -28,6 +28,8 @@ import { escapeHtml } from "../core/html.js";
     let facets = {};
     /** collection id -> its colour sets, so a collection reads as its colours. */
     let setsByCollection = new Map();
+    /** The collections themselves, for the rail above the grid. */
+    let collections = [];
 
     // ----------------------------------------------------------------
     // Sidebar
@@ -87,6 +89,10 @@ import { escapeHtml } from "../core/html.js";
         items.forEach((item) =>
             StoreFilters.registerLabel(filterGroup, item.id, item.name)
         );
+
+        // Returned so the collection rail can be built from the same payload
+        // rather than asking for the collections a second time.
+        return items;
     }
 
     /**
@@ -371,12 +377,104 @@ import { escapeHtml } from "../core/html.js";
     });
 
     // ----------------------------------------------------------------
+    // The collection rail
+    // ----------------------------------------------------------------
+
+    /**
+     * The collections as photographs, above the grid.
+     *
+     * It drives the same collection_id filter the sidebar checkbox drives, rather
+     * than a mode of its own: the badge, the sidebar and the URL then all follow
+     * from one piece of state, and Limpar clears the rail too.
+     *
+     * `set` rather than `toggle` because the rail asks a different question from
+     * the sidebar. The checkboxes accumulate; a wall of covers reads as "pick one",
+     * so picking one replaces whatever was chosen, and picking the chosen one again
+     * goes back to everything.
+     */
+    function renderRail() {
+        const rail = document.getElementById("collection-rail");
+        const strip = document.getElementById("collection-strip");
+        if (!rail || !strip) return;
+
+        const counts = facets.collections ?? new Map();
+        // A collection with nothing behind it is a dead end, and one collection is
+        // not a choice worth a rail.
+        const offered = collections.filter((c) => (counts.get(c.id) ?? 0) > 0);
+        rail.hidden = offered.length < 2;
+        if (rail.hidden) return;
+
+        const chosen = StoreFilters.get("collection_id");
+        strip.innerHTML = [
+            railCard({
+                id: "",
+                name: "Ver tudo",
+                detail: "Todas as peças",
+                active: !chosen || chosen.length === 0,
+                cover: `<span class="collection-cover-all disc"><i class="fa-solid fa-grip"></i></span>`,
+            }),
+            ...offered.map((collection) => {
+                const pieces = counts.get(collection.id) ?? 0;
+                return railCard({
+                    id: collection.id,
+                    name: collection.name,
+                    detail: `${pieces} ${pieces === 1 ? "peça" : "peças"}`,
+                    active: StoreFilters.isSelected("collection_id", collection.id),
+                    cover: railCover(collection),
+                });
+            }),
+        ].join("");
+    }
+
+    /** Its cover, or the same no-photograph tile the grid uses, tinted in the
+     *  collection's own colours rather than a neutral grey. */
+    function railCover(collection) {
+        if (collection.image_url) {
+            return `<img src="${escapeHtml(collection.image_url)}"
+                         alt="${escapeHtml(collection.name)}" loading="lazy">`;
+        }
+        return ProductPlaceholder.markup(
+            { name: collection.name, type: { icon: "fa-layer-group" } },
+            "",
+            (setsByCollection.get(collection.id) ?? [])[0] ?? null
+        );
+    }
+
+    function railCard({ id, name, detail, active, cover }) {
+        return `
+          <li>
+            <button type="button" class="collection-card${active ? " is-active" : ""}"
+                    data-collection-id="${id}" aria-pressed="${active}">
+              <span class="collection-cover">${cover}</span>
+              <span class="collection-card-name">${escapeHtml(name)}</span>
+              <span class="collection-card-detail">${escapeHtml(detail)}</span>
+            </button>
+          </li>`;
+    }
+
+    document.getElementById("collection-strip")?.addEventListener("click", (event) => {
+        const card = event.target.closest("[data-collection-id]");
+        if (!card) return;
+
+        const { collectionId: id } = card.dataset;
+        if (!id) {
+            StoreFilters.set("collection_id", null);
+            return;
+        }
+
+        const already = StoreFilters.isSelected("collection_id", id);
+        const name = collections.find((c) => String(c.id) === id)?.name;
+        StoreFilters.set("collection_id", already ? null : id, name);
+    });
+
+    // ----------------------------------------------------------------
     // Wiring
     // ----------------------------------------------------------------
 
     StoreFilters.onChange(() => {
         page = 1; // a changed filter invalidates the current page number
         syncSidebar();
+        renderRail();
         renderBadges();
         loadProducts();
     });
@@ -387,11 +485,16 @@ import { escapeHtml } from "../core/html.js";
         // Counts and colour sets first: the entries are rendered with them, not
         // patched afterwards.
         await Promise.all([loadFacets(), loadColorSets()]);
-        await Promise.all(
-            [...document.querySelectorAll("#filter-groups [data-filter-group]")].map(loadGroup)
+
+        const groups = [...document.querySelectorAll("#filter-groups [data-filter-group]")];
+        const loaded = await Promise.all(groups.map(loadGroup));
+        const collectionsIndex = groups.findIndex(
+            (group) => group.dataset.collectionKey === "collections"
         );
+        collections = loaded[collectionsIndex] ?? [];
 
         syncSidebar();
+        renderRail();
         renderBadges();
         loadProducts();
     })();
