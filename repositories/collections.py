@@ -9,21 +9,34 @@ from repositories.base import NameTableRepository
 
 class CollectionRepository(NameTableRepository):
     TABLE = "collections"
-    COLUMNS = "id, name, description"
+    COLUMNS = "id, name, description, image_url"
 
-    def create(self, *, name: str, description: Optional[str] = None) -> int:
+    def create(
+        self,
+        *,
+        name: str,
+        description: Optional[str] = None,
+        image_url: Optional[str] = None,
+    ) -> int:
         self._cursor.execute(
-            "INSERT INTO collections (name, description) VALUES (%s, %s)",
-            (name, description),
+            "INSERT INTO collections (name, description, image_url) "
+            "VALUES (%s, %s, %s)",
+            (name, description, image_url),
         )
         return self._cursor.lastrowid
 
     def update(
-        self, collection_id: int, *, name: str, description: Optional[str] = None
+        self,
+        collection_id: int,
+        *,
+        name: str,
+        description: Optional[str] = None,
+        image_url: Optional[str] = None,
     ) -> None:
         self._cursor.execute(
-            "UPDATE collections SET name = %s, description = %s WHERE id = %s",
-            (name, description, collection_id),
+            "UPDATE collections SET name = %s, description = %s, image_url = %s "
+            "WHERE id = %s",
+            (name, description, image_url, collection_id),
         )
 
     def delete(self, collection_id: int) -> None:

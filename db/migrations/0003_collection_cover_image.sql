@@ -1,0 +1,13 @@
+-- The catalogue now offers the collections first, each as a photograph, because
+-- that is how the owners say people ask for their work: by the collection rather
+-- than by the kind of object.
+--
+-- The photograph is chosen rather than derived. Deriving one from the collection's
+-- pieces would have needed no column at all, but then the picture that speaks for
+-- the collection would be whatever the earliest piece happened to be photographed
+-- as, and it would change under them whenever a row moved.
+--
+-- Nullable with no default: a collection without a cover yet is normal, and the
+-- catalogue draws the same placeholder it already uses for a piece with no
+-- photograph.
+ALTER TABLE collections ADD COLUMN image_url VARCHAR(500) NULL;

@@ -58,10 +58,15 @@ CREATE TABLE materials (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- A themed grouping of products, e.g. "Barra da Saia".
+-- image_url is the photograph that stands for the collection on the catalogue,
+-- chosen by the owners rather than picked automatically from the pieces: the
+-- collection is what they want a shopper to choose first, so which photograph
+-- speaks for it is an editorial decision, not the first row of a query.
 CREATE TABLE collections (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
-    description TEXT
+    description TEXT,
+    image_url VARCHAR(500)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- A single colour. `hex` is optional and drives swatches in the dashboard.

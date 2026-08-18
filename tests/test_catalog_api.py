@@ -1,6 +1,9 @@
 """HTTP-level tests for the catalog layers: collections, colours, colour sets,
 sizes and product types."""
 
+import io
+import pathlib
+
 import pytest
 
 
@@ -66,6 +69,135 @@ class TestCollections:
 
         body = client.get(f"/api/products/{product['id']}").get_json()
         assert body["collection"] is None
+
+
+class TestCollectionCover:
+    """The photograph that stands for a collection on the catalogue.
+
+    Chosen rather than derived from the pieces, because which photograph speaks
+    for a collection is an editorial decision, and a derived one would change
+    under the owners whenever a row moved.
+    """
+
+    @pytest.fixture(autouse=True)
+    def cover_dir(self, tmp_path, monkeypatch):
+        """Covers land somewhere disposable, and in their own folder."""
+        import uploads
+
+        monkeypatch.setattr(uploads, "COLLECTION_DIR", tmp_path / "collections")
+        monkeypatch.setattr(uploads, "UPLOAD_DIR", tmp_path / "products")
+        return tmp_path
+
+    def _upload(self, client, collection_id, name="capa.jpg"):
+        from tests.test_uploads import image_bytes
+
+        return client.post(
+            f"/api/collections/{collection_id}/cover",
+            data={"file": (io.BytesIO(image_bytes()), name)},
+            content_type="multipart/form-data",
+        )
+
+    def test_a_new_collection_has_no_cover(self, client, make_collection):
+        assert make_collection("Filigrana")["image_url"] is None
+
+    def test_it_can_be_set_as_a_plain_url(self, client):
+        """A path placed by hand still works, the way product images do."""
+        response = client.post(
+            "/api/collections/",
+            json={"name": "Filigrana", "image_url": "/static/img/logo.png"},
+        )
+        assert response.get_json()["image_url"] == "/static/img/logo.png"
+
+    def test_uploading_stores_it_and_points_the_collection_at_it(
+        self, client, make_collection, cover_dir
+    ):
+        collection = make_collection("Filigrana")
+        response = self._upload(client, collection["id"])
+        assert response.status_code == 201
+
+        url = response.get_json()["image_url"]
+        assert url.startswith("/static/img/collections/")
+        assert (cover_dir / "collections" / pathlib.Path(url).name).is_file()
+
+    def test_a_cover_is_not_stored_with_the_pieces(
+        self, client, make_collection, cover_dir
+    ):
+        """Its own folder is what makes replacing one safe to delete."""
+        collection = make_collection("Filigrana")
+        self._upload(client, collection["id"])
+
+        assert not (cover_dir / "products").exists()
+
+    def test_replacing_a_cover_removes_the_file_it_replaced(
+        self, client, make_collection, cover_dir
+    ):
+        collection = make_collection("Filigrana")
+        first = self._upload(client, collection["id"]).get_json()["image_url"]
+        second = self._upload(client, collection["id"], "outra.jpg").get_json()["image_url"]
+
+        assert first != second
+        assert not (cover_dir / "collections" / pathlib.Path(first).name).exists()
+        assert (cover_dir / "collections" / pathlib.Path(second).name).is_file()
+
+    def test_replacing_a_cover_that_points_at_a_product_photo_keeps_the_photo(
+        self, client, make_collection, cover_dir
+    ):
+        """The reason covers have a folder of their own. Set a cover to one of the
+        pieces' photographs, change your mind, and the piece must still have it."""
+        piece_photo = cover_dir / "products" / "caixa-abcd1234.jpg"
+        piece_photo.parent.mkdir(parents=True, exist_ok=True)
+        piece_photo.write_bytes(b"a real photograph as far as this test cares")
+
+        collection = make_collection("Filigrana")
+        client.put(
+            f"/api/collections/{collection['id']}",
+            json={"name": "Filigrana", "image_url": f"/static/img/products/{piece_photo.name}"},
+        )
+        self._upload(client, collection["id"])
+
+        assert piece_photo.is_file(), "a collection cover deleted a piece's photograph"
+
+    def test_removing_the_cover_clears_the_column_and_the_file(
+        self, client, make_collection, cover_dir
+    ):
+        collection = make_collection("Filigrana")
+        url = self._upload(client, collection["id"]).get_json()["image_url"]
+
+        response = client.delete(f"/api/collections/{collection['id']}/cover")
+        assert response.status_code == 200
+        assert response.get_json()["image_url"] is None
+        assert not (cover_dir / "collections" / pathlib.Path(url).name).exists()
+
+    def test_deleting_the_collection_takes_its_cover_with_it(
+        self, client, make_collection, cover_dir
+    ):
+        collection = make_collection("Filigrana")
+        url = self._upload(client, collection["id"]).get_json()["image_url"]
+
+        client.delete(f"/api/collections/{collection['id']}")
+        assert not (cover_dir / "collections" / pathlib.Path(url).name).exists()
+
+    def test_a_file_that_is_not_an_image_is_refused(self, client, make_collection):
+        collection = make_collection("Filigrana")
+        response = client.post(
+            f"/api/collections/{collection['id']}/cover",
+            data={"file": (io.BytesIO(b"\xff\xd8\xff\xe0 nope"), "capa.jpg")},
+            content_type="multipart/form-data",
+        )
+        assert response.status_code == 400
+
+    def test_uploading_requires_a_token(self, anon_client, client, make_collection):
+        collection = make_collection("Filigrana")
+        response = anon_client.post(
+            f"/api/collections/{collection['id']}/cover",
+            data={"file": (io.BytesIO(b"x"), "capa.jpg")},
+            content_type="multipart/form-data",
+        )
+        assert response.status_code == 401
+
+    def test_unknown_collection_is_404(self, client):
+        assert self._upload(client, 9999).status_code == 404
+        assert client.delete("/api/collections/9999/cover").status_code == 404
 
 
 class TestColors:

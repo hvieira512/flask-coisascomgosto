@@ -21,6 +21,10 @@ collection_model = Model(
             required=True, description="Collection name, e.g. 'Barra da Saia'"
         ),
         "description": fields.String(description="Optional longer description"),
+        "image_url": fields.String(
+            description="Cover photograph shown for the collection on the "
+            "catalogue. Null until the owners choose one."
+        ),
     },
 )
 
@@ -39,6 +43,10 @@ collection_write_model = Model(
     {
         "name": fields.String(required=True, description="Collection name"),
         "description": fields.String(description="Optional longer description"),
+        "image_url": fields.String(
+            description="Cover photograph for the catalogue. Either a path from "
+            "the upload endpoint or a URL placed by hand."
+        ),
     },
 )
 

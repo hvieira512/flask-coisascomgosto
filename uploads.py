@@ -16,6 +16,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 UPLOAD_DIR = PROJECT_ROOT / "static" / "img" / "products"
 URL_PREFIX = "/static/img/products"
 
+# Collection covers live apart from the pieces on purpose. Replacing a cover
+# should delete the file it replaced, and that is only safe while the folder says
+# who owns it — a cover pointed at a product photograph must never take that
+# photograph with it when the owners change their minds.
+COLLECTION_DIR = PROJECT_ROOT / "static" / "img" / "collections"
+COLLECTION_PREFIX = "/static/img/collections"
+
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_BYTES = 5 * 1024 * 1024
 
@@ -42,8 +49,11 @@ def _extension(filename: str) -> str:
     return Path(secure_filename(filename or "")).suffix.lower()
 
 
-def save(file_storage) -> str:
+def save(file_storage, *, folder=None, url_prefix=None) -> str:
     """Write an uploaded photograph and return the URL it is served from.
+
+    `folder` and `url_prefix` default to the product folder and are read at call
+    time, which is also what lets the tests point them somewhere disposable.
 
     The stored name is derived from the original but suffixed with random hex:
     two photographs called "caixa.jpg" must not overwrite one another, and the
@@ -58,6 +68,9 @@ def save(file_storage) -> str:
     owners photograph their work at home with a phone, and a phone writes the
     coordinates of the room into the file.
     """
+    folder = folder or UPLOAD_DIR
+    url_prefix = url_prefix or URL_PREFIX
+
     if file_storage is None or not file_storage.filename:
         raise UploadError("Nenhum ficheiro enviado.")
 
@@ -96,21 +109,40 @@ def save(file_storage) -> str:
     stem = Path(secure_filename(file_storage.filename)).stem[:40] or "foto"
     name = f"{stem}-{secrets.token_hex(4)}{FORMAT_EXTENSIONS[image.format]}"
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    image.save(UPLOAD_DIR / name, **SAVE_OPTIONS.get(image.format, {}))
+    folder.mkdir(parents=True, exist_ok=True)
+    image.save(folder / name, **SAVE_OPTIONS.get(image.format, {}))
 
-    return f"{URL_PREFIX}/{name}"
+    return f"{url_prefix}/{name}"
+
+
+def delete_cover(url: str) -> None:
+    """Remove a collection cover, and only ever one stored *as* a cover.
+
+    A cover may be pointed at any URL, including one of the pieces' own
+    photographs. Replacing it then reaches `delete`, which knows how to remove
+    files from the product folder too — so without this narrowing, changing a
+    collection's cover would delete a photograph a product row still points at.
+    """
+    if url and url.startswith(f"{COLLECTION_PREFIX}/"):
+        delete(url)
 
 
 def delete(url: str) -> None:
-    """Remove a previously uploaded file, ignoring anything outside the folder.
+    """Remove a previously uploaded file, ignoring anything outside our folders.
 
-    Image rows may point at files that were never uploaded — seeded assets, or
-    a hand-written path — so a miss is not an error.
+    Rows may point at files that were never uploaded — seeded assets, or a
+    hand-written path — so a miss is not an error. A URL under neither prefix is
+    left alone entirely, which is what stops a collection cover set to some other
+    page's image from deleting it.
     """
-    if not url or not url.startswith(f"{URL_PREFIX}/"):
+    if not url:
         return
 
-    path = (UPLOAD_DIR / Path(url).name).resolve()
-    if path.parent == UPLOAD_DIR.resolve() and path.is_file():
-        path.unlink()
+    for folder, prefix in ((UPLOAD_DIR, URL_PREFIX), (COLLECTION_DIR, COLLECTION_PREFIX)):
+        if not url.startswith(f"{prefix}/"):
+            continue
+
+        path = (folder / Path(url).name).resolve()
+        if path.parent == folder.resolve() and path.is_file():
+            path.unlink()
+        return

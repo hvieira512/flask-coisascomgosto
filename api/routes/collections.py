@@ -5,7 +5,9 @@ collection leaves its colour sets and products in place, simply unowned.
 """
 
 from flask_restx import Namespace, Resource
+from werkzeug.datastructures import FileStorage
 
+import uploads
 from db import get_db_connection
 from api.models.catalog import (
     collection_list_model,
@@ -26,6 +28,31 @@ for model in [
     collection_write_model,
 ]:
     ns.models[model.name] = model
+
+cover_parser = ns.parser()
+cover_parser.add_argument(
+    "file", location="files", type=FileStorage, required=True,
+    help="Cover photograph: jpg, png or webp, up to 5 MB",
+)
+
+
+def _replace_cover(collections, collection, image_url):
+    """Point a collection at a new cover, removing the file it replaces.
+
+    delete_cover rather than delete: a cover may be pointed at any URL, including
+    one of the pieces' own photographs, and changing it must not take that
+    photograph with it.
+    """
+    previous = collection.get("image_url")
+
+    collections.update(
+        collection["id"],
+        name=collection["name"],
+        description=collection.get("description"),
+        image_url=image_url,
+    )
+    if previous and previous != image_url:
+        uploads.delete_cover(previous)
 
 
 @ns.route("/")
@@ -57,7 +84,9 @@ class CollectionList(Resource):
             reject_duplicate_name(ns, collections, data["name"], "Collection")
 
             collection_id = collections.create(
-                name=data["name"], description=data.get("description")
+                name=data["name"],
+                description=data.get("description"),
+                image_url=data.get("image_url"),
             )
             return collections.get(collection_id), 201
 
@@ -98,6 +127,7 @@ class Collection(Resource):
                 collection_id,
                 name=data["name"],
                 description=data.get("description"),
+                image_url=data.get("image_url"),
             )
             return collections.get(collection_id), 200
 
@@ -116,4 +146,52 @@ class Collection(Resource):
             collection = get_or_404(ns, collections, collection_id, "Collection")
 
             collections.delete(collection_id)
+            # Its own uploaded cover goes with it; anything else it pointed at does
+            # not, which is what the separate folder is for.
+            uploads.delete_cover(collection.get("image_url"))
             return collection, 200
+
+
+@ns.route("/<int:collection_id>/cover")
+@ns.param("collection_id", "The collection identifier")
+class CollectionCover(Resource):
+    @ns.expect(cover_parser)
+    @ns.marshal_with(collection_model, code=201)
+    @ns.response(201, "Cover stored and attached")
+    @ns.response(400, "Missing file, unsupported format, or too large")
+    @ns.response(404, "Collection not found")
+    @ns.doc(**PROTECTED_DOC)
+    @auth_required
+    def post(self, collection_id):
+        """Upload the photograph that stands for this collection."""
+        args = cover_parser.parse_args()
+
+        with get_db_connection() as (_, cursor):
+            collections = CollectionRepository(cursor)
+            collection = get_or_404(ns, collections, collection_id, "Collection")
+
+            try:
+                url = uploads.save(
+                    args["file"],
+                    folder=uploads.COLLECTION_DIR,
+                    url_prefix=uploads.COLLECTION_PREFIX,
+                )
+            except uploads.UploadError as error:
+                ns.abort(400, str(error))
+
+            _replace_cover(collections, collection, url)
+            return collections.get(collection_id), 201
+
+    @ns.marshal_with(collection_model)
+    @ns.response(200, "The collection, with no cover")
+    @ns.response(404, "Collection not found")
+    @ns.doc(**PROTECTED_DOC)
+    @auth_required
+    def delete(self, collection_id):
+        """Remove this collection's cover photograph."""
+        with get_db_connection() as (_, cursor):
+            collections = CollectionRepository(cursor)
+            collection = get_or_404(ns, collections, collection_id, "Collection")
+
+            _replace_cover(collections, collection, None)
+            return collections.get(collection_id), 200
