@@ -335,8 +335,17 @@
 }
 
 /* ----------------------------------------------------------------
-   Modals and the read-only view
+   Modals
    ---------------------------------------------------------------- */
+
+/* Bulma 1.0's .modal-card-foot is justify-content: flex-start and has no gap —
+   0.9's `.button:not(:last-child) { margin-right: .5rem }` went away with it —
+   so every dialog's Cancelar and Guardar sat flush left and touching. Actions
+   belong at the trailing edge, primary last. */
+.modal-card-foot {
+    justify-content: flex-end;
+    gap: .75rem;
+}
 
 .dash-thumb {
     width: 46px;
