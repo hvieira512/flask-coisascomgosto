@@ -8,7 +8,7 @@ history — and adding a migration to db/migrations never breaks these.
 import pytest
 
 from db import migrate as migrations
-from db import get_db_connection
+from db import connect, get_db_connection
 
 
 PROBE_TABLES = ["probe_one", "probe_two", "probe_order", "probe_dml"]
@@ -164,6 +164,98 @@ class TestFailure:
         with get_db_connection() as (_, cursor):
             cursor.execute("SELECT name FROM probe_dml WHERE id = 1")
             assert cursor.fetchone()["name"] == "antes"
+
+
+class TestConcurrency:
+    """Two processes reaching `flask migrate` together — a deploy racing a
+    container restart is the usual way — must not both apply the same file.
+
+    Without the lock both read the same pending list, and the loser fails partway
+    through with "column already exists" against a schema MySQL has already
+    committed, since DDL cannot roll back.
+    """
+
+    def test_a_second_run_is_refused_while_the_first_holds_the_lock(
+        self, migrations_dir, monkeypatch
+    ):
+        write(migrations_dir, "0001_add_a_table.sql",
+              "CREATE TABLE probe_one (id INT PRIMARY KEY);")
+        # Do not sit through the real wait to prove the refusal.
+        monkeypatch.setattr(migrations, "LOCK_TIMEOUT_SECONDS", 0)
+
+        holder = connect()
+        try:
+            with holder.cursor() as cursor:
+                cursor.execute("SELECT GET_LOCK(%s, 1)", (migrations.LOCK_NAME,))
+
+            with pytest.raises(migrations.MigrationsLocked):
+                migrations.apply_pending()
+
+            assert not table_exists("probe_one"), "it must not have run anyway"
+            assert applied_names() == []
+        finally:
+            holder.close()
+
+    def test_the_lock_is_released_after_a_successful_run(self, migrations_dir):
+        write(migrations_dir, "0001_add_a_table.sql",
+              "CREATE TABLE probe_one (id INT PRIMARY KEY);")
+        migrations.apply_pending()
+
+        assert _lock_is_free(), "holding it after finishing would wedge every deploy"
+
+    def test_the_lock_is_released_after_a_failed_run(self, migrations_dir):
+        """A broken migration is going to happen; it must not also take the
+        ability to run the fix with it."""
+        write(migrations_dir, "0001_broken.sql", "NOT VALID SQL AT ALL;")
+
+        with pytest.raises(Exception):
+            migrations.apply_pending()
+
+        assert _lock_is_free()
+
+    def test_two_at_once_apply_it_exactly_once(self, migrations_dir):
+        """The guarantee itself, with two threads actually racing.
+
+        Whoever waits finds the ledger already written and applies nothing, which
+        is why the pending list is read inside the lock rather than before it.
+        """
+        import threading
+
+        write(migrations_dir, "0001_add_a_table.sql",
+              "CREATE TABLE probe_one (id INT PRIMARY KEY);")
+
+        results, errors = [], []
+        start = threading.Barrier(2)
+
+        def run():
+            start.wait()
+            try:
+                results.append(migrations.apply_pending())
+            except Exception as error:      # noqa: BLE001 - recorded, asserted below
+                errors.append(error)
+
+        threads = [threading.Thread(target=run) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+
+        assert errors == [], f"neither run should fail: {errors}"
+        applied = [name for result in results for name in result]
+        assert applied == ["0001_add_a_table.sql"], "applied twice, or not at all"
+        assert applied_names() == ["0001_add_a_table.sql"]
+        assert table_exists("probe_one")
+
+
+def _lock_is_free():
+    """Whether the advisory lock can be taken right now, from a fresh session."""
+    probe = connect()
+    try:
+        with probe.cursor() as cursor:
+            cursor.execute("SELECT IS_USED_LOCK(%s) AS holder", (migrations.LOCK_NAME,))
+            return cursor.fetchone()["holder"] is None
+    finally:
+        probe.close()
 
 
 class TestStamping:

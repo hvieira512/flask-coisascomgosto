@@ -45,7 +45,11 @@ def migrate_command(show_status, stamp):
             click.echo(f"  {'applied' if applied else 'pending'}  {filename}")
         return
 
-    applied = migrations.apply_pending()
+    try:
+        applied = migrations.apply_pending()
+    except migrations.MigrationsLocked as locked:
+        raise click.ClickException(str(locked)) from locked
+
     if not applied:
         click.echo("Nothing to apply; the database is up to date.")
         return

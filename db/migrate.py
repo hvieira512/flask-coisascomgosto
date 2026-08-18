@@ -29,11 +29,61 @@ hand. Pure DML (an UPDATE, like renaming a lookup row) does roll back cleanly.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 
-from db import _statements, get_db_connection
+from db import _statements, connect, get_db_connection
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
+
+LOCK_NAME = "coisascomgosto_migrate"
+# Long enough to queue behind a normal migration, short enough that a deploy
+# waiting on a dead holder fails while someone is still watching it.
+LOCK_TIMEOUT_SECONDS = 10
+
+
+class MigrationsLocked(RuntimeError):
+    """Another process is already applying migrations."""
+
+
+@contextmanager
+def _exclusive():
+    """Hold a MySQL advisory lock for the length of a migration run.
+
+    Without it, two processes reaching `flask migrate` together — a deploy racing
+    a container restart is the usual way — both read the same pending list and both
+    run it. The second one then fails partway through with "column already exists",
+    against a schema the first has already changed and MySQL has already committed
+    (DDL is implicit-commit, so there is nothing to roll back).
+
+    The lock lives on a connection of its own because it is held for the whole run
+    while `apply_pending` opens a connection per file, and MySQL scopes advisory
+    locks to the session that took them. That scoping is also the failsafe: if this
+    process is killed, the connection drops and the lock goes with it, so a crashed
+    migration cannot wedge every future one.
+    """
+    connection = connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT GET_LOCK(%s, %s) AS acquired",
+                (LOCK_NAME, LOCK_TIMEOUT_SECONDS),
+            )
+            # 0 is the timeout, NULL an error. Neither is permission to proceed.
+            if cursor.fetchone()["acquired"] != 1:
+                raise MigrationsLocked(
+                    "Another process is applying migrations. Wait for it to finish, "
+                    "then run `flask migrate --status` to see where it got to."
+                )
+        yield
+    finally:
+        # Closing would release it anyway; doing it explicitly means the error
+        # surfaces here rather than as a lock nobody can explain.
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT RELEASE_LOCK(%s)", (LOCK_NAME,))
+        finally:
+            connection.close()
 
 
 def _ensure_table(cursor) -> None:
@@ -81,18 +131,24 @@ def apply_pending() -> list[str]:
     One connection per file: the record of a migration lands in the same commit
     as the migration itself wherever MySQL allows it, so a failure cannot leave a
     file marked as applied.
+
+    Raises MigrationsLocked if another process is already doing this. The pending
+    list is read inside the lock, so a waiting process sees what the first one
+    applied rather than the list it would have seen on arrival.
     """
-    applied = []
-    for path in pending():
-        statements = _statements(path.read_text(encoding="utf-8"))
-        with get_db_connection() as (_, cursor):
-            for statement in statements:
-                cursor.execute(statement)
-            cursor.execute(
-                "INSERT INTO schema_migrations (filename) VALUES (%s)", (path.name,)
-            )
-        applied.append(path.name)
-    return applied
+    with _exclusive():
+        applied = []
+        for path in pending():
+            statements = _statements(path.read_text(encoding="utf-8"))
+            with get_db_connection() as (_, cursor):
+                for statement in statements:
+                    cursor.execute(statement)
+                cursor.execute(
+                    "INSERT INTO schema_migrations (filename) VALUES (%s)",
+                    (path.name,),
+                )
+            applied.append(path.name)
+        return applied
 
 
 def stamp_all() -> int:

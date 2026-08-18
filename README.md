@@ -38,7 +38,13 @@ docker compose exec web flask migrate --status   # list applied and pending
 ```
 
 Migrations run automatically when the container starts, so a deploy against an
-older database catches up before it serves a request.
+older database catches up before it serves a request. Because that means two
+containers can reach the runner at the same moment, a run holds a MySQL advisory
+lock (`GET_LOCK`) and reads the pending list inside it: the second one waits, then
+finds the ledger already written and applies nothing. Without that both would run
+the same file, and the loser fails against a schema MySQL has already committed —
+DDL cannot roll back. A run that cannot take the lock within ten seconds says so
+and exits non-zero rather than proceeding.
 
 **A schema change needs both halves:**
 
