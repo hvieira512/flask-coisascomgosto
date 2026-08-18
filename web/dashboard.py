@@ -2,7 +2,7 @@
 
 Each one is a shell: the template renders the chrome and an empty container, and
 the page's own module fills it from the API. So there is nothing here but the
-guard and five render_templates.
+guard and the render_templates.
 """
 
 from flask import Blueprint, redirect, render_template, session, url_for
@@ -44,6 +44,11 @@ def events():
 @bp.route("/types")
 def types():
     return render_template("dashboard/types.html")
+
+
+@bp.route("/colors")
+def colors():
+    return render_template("dashboard/colors.html")
 
 
 @bp.route("/contacts")

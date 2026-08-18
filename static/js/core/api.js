@@ -85,6 +85,15 @@ export const API = {
     },
     colorSets: {
         list: "/api/color-sets/",
+        create: "/api/color-sets/",
+        update: (id) => `/api/color-sets/${id}`,
+        delete: (id) => `/api/color-sets/${id}`,
+    },
+    colors: {
+        list: "/api/colors/",
+        create: "/api/colors/",
+        update: (id) => `/api/colors/${id}`,
+        delete: (id) => `/api/colors/${id}`,
     },
     sizes: {
         list: "/api/sizes/",

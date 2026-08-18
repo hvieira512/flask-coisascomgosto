@@ -340,6 +340,55 @@ class TestDashboardEvents:
         assert "/dashboard/events" in html
 
 
+class TestDashboardColors:
+    """The colours page is driven by js/dashboard/colors/main.js."""
+
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/colors").get_data(as_text=True)
+
+    def test_hooks_exist(self, client, make_user):
+        html = self._page(client, make_user)
+        for element_id in ["set-rows", "set-count", "new-set", "color-rows",
+                           "color-count", "color-form", "color-name", "color-hex",
+                           "newSetModal", "editSetModal", "deleteSetModal",
+                           "editColorModal", "deleteColorModal"]:
+            assert f'id="{element_id}"' in html, element_id
+        assert "js/dashboard/colors/main.js" in html
+
+    def test_tab_is_in_the_sidebar(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "/dashboard/colors" in html
+        assert ">Cores<" in html
+
+    def test_the_page_offers_the_full_set_on_both_halves(self, client, make_user):
+        """Colour sets and the colours they are built from are both editable.
+
+        The dashboard had neither: the API has carried full CRUD for both since
+        the beginning, but a variant could only be pointed at a set that was
+        already in the database, so the owners could not add a combination.
+        """
+        source = pathlib.Path("static/js/dashboard/colors/main.js").read_text(
+            encoding="utf-8"
+        )
+        for call in ["createColorSet", "updateColorSet", "deleteColorSet",
+                     "createColor", "updateColor", "deleteColor"]:
+            assert call in source, call
+
+    def test_the_delete_dialog_says_what_goes_with_the_set(self, client, make_user):
+        """Deleting a set deletes every variant offered in it, and their photos.
+
+        Unlike a type, this is allowed — so the count has to be on the dialog
+        rather than discovered afterwards.
+        """
+        source = pathlib.Path("static/js/dashboard/colors/main.js").read_text(
+            encoding="utf-8"
+        )
+        assert "pieceCounts.get(set.id)" in source
+        assert "fotografias" in source
+
+
 class TestModalFormScoping:
     """The create and edit modals render forms with the same element ids, and a
     closed modal stays in the DOM. Reading a field by id alone found the create
@@ -476,7 +525,7 @@ class TestOneModuleSystem:
 
         pages = ["/", "/products", f"/products/{product['id']}",
                  "/dashboard/home", "/dashboard/products", "/dashboard/types",
-                 "/dashboard/events", "/dashboard/contacts"]
+                 "/dashboard/colors", "/dashboard/events", "/dashboard/contacts"]
 
         for page in pages:
             html = client.get(page).get_data(as_text=True)

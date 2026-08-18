@@ -1,0 +1,85 @@
+{% extends 'dashboard/base.html' %}
+
+{% block page_title %}Cores{% endblock %}
+
+{% from 'dashboard/components/page.html' import page_head_action %}
+
+{% block content %}
+{{ page_head_action('Catálogo', 'Cores e conjuntos', 'set-count',
+                    'new-set', 'Novo conjunto') }}
+
+<div class="columns">
+    {# Conjuntos are the page's subject: a variant is a piece offered in one. #}
+    <div class="column is-8">
+        <div class="card dash-panel">
+            <div class="dash-table-wrap">
+                <table class="table dash-table is-fullwidth is-hoverable mb-0">
+                    <thead>
+                        <tr>
+                            <th class="dash-col-name">Conjunto</th>
+                            <th>Cores</th>
+                            <th>Colecção</th>
+                            <th class="dash-col-photos">Peças</th>
+                            <th class="dash-col-actions"><span class="is-sr-only">Acções</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="set-rows"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# The individual colours, which only exist to be combined into a set. #}
+    <div class="column is-4">
+        <div class="card dash-panel p-5">
+            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
+                <h2 class="title is-6 mb-0">Cores</h2>
+                <span class="data has-text-grey" id="color-count">—</span>
+            </header>
+
+            <div id="color-rows" class="mb-4"></div>
+
+            <form id="color-form" class="mb-0">
+                <div class="field has-addons mb-2">
+                    <div class="control">
+                        <input class="input is-small color-swatch-input" type="color"
+                               id="color-hex" value="#4472C4" aria-label="Cor">
+                    </div>
+                    <div class="control is-expanded">
+                        <input class="input is-small" id="color-name" required
+                               placeholder="Dourado" aria-label="Nome da cor">
+                    </div>
+                    <div class="control">
+                        <button class="button is-small is-dark" type="submit">Adicionar</button>
+                    </div>
+                </div>
+            </form>
+            <p class="help">Cada cor pode entrar em vários conjuntos.</p>
+        </div>
+    </div>
+</div>
+
+{% with modal_id="newSetModal", modal_title="Novo conjunto" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+
+{% with modal_id="editSetModal", modal_title="Editar conjunto" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+
+{% with modal_id="deleteSetModal", modal_title="Apagar conjunto" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+
+{% with modal_id="editColorModal", modal_title="Editar cor" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+
+{% with modal_id="deleteColorModal", modal_title="Apagar cor" %}
+    {% include 'dashboard/components/modal.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/dashboard/colors/main.js') }}"></script>
+{% endblock %}
