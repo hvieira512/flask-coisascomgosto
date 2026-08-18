@@ -1,15 +1,22 @@
+/**
+ * Every endpoint the dashboard talks to.
+ *
+ * Collection paths keep their trailing slash: flask-restx registers them that
+ * way, so "/api/materials" answers 308 and every list and create paid for two
+ * round trips instead of one.
+ */
 export const API = {
     materials: {
-        list: "/api/materials",
+        list: "/api/materials/",
         get: (id) => `/api/materials/${id}`,
-        create: "/api/materials",
+        create: "/api/materials/",
         update: (id) => `/api/materials/${id}`,
         delete: (id) => `/api/materials/${id}`,
     },
     products: {
-        list: "/api/products",
+        list: "/api/products/",
         get: (id) => `/api/products/${id}`,
-        create: "/api/products",
+        create: "/api/products/",
         update: (id) => `/api/products/${id}`,
         delete: (id) => `/api/products/${id}`,
         sizes: (id) => `/api/products/${id}/sizes`,
@@ -20,25 +27,25 @@ export const API = {
         image: (id, imageId) => `/api/products/${id}/images/${imageId}`,
     },
     productTypes: {
-        list: "/api/product-types",
+        list: "/api/product-types/",
         get: (id) => `/api/product-types/${id}`,
-        create: "/api/product-types",
+        create: "/api/product-types/",
         update: (id) => `/api/product-types/${id}`,
         delete: (id) => `/api/product-types/${id}`,
     },
     collections: {
-        list: "/api/collections",
+        list: "/api/collections/",
     },
     colorSets: {
-        list: "/api/color-sets",
+        list: "/api/color-sets/",
     },
     sizes: {
-        list: "/api/sizes",
+        list: "/api/sizes/",
     },
     events: {
-        list: "/api/events",
+        list: "/api/events/",
         get: (id) => `/api/events/${id}`,
-        create: "/api/events",
+        create: "/api/events/",
         update: (id) => `/api/events/${id}`,
         delete: (id) => `/api/events/${id}`,
     },
