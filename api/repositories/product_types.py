@@ -8,51 +8,18 @@ the product's own name, so "Caixa" is the type and "Caixa rectangular" and
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional
 
-from pymysql.cursors import DictCursor
+from api.repositories.base import NameTableRepository
 
 
-class ProductTypeRepository:
+class ProductTypeRepository(NameTableRepository):
+    """Flat, so it is one of the name tables: list, count, get, exists and
+    name_exists all come from the base. It kept its own copies of them while
+    types had a parent_id to filter on, which they no longer do."""
 
-    def __init__(self, cursor: DictCursor):
-        self._cursor = cursor
-
-    def list(self, *, search: Optional[str] = None, limit: int, offset: int) -> list[dict]:
-        where, params = self._filter(search)
-        self._cursor.execute(
-            f"SELECT id, name, description, icon FROM product_types {where} "
-            "ORDER BY id LIMIT %s OFFSET %s",
-            params + [limit, offset],
-        )
-        return [dict(row) for row in self._cursor.fetchall()]
-
-    def count(self, *, search: Optional[str] = None) -> int:
-        where, params = self._filter(search)
-        self._cursor.execute(f"SELECT COUNT(*) AS total FROM product_types {where}", params)
-        return self._cursor.fetchone()["total"]
-
-    def get(self, type_id: int) -> Optional[dict]:
-        self._cursor.execute(
-            "SELECT id, name, description, icon FROM product_types WHERE id = %s",
-            (type_id,),
-        )
-        row = self._cursor.fetchone()
-        return dict(row) if row else None
-
-    def exists(self, type_id: int) -> bool:
-        self._cursor.execute("SELECT 1 FROM product_types WHERE id = %s", (type_id,))
-        return self._cursor.fetchone() is not None
-
-    def name_exists(self, name: str, *, exclude_id: Optional[int] = None) -> bool:
-        """Check whether `name` is taken, optionally ignoring one type."""
-        sql = "SELECT 1 FROM product_types WHERE name = %s"
-        params: list = [name]
-        if exclude_id is not None:
-            sql += " AND id <> %s"
-            params.append(exclude_id)
-        self._cursor.execute(sql, params)
-        return self._cursor.fetchone() is not None
+    TABLE = "product_types"
+    COLUMNS = "id, name, description, icon"
 
     def create(
         self,
@@ -125,9 +92,3 @@ class ProductTypeRepository:
         routes/product_types.py.
         """
         self._cursor.execute("DELETE FROM product_types WHERE id = %s", (type_id,))
-
-    @staticmethod
-    def _filter(search: Optional[str]) -> Tuple[str, list]:
-        if term := (search or "").strip():
-            return "WHERE name LIKE %s", [f"%{term}%"]
-        return "", []
