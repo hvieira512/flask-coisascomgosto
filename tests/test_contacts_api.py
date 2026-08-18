@@ -87,13 +87,13 @@ class TestLandingPage:
         make_product_type("Caixa")
         html = client.get("/").get_data(as_text=True)
 
-        # Match each section's own heading, not the navbar links that share
-        # the same words.
+        # Match each section's own heading, not the navbar links or the hero's
+        # CTA, which share the same words.
         headings = [
-            "Começou numa bancada pequena",     # 2. Origem
-            "três mãos-cheias de tempo",        # 3. O ofício
-            "As peças que saem da oficina",     # 4. O que fazemos
-            "Onde nos encontra",                # 6. Contactos
+            "Começou numa bancada pequena",              # 2. Origem
+            "três mãos-cheias de tempo",                 # 3. O ofício
+            "As peças que saem da oficina",              # 4. O que fazemos
+            'is-spaced">Onde nos encontra</h2>',         # 6. Contactos
         ]
         positions = [html.index(h) for h in headings]
         assert positions == sorted(positions), "sections are out of order"

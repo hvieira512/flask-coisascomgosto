@@ -20,33 +20,44 @@
 
 {% block content %}
 
-{# ---------------------------------------------------------------- 1. Hero #}
-<section class="hero is-medium store-hero">
-    <div class="hero-body">
-        <div class="container has-text-centered">
-            <p class="eyebrow">Viana do Castelo · desde sempre à mão</p>
+{# ---------------------------------------------------------------- 1. Hero
 
-            <h1 class="title is-1 is-spaced store-display">
-                Peças que guardam<br>a nossa terra.
-            </h1>
+   The photograph leads. For a two-person workshop the most characteristic thing
+   in the subject's world is the two of them holding what they made, so the hero
+   is a split rather than centred type on an empty wash — and it carries the two
+   things a visitor might actually want to do next. #}
+<section class="store-hero">
+    <div class="container">
+        <div class="columns is-vcentered is-variable is-8">
+            <div class="column is-5">
+                <p class="eyebrow">Viana do Castelo · desde sempre à mão</p>
 
-            <p class="subtitle is-5 has-text-grey mx-auto measure-narrow">
-                Madeira e tecido trabalhados um a um, com os motivos que
-                atravessam gerações no Alto Minho.
-            </p>
+                <h1 class="title is-1 is-spaced store-display">
+                    Peças que guardam<br>a nossa terra.
+                </h1>
 
+                <p class="subtitle is-5 has-text-grey measure-narrow">
+                    Madeira e tecido trabalhados um a um, com os motivos que
+                    atravessam gerações no Alto Minho.
+                </p>
+
+                <div class="buttons mt-5">
+                    <a class="button is-dark is-medium"
+                       href="{{ url_for('web.store.products') }}">
+                        Ver o catálogo
+                    </a>
+                    <a class="button is-medium" href="#contacts">Onde nos encontrar</a>
+                </div>
+            </div>
+
+            <div class="column is-7">
+                <img class="store-hero-photo"
+                     src="{{ url_for('static', filename='img/hero.webp') }}"
+                     alt="Os fundadores da Coisas com Gosto numa feira de artesanato, com uma caixa em forma de coração e uma moldura pintada à mão."
+                     width="1440" height="1440">
+            </div>
         </div>
     </div>
-
-    {# Direct child of the hero: Bulma's .container is position:relative, so a
-       cue placed inside it would anchor to the container, not the hero. #}
-    <a class="hero-scroll is-flex is-flex-direction-column is-align-items-center"
-       href="#origin">
-        <span class="is-size-7 is-uppercase">Conheça a nossa história</span>
-        <span class="disc hero-scroll-icon mt-4" aria-hidden="true">
-            <i class="fa-solid fa-chevron-down"></i>
-        </span>
-    </a>
 </section>
 
 {# ------------------------------------------------------------- 2. Origin #}
@@ -70,9 +81,9 @@
 
             <div class="column is-half">
                 <figure class="image">
-                    <img class="media-photo" src="{{ url_for('static', filename='img/hero.webp') }}"
-                         alt="Os fundadores da Coisas com Gosto numa feira de artesanato, com uma
-                              caixa em forma de coração e uma moldura pintada à mão."
+                    <img class="media-photo" src="{{ url_for('static', filename='img/ccg-01.jpg') }}"
+                         alt="Duas caixas redondas pretas com filigrana branca e friso vermelho,
+                              sobre um Lenço dos Namorados."
                          loading="lazy">
                 </figure>
             </div>

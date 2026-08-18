@@ -75,57 +75,26 @@ main {
     color: var(--ccg-blue-800);
 }
 
-/* The hero fills the first screen and pins the scroll cue just above the
-   fold. Bulma's .is-medium padding alone left the cue floating mid-page with
-   144px of dead space beneath it. */
+/* Tall enough to hold the photograph without filling the whole viewport: a
+   full-height hero pushed everything worth reading below the fold. */
 .store-hero {
-    position: relative;
     display: flex;
     align-items: center;
-    min-height: calc(100vh - 3.25rem);
+    padding: 3.5rem 0 4.5rem;
     background:
-        radial-gradient(60rem 30rem at 50% -10%, var(--ccg-blue-50) 0%, transparent 70%),
+        radial-gradient(60rem 30rem at 15% -20%, var(--ccg-blue-50) 0%, transparent 70%),
         var(--ccg-paper);
 }
 
-.store-hero .hero-body {
+/* Portrait, so the two of them read at this width, and cropped rather than
+   letterboxed — the source is square. */
+.store-hero-photo {
+    display: block;
     width: 100%;
-}
-
-.hero-scroll {
-    position: absolute;
-    bottom: 3rem;
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--ccg-ink-soft);
-    letter-spacing: .1em;
-    transition: color .2s ease;
-}
-
-.hero-scroll:hover {
-    color: var(--ccg-blue-700);
-}
-
-.hero-scroll-icon {
-    width: 42px;
-    height: 42px;
-    border: 1px solid var(--bulma-border);
-    background: var(--ccg-surface);
-    color: var(--ccg-blue-600);
-    /* A slow nudge downward, echoing the loader's breathing rhythm. */
-    animation: hero-nudge 2.4s ease-in-out infinite;
-}
-
-@keyframes hero-nudge {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(5px);
-    }
+    aspect-ratio: 5 / 4;
+    object-fit: cover;
+    object-position: center 30%;
+    border-radius: var(--radius-lg);
 }
 
 /* The step number is rendered as an eyebrow ("01"), so the browser's own
