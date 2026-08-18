@@ -1,6 +1,6 @@
-{# A native <dialog>, opened by any element carrying data-modal-target="<id>" and
-   closed by the backdrop, the × or any data-modal-close element — all wired in
-   static/js/dashboard/menus.js.
+{# A native <dialog>. Opened by the page's own module through core/modal.js,
+   which fills the body first; closed by the backdrop, the × or any
+   data-modal-close element, wired once in static/js/dashboard/menus.js.
 
    Native rather than Bulma's .modal div: the browser then supplies the top
    layer, ::backdrop, the focus trap, Escape and returning focus to whatever

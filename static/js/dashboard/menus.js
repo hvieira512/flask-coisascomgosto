@@ -64,24 +64,12 @@
     // Modals — native <dialog>
     // ----------------------------------------------------------------
 
-    function openModal(id) {
-        const dialog = document.getElementById(id);
-        if (dialog && !dialog.open) dialog.showModal();
-    }
-
-    function closeModals() {
-        document.querySelectorAll("dialog.dash-dialog[open]").forEach((d) => d.close());
-    }
-
+    // Closing only. Opening belongs to core/modal.js, because every dialog on
+    // these pages needs its body built before it is any use — there was also a
+    // data-modal-target opener here, which no template ever used.
+    //
     // Delegated so buttons rendered later (table rows) work without rebinding.
     document.addEventListener("click", (event) => {
-        const opener = event.target.closest("[data-modal-target]");
-        if (opener) {
-            event.preventDefault();
-            openModal(opener.dataset.modalTarget);
-            return;
-        }
-
         if (event.target.closest("[data-modal-close]")) {
             event.preventDefault();
             event.target.closest("dialog")?.close();
@@ -94,6 +82,4 @@
         const dialog = event.target.closest("dialog.dash-dialog");
         if (dialog && !event.target.closest(".modal-card")) dialog.close();
     });
-
-    window.DashboardModals = { open: openModal, close: closeModals };
 })();

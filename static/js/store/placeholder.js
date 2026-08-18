@@ -99,5 +99,5 @@ window.ProductPlaceholder = (function () {
           </div>`;
     }
 
-    return { markup, iconFor, colorFor, tint };
+    return { markup };
 })();
