@@ -39,9 +39,6 @@
         }
         if (product.collection) rows.push(["Colecção", product.collection.name]);
         if (product.default_size) rows.push(["Tamanho base", product.default_size.name]);
-        if (product.variants?.length) {
-            rows.push(["Cores disponíveis", String(product.variants.length)]);
-        }
 
         meta.innerHTML = rows
             .map(

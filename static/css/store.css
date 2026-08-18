@@ -516,22 +516,28 @@ a.card:hover {
 }
 
 :root {
-    /* Trimmed from 520px: the right column carries ~430px of content, and a
-       taller stage left the two columns visibly unbalanced. */
-    --gallery-height: 440px;
+    /* The stage's longest side. Product photographs are shot square, so a wide
+       stage letterboxed every one of them — 757x440 painted a 438px picture
+       between two 160px bands of paper. The stage is square and capped instead,
+       and 620px is what the information panel beside it runs to. */
+    --gallery-height: 620px;
 }
 
+/* The stage track is capped rather than 1fr: it is square, so an unbounded
+   track would make it as tall as the column is wide. */
 .gallery {
     display: grid;
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: 72px minmax(0, var(--gallery-height));
     gap: 1rem;
     align-items: start;
+    /* Declares the query container the rail's cap is measured against. */
+    container-type: inline-size;
 }
 
 /* Set by gallery.js when there is nothing to scroll through: a hidden rail
    leaves column 1 empty, so the stage would drop into the narrow track. */
 .gallery--no-rail {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, var(--gallery-height));
 }
 
 /* `display: flex` outranks the [hidden] attribute's default display:none. */
@@ -539,15 +545,26 @@ a.card:hover {
     display: none;
 }
 
+/* Capped, not fixed: a rail of two thumbnails should not draw a 620px column
+   beside a stage it does not fill.
+
+   The cap is the stage's own height, which is its width — the gallery's width
+   less the rail and the gap — because the stage is square. Percentages here
+   would resolve against the grid row the rail is itself sizing, so this is
+   measured in cqw against .gallery. Without it a product with ten photographs
+   hung its rail 68px below the stage. */
 .gallery-rail {
     display: flex;
     flex-direction: column;
     gap: .35rem;
-    height: var(--gallery-height);
+    max-height: min(var(--gallery-height), calc(100cqw - 88px));
 }
 
 .rail-track {
     flex: 1 1 auto;
+    /* Without this the track's flex base is its content, so it never scrolls
+       inside the capped rail — it just pushes past the cap. */
+    min-height: 0;
     overflow-y: auto;
     scroll-behavior: smooth;
     display: flex;
@@ -621,7 +638,7 @@ a.card:hover {
     border: 1px solid var(--bulma-border);
     border-radius: var(--bulma-radius-large);
     overflow: hidden;
-    height: var(--gallery-height);
+    aspect-ratio: 1 / 1;
 }
 
 .gallery-stage img {
@@ -732,7 +749,6 @@ a.card:hover {
 
 @media (prefers-reduced-motion: reduce) {
 
-    .hero-scroll-icon,
     .card,
     .type-card-icon {
         animation: none;

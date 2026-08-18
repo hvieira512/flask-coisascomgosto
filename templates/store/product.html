@@ -25,7 +25,9 @@
 <div id="product-detail" class="columns is-variable is-8" data-product-id="{{ product_id }}">
 
     {# ---------------- Gallery: vertical thumbnail rail + previewer -------- #}
-    <div class="column is-7">
+    {# Even halves: the stage is square and capped, so a wider column only put
+       dead space between the photograph and the panel. #}
+    <div class="column is-6">
         <div class="gallery">
             <div class="gallery-rail">
                 <button class="rail-scroll" data-rail-up type="button" aria-label="Imagens anteriores">▲</button>
@@ -53,7 +55,7 @@
     </div>
 
     {# ---------------- Information panel ---------------------------------- #}
-    <div class="column is-5">
+    <div class="column is-6">
         <h1 class="title is-3 is-spaced" id="product-name">…</h1>
         <p class="subtitle is-6 has-text-grey" id="product-description"></p>
 
