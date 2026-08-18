@@ -423,6 +423,9 @@ api/
     base.py             The reads the lookup tables share
   routes/               HTTP concerns only: validation, status codes, marshalling
     crud.py             The route bodies they share: paging, 404, 409
+    products/           One namespace, four modules: the product itself, its
+                        variants, its photographs, its sizes
+  type_icons.py         Name -> Font Awesome class, the one copy of that table
 
 web/                    Server-rendered storefront and dashboard blueprints
 templates/  static/     Jinja templates and assets
