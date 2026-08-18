@@ -360,11 +360,18 @@ class TestColorSetBadge:
 
     def test_styles_live_in_the_shared_stylesheet(self):
         """The dashboard loads only theme.css, so while these rules lived in
-        store.css its badges rendered with no swatches at all."""
-        import pathlib
+        store.css its badges rendered with no swatches at all.
 
-        assert ".swatch {" in pathlib.Path("static/css/theme.css").read_text()
-        assert ".swatch {" not in pathlib.Path("static/css/store.css").read_text()
+        Anchored to the start of a line, so it pins where the *base* rule lives
+        without forbidding a storefront-only override of it — the product page's
+        variant chips carry larger swatches than a table row does.
+        """
+        import pathlib
+        import re
+
+        base_rule = re.compile(r"^\.swatch\s*\{", re.M)
+        assert base_rule.search(pathlib.Path("static/css/theme.css").read_text())
+        assert not base_rule.search(pathlib.Path("static/css/store.css").read_text())
 
     def test_the_catalog_renders_swatches_and_a_full_name(self, client, make_product,
                                                           make_color, make_color_set):

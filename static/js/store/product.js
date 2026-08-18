@@ -76,7 +76,7 @@
         block.hidden = false;
         options.innerHTML = product.sizes
             .map((size) => `
-                <button class="button is-small" type="button"
+                <button class="button" type="button"
                         data-size="${escapeHtml(size.name)}"
                         aria-pressed="false">${escapeHtml(size.name)}</button>`)
             .join("");
@@ -114,11 +114,13 @@
         block.hidden = false;
         options.innerHTML = product.variants
             .map((variant, position) => {
+                const chosen = position === activeIndex;
                 return `
-                  <button class="tag is-rounded color-set-badge variant-option${position === activeIndex ? " is-active" : ""}"
+                  <button class="tag is-rounded color-set-badge variant-option${chosen ? " is-active" : ""}"
                           type="button" data-variant-index="${position}"
+                          aria-pressed="${chosen}"
                           style="${window.ColorSet.style(variant.color_set)}">
-                    ${window.ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span>
+                    ${window.ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span><span class="variant-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
                   </button>`;
             })
             .join("");
@@ -127,9 +129,11 @@
             const button = event.target.closest("[data-variant-index]");
             if (!button) return;
 
-            options.querySelectorAll(".variant-option").forEach((option) =>
-                option.classList.toggle("is-active", option === button)
-            );
+            options.querySelectorAll(".variant-option").forEach((option) => {
+                const chosen = option === button;
+                option.classList.toggle("is-active", chosen);
+                option.setAttribute("aria-pressed", String(chosen));
+            });
 
             const variant = product.variants[Number(button.dataset.variantIndex)];
             chosen.colorSet = variant.color_set.name;

@@ -804,22 +804,73 @@ a.card:hover {
 
 /* Colour and shape come from .color-set-badge; this adds only what makes it a
    control rather than a label. */
+/* Deliberate spacing. There was no rule here at all, so the chips were
+   inline-blocks separated by whatever whitespace the markup happened to carry:
+   4px across, 1.8px between rows. */
+.variant-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+}
+
+/* The piece's main choice, so it is sized as a control rather than as a label:
+   26px tall chips two pixels apart were smaller than the spec text beneath them
+   and, on a phone, smaller than a fingertip. 44px is the comfortable target. */
 .variant-option {
     cursor: pointer;
-    padding: .35rem .85rem;
-    font-size: .8rem;
+    min-height: 2.75rem;
+    padding: .45rem 1rem;
+    gap: .55rem;
+    font-size: .9rem;
+}
+
+.variant-option .swatch {
+    width: 18px;
+    height: 18px;
+}
+
+.variant-option .swatch + .swatch {
+    margin-left: -7px;
 }
 
 .variant-option:hover {
     border-color: var(--cs-fg);
 }
 
-/* Selected reads as the set's own colour rather than a generic navy, so the
-   choice and the colour it stands for are the same thing. */
+/* Selection is drawn as an outline and a tick, not as a repaint.
+
+   Filling the chip with the set's own colour sounded right and wasn't: a pale
+   set like "Branco e Dourado" has to be darkened before its name is readable,
+   so the chosen chip turned a muddy olive and read as disabled. The chip's job
+   is to show a colour pair — keeping its wash means the swatches stay legible
+   whichever one is chosen, and the state rides on shape instead of hue.
+
+   An inset shadow rather than a thicker border: 1px -> 2px would shift every
+   neighbouring chip by two pixels on each click. */
+/* No bolder text on the chosen chip: 500 -> 600 widened it and nudged every
+   chip after it along the row on each click. */
 .variant-option.is-active {
-    background-color: var(--cs-fg);
-    border-color: var(--cs-fg);
-    color: #fff;
+    border-color: var(--ccg-blue-900);
+    box-shadow: inset 0 0 0 1px var(--ccg-blue-900);
+}
+
+/* Reserved in every chip, so revealing it does not re-flow the row. */
+.variant-check {
+    opacity: 0;
+    margin-left: .05rem;
+    font-size: .7em;
+    color: var(--ccg-blue-900);
+    transition: opacity .12s ease;
+}
+
+.variant-option.is-active .variant-check {
+    opacity: 1;
+}
+
+/* Colour and size are one decision made twice, so the rows match. */
+#size-options .button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
 }
 
 @media screen and (max-width: 1023px) {

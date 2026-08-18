@@ -7,8 +7,11 @@
  */
 window.ColorSet = (function () {
     const FALLBACK = "#4472C4";
-    /** Above this, a colour is too light to read as text on its own wash. */
-    const MAX_TEXT_LUMINANCE = 140;
+    /** WCAG AA for body text, which is what a badge's name is. */
+    const MIN_CONTRAST = 4.5;
+    /** --ccg-paper, the ground the wash is composited over. */
+    const PAPER = [250, 248, 245];
+    const WASH_ALPHA = 0.14;
 
     function rgb(hex) {
         const match = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
@@ -17,27 +20,63 @@ window.ColorSet = (function () {
         return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
     }
 
-    function luminance([r, g, b]) {
-        return 0.299 * r + 0.587 * g + 0.114 * b;
+    /** WCAG relative luminance, not the perceived-brightness approximation:
+     *  the contrast ratio below is only meaningful against this one. */
+    function relativeLuminance([r, g, b]) {
+        const channel = (c) => {
+            const v = c / 255;
+            return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
     }
 
-    /** Scales a colour down until it is dark enough to read. */
-    function readable(channels) {
+    function contrast(a, b) {
+        const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x);
+        return (hi + 0.05) / (lo + 0.05);
+    }
+
+    const over = (channels, alpha, ground) =>
+        channels.map((c, i) => c * alpha + ground[i] * (1 - alpha));
+
+    /**
+     * The set's darkest colour, not its first.
+     *
+     * "Branco e Dourado" led with white, which had to be darkened so far to be
+     * readable that the badge came out grey — the name of a gold piece printed in
+     * grey, at 3.4:1 against its own wash. The darkest colour is the one that can
+     * carry the text and still say which set this is.
+     */
+    function inkFor(colours) {
+        return colours.reduce((darkest, c) =>
+            relativeLuminance(c) < relativeLuminance(darkest) ? c : darkest
+        );
+    }
+
+    /** Scales a colour down until it reads against the wash behind it. */
+    function readable(channels, wash) {
         let current = channels;
-        while (luminance(current) > MAX_TEXT_LUMINANCE) {
-            current = current.map((c) => Math.round(c * 0.82));
+        // Bounded: 0.86^40 is black long before it runs out.
+        for (let i = 0; i < 40 && contrast(current, wash) < MIN_CONTRAST; i += 1) {
+            current = current.map((c) => Math.round(c * 0.86));
         }
         return current;
     }
 
     /** The inline custom properties the .color-set-badge rule paints with. */
     function style(colorSet) {
-        const channels = rgb((colorSet.colors || [])[0]?.hex) || rgb(FALLBACK);
-        const [r, g, b] = channels;
-        const [tr, tg, tb] = readable(channels);
+        const colours = (colorSet.colors || [])
+            .map((c) => rgb(c.hex))
+            .filter(Boolean);
+        const identity = colours[0] || rgb(FALLBACK);
+        const ink = colours.length ? inkFor(colours) : rgb(FALLBACK);
+
+        const [r, g, b] = identity;
+        const [br, bg, bb] = ink;
+        const wash = over(identity, WASH_ALPHA, PAPER);
+        const [tr, tg, tb] = readable(ink, wash);
 
         return `--cs-bg:rgba(${r},${g},${b},.14);` +
-               `--cs-border:rgba(${r},${g},${b},.32);` +
+               `--cs-border:rgba(${br},${bg},${bb},.32);` +
                `--cs-fg:rgb(${tr},${tg},${tb})`;
     }
 
