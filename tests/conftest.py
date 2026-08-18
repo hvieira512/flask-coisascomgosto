@@ -47,6 +47,11 @@ def clean_database(database):
         tables = [row["name"] for row in cursor.fetchall()]
 
         for table in tables:
+            # schema_migrations is a record of the schema, not application data.
+            # Emptying it between tests would say the migrations had never run
+            # against a schema that already has them.
+            if table == "schema_migrations":
+                continue
             cursor.execute(f"TRUNCATE TABLE `{table}`")
         for statement in seeds:
             cursor.execute(statement)

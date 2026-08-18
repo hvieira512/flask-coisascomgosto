@@ -144,6 +144,15 @@ def init_db(*, keep_users=True):
     finally:
         conn.close()
 
+    # schema.sql is the current state of the schema, so everything the migrations
+    # would do is already here. Recording them keeps `migrate` a no-op on a fresh
+    # database instead of replaying changes against a schema that has them.
+    from api.migrations import stamp_all
+
+    stamped = stamp_all()
+
     print(f"Database initialized: {Config.MYSQL_DATABASE}")
     if saved:
         print(f"Accounts preserved: {restored} of {len(saved)}")
+    if stamped:
+        print(f"Migrations stamped as applied: {stamped}")

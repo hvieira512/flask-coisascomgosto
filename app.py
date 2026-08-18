@@ -21,6 +21,39 @@ def init_db_command():
     init_db()
 
 
+@app.cli.command("migrate")
+@click.option("--status", "show_status", is_flag=True,
+              help="List what is applied and what is pending, and change nothing.")
+@click.option("--stamp", is_flag=True,
+              help="Record every migration as applied without running any of it, "
+                   "for a database that is already up to date.")
+def migrate_command(show_status, stamp):
+    """Apply the pending migrations in db/migrations."""
+    from api import migrations
+
+    if stamp:
+        stamped = migrations.stamp_all()
+        click.echo(f"Recorded {stamped} migration(s) as applied without running them.")
+        return
+
+    if show_status:
+        rows = migrations.status()
+        if not rows:
+            click.echo("No migrations.")
+            return
+        for filename, applied in rows:
+            click.echo(f"  {'applied' if applied else 'pending'}  {filename}")
+        return
+
+    applied = migrations.apply_pending()
+    if not applied:
+        click.echo("Nothing to apply; the database is up to date.")
+        return
+
+    for filename in applied:
+        click.echo(f"Applied {filename}")
+
+
 @app.cli.command("seed")
 def seed_command():
     """Fill the catalog with development data."""

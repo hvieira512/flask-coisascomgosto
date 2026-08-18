@@ -8,6 +8,14 @@
 #   otherwise      gunicorn, which is what should ever face the internet.
 set -e
 
+# Bring the schema up to date before serving. A migration is recorded once, so
+# this is a no-op on every start after the first, and a container started against
+# an older database catches up instead of serving against a schema the code no
+# longer matches. Single web container here; with more than one, this moves to a
+# release step so two of them cannot race.
+echo "Applying database migrations"
+flask --app "${FLASK_APP:-app}" migrate
+
 case "${FLASK_DEBUG}" in
     1 | true | True | TRUE)
         echo "Starting Flask development server (live reload, debugger ON)"

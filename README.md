@@ -24,7 +24,33 @@ The storefront is then at http://127.0.0.1:5000 and MySQL is exposed on
 application uses.
 
 `init-db` drops and recreates every table, so it is safe to re-run — and it
-wipes existing data.
+wipes existing data, apart from the user accounts, which it carries across.
+
+### Changing the schema
+
+`db/schema.sql` is the current shape of the database and what a fresh install is
+built from. A database that already exists is brought forward by the migrations
+in `db/migrations/`:
+
+```bash
+docker compose exec web flask migrate            # apply whatever is pending
+docker compose exec web flask migrate --status   # list applied and pending
+```
+
+Migrations run automatically when the container starts, so a deploy against an
+older database catches up before it serves a request.
+
+**A schema change needs both halves:**
+
+1. edit `db/schema.sql`, so new databases and the test suite get it;
+2. add `db/migrations/NNNN_what_it_does.sql`, so existing databases get it.
+
+`init-db` records every migration as applied without running it, because a
+database built from `schema.sql` is by definition already current — so the two
+halves never fight. For a database that predates the system but is already up to
+date, `flask migrate --stamp` does the same thing. There is no `down`: a
+migration that turns out wrong is corrected by another one, which is the only
+undo that survives having already run somewhere.
 
 ### Configuration
 
@@ -126,7 +152,7 @@ default size ──┘        └──► sizes            └── normally o
 | **Colour** | A single named swatch, optionally with a hex code. | `White`, `Green` |
 | **Colour set** | A named combination of colours, normally owned by a collection. | `White and Green` |
 | **Variant** | One product offered in one colour set. | A `Caixa Redonda` in `Red and White` |
-| **Size** | `S` / `M` / `L`, seeded by the schema. | — |
+| **Size** | `Pequeno` / `Médio` / `Grande`, seeded by the schema. | — |
 
 ### Worked example
 
@@ -287,8 +313,8 @@ name.
 
 - **`color_ids` is ordered.** The first colour is the primary one — it is what
   the storefront badge tints itself with. Duplicates are collapsed.
-- **`S`, `M` and `L` are seeded** by `db/schema.sql`, ordered by `position`
-  rather than by id.
+- **`Pequeno`, `Médio` and `Grande` are seeded** by `db/schema.sql`, ordered by
+  `position` rather than by id. The list is the owners' to extend.
 - **Variants, images and sizes are sub-resources**, not fields on the product
   body: `POST /products/<id>/variants`, `/images`, and `PUT /sizes`.
 - **`PUT /products/<id>/sizes` replaces the whole list**; `{"size_ids": []}` puts
@@ -381,12 +407,14 @@ static/js/store/product.js    detail page wiring
 ## Project layout
 
 ```
-app.py                  Flask app entrypoint + the init-db and seed commands
+app.py                  Flask app entrypoint + the init-db, migrate, seed and
+                        create-admin commands
 config.py               Config read from environment variables
 
 api/
   __init__.py           Api object; mounts every namespace under /api
   db.py                 PyMySQL connection handling and schema init
+  migrations.py         The numbered-.sql runner behind `flask migrate`
   pagination.py         Request-arg parsing and the pagination envelope
   security.py           auth_required — bearer token or session, on every write
   uploads.py            Storing uploaded photographs on disk
@@ -399,6 +427,7 @@ api/
 web/                    Server-rendered storefront and dashboard blueprints
 templates/  static/     Jinja templates and assets
 db/schema.sql           Full schema, dropped and recreated by init-db
+db/migrations/          Numbered .sql files, each applied once, in order
 tests/                  pytest suite, isolated per test by truncating tables
 ```
 
