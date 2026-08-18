@@ -2,7 +2,7 @@ import { API, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
 import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
 import { addVariant, removeVariant, variantsPanel } from "./variants.js";
-import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
+import { bodyOf, close, confirmDialog, footOf, modal, open, submitting } from "../../core/modal.js";
 import { escapeHtml } from "../../core/html.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
@@ -166,25 +166,19 @@ function wireImagePanel(product) {
 async function openDelete(id) {
     const product = await getProduct(id);
 
-    bodyOf("deleteProductModal").innerHTML = `
-        <p>Apagar <strong>${escapeHtml(product.name)}</strong>?</p>
-        <p class="has-text-grey is-size-7 mt-2">
-          Remove também as suas ${product.variants.length} cores e
-          ${allImages(product).length} fotografias. Não pode ser anulado.
-        </p>`;
-    footOf("deleteProductModal").innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-danger" id="delete-submit">Apagar</button>`;
-    open("deleteProductModal");
-
-    document.getElementById("delete-submit").onclick = (event) =>
-        submitting(event.currentTarget, async () => {
-            await request(API.products.delete(id),
-                          { method: "DELETE", fallback: "Não foi possível apagar." });
-            close("deleteProductModal");
-            Notify.success("Produto apagado.");
-            await mountFilters(fetchProducts).then(fetchProducts);
-        });
+    confirmDialog({
+        id: "deleteProductModal",
+        body: `
+            <p>Apagar <strong>${escapeHtml(product.name)}</strong>?</p>
+            <p class="has-text-grey is-size-7 mt-2">
+              Remove também as suas ${product.variants.length} cores e
+              ${allImages(product).length} fotografias. Não pode ser anulado.
+            </p>`,
+        onConfirm: () => request(API.products.delete(id),
+                               { method: "DELETE", fallback: "Não foi possível apagar." }),
+        success: "Produto apagado.",
+        after: () => mountFilters(fetchProducts).then(fetchProducts),
+    });
 }
 
 document.addEventListener("click", (event) => {

@@ -30,6 +30,50 @@ export const close = (id) => {
 };
 
 /**
+ * A dialog whose body is a form.
+ *
+ * Tipos and Eventos were each writing this out: fill the body, add the same two
+ * buttons, wire the primary one through `submitting`, close, toast, reload the
+ * table behind it. Only the body, the labels and the save itself differ.
+ *
+ * `afterRender` is for a form that has to wire something of its own — the type
+ * form previews the icon you pick.
+ */
+export function formDialog({ id, body, submitLabel, onSubmit, success, after, afterRender }) {
+    bodyOf(id).innerHTML = body;
+    footOf(id).innerHTML = `
+        <button class="button" data-modal-close>Cancelar</button>
+        <button class="button is-dark" data-dialog-submit>${submitLabel}</button>`;
+    open(id);
+    afterRender?.(modal(id));
+
+    modal(id).querySelector("[data-dialog-submit]").onclick = (event) =>
+        submitting(event.currentTarget, async () => {
+            const result = await onSubmit(modal(id));
+            close(id);
+            if (success) Notify.success(success);
+            await after?.(result);
+        });
+}
+
+/** The same shape for "are you sure", with the destructive button. */
+export function confirmDialog({ id, body, confirmLabel = "Apagar", onConfirm, success, after }) {
+    bodyOf(id).innerHTML = body;
+    footOf(id).innerHTML = `
+        <button class="button" data-modal-close>Cancelar</button>
+        <button class="button is-danger" data-dialog-confirm>${confirmLabel}</button>`;
+    open(id);
+
+    modal(id).querySelector("[data-dialog-confirm]").onclick = (event) =>
+        submitting(event.currentTarget, async () => {
+            await onConfirm();
+            close(id);
+            if (success) Notify.success(success);
+            await after?.();
+        });
+}
+
+/**
  * Run a click handler with the button spinning, surfacing any failure as a
  * toast. The button is captured before the first await deliberately: the
  * browser nulls event.currentTarget once dispatch ends, so an async handler

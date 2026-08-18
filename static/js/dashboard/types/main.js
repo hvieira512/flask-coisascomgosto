@@ -1,5 +1,5 @@
 import { escapeHtml } from "../../core/html.js";
-import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
+import { bodyOf, confirmDialog, footOf, formDialog, modal, open, submitting } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import {
     countByType, createMaterial, createType, deleteMaterial, deleteType,
@@ -148,27 +148,18 @@ function payloadFrom(modalId) {
 }
 
 function openTypeForm({ modalId, type = null }) {
-    bodyOf(modalId).innerHTML = typeForm(type);
-    footOf(modalId).innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-dark" id="type-submit">
-          ${type ? "Guardar alterações" : "Criar tipo"}
-        </button>`;
-    open(modalId);
-    wireIconPreview(modalId);
-
-    document.getElementById("type-submit").onclick = (event) =>
-        submitting(event.currentTarget, async () => {
+    formDialog({
+        id: modalId,
+        body: typeForm(type),
+        submitLabel: type ? "Guardar alterações" : "Criar tipo",
+        afterRender: () => wireIconPreview(modalId),
+        onSubmit: async () => {
             const { id, payload } = payloadFrom(modalId);
-            if (id) {
-                await updateType(id, payload);
-            } else {
-                await createType(payload);
-            }
-            close(modalId);
-            Notify.success(type ? "Tipo actualizado." : "Tipo criado.");
-            await loadTypes();
-        });
+            return id ? updateType(id, payload) : createType(payload);
+        },
+        success: type ? "Tipo actualizado." : "Tipo criado.",
+        after: loadTypes,
+    });
 }
 
 async function openDeleteType(id) {
@@ -195,20 +186,13 @@ async function openDeleteType(id) {
         return;
     }
 
-    bodyOf("deleteTypeModal").innerHTML =
-        `<p>Apagar <strong>${escapeHtml(type.name)}</strong>?</p>`;
-    footOf("deleteTypeModal").innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-danger" id="type-delete">Apagar</button>`;
-    open("deleteTypeModal");
-
-    document.getElementById("type-delete").onclick = (event) =>
-        submitting(event.currentTarget, async () => {
-            await deleteType(id);
-            close("deleteTypeModal");
-            Notify.success("Tipo apagado.");
-            await loadTypes();
-        });
+    confirmDialog({
+        id: "deleteTypeModal",
+        body: `<p>Apagar <strong>${escapeHtml(type.name)}</strong>?</p>`,
+        onConfirm: () => deleteType(id),
+        success: "Tipo apagado.",
+        after: loadTypes,
+    });
 }
 
 // ---- Materials ----

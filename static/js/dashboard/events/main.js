@@ -1,6 +1,6 @@
 import { API, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
-import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
+import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { escapeHtml } from "../../core/html.js";
 import { eventDates, stateChip } from "./dates.js";
 
@@ -131,21 +131,14 @@ async function submitEventForm(modalId) {
 }
 
 function openForm({ id, event = null }) {
-    bodyOf(id).innerHTML = eventForm(event);
-    footOf(id).innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-dark" id="event-submit">
-          ${event ? "Guardar alterações" : "Criar evento"}
-        </button>`;
-    open(id);
-
-    document.getElementById("event-submit").onclick = (e) =>
-        submitting(e.currentTarget, async () => {
-            await submitEventForm(id);
-            close(id);
-            Notify.success(event ? "Evento actualizado." : "Evento criado.");
-            await loadEvents();
-        });
+    formDialog({
+        id,
+        body: eventForm(event),
+        submitLabel: event ? "Guardar alterações" : "Criar evento",
+        onSubmit: () => submitEventForm(id),
+        success: event ? "Evento actualizado." : "Evento criado.",
+        after: loadEvents,
+    });
 }
 
 const getEvent = (id) =>
@@ -154,23 +147,16 @@ const getEvent = (id) =>
 async function openDelete(id) {
     const event = await getEvent(id);
 
-    bodyOf("deleteEventModal").innerHTML =
-        `<p>Apagar <strong>${escapeHtml(event.name)}</strong>?</p>
-         <p class="has-text-grey is-size-7 mt-2">
-           Deixa de aparecer no percurso da página inicial.</p>`;
-    footOf("deleteEventModal").innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-danger" id="event-delete">Apagar</button>`;
-    open("deleteEventModal");
-
-    document.getElementById("event-delete").onclick = (e) =>
-        submitting(e.currentTarget, async () => {
-            await request(API.events.delete(id),
-                          { method: "DELETE", fallback: "Não foi possível apagar." });
-            close("deleteEventModal");
-            Notify.success("Evento apagado.");
-            await loadEvents();
-        });
+    confirmDialog({
+        id: "deleteEventModal",
+        body: `<p>Apagar <strong>${escapeHtml(event.name)}</strong>?</p>
+               <p class="has-text-grey is-size-7 mt-2">
+                 Deixa de aparecer no percurso da página inicial.</p>`,
+        onConfirm: () => request(API.events.delete(id),
+                                { method: "DELETE", fallback: "Não foi possível apagar." }),
+        success: "Evento apagado.",
+        after: loadEvents,
+    });
 }
 
 document.addEventListener("click", async (clicked) => {
