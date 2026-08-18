@@ -117,11 +117,16 @@ h3 {
    stylesheet both the storefront and the dashboard load, and the dashboard had
    its own copy of this rule under a different name. Bulma has is-uppercase and
    is-size-7 but no letter-spacing helper. */
+/* 11.5px uppercase at .16em tracking is the hardest combination to read there
+   is, and this is the most-repeated element in both halves of the product — so
+   it gets the darker blue (4.12:1 against paper failed AA) and a size that does
+   not need perfect eyesight. */
 .eyebrow {
-    font-size: .72rem;
+    font-size: .78rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .16em;
-    color: var(--ccg-blue-500);
+    letter-spacing: .12em;
+    color: var(--ccg-blue-700);
     margin-bottom: .9rem;
 }
 
