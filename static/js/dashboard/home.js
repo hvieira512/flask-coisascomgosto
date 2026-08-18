@@ -88,12 +88,21 @@ async function renderAttention(products, events) {
            </div>`;
 }
 
-const statCard = ({ label, value, href }) => `
-    <a class="cell card p-4 mb-0 is-flex is-flex-direction-column has-text-inherit"
-       href="${href}">
+/**
+ * A counter is only a link when there is somewhere to go. Colour sets have no
+ * page of their own — they are attached to a piece from its Cores tab — so that
+ * card renders as plain text rather than promising a destination.
+ */
+const statCard = ({ label, value, href }) => {
+    const inner = `
       <span class="title is-4 mb-1">${value}</span>
-      <span class="eyebrow mb-0">${escapeHtml(label)}</span>
-    </a>`;
+      <span class="eyebrow mb-0">${escapeHtml(label)}</span>`;
+
+    return href
+        ? `<a class="cell card p-4 mb-0 is-flex is-flex-direction-column has-text-inherit"
+              href="${href}">${inner}</a>`
+        : `<div class="cell card p-4 mb-0 is-flex is-flex-direction-column">${inner}</div>`;
+};
 
 async function renderStats() {
     const [products, types, colorSets, events] = await Promise.all([
@@ -105,8 +114,10 @@ async function renderStats() {
 
     document.getElementById("stat-cards").innerHTML = [
         { label: "Peças", value: products, href: "/dashboard/products" },
-        { label: "Tipos", value: types, href: "/dashboard/products" },
-        { label: "Conjuntos de cor", value: colorSets, href: "/dashboard/products" },
+        // Counts sub-types too, which is why it can read higher than the number
+        // of families the storefront shows. The label says so.
+        { label: "Tipos e sub-tipos", value: types, href: "/dashboard/types" },
+        { label: "Conjuntos de cor", value: colorSets },
         { label: "Eventos", value: events, href: "/dashboard/events" },
     ].map(statCard).join("");
 }
