@@ -389,6 +389,49 @@ class TestDashboardColors:
         assert "fotografias" in source
 
 
+class TestDashboardCollections:
+    """The collections page is driven by js/dashboard/collections/main.js.
+
+    Collections had full CRUD in the API from the beginning and no screen at all,
+    which stopped mattering the moment they became the catalogue's front door: a
+    cover nobody can set is the same as no cover.
+    """
+
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/collections").get_data(as_text=True)
+
+    def test_hooks_exist(self, client, make_user):
+        html = self._page(client, make_user)
+        for element_id in ["collection-rows", "collection-count", "new-collection",
+                           "newCollectionModal", "editCollectionModal",
+                           "deleteCollectionModal"]:
+            assert f'id="{element_id}"' in html, element_id
+        assert "js/dashboard/collections/main.js" in html
+
+    def test_tab_is_in_the_sidebar(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "/dashboard/collections" in html
+        assert "Colecções" in html
+
+    def test_the_page_can_set_and_clear_a_cover(self):
+        source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
+            encoding="utf-8"
+        )
+        for call in ["createCollection", "updateCollection", "deleteCollection",
+                     "uploadCover", "removeCover"]:
+            assert call in source, call
+
+    def test_editing_carries_the_existing_cover_through(self):
+        """PUT replaces the row, so a form that does not send image_url would
+        clear a cover the owner never touched."""
+        source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
+            encoding="utf-8"
+        )
+        assert "payload.image_url = collection.image_url" in source
+
+
 class TestSteppedCreateForms:
     """The two big create forms ask for the required fields first.
 
@@ -579,7 +622,8 @@ class TestOneModuleSystem:
 
         pages = ["/", "/products", f"/products/{product['id']}",
                  "/dashboard/home", "/dashboard/products", "/dashboard/types",
-                 "/dashboard/colors", "/dashboard/events", "/dashboard/contacts"]
+                 "/dashboard/colors", "/dashboard/collections", "/dashboard/events",
+                 "/dashboard/contacts"]
 
         for page in pages:
             html = client.get(page).get_data(as_text=True)

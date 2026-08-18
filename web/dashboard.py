@@ -51,6 +51,11 @@ def colors():
     return render_template("dashboard/colors.html")
 
 
+@bp.route("/collections")
+def collections():
+    return render_template("dashboard/collections.html")
+
+
 @bp.route("/contacts")
 def contacts():
     return render_template("dashboard/contacts.html")
