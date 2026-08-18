@@ -212,6 +212,28 @@
     color: var(--ccg-ink-soft);
 }
 
+/* A step group sliding in, in the direction of travel: --step-from is set by
+   core/steps.js before the group is un-hidden, and un-hiding is what restarts the
+   animation. Deliberately not a carousel track — the two groups are different
+   heights, and a track tall enough for both leaves the short one floating in
+   whitespace. Sliding each group in over its own height keeps the dialog snug. */
+@keyframes step-in {
+    from {
+        opacity: 0;
+        transform: translateX(var(--step-from, 1.5rem));
+    }
+}
+
+[data-step] {
+    animation: step-in .22s cubic-bezier(.2, .8, .2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-step] {
+        animation: none;
+    }
+}
+
 /* A colour you click to put into the set you are building. Bulma's .tags wraps
    them and .tag draws the pill; it has no notion of a chosen tag, and the chosen
    state matches the storefront's variant buttons so the two read alike. */

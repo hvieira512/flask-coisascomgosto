@@ -1,6 +1,7 @@
 import { API, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
+import { stepDialog } from "../../core/steps.js";
 import { escapeHtml } from "../../core/html.js";
 import { eventDates, stateChip } from "./dates.js";
 
@@ -52,53 +53,76 @@ async function loadEvents() {
         `${events.length} ${events.length === 1 ? "evento" : "eventos"}`;
 }
 
+const EVENT_STEPS = ["Quando", "Detalhes"];
+
+/**
+ * Two `data-step` groups: the name and the dates the API insists on, then the
+ * rest. core/steps.js shows one at a time when creating; editing leaves both
+ * visible.
+ */
 function eventForm(event = null) {
     return `
     <form id="event-form" data-event-id="${event?.id ?? ""}">
-      <div class="field">
-        <label class="label is-small" for="ef-name">Nome</label>
-        <input class="input" id="ef-name" name="name" required
-               value="${escapeHtml(event?.name ?? "")}"
-               placeholder="Feira de Artesanato da Romaria d'Agonia">
-      </div>
-
-      <div class="field">
-        <label class="label is-small" for="ef-location">Local</label>
-        <input class="input" id="ef-location" name="location"
-               value="${escapeHtml(event?.location ?? "")}"
-               placeholder="Jardim Público, Viana do Castelo">
-      </div>
-
-      <div class="columns is-mobile">
-        <div class="column">
-          <div class="field">
-            <label class="label is-small" for="ef-starts">Início</label>
-            <input class="input" id="ef-starts" name="starts_on" type="date" required
-                   value="${escapeHtml(event?.starts_on ?? "")}">
-          </div>
+      <div data-step="when">
+        <div class="field">
+          <label class="label is-small" for="ef-name">Nome</label>
+          <input class="input" id="ef-name" name="name" required
+                 value="${escapeHtml(event?.name ?? "")}"
+                 placeholder="Feira de Artesanato da Romaria d'Agonia">
         </div>
-        <div class="column">
-          <div class="field">
-            <label class="label is-small" for="ef-ends">Fim</label>
-            <input class="input" id="ef-ends" name="ends_on" type="date"
-                   value="${escapeHtml(event?.ends_on ?? "")}">
-            <p class="help">Deixe vazio se for de um só dia.</p>
+
+        <div class="columns is-mobile">
+          <div class="column">
+            <div class="field">
+              <label class="label is-small" for="ef-starts">Início</label>
+              <input class="input" id="ef-starts" name="starts_on" type="date" required
+                     value="${escapeHtml(event?.starts_on ?? "")}">
+            </div>
+          </div>
+          <div class="column">
+            <div class="field">
+              <label class="label is-small" for="ef-ends">Fim</label>
+              <input class="input" id="ef-ends" name="ends_on" type="date"
+                     value="${escapeHtml(event?.ends_on ?? "")}">
+              <p class="help">Deixe vazio se for de um só dia.</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="field">
-        <label class="label is-small" for="ef-description">Descrição</label>
-        <textarea class="textarea" id="ef-description" name="description" rows="2"
-                  >${escapeHtml(event?.description ?? "")}</textarea>
-      </div>
+      <div data-step="details">
+        <div class="field">
+          <label class="label is-small" for="ef-location">Local</label>
+          <input class="input" id="ef-location" name="location"
+                 value="${escapeHtml(event?.location ?? "")}"
+                 placeholder="Jardim Público, Viana do Castelo">
+        </div>
 
-      <div class="field">
-        <label class="label is-small" for="ef-url">Ligação</label>
-        <input class="input" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
-               placeholder="https://...">
+        <div class="field">
+          <label class="label is-small" for="ef-description">Descrição</label>
+          <textarea class="textarea" id="ef-description" name="description" rows="2"
+                    >${escapeHtml(event?.description ?? "")}</textarea>
+        </div>
+
+        <div class="field mb-0">
+          <label class="label is-small" for="ef-url">Ligação</label>
+          <input class="input" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
+                 placeholder="https://...">
+        </div>
       </div>
     </form>`;
+}
+
+/** The dates step's own check, run before it will let go. */
+function validateWhen(root) {
+    const form = root.querySelector("#event-form");
+    const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
+
+    if (!value("name")) throw new Error("O nome é obrigatório.");
+    if (!value("starts_on")) throw new Error("A data de início é obrigatória.");
+    if (value("ends_on") && value("ends_on") < value("starts_on")) {
+        throw new Error("O fim não pode ser anterior ao início.");
+    }
 }
 
 /**
@@ -130,13 +154,27 @@ async function submitEventForm(modalId) {
     });
 }
 
-function openForm({ id, event = null }) {
+/** Editing is changing one thing, so it stays a single screen. */
+function openEdit({ id, event }) {
     formDialog({
         id,
         body: eventForm(event),
-        submitLabel: event ? "Guardar alterações" : "Criar evento",
+        submitLabel: "Guardar alterações",
         onSubmit: () => submitEventForm(id),
-        success: event ? "Evento actualizado." : "Evento criado.",
+        success: "Evento actualizado.",
+        after: loadEvents,
+    });
+}
+
+function openCreate(id) {
+    stepDialog({
+        id,
+        body: eventForm(),
+        titles: EVENT_STEPS,
+        validate: [validateWhen, validateWhen],
+        finishLabel: "Criar evento",
+        onFinish: () => submitEventForm(id),
+        success: "Evento criado.",
         after: loadEvents,
     });
 }
@@ -163,7 +201,7 @@ document.addEventListener("click", async (clicked) => {
     const trigger = clicked.target.closest("[data-event-action]");
     if (trigger) {
         const { eventAction: action, eventId: id } = trigger.dataset;
-        if (action === "edit") openForm({ id: "editEventModal", event: await getEvent(id) });
+        if (action === "edit") openEdit({ id: "editEventModal", event: await getEvent(id) });
         if (action === "delete") openDelete(id);
         return;
     }
@@ -171,11 +209,11 @@ document.addEventListener("click", async (clicked) => {
     // The whole row opens the event, matching the catalogue.
     const row = clicked.target.closest("#event-rows tr[data-event-id]");
     if (row) {
-        openForm({ id: "editEventModal", event: await getEvent(row.dataset.eventId) });
+        openEdit({ id: "editEventModal", event: await getEvent(row.dataset.eventId) });
     }
 });
 
 document.getElementById("new-event")
-    ?.addEventListener("click", () => openForm({ id: "newEventModal" }));
+    ?.addEventListener("click", () => openCreate("newEventModal"));
 
 loadEvents();

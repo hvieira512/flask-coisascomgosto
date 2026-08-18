@@ -6,26 +6,36 @@ import { bodyOf, close, confirmDialog, footOf, modal, open, submitting } from ".
 import { escapeHtml } from "../../core/html.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
-import { productForm, submitProductForm } from "./form.js";
+import { PRODUCT_STEPS, productForm, submitProductForm, validateIdentity } from "./form.js";
+import { stepDialog } from "../../core/steps.js";
 
 const getProduct = (id) =>
     request(API.products.get(id), { fallback: "Produto não encontrado." });
 
+/**
+ * Creating asks what the piece is, then the optional details, and writes once at
+ * the end — a piece is on the storefront the moment its row exists, so a
+ * half-answered form must not create one.
+ *
+ * Colours and photographs cannot be steps here: both need an id. The save hands
+ * straight over to the edit modal on its Cores tab, which is where the work
+ * continues.
+ */
 async function openCreate() {
-    bodyOf("newProductModal").innerHTML = await productForm();
-    footOf("newProductModal").innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-dark" id="create-submit">Criar produto</button>`;
-    open("newProductModal");
-
-    document.getElementById("create-submit").onclick = (event) =>
-        submitting(event.currentTarget, async () => {
-            const id = await submitProductForm(modal("newProductModal"));
-            close("newProductModal");
-            Notify.success("Produto criado.");
+    stepDialog({
+        id: "newProductModal",
+        body: await productForm(),
+        titles: PRODUCT_STEPS,
+        validate: [validateIdentity, validateIdentity],
+        finishLabel: "Criar produto",
+        onFinish: (root) => submitProductForm(root),
+        success: "Produto criado.",
+        after: async (id) => {
             await mountFilters(fetchProducts).then(fetchProducts);
-            openEdit(id);   // straight on to colours and photographs
-        });
+            await openEdit(id);
+            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+        },
+    });
 }
 
 async function openEdit(id) {

@@ -389,6 +389,60 @@ class TestDashboardColors:
         assert "fotografias" in source
 
 
+class TestSteppedCreateForms:
+    """The two big create forms ask for the required fields first.
+
+    Produto and Evento each have six controls of which two are required, so the
+    create dialog walks them in groups. Nothing is written until the last step: a
+    piece is on the storefront the moment its row exists, and there is no draft
+    flag, so a half-answered form must not create one.
+    """
+
+    def _module(self, path):
+        return pathlib.Path(path).read_text(encoding="utf-8")
+
+    def test_the_forms_declare_their_groups(self):
+        product = self._module("static/js/dashboard/products/form.js")
+        for group in ['data-step="identity"', 'data-step="details"']:
+            assert group in product, group
+
+        event = self._module("static/js/dashboard/events/main.js")
+        for group in ['data-step="when"', 'data-step="details"']:
+            assert group in event, group
+
+    def test_creating_is_stepped_and_editing_is_not(self):
+        """Editing is changing one thing; a wizard would make you walk past
+        three screens to fix a typo. The product edit modal keeps its tabs, which
+        are random access, and the event edit modal keeps its single screen."""
+        products = self._module("static/js/dashboard/products/main.js")
+        assert 'id: "newProductModal"' in products
+        assert products.count("stepDialog({") == 1
+        assert "#edit-tabs" in products
+
+        events = self._module("static/js/dashboard/events/main.js")
+        assert events.count("stepDialog({") == 1
+        assert events.count("formDialog({") == 1
+
+    def test_nothing_is_written_before_the_last_step(self):
+        steps = self._module("static/js/core/steps.js")
+        assert "if (!last())" in steps
+        assert "onFinish(root)" in steps
+
+    def test_back_is_hidden_with_the_class_not_the_attribute(self):
+        """Bulma's .button is display:inline-flex, which outranks [hidden] — so
+        `back.hidden = true` left Voltar sitting on the first step."""
+        steps = self._module("static/js/core/steps.js")
+        assert 'back.classList.toggle("is-hidden"' in steps
+        assert "back.hidden" not in steps
+
+    def test_the_slide_has_a_reduced_motion_escape(self):
+        css = pathlib.Path("static/css/dashboard.css").read_text(encoding="utf-8")
+        assert "@keyframes step-in" in css
+        assert "[data-step] {" in css
+        reduced = css.split("prefers-reduced-motion: reduce")
+        assert any("[data-step]" in block for block in reduced[1:])
+
+
 class TestModalFormScoping:
     """The create and edit modals render forms with the same element ids, and a
     closed modal stays in the DOM. Reading a field by id alone found the create
