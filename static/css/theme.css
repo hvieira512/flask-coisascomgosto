@@ -79,6 +79,15 @@
     --bulma-link-s: 52%;
     --bulma-link-l: 42%;
 
+    /* is-dark is the brand navy, not Bulma's near-black. This was a
+       .button.is-dark override for a while, which left every other .is-dark on
+       the default: the catalogue's selected-filter tags came out black against a
+       page that has no black in it. Retinting the variable covers the tag, the
+       button and anything else derived from it. #1F3864 = --ccg-blue-800. */
+    --bulma-dark-h: 218deg;
+    --bulma-dark-s: 53%;
+    --bulma-dark-l: 26%;
+
     --bulma-scheme-h: 35;
     --bulma-scheme-s: 22%;
 
@@ -315,16 +324,6 @@ body {
 
 .button {
     border-radius: var(--radius);
-}
-
-.button.is-dark {
-    background-color: var(--ccg-blue-800);
-    border-color: var(--ccg-blue-800);
-}
-
-.button.is-dark:hover {
-    background-color: var(--ccg-blue-900);
-    border-color: var(--ccg-blue-900);
 }
 
 /* Carries a border because is-light sits on both --ccg-paper and

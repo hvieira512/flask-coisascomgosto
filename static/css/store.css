@@ -524,6 +524,20 @@ a.card:hover {
     cursor: pointer;
 }
 
+/* Bulma's delete circle is black at 50% alpha, which assumes a light
+   background. On the navy badge it reads as a hole punched through the pill, so
+   it flips to white-alpha. The declaration has to sit on the button itself:
+   .delete sets --bulma-delete-background-l in its own rule, so setting it on the
+   badge is overridden rather than inherited. */
+.filter-badge .delete {
+    --bulma-delete-background-l: 100%;
+    --bulma-delete-background-alpha: .22;
+}
+
+.filter-badge .delete:hover {
+    --bulma-delete-background-alpha: .38;
+}
+
 /* No-photo placeholder. --ph-color / --ph-wash / --ph-circle are set inline
    per product by placeholder.js. */
 .product-placeholder {
