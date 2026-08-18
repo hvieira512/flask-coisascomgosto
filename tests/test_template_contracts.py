@@ -9,6 +9,7 @@ browser knew it was broken.
 Any test here should name the JS file that would break if the assertion fails.
 """
 
+import pathlib
 import re
 
 import pytest
@@ -153,7 +154,12 @@ class TestPageLayoutWrappers:
 
 
 class TestNotifications:
-    """js/core/notify.js wraps SweetAlert2 and must load after it."""
+    """js/core/notify.js wraps SweetAlert2.
+
+    SweetAlert2 is the one vendored library that only publishes a global, so it
+    stays a classic script tag; notify.js is a module that reads Swal when a toast
+    is actually raised, which is long after any script has finished loading. That
+    is what removed the old "must load after" ordering rule."""
 
     def _dashboard(self, client, make_user):
         make_user("dash", password="pw")
@@ -163,17 +169,22 @@ class TestNotifications:
     def test_auth_page_loads_sweetalert2(self, anon_client):
         html = anon_client.get("/auth").get_data(as_text=True)
         assert "sweetalert2/sweetalert2.all.min.js" in html
-        assert "js/core/notify.js" in html
 
     def test_dashboard_loads_sweetalert2(self, client, make_user):
-        html = self._dashboard(client, make_user)
-        assert "sweetalert2/sweetalert2.all.min.js" in html
-        assert "js/core/notify.js" in html
+        assert "sweetalert2/sweetalert2.all.min.js" in self._dashboard(client, make_user)
 
-    def test_notify_wrapper_loads_after_sweetalert2(self, anon_client):
-        """notify.js reads Swal at definition time to warn if it is missing."""
+    def test_notify_is_imported_rather_than_loaded(self, anon_client):
         html = anon_client.get("/auth").get_data(as_text=True)
-        assert html.index("sweetalert2.all.min.js") < html.index("js/core/notify.js")
+        assert "js/core/notify.js" not in html
+
+        source = pathlib.Path("static/js/auth/auth.js").read_text(encoding="utf-8")
+        assert 'import { Notify }' in source
+
+    def test_notify_reads_swal_lazily(self):
+        """It must not capture Swal at module evaluation: a module runs before the
+        classic vendor script has necessarily been parsed."""
+        source = pathlib.Path("static/js/core/notify.js").read_text(encoding="utf-8")
+        assert 'typeof Swal === "undefined"' in source
 
     @pytest.mark.parametrize("path", ["/", "/products", "/not-found"])
     def test_storefront_stays_lean(self, client, path):
@@ -216,17 +227,26 @@ class TestColorScheme:
 
 
 class TestColorSetBadges:
-    """js/store/color-set.js renders colour sets for both the catalog cards and
-    the product page, so it has to load before either."""
+    """js/store/color-set.js renders colour sets for the catalogue cards, the
+    product page and the dashboard. It used to be a global that each page had to
+    load first; it is imported now, so the pages that draw a badge say so."""
 
-    def test_catalog_loads_swatches_first(self, client):
-        html = client.get("/products").get_data(as_text=True)
-        assert html.index("js/store/color-set.js") < html.index("js/store/products.js")
+    def test_every_page_that_draws_a_badge_imports_it(self):
+        for path in [
+            "static/js/store/products.js",
+            "static/js/store/product.js",
+            "static/js/dashboard/products/fetch.js",
+            "static/js/dashboard/products/variants.js",
+            "static/js/dashboard/products/images.js",
+        ]:
+            source = pathlib.Path(path).read_text(encoding="utf-8")
+            assert 'import { ColorSet }' in source, path
 
-    def test_product_page_loads_swatches_first(self, client, make_product):
+    def test_it_is_no_longer_a_script_tag(self, client, make_product):
         product = make_product("Caixa")
-        html = client.get(f"/products/{product['id']}").get_data(as_text=True)
-        assert html.index("js/store/color-set.js") < html.index("js/store/product.js")
+        for page in ["/products", f"/products/{product['id']}"]:
+            html = client.get(page).get_data(as_text=True)
+            assert "js/store/color-set.js" not in html, page
 
 
 class TestDashboardProducts:
@@ -256,10 +276,14 @@ class TestDashboardProducts:
                            "filter-photos", "filter-clear"]:
             assert f'id="{element_id}"' in html, element_id
 
-    def test_colour_set_helper_loads_before_the_module(self, client, make_user):
-        """The cards and the edit modal render colour-set badges."""
+    def test_the_page_loads_exactly_one_script(self, client, make_user):
+        """Its module imports the rest — the colour-set helper, the placeholder,
+        the modal — so the template no longer lists them in dependency order."""
         html = self._page(client, make_user)
-        assert html.index("js/store/color-set.js") < html.index("js/dashboard/products/main.js")
+
+        assert 'type="module" src="/static/js/dashboard/products/main.js"' in html
+        assert "js/store/color-set.js" not in html
+        assert "js/store/placeholder.js" not in html
 
 
 class TestDashboardHome:
@@ -358,24 +382,31 @@ class TestDashboardChrome:
 
 
 class TestProductGallery:
-    """The gallery is a classic script; PhotoSwipe ships ESM only, so the
-    lightbox is a module that publishes window.StoreLightbox for it."""
+    """PhotoSwipe ships ESM only, which is what first forced a module into a
+    codebase of classic scripts. Now that everything is a module, the gallery
+    imports the lightbox instead of finding it on window at click time."""
 
     def _page(self, client, make_product):
         product = make_product("Caixa")
         return client.get(f"/products/{product['id']}").get_data(as_text=True)
 
-    def test_lightbox_is_loaded_as_a_module(self, client, make_product):
+    def test_the_page_loads_exactly_one_script(self, client, make_product):
         html = self._page(client, make_product)
-        assert 'type="module" src="/static/js/store/lightbox.js"' in html
+
+        assert 'type="module" src="/static/js/store/product.js"' in html
+        assert "js/store/gallery.js" not in html
+        assert "js/store/lightbox.js" not in html
 
     def test_photoswipe_styles_are_loaded(self, client, make_product):
+        """The stylesheet cannot be imported by the module, so the template keeps
+        it."""
         html = self._page(client, make_product)
         assert "photoswipe/photoswipe.css" in html
 
-    def test_gallery_still_loads_before_the_page_module(self, client, make_product):
-        html = self._page(client, make_product)
-        assert html.index("js/store/gallery.js") < html.index("js/store/product.js")
+    def test_the_gallery_imports_the_lightbox(self):
+        source = pathlib.Path("static/js/store/gallery.js").read_text(encoding="utf-8")
+        assert 'import { StoreLightbox } from "./lightbox.js"' in source
+        assert "window.StoreLightbox" not in source
 
 
 class TestColorSetBadge:
@@ -412,3 +443,44 @@ class TestColorSetBadge:
 
         assert variant["color_set"]["name"] == "Vermelho e Branco"
         assert variant["color_set"]["colors"][0]["hex"] == "#B3282D"
+
+
+class TestOneModuleSystem:
+    """Every script in static/js is an ES module.
+
+    There used to be two systems: 17 modules and 8 classic scripts publishing on
+    window. The cost was written into the code — core/api.js carried "core/auth.js
+    is a classic script, so it cannot import from here and hardcodes
+    /api/auth/refresh itself". A second URL, because of a module boundary.
+    """
+
+    @staticmethod
+    def _sources():
+        return sorted(pathlib.Path("static/js").rglob("*.js"))
+
+    def test_nothing_publishes_itself_on_window(self):
+        offenders = []
+        for path in self._sources():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                # window.Swal is SweetAlert2's own global, read not written.
+                if re.match(r"\s*window\.[A-Z]\w*\s*=", line):
+                    offenders.append(f"{path}: {line.strip()}")
+        assert offenders == [], offenders
+
+    def test_every_script_tag_is_a_module(self, client, make_user, make_product):
+        """The one exception is the vendored SweetAlert2 bundle, which only
+        publishes a global."""
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        product = make_product("Caixa")
+
+        pages = ["/", "/products", f"/products/{product['id']}",
+                 "/dashboard/home", "/dashboard/products", "/dashboard/types",
+                 "/dashboard/events", "/dashboard/contacts"]
+
+        for page in pages:
+            html = client.get(page).get_data(as_text=True)
+            for tag in re.findall(r"<script[^>]*src=[^>]*>", html):
+                if "sweetalert2" in tag or "fontawesome" in tag:
+                    continue
+                assert 'type="module"' in tag, f"{page}: {tag}"

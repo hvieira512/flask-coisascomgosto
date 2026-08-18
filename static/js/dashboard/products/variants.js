@@ -1,4 +1,6 @@
 import { API, request } from "../../core/api.js";
+import { ColorSet } from "../../store/color-set.js";
+import { escapeHtml } from "../../core/html.js";
 import { reference } from "./reference.js";
 
 /** The variants panel inside the edit modal: what the product is offered in. */
@@ -10,7 +12,7 @@ export async function variantsPanel(product) {
     const rows = product.variants.length
         ? product.variants.map((v) => `
             <li class="panel-block px-0 is-gap-1">
-              ${window.ColorSet.badge(v.color_set, "mr-auto")}
+              ${ColorSet.badge(v.color_set, "mr-auto")}
               <button class="button is-small is-ghost has-text-danger"
                       data-remove-variant="${v.id}" title="Remover">
                 <span class="icon"><i class="fa-solid fa-xmark"></i></span>

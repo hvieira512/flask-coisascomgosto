@@ -1,4 +1,6 @@
 import { API, request } from "../../core/api.js";
+import { ColorSet } from "../../store/color-set.js";
+import { escapeHtml } from "../../core/html.js";
 
 /**
  * Every photograph of a product, from both places the API keeps them:
@@ -27,7 +29,7 @@ export function imagesPanel(product) {
                 <img class="dash-thumb" src="${escapeHtml(img.url)}" alt="${escapeHtml(img.alt ?? "")}">
                 <span class="is-size-7 mr-auto">
                   ${variant
-                      ? window.ColorSet.badge(variant.color_set)
+                      ? ColorSet.badge(variant.color_set)
                       : `<span class="tag is-light is-rounded">Todas as cores</span>`}
                 </span>
                 <button class="button is-small is-ghost has-text-danger"

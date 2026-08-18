@@ -5,6 +5,12 @@
  * colour shows that colour's photographs, or the placeholder in that colour when
  * there are none of it yet.
  */
+
+import { ColorSet } from "./color-set.js";
+import { StoreApi } from "./api.js";
+import { StoreGallery } from "./gallery.js";
+import { escapeHtml } from "../core/html.js";
+
 (function () {
     const root = document.getElementById("product-detail");
     const errorNotice = document.getElementById("detail-error");
@@ -119,8 +125,8 @@
                   <button class="tag is-rounded color-set-badge variant-option${chosen ? " is-active" : ""}"
                           type="button" data-variant-index="${position}"
                           aria-pressed="${chosen}"
-                          style="${window.ColorSet.style(variant.color_set)}">
-                    ${window.ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span><span class="variant-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                          style="${ColorSet.style(variant.color_set)}">
+                    ${ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span><span class="variant-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
                   </button>`;
             })
             .join("");

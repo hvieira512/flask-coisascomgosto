@@ -1,4 +1,6 @@
 import { API, request } from "../core/api.js";
+import { Notify } from "../core/notify.js";
+import { escapeHtml } from "../core/html.js";
 import { submitting } from "../core/modal.js";
 
 /**

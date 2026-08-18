@@ -22,9 +22,9 @@
 
     {% block body %}{% block content %}{% endblock %}{% endblock %}
 
-    <script src="{{ url_for('static', filename='js/store/loader.js') }}"></script>
-    {# Publishes window.escapeHtml, which every script below builds markup with. #}
-    <script src="{{ url_for('static', filename='js/core/html.js') }}"></script>
+    {# Every script in this project is a module, so each one imports what it needs
+       and none of them depend on the order they appear in. #}
+    <script type="module" src="{{ url_for('static', filename='js/store/loader.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 

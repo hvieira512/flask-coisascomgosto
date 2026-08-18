@@ -1,4 +1,8 @@
 import { API, request } from "../../core/api.js";
+import { ColorSet } from "../../store/color-set.js";
+import { Notify } from "../../core/notify.js";
+import { ProductPlaceholder } from "../../store/placeholder.js";
+import { escapeHtml } from "../../core/html.js";
 import { isFiltered, photoFilter, query } from "./filters.js";
 
 const productList = document.getElementById("product-list");
@@ -48,7 +52,7 @@ const row = (product) => {
     const image = product.primary_image
         ? `<img class="dash-thumb" src="${escapeHtml(product.primary_image.url)}"
                 alt="${escapeHtml(product.name)}">`
-        : window.ProductPlaceholder.markup(product);
+        : ProductPlaceholder.markup(product);
 
     // Capped at three so a piece offered in five colours does not make its row
     // twice the height of its neighbours and break the scan down the column.
@@ -59,7 +63,7 @@ const row = (product) => {
 
     const colours = product.variants.length
         ? `<span class="is-flex is-align-items-center is-gap-1">
-             ${shown.map((v) => window.ColorSet.badge(v.color_set)).join("")}
+             ${shown.map((v) => ColorSet.badge(v.color_set)).join("")}
              ${rest ? `<span class="data has-text-grey">+${rest}</span>` : ""}
            </span>`
         : `<span class="tag is-rounded chip is-quiet">Sem cores</span>`;

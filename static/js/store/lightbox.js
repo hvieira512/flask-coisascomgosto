@@ -1,11 +1,12 @@
 /**
  * Fullscreen, zoomable view of the product photographs, on PhotoSwipe.
  *
- * A module because PhotoSwipe 5 ships ESM only; it exposes window.StoreLightbox
- * so gallery.js — a classic script — can call it. Module scripts are deferred,
- * so the global appears after the gallery is built; the gallery therefore
- * checks for it at click time rather than at startup.
+ * PhotoSwipe 5 ships ESM only, which is what first forced a module into a
+ * codebase of classic scripts — and left this publishing a global for gallery.js
+ * to find at click time, because a deferred module had not run when the gallery
+ * was built. Now that everything is a module, gallery.js imports it.
  */
+
 import PhotoSwipe from "../../photoswipe/photoswipe.esm.min.js";
 
 /**
@@ -24,7 +25,7 @@ async function measure(image) {
     });
 }
 
-window.StoreLightbox = {
+export const StoreLightbox = {
     async open(images, index = 0) {
         if (!images || images.length === 0) return;
 

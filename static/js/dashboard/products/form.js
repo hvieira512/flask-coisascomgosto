@@ -1,4 +1,5 @@
 import { API, request } from "../../core/api.js";
+import { escapeHtml } from "../../core/html.js";
 import { reference, typeOptions } from "./reference.js";
 
 const option = (value, label, selected) =>

@@ -1,4 +1,5 @@
 import { API } from "../core/api.js";
+import { Notify } from "../core/notify.js";
 
 const submitBtn = document.querySelector("#submitBtn");
 const usernameField = document.querySelector("#usernameField");

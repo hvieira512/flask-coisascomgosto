@@ -10,7 +10,7 @@
  * frames wants both families rather than having each click undo the last. Search
  * stays single — there is only one search box.
  */
-window.StoreFilters = (function () {
+export const StoreFilters = (function () {
     /** Filters that map straight onto /api/products query parameters. */
     const GROUPS = {
         q: { label: "Pesquisa", multiple: false },

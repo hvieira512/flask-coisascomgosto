@@ -4,7 +4,7 @@
  * Every page talks to the same JSON API the dashboard uses, so the catalog has
  * one source of truth.
  */
-window.StoreApi = (function () {
+export const StoreApi = (function () {
     async function get(path, params) {
         const url = new URL(path, window.location.origin);
 

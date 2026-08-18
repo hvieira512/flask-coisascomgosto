@@ -92,7 +92,5 @@
 {% endblock %}
 
 {% block page_scripts %}
-<script src="{{ url_for('static', filename='js/store/filters.js') }}"></script>
-<script src="{{ url_for('static', filename='js/store/color-set.js') }}"></script>
-<script src="{{ url_for('static', filename='js/store/products.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/store/products.js') }}"></script>
 {% endblock %}

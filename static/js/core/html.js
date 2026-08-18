@@ -1,12 +1,9 @@
 /**
  * Escaping for the template literals that build markup.
  *
- * A global rather than a module export because both kinds of script need it:
- * the dashboard's ES modules, and the classic scripts (color-set.js,
- * placeholder.js) that publish components on window. Every base template loads
- * this first. Seven files had their own byte-identical copy.
+ * Seven files had their own byte-identical copy of this before it was shared.
  */
-window.escapeHtml = (value) =>
+export const escapeHtml = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
     }[char]));

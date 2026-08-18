@@ -1,4 +1,6 @@
+import { escapeHtml } from "../../core/html.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
+import { Notify } from "../../core/notify.js";
 import {
     countByType, createMaterial, createType, deleteMaterial, deleteType,
     listMaterials, listTypes, updateMaterial, updateType,

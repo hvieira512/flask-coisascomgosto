@@ -1,3 +1,7 @@
+import { ProductPlaceholder } from "./placeholder.js";
+import { escapeHtml } from "../core/html.js";
+import { StoreLightbox } from "./lightbox.js";
+
 /**
  * Product gallery: a previewer plus a vertical carousel of thumbnails.
  *
@@ -6,7 +10,7 @@
  * vertically and keeps the active thumbnail in view. Swiping steps too, and a
  * tap opens the photographs full screen through lightbox.js.
  */
-window.StoreGallery = (function () {
+export const StoreGallery = (function () {
     function create(root, product) {
         const galleryEl = root.querySelector(".gallery");
         const stage = root.querySelector("#gallery-stage");
@@ -126,10 +130,7 @@ window.StoreGallery = (function () {
         // Swipe, and the fullscreen view
         // ----------------------------------------------------------------
 
-        function openLightbox() {
-            // Deferred module, so it may not exist yet on a very early click.
-            window.StoreLightbox?.open(images, index);
-        }
+        const openLightbox = () => StoreLightbox.open(images, index);
 
         /** Past this many pixels the gesture is a swipe, not a tap. */
         const SWIPE_THRESHOLD = 40;

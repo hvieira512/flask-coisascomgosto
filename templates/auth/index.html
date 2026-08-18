@@ -73,6 +73,5 @@
 {# SweetAlert2 bundles its own CSS, so there is no stylesheet to load.
    js/core/notify.js wraps it and must follow it. #}
 <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.all.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/core/notify.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/auth/auth.js') }}"></script>
 {% endblock %}

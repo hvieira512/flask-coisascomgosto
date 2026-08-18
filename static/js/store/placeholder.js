@@ -1,5 +1,5 @@
 // No-photo tile: a wash of the product's own colour behind its type icon.
-window.ProductPlaceholder = (function () {
+export const ProductPlaceholder = (function () {
     /** Brand blue, used when a product has no colour of its own. */
     const DEFAULT_COLOR = "#4472C4";
     const DEFAULT_ICON = "fa-gift";

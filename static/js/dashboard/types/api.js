@@ -1,5 +1,6 @@
 import { API, request, requestOr } from "../../core/api.js";
 
+
 export async function listTypes() {
     const { product_types: types } = await request(
         `${API.productTypes.list}?limit=100`, { fallback: "Erro ao carregar os tipos." }

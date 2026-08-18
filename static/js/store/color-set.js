@@ -1,3 +1,6 @@
+import { escapeHtml } from "../core/html.js";
+
+
 /**
  * Renders a colour set as a rounded badge: its overlapping colour circles and
  * the set's name, drawn in its first colour on a pale wash of the same.
@@ -5,7 +8,7 @@
  * Shared by the catalog cards and the product page's variant buttons so the two
  * cannot drift apart.
  */
-window.ColorSet = (function () {
+export const ColorSet = (function () {
     const FALLBACK = "#4472C4";
     /** WCAG AA for body text, which is what a badge's name is. */
     const MIN_CONTRAST = 4.5;

@@ -91,8 +91,6 @@ export const API = {
         update: (id) => `/api/events/${id}`,
         delete: (id) => `/api/events/${id}`,
     },
-    // core/auth.js is a classic script, so it cannot import from here and
-    // hardcodes /api/auth/refresh itself.
     auth: {
         login: "/api/auth/login",
         register: "/api/auth/register",

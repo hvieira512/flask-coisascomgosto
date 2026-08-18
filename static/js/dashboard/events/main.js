@@ -1,5 +1,7 @@
 import { API, request } from "../../core/api.js";
+import { Notify } from "../../core/notify.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
+import { escapeHtml } from "../../core/html.js";
 import { eventDates, stateChip } from "./dates.js";
 
 async function loadEvents() {

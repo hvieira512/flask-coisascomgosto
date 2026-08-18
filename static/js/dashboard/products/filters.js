@@ -1,5 +1,6 @@
 import { reference, typeOptions } from "./reference.js";
 
+
 /**
  * The filter bar above the product grid.
  *

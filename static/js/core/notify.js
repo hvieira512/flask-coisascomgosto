@@ -4,7 +4,7 @@
  *     Notify.success("Sessão iniciada.");
  *     await Notify.confirm("Apagar este produto?", { danger: true });
  */
-window.Notify = (function () {
+const Notify = (function () {
     if (typeof Swal === "undefined") {
         console.error("SweetAlert2 is not loaded — notifications are disabled.");
     }
@@ -73,3 +73,5 @@ window.Notify = (function () {
         },
     };
 })();
+
+export { Notify };

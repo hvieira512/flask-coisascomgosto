@@ -1,5 +1,7 @@
 import { API, requestOr } from "../core/api.js";
+import { Notify } from "../core/notify.js";
 import { daysUntil, eventState, shortDate, stateChip } from "./events/dates.js";
+import { escapeHtml } from "../core/html.js";
 
 /** Every list endpoint answers with a pagination envelope. A card that cannot be
  *  counted shows nothing rather than taking the whole page down with it. */

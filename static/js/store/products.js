@@ -5,6 +5,13 @@
  * state, so selecting an entry in the sidebar and removing its badge are the
  * same operation.
  */
+
+import { ColorSet } from "./color-set.js";
+import { ProductPlaceholder } from "./placeholder.js";
+import { StoreApi } from "./api.js";
+import { StoreFilters } from "./filters.js";
+import { escapeHtml } from "../core/html.js";
+
 (function () {
     const grid = document.getElementById("product-grid");
     const emptyNotice = document.getElementById("grid-empty");
@@ -90,7 +97,7 @@
     function renderEntry(group, item, counts, withColorSets) {
         const count = counts.get(item.id) ?? 0;
         const sets = withColorSets ? setsByCollection.get(item.id) ?? [] : [];
-        const badges = sets.map((set) => window.ColorSet.badge(set)).join("");
+        const badges = sets.map((set) => ColorSet.badge(set)).join("");
         // Kept visible but not clickable: it is part of the workshop's
         // vocabulary, and ticking it could only ever empty the grid.
         const empty = count === 0;
@@ -217,7 +224,7 @@
 
         const overflows = sets.length > MAX_BADGES;
         const visible = overflows ? MAX_BADGES - 1 : sets.length;
-        const cells = sets.slice(0, visible).map(window.ColorSet.badge);
+        const cells = sets.slice(0, visible).map(ColorSet.badge);
 
         if (overflows) {
             const rest = sets.length - visible;

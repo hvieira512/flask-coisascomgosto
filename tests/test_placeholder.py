@@ -118,17 +118,34 @@ class TestProductTypeGridIcons:
         assert "fa-heart" in html
 
 
-class TestPlaceholderScriptIsLoaded:
-    def test_storefront_loads_it_before_the_page_modules(self, client):
-        html = client.get("/products").get_data(as_text=True)
-        assert html.index("js/store/placeholder.js") < html.index("js/store/products.js")
+class TestPlaceholderIsImported:
+    """The tile used to be a global published by a classic script the page had to
+    load first. It is a module export now, so the guarantee is an import in
+    whoever draws a tile — order in the HTML no longer decides anything."""
 
-    def test_dashboard_loads_it(self, client, make_user):
+    @staticmethod
+    def _source(path):
+        import pathlib as _p
+
+        return _p.Path(path).read_text(encoding="utf-8")
+
+    def test_every_drawer_of_a_tile_imports_it(self):
+        for path in [
+            "static/js/store/products.js",     # the catalogue grid
+            "static/js/store/gallery.js",      # the product page's stage
+            "static/js/dashboard/products/fetch.js",   # the dashboard's rows
+        ]:
+            assert 'import { ProductPlaceholder }' in self._source(path), path
+
+    def test_it_is_no_longer_a_script_tag(self, client, make_user):
+        """A page that loaded it for its side effect would still work, and would
+        hide the missing import until something else broke."""
         make_user("dash", password="pw")
         client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
 
-        html = client.get("/dashboard/products").get_data(as_text=True)
-        assert "js/store/placeholder.js" in html
+        for page in ["/products", "/dashboard/products"]:
+            html = client.get(page).get_data(as_text=True)
+            assert "js/store/placeholder.js" not in html, page
 
 
 def test_placeholder_tile_keeps_its_load_bearing_rules():

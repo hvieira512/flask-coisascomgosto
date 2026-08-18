@@ -6,6 +6,9 @@
  * focus to whatever opened it; the enter and leave animations are CSS. Calling
  * it on an already-open dialog throws, hence the guards.
  */
+
+import { Notify } from "./notify.js";
+
 export const modal = (id) => document.getElementById(id);
 export const bodyOf = (id) => modal(id).querySelector(".modal-card-body");
 export const footOf = (id) => modal(id).querySelector(".modal-card-foot");

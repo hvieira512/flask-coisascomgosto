@@ -1,10 +1,12 @@
 import { API, request } from "../../core/api.js";
+import { Notify } from "../../core/notify.js";
+import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
+import { addVariant, removeVariant, variantsPanel } from "./variants.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
+import { escapeHtml } from "../../core/html.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
 import { productForm, submitProductForm } from "./form.js";
-import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
-import { addVariant, removeVariant, variantsPanel } from "./variants.js";
 
 const getProduct = (id) =>
     request(API.products.get(id), { fallback: "Produto não encontrado." });

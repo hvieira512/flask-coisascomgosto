@@ -83,11 +83,10 @@
 {% endblock %}
 
 {% block scripts %}
-{# SweetAlert2 bundles its own CSS, so there is no stylesheet to load.
-   js/core/notify.js wraps it and must follow it. #}
+{# SweetAlert2 bundles its own CSS, so there is no stylesheet to load. It is the
+   one vendored library that only publishes a global, so it stays a classic script
+   and core/notify.js reads window.Swal from its own module. #}
 <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.all.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/core/notify.js') }}"></script>
-<script src="{{ url_for('static', filename='js/store/placeholder.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/menus.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/dashboard/menus.js') }}"></script>
 {% block page_scripts %}{% endblock %}
 {% endblock %}
