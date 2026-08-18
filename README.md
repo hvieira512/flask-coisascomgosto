@@ -128,6 +128,25 @@ mistyped environment variable cannot point the suite at real data.
 `*_test` schemas so the suite needs no root credentials; it runs automatically
 when the MySQL volume is first created.
 
+#### The frontend
+
+Most frontend tests read a module and assert on its source, which catches a call
+that went missing but never a dialog that fails to open. The dialogs — the create
+wizard and the modal helpers under `static/js/core/` — are exercised for real
+instead, in a browser:
+
+```bash
+playwright install chromium     # once; the browser is not a pip package
+pytest tests/test_dialog_behaviour.py
+```
+
+Without that browser the module skips, so the suite stays green for anyone who
+has not installed it. A browser rather than jsdom for two reasons: jsdom has no
+`HTMLDialogElement.showModal()`, which is what `core/modal.js` is built on, and no
+cascade — so it cannot see the bugs these dialogs actually hit. `back.hidden =
+true` did nothing because Bulma's `.button` is `display: inline-flex` and outranks
+the attribute, and only a real layout notices that the button is still there.
+
 ---
 
 ## Domain model
