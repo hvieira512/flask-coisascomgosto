@@ -804,12 +804,16 @@ a.card:hover {
 
 /* Colour and shape come from .color-set-badge; this adds only what makes it a
    control rather than a label. */
-/* Deliberate spacing. There was no rule here at all, so the chips were
-   inline-blocks separated by whatever whitespace the markup happened to carry:
-   4px across, 1.8px between rows. */
+/* Equal cells, not content-sized chips. Sized to their names, the five sets of
+   one box came out 183, 190, 200, 212 and 216px wide and wrapped 3 + 2, so the
+   group looked like a mistake rather than a set of options. A grid gives every
+   option the same box and lines both rows up.
+
+   min(100%, 14rem) rather than a bare 14rem: below that width the track would
+   overflow its column instead of collapsing to one per row. */
 .variant-options {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
     gap: .6rem;
 }
 
@@ -822,6 +826,9 @@ a.card:hover {
     padding: .45rem 1rem;
     gap: .55rem;
     font-size: .9rem;
+    /* Bulma's .tag centres its content, which in a fixed-width cell put every
+       name at a different offset and made the swatches zigzag down the column. */
+    justify-content: flex-start;
 }
 
 .variant-option .swatch {
@@ -854,11 +861,14 @@ a.card:hover {
     box-shadow: inset 0 0 0 1px var(--ccg-blue-900);
 }
 
-/* Reserved in every chip, so revealing it does not re-flow the row. */
+/* Reserved in every chip, so revealing it does not re-flow the row, and pushed
+   to the trailing edge: the cell is wider than the name, and a tick floating
+   just after the text would look like part of it. */
 .variant-check {
     opacity: 0;
-    margin-left: .05rem;
-    font-size: .7em;
+    margin-left: auto;
+    padding-left: .5rem;
+    font-size: .75em;
     color: var(--ccg-blue-900);
     transition: opacity .12s ease;
 }
