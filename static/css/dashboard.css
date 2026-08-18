@@ -244,11 +244,14 @@
     --bulma-table-cell-border-width: 0 0 1px;
     --bulma-table-cell-padding: .625rem .75rem;
     font-size: .875rem;
-    /* Enough for every column to get its share: three colour chips alone want
-       ~25rem, and under auto table layout their intrinsic width beats the
-       percentage widths below, squeezing the name column until it breaks one
-       word per line. Below this the table scrolls sideways instead, which is the
-       better failure. */
+}
+
+/* Only the tables carrying colour chips need a floor: three chips alone want
+   ~25rem, and under auto table layout their intrinsic width beats the percentage
+   column widths, squeezing the name column until it breaks one word per line.
+   Below this such a table scrolls sideways instead, which is the better failure.
+   Applying it to every table pushed the narrow ones out of their column. */
+.dash-table.is-wide {
     min-width: 56rem;
 }
 
@@ -372,4 +375,32 @@
     .dash-view {
         grid-template-columns: 1fr;
     }
+}
+
+/* ----------------------------------------------------------------
+   Tipos e materiais
+   ---------------------------------------------------------------- */
+
+.dash-type-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--ccg-blue-50);
+    color: var(--ccg-blue-600);
+    font-size: .8rem;
+}
+
+/* Sub-types are indented under their parent: "Caixa redonda" on its own says
+   less than it does sitting beneath "Caixa". */
+.dash-subtype {
+    padding-left: 1.25rem;
+    position: relative;
+}
+
+.dash-subtype::before {
+    content: "";
+    position: absolute;
+    left: .35rem;
+    top: .65em;
+    width: .5rem;
+    border-top: 1px solid var(--bulma-border);
 }

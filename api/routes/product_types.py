@@ -168,11 +168,11 @@ class ProductType(Resource):
 
             in_use = types.product_count(type_id)
             if in_use:
-                noun = "product" if in_use == 1 else "products"
                 ns.abort(
                     409,
-                    f"{in_use} {noun} still use this type. "
-                    "Move them to another type first.",
+                    f"{in_use} "
+                    + ("product still uses" if in_use == 1 else "products still use")
+                    + " this type. Move them to another type first.",
                 )
 
             types.delete(type_id)

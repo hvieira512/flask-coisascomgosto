@@ -41,6 +41,12 @@ def events():
     return render_template("dashboard/events.html")
 
 
+@bp.route("/types")
+@login_required
+def types():
+    return render_template("dashboard/types.html")
+
+
 @bp.route("/contacts")
 @login_required
 def contacts():

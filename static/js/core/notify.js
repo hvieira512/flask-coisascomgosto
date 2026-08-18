@@ -33,6 +33,26 @@ window.Notify = (function () {
         success: (message) => toast("success", message),
         error: (message) => toast("error", message),
 
+        /** One short value, for a rename that does not deserve a modal form. */
+        prompt: async (title, { value = "", confirmText = "Guardar" } = {}) => {
+            if (typeof Swal === "undefined") return null;
+
+            const result = await Swal.fire({
+                title,
+                input: "text",
+                inputValue: value,
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: "Cancelar",
+                confirmButtonColor: BRAND,
+                cancelButtonColor: "#6B7280",
+                reverseButtons: true,
+                inputValidator: (entered) =>
+                    entered.trim() ? undefined : "Escreva um nome.",
+            });
+            return result.isConfirmed ? result.value.trim() : null;
+        },
+
         // False on cancel, Escape and backdrop dismissal alike.
         confirm: async (title, { text = "", confirmText = "Confirmar",
                                  danger = false } = {}) => {

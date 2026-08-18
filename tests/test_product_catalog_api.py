@@ -414,3 +414,29 @@ class TestProductCollection:
         by_name = {p["name"]: p for p in body["products"]}
         assert len(by_name["Caixa Redonda"]["variants"]) == 4
         assert by_name["Sem variantes"]["variants"] == []
+
+
+class TestTypeDeletionGuard:
+    """type_id is NOT NULL, so a type in use cannot be removed."""
+
+    def test_message_names_the_number_of_products(
+        self, client, make_product, make_product_type
+    ):
+        brush = make_product_type("Escova de cabelo")
+        make_product("Escova A", type_id=brush["id"])
+        make_product("Escova B", type_id=brush["id"])
+
+        body = client.delete(f"/api/product-types/{brush['id']}").get_json()
+        assert "2 products still use" in body["message"]
+
+    def test_a_sub_types_products_also_block_the_parent(
+        self, client, make_product, make_product_type
+    ):
+        """Deleting a parent takes its sub-types with it, so pieces filed under
+        one of those sub-types have to count too."""
+        parent = make_product_type("Moldura de parede")
+        sub = make_product_type("Oval", parent_id=parent["id"])
+        make_product("Moldura oval", type_id=sub["id"])
+
+        assert client.delete(f"/api/product-types/{parent['id']}").status_code == 409
+        assert client.get(f"/api/product-types/{sub['id']}").status_code == 200

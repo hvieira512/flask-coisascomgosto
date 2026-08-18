@@ -245,6 +245,28 @@ class TestDashboardHome:
         assert "js/dashboard/home.js" in html
 
 
+class TestDashboardTypes:
+    """The types page is driven by js/dashboard/types/main.js."""
+
+    def _page(self, client, make_user):
+        make_user("dash", password="pw")
+        client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
+        return client.get("/dashboard/types").get_data(as_text=True)
+
+    def test_hooks_exist(self, client, make_user):
+        html = self._page(client, make_user)
+        for element_id in ["type-rows", "type-count", "new-type", "material-rows",
+                           "material-count", "material-form", "material-name",
+                           "newTypeModal", "editTypeModal", "deleteTypeModal"]:
+            assert f'id="{element_id}"' in html, element_id
+        assert "js/dashboard/types/main.js" in html
+
+    def test_tab_is_in_the_sidebar(self, client, make_user):
+        html = self._page(client, make_user)
+        assert "/dashboard/types" in html
+        assert ">Tipos<" in html
+
+
 class TestDashboardEvents:
     """The events page is driven by js/dashboard/events/main.js."""
 

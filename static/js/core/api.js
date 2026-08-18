@@ -22,6 +22,9 @@ export const API = {
     productTypes: {
         list: "/api/product-types",
         get: (id) => `/api/product-types/${id}`,
+        create: "/api/product-types",
+        update: (id) => `/api/product-types/${id}`,
+        delete: (id) => `/api/product-types/${id}`,
     },
     collections: {
         list: "/api/collections",
