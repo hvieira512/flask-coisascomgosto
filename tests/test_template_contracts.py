@@ -219,8 +219,13 @@ class TestDashboardProducts:
         html = self._page(client, make_user)
         for element_id in ["product-list", "product-count", "new-product",
                            "newProductModal", "editProductModal",
-                           "deleteProductModal", "viewProductModal"]:
+                           "deleteProductModal"]:
             assert f'id="{element_id}"' in html, element_id
+
+    def test_there_is_no_read_only_product_modal(self, client, make_user):
+        """Rows open straight into the edit modal, whose Detalhes tab shows the
+        same facts a separate view modal used to repeat."""
+        assert 'id="viewProductModal"' not in self._page(client, make_user)
 
     def test_filter_bar_is_rendered(self, client, make_user):
         html = self._page(client, make_user)

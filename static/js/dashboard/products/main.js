@@ -65,6 +65,12 @@ async function openEdit(id) {
 function wireEditTabs() {
     const root = modal("editProductModal");
     const tabs = root.querySelector("#edit-tabs");
+    // Only the details form has pending changes to save: colours and
+    // photographs are written the moment they are added or removed, so leaving
+    // "Guardar alterações" on those tabs promised a save that never happened —
+    // and reported "Produto actualizado" for a form nobody had touched.
+    const save = root.querySelector("#edit-submit");
+
     tabs.querySelectorAll("li").forEach((tab) => {
         tab.onclick = () => {
             tabs.querySelectorAll("li").forEach((t) => t.classList.remove("is-active"));
@@ -72,6 +78,9 @@ function wireEditTabs() {
             root.querySelectorAll("[data-panel]").forEach((panel) => {
                 panel.hidden = panel.dataset.panel !== tab.dataset.tab;
             });
+            // Bulma's .button is display:inline-flex, which outranks the
+            // [hidden] attribute — is-hidden carries the !important.
+            save.classList.toggle("is-hidden", tab.dataset.tab !== "details");
         };
     });
 }
@@ -155,32 +164,6 @@ function wireImagePanel(product) {
     });
 }
 
-async function openView(id) {
-    const product = await getProduct(id);
-    const image = product.primary_image
-        ? `<img src="${escapeHtml(product.primary_image.url)}" alt="${escapeHtml(product.name)}" class="dash-view-image">`
-        : window.ProductPlaceholder.markup(product);
-
-    bodyOf("viewProductModal").innerHTML = `
-        <div class="dash-view">
-          <div>${image}</div>
-          <div>
-            <h3 class="title is-5 mb-2">${escapeHtml(product.name)}</h3>
-            <p class="has-text-grey mb-4">${escapeHtml(product.description ?? "")}</p>
-            <dl class="dash-facts">
-              <dt>Material</dt><dd>${escapeHtml(product.material?.name ?? "—")}</dd>
-              <dt>Tipo</dt><dd>${escapeHtml(product.type?.name ?? "—")}</dd>
-              <dt>Colecção</dt><dd>${escapeHtml(product.collection?.name ?? "—")}</dd>
-              <dt>Tamanhos</dt><dd>${product.sizes.map((s) => escapeHtml(s.name)).join(", ") || "—"}</dd>
-            </dl>
-            <div class="mt-4">${product.variants.map((v) => window.ColorSet.badge(v.color_set)).join(" ")}</div>
-          </div>
-        </div>`;
-    footOf("viewProductModal").innerHTML =
-        `<button class="button" data-modal-close>Fechar</button>`;
-    open("viewProductModal");
-}
-
 async function openDelete(id) {
     const product = await getProduct(id);
 
@@ -209,7 +192,6 @@ document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-product-action]");
     if (trigger) {
         const { productAction: action, productId: id } = trigger.dataset;
-        if (action === "view") openView(id);
         if (action === "edit") openEdit(id);
         if (action === "delete") openDelete(id);
         return;

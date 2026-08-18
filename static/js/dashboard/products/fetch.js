@@ -80,10 +80,6 @@ const row = (product) => {
         <td>${photoCell(product)}</td>
         <td class="dash-col-actions">
           <span class="dash-row-actions is-flex is-gap-1">
-            <button class="button is-small is-ghost" data-product-action="view"
-                    data-product-id="${product.id}" title="Ver" aria-label="Ver ${escapeHtml(product.name)}">
-              <span class="icon"><i class="fa-solid fa-eye"></i></span>
-            </button>
             <button class="button is-small is-ghost" data-product-action="edit"
                     data-product-id="${product.id}" title="Editar" aria-label="Editar ${escapeHtml(product.name)}">
               <span class="icon"><i class="fa-solid fa-pencil"></i></span>
