@@ -55,7 +55,8 @@ class TestProductType:
         assert body["type"] == {
             "id": product_type["id"],
             "name": "Hairbrush",
-            "icon": None,
+            # Resolved, not passed through: "Hairbrush" matches the brush keyword.
+            "icon": "fa-brush",
         }
 
     def test_type_is_required(self, client, make_material):

@@ -1,30 +1,13 @@
 // No-photo tile: a wash of the product's own colour behind its type icon.
-// The keyword table is mirrored by the `type_icon` filter in web/filters.py.
 window.ProductPlaceholder = (function () {
     /** Brand blue, used when a product has no colour of its own. */
     const DEFAULT_COLOR = "#4472C4";
     const DEFAULT_ICON = "fa-gift";
 
-    // First match wins.
-    const KEYWORD_ICONS = [
-        [/cora[çc][ãa]o|heart/i, "fa-heart"],
-        [/moldura|quadro|frame|foto/i, "fa-image"],
-        [/bastidor|hoop/i, "fa-circle-notch"],
-        [/escova|brush|cabelo/i, "fa-brush"],
-        [/redond|circul|round/i, "fa-circle-dot"],
-        [/caixa|box|estojo/i, "fa-box"],
-        [/len[çc]o|pano|tecido|cloth/i, "fa-scroll"],
-        [/[íi]man|magnet/i, "fa-magnet"],
-        [/chave|key/i, "fa-key"],
-    ];
-
-    function iconFor(product) {
-        const type = product.type;
-        if (type?.icon) return type.icon;
-
-        const match = KEYWORD_ICONS.find(([pattern]) => pattern.test(type?.name || ""));
-        return match ? match[1] : DEFAULT_ICON;
-    }
+    /** The API resolves this — the type's own icon, or one guessed from its name
+     *  by api/type_icons.py. There used to be a second copy of that keyword table
+     *  here, kept in step by a comment. */
+    const iconFor = (product) => product.type?.icon || DEFAULT_ICON;
 
     /** Perceived brightness, 0–255. */
     function luminance(hex) {

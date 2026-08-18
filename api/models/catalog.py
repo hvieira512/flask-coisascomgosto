@@ -7,6 +7,7 @@ descriptions here are the API's user-facing documentation.
 from flask_restx import Model, fields
 
 from api.models.common import list_model
+from api.type_icons import icon_for
 
 # ----------------
 # Collections
@@ -173,14 +174,18 @@ product_type_write_model = Model(
     },
 )
 
-# Nested inside a product.
+# Nested inside a product. The icon is resolved here rather than passed through:
+# a piece with no photograph has to draw something, and the alternative was the
+# browser carrying its own copy of the keyword table in placeholder.js.
 product_type_nested_model = Model(
     "ProductTypeNested",
     {
         "id": fields.Integer(description="Product type ID"),
         "name": fields.String(description="Product type name"),
         "icon": fields.String(
-            description="Font Awesome class drawn on products with no photo"
+            attribute=icon_for,
+            description="Font Awesome class drawn on products with no photo. "
+            "Always set: the type's own icon, or one guessed from its name.",
         ),
     },
 )

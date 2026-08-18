@@ -36,16 +36,37 @@ class TestProductTypeIcon:
         body = client.get(f"/api/products/{product['id']}").get_json()
         assert body["type"]["icon"] == "fa-box"
 
-    def test_type_without_an_icon_exposes_null(self, client, make_product):
-        """The front end guesses from the name in that case — there is no parent
-        type to inherit one from."""
+    def test_a_product_always_gets_a_resolved_icon(self, client, make_product):
+        """Guessed from the name when the type carries none, so the browser has
+        nothing left to work out — placeholder.js used to hold a second copy of
+        the keyword table for exactly this."""
         product_type = client.post(
             "/api/product-types/", json={"name": "Coração"}
         ).get_json()
+        assert product_type["icon"] is None
+
         product = make_product("Coração de Viana", type_id=product_type["id"])
 
         body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["type"]["icon"] is None
+        assert body["type"]["icon"] == "fa-heart"
+
+    def test_an_unrecognisable_name_gets_the_default(self, client, make_product):
+        product_type = client.post(
+            "/api/product-types/", json={"name": "Qualquer coisa"}
+        ).get_json()
+        product = make_product("Uma peça", type_id=product_type["id"])
+
+        body = client.get(f"/api/products/{product['id']}").get_json()
+        assert body["type"]["icon"] == "fa-gift"
+
+    def test_the_types_endpoint_keeps_the_icon_unresolved(self, client, make_product_type):
+        """The dashboard's form offers "Adivinhar pelo nome" for a type with no
+        icon, which it can only do while null still means null. Resolving it here
+        too would quietly turn a guess into a saved choice."""
+        created = make_product_type("Coração")
+
+        body = client.get(f"/api/product-types/{created['id']}").get_json()
+        assert body["icon"] is None
 
 
 class TestTypeIconFilter:

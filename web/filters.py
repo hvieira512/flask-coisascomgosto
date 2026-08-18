@@ -1,44 +1,20 @@
 """Jinja filters for the rendered pages."""
 
-import re
 from datetime import date
 from urllib.parse import urlsplit
+
+from api.type_icons import icon_for
 
 _MONTHS_PT = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ]
 
-DEFAULT_TYPE_ICON = "fa-gift"
-
-# First match wins, so specific shapes precede generic containers.
-# static/js/store/placeholder.js carries the same table — keep them in step.
-_TYPE_ICONS = [
-    (re.compile(r"cora[çc][ãa]o|heart", re.I), "fa-heart"),
-    (re.compile(r"moldura|quadro|frame|foto", re.I), "fa-image"),
-    (re.compile(r"bastidor|hoop", re.I), "fa-circle-notch"),
-    (re.compile(r"escova|brush|cabelo", re.I), "fa-brush"),
-    (re.compile(r"redond|circul|round", re.I), "fa-circle-dot"),
-    (re.compile(r"caixa|box|estojo", re.I), "fa-box"),
-    (re.compile(r"len[çc]o|pano|tecido|cloth", re.I), "fa-scroll"),
-    (re.compile(r"[íi]man|magnet", re.I), "fa-magnet"),
-    (re.compile(r"chave|key", re.I), "fa-key"),
-]
-
 
 def type_icon(product_type):
-    """An explicit icon wins; otherwise guess from the type's name."""
-    if not product_type:
-        return DEFAULT_TYPE_ICON
-
-    if icon := (product_type.get("icon") or ""):
-        return icon
-
-    name = product_type.get("name") or ""
-    for pattern, icon in _TYPE_ICONS:
-        if pattern.search(name):
-            return icon
-    return DEFAULT_TYPE_ICON
+    """The Jinja filter behind the landing page's type cards. The table itself
+    lives in api/type_icons.py, which the API's marshalling also uses."""
+    return icon_for(product_type)
 
 
 def event_dates(starts_on, ends_on=None):
