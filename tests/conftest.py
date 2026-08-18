@@ -22,7 +22,7 @@ if not _name.endswith("_test"):
 
 @pytest.fixture(scope="session")
 def database():
-    from api.db import init_db
+    from db import init_db
 
     # The suite wants a blank slate; init_db otherwise carries accounts across a
     # schema rebuild, which is what keeps the owners logged in on a real database.
@@ -33,7 +33,7 @@ def database():
 @pytest.fixture(autouse=True)
 def clean_database(database):
     """Empty every table and replay the schema seeds before each test."""
-    from api.db import SCHEMA_PATH, _statements, get_db_connection
+    from db import SCHEMA_PATH, _statements, get_db_connection
 
     seeds = [s for s in _statements(SCHEMA_PATH.read_text())
              if s.upper().startswith("INSERT")]
@@ -131,7 +131,7 @@ def auth_client(client):
 @pytest.fixture()
 def cursor(app):
     """A live cursor against the test database, for repository unit tests."""
-    from api.db import get_db_connection
+    from db import get_db_connection
 
     with get_db_connection() as (_, cur):
         yield cur

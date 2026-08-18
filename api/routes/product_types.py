@@ -8,7 +8,7 @@ The list is flat: there is no level between the family and the piece.
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import (
     product_type_list_model,
     product_type_model,
@@ -17,7 +17,7 @@ from api.models.catalog import (
 from api.models.common import pagination_model
 from api.routes.crud import page_of
 from api.security import PROTECTED_DOC, auth_required
-from api.repositories import ProductTypeRepository
+from repositories import ProductTypeRepository
 
 ns = Namespace("product-types", description="Product type operations")
 

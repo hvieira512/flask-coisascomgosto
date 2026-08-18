@@ -116,7 +116,7 @@ class ProductVariantRepository:
         if not variants:
             return
 
-        from api.repositories.images import ProductImageRepository
+        from repositories.images import ProductImageRepository
 
         by_variant = ProductImageRepository(self._cursor).by_variant(
             [v["id"] for v in variants]

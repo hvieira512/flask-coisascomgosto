@@ -2,10 +2,10 @@
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import color_list_model, color_model, color_write_model
 from api.models.common import pagination_model
-from api.repositories import ColorRepository
+from repositories import ColorRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 

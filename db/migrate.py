@@ -31,9 +31,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from api.db import _statements, get_db_connection
+from db import _statements, get_db_connection
 
-MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "db" / "migrations"
+MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
 def _ensure_table(cursor) -> None:

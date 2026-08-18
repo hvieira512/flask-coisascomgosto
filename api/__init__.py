@@ -3,13 +3,20 @@
 Namespaces are mounted under /api, with interactive Swagger docs at /api/docs
 and the raw schema at /api/swagger.json.
 
-Layering:
+This package is the HTTP surface and nothing else:
+
     routes/         HTTP concerns only: validation, status codes, marshalling
     models/         flask-restx marshalling models, which also define the docs
-    repositories/   every SQL statement in the application
-    db.py           connection handling and schema initialisation
     pagination.py   request-arg parsing and the pagination response envelope
     security.py     auth_required — bearer token or session — on every write
+
+What it reads through lives outside it, because the storefront's own page routes,
+the seed and the CLI use the same things:
+
+    repositories/   every SQL statement in the application
+    db/             connecting, the schema, the migrations, the seed
+    uploads.py      storing uploaded photographs on disk
+    type_icons.py   a type's name -> the icon drawn when a piece has no photo
 """
 
 from flask_restx import Api

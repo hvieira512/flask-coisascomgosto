@@ -7,9 +7,9 @@ PUT replaces the whole record.
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.contacts import contact_model, contact_write_model
-from api.repositories import ContactRepository
+from repositories import ContactRepository
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace(

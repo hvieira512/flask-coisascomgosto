@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from api.repositories.base import NameTableRepository
+from repositories.base import NameTableRepository
 
 
 class SizeRepository(NameTableRepository):

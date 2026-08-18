@@ -7,8 +7,8 @@ history — and adding a migration to db/migrations never breaks these.
 
 import pytest
 
-from api import migrations
-from api.db import get_db_connection
+from db import migrate as migrations
+from db import get_db_connection
 
 
 PROBE_TABLES = ["probe_one", "probe_two", "probe_order", "probe_dml"]
@@ -220,7 +220,7 @@ class TestTheRealMigrations:
     def test_every_file_is_numbered_and_unique(self):
         import re
 
-        from api.migrations import MIGRATIONS_DIR
+        from db.migrate import MIGRATIONS_DIR
 
         paths = sorted(MIGRATIONS_DIR.glob("*.sql"))
         assert paths, "the directory exists to hold migrations"
@@ -238,7 +238,7 @@ class TestTheRealMigrations:
         migrations do, so init-db records them and `migrate` is a no-op. Built
         here rather than leaning on the session's own setup, so the claim is
         tested rather than assumed."""
-        from api.db import init_db
+        from db import init_db
 
         init_db()
 

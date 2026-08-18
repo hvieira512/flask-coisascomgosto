@@ -2,7 +2,7 @@
 
 from flask import request
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.products import (
     facet_counts_model,
     product_create_model,
@@ -13,7 +13,7 @@ from api.models.products import (
 from api.pagination import get_pagination_params, make_pagination
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
-from api.repositories import (
+from repositories import (
     CollectionRepository,
     MaterialRepository,
     ProductRepository,

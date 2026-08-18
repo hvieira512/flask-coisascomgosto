@@ -10,7 +10,8 @@ from pathlib import Path
 
 from werkzeug.utils import secure_filename
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# This module sits at the project root, so its own directory is that root.
+PROJECT_ROOT = Path(__file__).resolve().parent
 UPLOAD_DIR = PROJECT_ROOT / "static" / "img" / "products"
 URL_PREFIX = "/static/img/products"
 

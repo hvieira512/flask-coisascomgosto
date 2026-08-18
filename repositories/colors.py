@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from api.repositories.base import NameTableRepository
+from repositories.base import NameTableRepository
 
 
 class ColorRepository(NameTableRepository):

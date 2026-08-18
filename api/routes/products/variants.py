@@ -1,10 +1,10 @@
 """The colour sets a product is offered in."""
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import variant_list_model, variant_model, variant_write_model
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
-from api.repositories import (
+from repositories import (
     ColorSetRepository,
     ProductRepository,
     ProductVariantRepository,

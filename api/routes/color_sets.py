@@ -9,7 +9,7 @@ variants pointing at four colour sets.
 from flask import request
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import (
     collection_ref_model,
     color_model,
@@ -18,7 +18,7 @@ from api.models.catalog import (
     color_set_write_model,
 )
 from api.models.common import pagination_model
-from api.repositories import ColorRepository, ColorSetRepository, CollectionRepository
+from repositories import ColorRepository, ColorSetRepository, CollectionRepository
 from api.routes.crud import page_of
 from api.security import PROTECTED_DOC, auth_required
 

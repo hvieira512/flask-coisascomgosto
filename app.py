@@ -3,7 +3,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 
 from api import api
-from api.db import init_db
+from db import init_db
 from config import Config
 from web import register_web
 
@@ -29,7 +29,7 @@ def init_db_command():
                    "for a database that is already up to date.")
 def migrate_command(show_status, stamp):
     """Apply the pending migrations in db/migrations."""
-    from api import migrations
+    from db import migrate as migrations
 
     if stamp:
         stamped = migrations.stamp_all()
@@ -74,8 +74,8 @@ def create_admin_command(username, email, password):
     """
     from werkzeug.security import generate_password_hash
 
-    from api.db import get_db_connection
-    from api.repositories import UserRepository
+    from db import get_db_connection
+    from repositories import UserRepository
 
     with get_db_connection() as (_, cursor):
         users = UserRepository(cursor)

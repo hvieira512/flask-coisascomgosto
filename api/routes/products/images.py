@@ -4,12 +4,12 @@ from flask import request
 from flask_restx import Resource
 from werkzeug.datastructures import FileStorage
 
-from api import uploads
-from api.db import get_db_connection
+import uploads
+from db import get_db_connection
 from api.models.catalog import image_model, image_write_model
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
-from api.repositories import (
+from repositories import (
     ProductImageRepository,
     ProductRepository,
     ProductVariantRepository,

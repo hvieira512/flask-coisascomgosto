@@ -13,8 +13,8 @@ Re-runnable: it clears the catalog tables first. Users are left alone.
     flask --app app seed
 """
 
-from api.db import get_db_connection
-from api.repositories import (
+from db import get_db_connection
+from repositories import (
     MaterialRepository,
     CollectionRepository,
     ColorRepository,

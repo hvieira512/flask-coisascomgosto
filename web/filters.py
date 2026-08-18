@@ -3,7 +3,7 @@
 from datetime import date
 from urllib.parse import urlsplit
 
-from api.type_icons import icon_for
+from type_icons import icon_for
 
 _MONTHS_PT = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",

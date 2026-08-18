@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 
-from api.db import get_db_connection
-from api.repositories import EventRepository, ProductTypeRepository
+from db import get_db_connection
+from repositories import EventRepository, ProductTypeRepository
 
 bp = Blueprint("store", __name__)
 

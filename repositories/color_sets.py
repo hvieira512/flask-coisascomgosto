@@ -122,7 +122,7 @@ class ColorSetRepository:
         Variants go through ProductVariantRepository so their images are
         removed too, which the schema no longer does for us.
         """
-        from api.repositories.variants import ProductVariantRepository
+        from repositories.variants import ProductVariantRepository
 
         self._cursor.execute(
             "SELECT id FROM product_variants WHERE color_set_id = %s", (color_set_id,)

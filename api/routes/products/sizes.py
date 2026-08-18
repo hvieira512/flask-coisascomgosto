@@ -1,10 +1,10 @@
 """The sizes a product is available in."""
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import product_sizes_write_model, size_model
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
-from api.repositories import ProductRepository, SizeRepository
+from repositories import ProductRepository, SizeRepository
 from flask_restx import Resource
 
 

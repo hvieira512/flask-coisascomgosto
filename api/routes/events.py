@@ -6,10 +6,10 @@ since only the owners should be adding to the shop's history.
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.common import pagination_model
 from api.models.events import event_list_model, event_model, event_write_model
-from api.repositories import EventRepository
+from repositories import EventRepository
 from api.routes.crud import page_of
 from api.security import PROTECTED_DOC, auth_required
 

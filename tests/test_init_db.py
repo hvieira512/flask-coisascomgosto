@@ -7,8 +7,8 @@ These pin the two halves of the fix: the accounts survive a rebuild, and the
 suite still gets the blank slate it needs.
 """
 
-from api.db import get_db_connection, init_db
-from api.repositories import UserRepository
+from db import get_db_connection, init_db
+from repositories import UserRepository
 
 
 # Each helper opens and closes its own connection. init_db drops tables, and

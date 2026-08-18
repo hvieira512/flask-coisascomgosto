@@ -69,7 +69,7 @@ class TestContactsApi:
         auth_client.put("/api/contacts/", json={"email": "a@example.com"})
         auth_client.put("/api/contacts/", json={"email": "b@example.com"})
 
-        from api.db import get_db_connection
+        from db import get_db_connection
 
         with get_db_connection() as (_, cursor):
             cursor.execute("SELECT COUNT(*) AS total FROM contacts")
@@ -375,7 +375,7 @@ class TestContactInjection:
     """
 
     def test_pages_render_before_the_table_exists(self, client):
-        from api.db import get_db_connection
+        from db import get_db_connection
 
         with get_db_connection() as (_, cursor):
             cursor.execute("DROP TABLE contacts")
@@ -386,7 +386,7 @@ class TestContactInjection:
             # The footer renders, just without any details in it.
             assert "Coisas com Gosto" in response.get_data(as_text=True)
         finally:
-            from api.db import SCHEMA_PATH, _statements
+            from db import SCHEMA_PATH, _statements
 
             statements = _statements(SCHEMA_PATH.read_text())
             with get_db_connection() as (_, cursor):
@@ -401,7 +401,7 @@ class TestContactInjection:
         from us."""
         import pymysql
 
-        from api.repositories import ContactRepository
+        from repositories import ContactRepository
 
         def boom(self):
             raise pymysql.err.OperationalError(2003, "Can't connect to MySQL server")

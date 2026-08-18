@@ -6,14 +6,14 @@ collection leaves its colour sets and products in place, simply unowned.
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import (
     collection_list_model,
     collection_model,
     collection_write_model,
 )
 from api.models.common import pagination_model
-from api.repositories import CollectionRepository
+from repositories import CollectionRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 

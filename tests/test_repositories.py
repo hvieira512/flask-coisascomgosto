@@ -2,7 +2,7 @@
 
 import pytest
 
-from api.repositories import (
+from repositories import (
     MaterialRepository,
     ProductImageRepository,
     ProductRepository,

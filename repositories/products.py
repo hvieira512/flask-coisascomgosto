@@ -295,7 +295,7 @@ class ProductRepository:
         if not products:
             return
 
-        from api.repositories.images import ProductImageRepository
+        from repositories.images import ProductImageRepository
 
         images = ProductImageRepository(self._cursor)
 

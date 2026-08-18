@@ -26,8 +26,8 @@ def inject_contact():
     from pymysql.constants import ER
     from pymysql.err import ProgrammingError
 
-    from api.db import get_db_connection
-    from api.repositories import ContactRepository
+    from db import get_db_connection
+    from repositories import ContactRepository
 
     try:
         with get_db_connection() as (_, cursor):

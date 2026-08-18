@@ -8,10 +8,10 @@ listed sizes is sold only in its default size.
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.catalog import size_list_model, size_model, size_write_model
 from api.models.common import pagination_model
-from api.repositories import SizeRepository
+from repositories import SizeRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 

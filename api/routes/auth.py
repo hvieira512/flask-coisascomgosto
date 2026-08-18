@@ -27,10 +27,10 @@ from flask_jwt_extended import (
 from flask_restx import Namespace, Resource
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.auth import login_model, refresh_model, register_model, token_model
 from api.models.users import user_model
-from api.repositories import UserRepository
+from repositories import UserRepository
 from api.security import PROTECTED_DOC, auth_required, current_user_id
 
 ns = Namespace("auth", description="Authentication operations")

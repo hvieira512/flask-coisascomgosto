@@ -7,14 +7,14 @@ material therefore detaches the pieces made of it rather than deleting them.
 
 from flask_restx import Namespace, Resource
 
-from api.db import get_db_connection
+from db import get_db_connection
 from api.models.common import pagination_model
 from api.models.materials import (
     material_list_model,
     material_model,
     material_write_model,
 )
-from api.repositories import MaterialRepository
+from repositories import MaterialRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 

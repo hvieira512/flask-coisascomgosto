@@ -7,7 +7,7 @@ descriptions here are the API's user-facing documentation.
 from flask_restx import Model, fields
 
 from api.models.common import list_model
-from api.type_icons import icon_for
+from type_icons import icon_for
 
 # ----------------
 # Collections

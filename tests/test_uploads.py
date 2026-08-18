@@ -8,7 +8,7 @@ import pathlib
 
 import pytest
 
-from api import uploads
+import uploads
 
 JPEG_BYTES = b"\xff\xd8\xff\xe0 fake jpeg"
 
