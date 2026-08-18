@@ -1,4 +1,4 @@
-import { API } from "../core/api.js";
+import { API, request } from "../core/api.js";
 import { submitting } from "../core/modal.js";
 
 /**
@@ -59,12 +59,13 @@ function fill(contact) {
 }
 
 async function load() {
-    const res = await fetch(API.contacts.get);
-    if (!res.ok) {
-        Notify.error("Erro ao carregar os contactos.");
+    try {
+        saved = await request(API.contacts.get,
+                             { fallback: "Erro ao carregar os contactos." });
+    } catch (error) {
+        Notify.error(error.message);
         return;
     }
-    saved = await res.json();
     fill(saved);
 }
 
@@ -81,17 +82,11 @@ function save(event) {
             if (value) payload[name] = value;
         });
 
-        const res = await fetch(API.contacts.update, {
+        saved = await request(API.contacts.update, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: payload,
+            fallback: "Não foi possível guardar.",
         });
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || "Não foi possível guardar.");
-        }
-
-        saved = await res.json();
         fill(saved);
         Notify.success("Contactos actualizados.");
     });

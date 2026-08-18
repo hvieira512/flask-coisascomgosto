@@ -1,4 +1,4 @@
-import { API } from "../../core/api.js";
+import { API, request } from "../../core/api.js";
 import { isFiltered, photoFilter, query } from "./filters.js";
 
 const productList = document.getElementById("product-list");
@@ -129,10 +129,8 @@ export const fetchProducts = async () => {
     try {
         // The query carries limit=100 plus whatever the filter bar has set.
         // The API defaults to 10, which silently hid four of fourteen products.
-        const res = await fetch(`${API.products.list}?${query()}`);
-        if (!res.ok) throw new Error("Failed to fetch products");
-
-        const { products } = await res.json();
+        const { products } = await request(`${API.products.list}?${query()}`,
+                                          { fallback: "Erro ao buscar produtos." });
 
         // No endpoint filters on photographs, so it is applied here.
         const wanted = photoFilter();

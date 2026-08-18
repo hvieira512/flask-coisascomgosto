@@ -1,4 +1,4 @@
-import { API } from "../../core/api.js";
+import { API, request } from "../../core/api.js";
 
 /**
  * Every photograph of a product, from both places the API keeps them:
@@ -87,15 +87,11 @@ export async function uploadImage(productId, { file, variantId, alt }) {
     if (variantId) body.append("variant_id", variantId);
     if (alt) body.append("alt", alt);
 
-    // No Content-Type header: the browser sets the multipart boundary.
-    const res = await fetch(API.products.uploadImage(productId), {
+    await request(API.products.uploadImage(productId), {
         method: "POST",
         body,
+        fallback: "Não foi possível carregar a fotografia.",
     });
-    if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.message || "Não foi possível carregar a fotografia.");
-    }
 }
 
 export async function addImage(productId, { url, variantId, alt }) {
@@ -104,20 +100,16 @@ export async function addImage(productId, { url, variantId, alt }) {
     const payload = { url, alt: alt || null };
     if (variantId) payload.variant_id = Number(variantId);
 
-    const res = await fetch(API.products.images(productId), {
+    await request(API.products.images(productId), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: payload,
+        fallback: "Não foi possível adicionar a fotografia.",
     });
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Não foi possível adicionar a fotografia.");
-    }
 }
 
 export async function removeImage(productId, imageId) {
-    const res = await fetch(
-        API.products.image(productId, imageId), { method: "DELETE" }
-    );
-    if (!res.ok) throw new Error("Não foi possível remover a fotografia.");
+    await request(API.products.image(productId, imageId), {
+        method: "DELETE",
+        fallback: "Não foi possível remover a fotografia.",
+    });
 }

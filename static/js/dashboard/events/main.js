@@ -1,15 +1,17 @@
-import { API } from "../../core/api.js";
+import { API, request } from "../../core/api.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
 import { eventDates, stateChip } from "./dates.js";
 
 async function loadEvents() {
-    const res = await fetch(`${API.events.list}?limit=100`);
-    if (!res.ok) {
-        Notify.error("Erro ao buscar eventos.");
+    let events;
+    try {
+        ({ events } = await request(`${API.events.list}?limit=100`,
+                                   { fallback: "Erro ao buscar eventos." }));
+    } catch (error) {
+        Notify.error(error.message);
         return;
     }
 
-    const { events } = await res.json();
     const rows = document.getElementById("event-rows");
 
     rows.innerHTML = events.length
@@ -119,18 +121,11 @@ async function submitEventForm(modalId) {
         throw new Error("O fim não pode ser anterior ao início.");
     }
 
-    const res = await fetch(
-        id ? API.events.update(id) : API.events.create,
-        {
-            method: id ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }
-    );
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Não foi possível guardar.");
-    }
+    await request(id ? API.events.update(id) : API.events.create, {
+        method: id ? "PUT" : "POST",
+        body: payload,
+        fallback: "Não foi possível guardar.",
+    });
 }
 
 function openForm({ id, event = null }) {
@@ -151,11 +146,8 @@ function openForm({ id, event = null }) {
         });
 }
 
-const getEvent = async (id) => {
-    const res = await fetch(API.events.get(id));
-    if (!res.ok) throw new Error("Evento não encontrado.");
-    return res.json();
-};
+const getEvent = (id) =>
+    request(API.events.get(id), { fallback: "Evento não encontrado." });
 
 async function openDelete(id) {
     const event = await getEvent(id);
@@ -171,8 +163,8 @@ async function openDelete(id) {
 
     document.getElementById("event-delete").onclick = (e) =>
         submitting(e.currentTarget, async () => {
-            const res = await fetch(API.events.delete(id), { method: "DELETE" });
-            if (!res.ok) throw new Error("Não foi possível apagar.");
+            await request(API.events.delete(id),
+                          { method: "DELETE", fallback: "Não foi possível apagar." });
             close("deleteEventModal");
             Notify.success("Evento apagado.");
             await loadEvents();

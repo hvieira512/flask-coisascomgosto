@@ -1,4 +1,4 @@
-import { API } from "../../core/api.js";
+import { API, request } from "../../core/api.js";
 import { bodyOf, close, footOf, modal, open, submitting } from "../../core/modal.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
@@ -6,11 +6,8 @@ import { productForm, submitProductForm } from "./form.js";
 import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
 import { addVariant, removeVariant, variantsPanel } from "./variants.js";
 
-const getProduct = async (id) => {
-    const res = await fetch(API.products.get(id));
-    if (!res.ok) throw new Error("Produto não encontrado.");
-    return res.json();
-};
+const getProduct = (id) =>
+    request(API.products.get(id), { fallback: "Produto não encontrado." });
 
 async function openCreate() {
     bodyOf("newProductModal").innerHTML = await productForm();
@@ -180,8 +177,8 @@ async function openDelete(id) {
 
     document.getElementById("delete-submit").onclick = (event) =>
         submitting(event.currentTarget, async () => {
-            const res = await fetch(API.products.delete(id), { method: "DELETE" });
-            if (!res.ok) throw new Error("Não foi possível apagar.");
+            await request(API.products.delete(id),
+                          { method: "DELETE", fallback: "Não foi possível apagar." });
             close("deleteProductModal");
             Notify.success("Produto apagado.");
             await mountFilters(fetchProducts).then(fetchProducts);

@@ -1,48 +1,44 @@
-import { API } from "../../core/api.js";
-
-/** Every write goes through here so one place turns a failure into a message. */
-async function send(url, method, body) {
-    const res = await fetch(url, {
-        method,
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-    });
-    if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.message || "Não foi possível guardar.");
-    }
-    return res.status === 200 || res.status === 201 ? res.json() : null;
-}
+import { API, request, requestOr } from "../../core/api.js";
 
 export async function listTypes() {
-    const res = await fetch(`${API.productTypes.list}?limit=100`);
-    if (!res.ok) throw new Error("Erro ao carregar os tipos.");
-    return (await res.json()).product_types;
+    const { product_types: types } = await request(
+        `${API.productTypes.list}?limit=100`, { fallback: "Erro ao carregar os tipos." }
+    );
+    return types;
 }
 
 /** Pieces per type, so a row can say what deleting it would block. */
 export async function countByType() {
-    const res = await fetch(`${API.products.list}?limit=100`);
-    if (!res.ok) return new Map();
+    const payload = await requestOr(`${API.products.list}?limit=100`, { products: [] });
 
     const counts = new Map();
-    for (const product of (await res.json()).products) {
+    for (const product of payload.products) {
         const id = product.type.id;
         counts.set(id, (counts.get(id) ?? 0) + 1);
     }
     return counts;
 }
 
-export const createType = (body) => send(API.productTypes.create, "POST", body);
-export const updateType = (id, body) => send(API.productTypes.update(id), "PUT", body);
-export const deleteType = (id) => send(API.productTypes.delete(id), "DELETE");
+const SAVE_FAILED = "Não foi possível guardar.";
+
+export const createType = (body) =>
+    request(API.productTypes.create, { method: "POST", body, fallback: SAVE_FAILED });
+export const updateType = (id, body) =>
+    request(API.productTypes.update(id), { method: "PUT", body, fallback: SAVE_FAILED });
+export const deleteType = (id) =>
+    request(API.productTypes.delete(id), { method: "DELETE", fallback: SAVE_FAILED });
 
 export async function listMaterials() {
-    const res = await fetch(`${API.materials.list}?limit=100`);
-    if (!res.ok) throw new Error("Erro ao carregar os materiais.");
-    return (await res.json()).materials;
+    const { materials } = await request(
+        `${API.materials.list}?limit=100`,
+        { fallback: "Erro ao carregar os materiais." }
+    );
+    return materials;
 }
 
-export const createMaterial = (name) => send(API.materials.create, "POST", { name });
-export const updateMaterial = (id, name) => send(API.materials.update(id), "PUT", { name });
-export const deleteMaterial = (id) => send(API.materials.delete(id), "DELETE");
+export const createMaterial = (name) =>
+    request(API.materials.create, { method: "POST", body: { name }, fallback: SAVE_FAILED });
+export const updateMaterial = (id, name) =>
+    request(API.materials.update(id), { method: "PUT", body: { name }, fallback: SAVE_FAILED });
+export const deleteMaterial = (id) =>
+    request(API.materials.delete(id), { method: "DELETE", fallback: SAVE_FAILED });

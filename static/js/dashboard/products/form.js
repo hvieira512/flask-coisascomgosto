@@ -1,4 +1,4 @@
-import { API } from "../../core/api.js";
+import { API, request } from "../../core/api.js";
 import { reference, typeOptions } from "./reference.js";
 
 const option = (value, label, selected) =>
@@ -107,26 +107,20 @@ export async function submitProductForm(root = document) {
     if (!payload.name) throw new Error("O nome é obrigatório.");
     if (!payload.type_id) throw new Error("O tipo é obrigatório.");
 
-    const res = await fetch(
-        id ? API.products.update(id) : API.products.create,
-        {
-            method: id ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }
-    );
+    const saved = await request(id ? API.products.update(id) : API.products.create, {
+        method: id ? "PUT" : "POST",
+        body: payload,
+        fallback: "Não foi possível guardar.",
+    });
 
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.message || "Não foi possível guardar.");
-
-    const productId = id || body.id;
+    const productId = id || saved.id;
 
     const sizeIds = [...root.querySelectorAll("#pf-sizes input:checked")]
         .map((input) => Number(input.value));
-    await fetch(API.products.sizes(productId), {
+    await request(API.products.sizes(productId), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ size_ids: sizeIds }),
+        body: { size_ids: sizeIds },
+        fallback: "Não foi possível guardar os tamanhos.",
     });
 
     return productId;

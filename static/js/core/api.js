@@ -1,10 +1,52 @@
 /**
- * Every endpoint the dashboard talks to.
+ * Every endpoint the dashboard talks to, and the one function that talks to them.
  *
  * Collection paths keep their trailing slash: flask-restx registers them that
  * way, so "/api/materials" answers 308 and every list and create paid for two
  * round trips instead of one.
  */
+
+/**
+ * A request that either returns the parsed body or throws something a toast can
+ * show. Twenty-two call sites used to repeat this by hand, each with its own idea
+ * of the failure message — one of them in English on a Portuguese dashboard.
+ *
+ * `fallback` is what to say when the API sends no message of its own. The API's
+ * own message wins when there is one: "3 products still use this type" is worth
+ * more than "could not delete".
+ */
+export async function request(url, { method = "GET", body, fallback } = {}) {
+    const options = { method };
+
+    if (body instanceof FormData) {
+        // No Content-Type: the browser has to set the multipart boundary itself.
+        options.body = body;
+    } else if (body !== undefined) {
+        options.headers = { "Content-Type": "application/json" };
+        options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || fallback || "Não foi possível concluir.");
+    }
+
+    // 204 and an empty 200 have nothing to parse; a DELETE returning the row does.
+    if (response.status === 204) return null;
+    return response.json().catch(() => null);
+}
+
+/** The same, for reads where an empty result is a better answer than a toast. */
+export async function requestOr(url, fallbackValue) {
+    try {
+        return await request(url);
+    } catch (error) {
+        return fallbackValue;
+    }
+}
+
 export const API = {
     materials: {
         list: "/api/materials/",

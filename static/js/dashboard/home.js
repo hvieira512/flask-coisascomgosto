@@ -1,12 +1,10 @@
-import { API } from "../core/api.js";
+import { API, requestOr } from "../core/api.js";
 import { daysUntil, eventState, shortDate, stateChip } from "./events/dates.js";
 
-/** Every list endpoint answers with a pagination envelope. */
-const totalOf = async (url) => {
-    const res = await fetch(`${url}?limit=1`);
-    if (!res.ok) return 0;
-    return (await res.json()).pagination.total;
-};
+/** Every list endpoint answers with a pagination envelope. A card that cannot be
+ *  counted shows nothing rather than taking the whole page down with it. */
+const totalOf = async (url) =>
+    (await requestOr(`${url}?limit=1`, { pagination: { total: 0 } })).pagination.total;
 
 /** Photographs live on the product and on each variant. */
 const photoCount = (product) =>

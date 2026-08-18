@@ -1,4 +1,4 @@
-import { API } from "../../core/api.js";
+import { API, request } from "../../core/api.js";
 import { reference } from "./reference.js";
 
 /** The variants panel inside the edit modal: what the product is offered in. */
@@ -39,20 +39,16 @@ export async function variantsPanel(product) {
 }
 
 export async function addVariant(productId, colorSetId) {
-    const res = await fetch(API.products.variants(productId), {
+    await request(API.products.variants(productId), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ color_set_id: Number(colorSetId) }),
+        body: { color_set_id: Number(colorSetId) },
+        fallback: "Não foi possível adicionar a cor.",
     });
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Não foi possível adicionar a cor.");
-    }
 }
 
 export async function removeVariant(productId, variantId) {
-    const res = await fetch(
-        API.products.variant(productId, variantId), { method: "DELETE" }
-    );
-    if (!res.ok) throw new Error("Não foi possível remover a cor.");
+    await request(API.products.variant(productId, variantId), {
+        method: "DELETE",
+        fallback: "Não foi possível remover a cor.",
+    });
 }

@@ -1,4 +1,4 @@
-import { API } from "../../core/api.js";
+import { API, requestOr } from "../../core/api.js";
 
 /**
  * The lookup lists every product form needs: types, materials, collections,
@@ -7,11 +7,8 @@ import { API } from "../../core/api.js";
  */
 let cache = null;
 
-const listOf = async (url, key) => {
-    const res = await fetch(`${url}?limit=100`);
-    if (!res.ok) return [];
-    return (await res.json())[key] ?? [];
-};
+const listOf = async (url, key) =>
+    (await requestOr(`${url}?limit=100`, {}))[key] ?? [];
 
 export async function reference({ refresh = false } = {}) {
     if (cache && !refresh) return cache;
