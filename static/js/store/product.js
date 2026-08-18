@@ -54,14 +54,22 @@
             .join("");
     }
 
-    /** Pre-fill the WhatsApp message with the piece the visitor is looking at. */
+    // What the visitor has picked, folded into the enquiry they send. There is no
+    // basket, so a chosen colour and size have nowhere else to go — and a control
+    // that looks pressable has to do something.
+    let chosen = { colorSet: null, size: null };
+
+    /** Pre-fill the WhatsApp message with the piece, colour and size on screen. */
     function renderEnquiry(product) {
         const link = document.getElementById("enquiry-link");
         if (!link) return;
 
+        const parts = [`Olá! Gostaria de saber mais sobre "${product.name}"`];
+        if (chosen.colorSet) parts.push(`em ${chosen.colorSet}`);
+        if (chosen.size) parts.push(`tamanho ${chosen.size}`);
+
         const base = link.getAttribute("href").split("?")[0];
-        const message = `Olá! Gostaria de saber mais sobre "${product.name}".`;
-        link.href = `${base}?text=${encodeURIComponent(message)}`;
+        link.href = `${base}?text=${encodeURIComponent(`${parts.join(", ")}.`)}`;
     }
 
     function renderSizes(product) {
@@ -75,8 +83,31 @@
 
         block.hidden = false;
         options.innerHTML = product.sizes
-            .map((size) => `<button class="button is-small" type="button">${escapeHtml(size.name)}</button>`)
+            .map((size) => `
+                <button class="button is-small" type="button"
+                        data-size="${escapeHtml(size.name)}"
+                        aria-pressed="false">${escapeHtml(size.name)}</button>`)
             .join("");
+
+        options.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-size]");
+            if (!button) return;
+
+            // Clicking the chosen size again clears it, so a visitor who only
+            // wanted to look is not stuck having asked for a size.
+            const already = button.getAttribute("aria-pressed") === "true";
+            options.querySelectorAll("[data-size]").forEach((option) => {
+                option.classList.remove("is-dark");
+                option.setAttribute("aria-pressed", "false");
+            });
+            if (!already) {
+                button.classList.add("is-dark");
+                button.setAttribute("aria-pressed", "true");
+            }
+
+            chosen.size = already ? null : button.dataset.size;
+            renderEnquiry(product);
+        });
     }
 
     function renderVariants(product, activeIndex) {
@@ -109,6 +140,8 @@
             );
 
             const variant = product.variants[Number(button.dataset.variantIndex)];
+            chosen.colorSet = variant.color_set.name;
+            renderEnquiry(product);
             gallery.render(imagesFor(product, variant), variant);
         });
     }
@@ -137,6 +170,8 @@
         const variants = product.variants || [];
         const photographed = variants.findIndex((v) => v.images?.length);
         const activeIndex = photographed === -1 ? 0 : photographed;
+
+        chosen.colorSet = variants[activeIndex]?.color_set?.name ?? null;
 
         renderMeta(product);
         renderVariants(product, activeIndex);
