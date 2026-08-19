@@ -33,16 +33,16 @@
 
             {# Each group is populated from its API endpoint by products.js.
                data-facet names the key under /api/products/facets that carries
-               this group's per-option counts. #}
+               this group's per-option counts.
+
+               There is no Colecção group: the cards above the grid are the way to
+               choose one, and a checkbox list beside them was the same question
+               asked twice. It also means the rail is the only way to filter by
+               collection, so it no longer hides itself when there is just one. #}
             <nav class="menu" id="filter-groups">
                 <p class="menu-label">Tipo</p>
                 <ul class="menu-list" data-filter-group="type_id" data-endpoint="/api/product-types/"
                     data-collection-key="product_types" data-facet="types"></ul>
-
-                <p class="menu-label">Colecção</p>
-                <ul class="menu-list" data-filter-group="collection_id" data-endpoint="/api/collections/"
-                    data-collection-key="collections" data-facet="collections"
-                    data-with-color-sets="1"></ul>
 
                 <p class="menu-label">Material</p>
                 <ul class="menu-list" data-filter-group="material_id" data-endpoint="/api/materials/"

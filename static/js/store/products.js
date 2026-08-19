@@ -50,7 +50,23 @@ import { escapeHtml } from "../core/html.js";
         }
     }
 
-    /** The colour sets behind each collection — a collection is its colours. */
+    /** The collections, for the rail. Their own request now that the sidebar has no
+     *  Colecção group to borrow the payload from. Labels are registered here so a
+     *  badge can say "Colecção: Filigrana" rather than "#1". */
+    async function loadCollections() {
+        try {
+            const payload = await StoreApi.get("/api/collections/", { limit: 100 });
+            collections = payload.collections ?? [];
+        } catch (error) {
+            collections = [];
+        }
+        collections.forEach((collection) =>
+            StoreFilters.registerLabel("collection_id", collection.id, collection.name)
+        );
+    }
+
+    /** The colour sets behind each collection, which tint the rail's cover for a
+     *  collection that has no photograph yet. */
     async function loadColorSets() {
         try {
             const { color_sets: sets } = await StoreApi.get("/api/color-sets/", {
@@ -68,8 +84,7 @@ import { escapeHtml } from "../core/html.js";
 
     /** Fill one sidebar group from its API endpoint. */
     async function loadGroup(list) {
-        const { filterGroup, endpoint, collectionKey, facet, withColorSets } =
-            list.dataset;
+        const { filterGroup, endpoint, collectionKey, facet } = list.dataset;
 
         let payload;
         try {
@@ -82,17 +97,13 @@ import { escapeHtml } from "../core/html.js";
         const items = payload[collectionKey] || [];
         const counts = facets[facet] ?? new Map();
         list.innerHTML = items
-            .map((item) => renderEntry(filterGroup, item, counts, withColorSets))
+            .map((item) => renderEntry(filterGroup, item, counts))
             .join("");
 
         // Cache names so badges can render before the sidebar is consulted.
         items.forEach((item) =>
             StoreFilters.registerLabel(filterGroup, item.id, item.name)
         );
-
-        // Returned so the collection rail can be built from the same payload
-        // rather than asking for the collections a second time.
-        return items;
     }
 
     /**
@@ -100,10 +111,8 @@ import { escapeHtml } from "../core/html.js";
      * is what says these are cumulative — before it, a second click looked like
      * it had undone the first.
      */
-    function renderEntry(group, item, counts, withColorSets) {
+    function renderEntry(group, item, counts) {
         const count = counts.get(item.id) ?? 0;
-        const sets = withColorSets ? setsByCollection.get(item.id) ?? [] : [];
-        const badges = sets.map((set) => ColorSet.badge(set)).join("");
         // Kept visible but not clickable: it is part of the workshop's
         // vocabulary, and ticking it could only ever empty the grid.
         const empty = count === 0;
@@ -121,7 +130,6 @@ import { escapeHtml } from "../core/html.js";
                 <span class="filter-name">${escapeHtml(item.name)}</span>
                 <span class="filter-count">${count}</span>
               </span>
-              ${badges ? `<span class="filter-sets swatch-row">${badges}</span>` : ""}
             </a>
           </li>`;
     }
@@ -401,10 +409,12 @@ import { escapeHtml } from "../core/html.js";
         if (!rail || !strip) return;
 
         const counts = facets.collections ?? new Map();
-        // A collection with nothing behind it is a dead end, and one collection is
-        // not a choice worth a rail.
+        // A collection with nothing behind it is a dead end. A single one still gets
+        // a rail, though: with no Colecção group in the sidebar this is the only way
+        // to filter by collection at all, and hiding it would remove the filter
+        // rather than tidy it away.
         const offered = collections.filter((c) => (counts.get(c.id) ?? 0) > 0);
-        rail.hidden = offered.length < 2;
+        rail.hidden = offered.length === 0;
         if (rail.hidden) return;
 
         const chosen = StoreFilters.get("collection_id");
@@ -487,14 +497,10 @@ import { escapeHtml } from "../core/html.js";
 
         // Counts and colour sets first: the entries are rendered with them, not
         // patched afterwards.
-        await Promise.all([loadFacets(), loadColorSets()]);
-
-        const groups = [...document.querySelectorAll("#filter-groups [data-filter-group]")];
-        const loaded = await Promise.all(groups.map(loadGroup));
-        const collectionsIndex = groups.findIndex(
-            (group) => group.dataset.collectionKey === "collections"
+        await Promise.all([loadFacets(), loadColorSets(), loadCollections()]);
+        await Promise.all(
+            [...document.querySelectorAll("#filter-groups [data-filter-group]")].map(loadGroup)
         );
-        collections = loaded[collectionsIndex] ?? [];
 
         syncSidebar();
         renderRail();

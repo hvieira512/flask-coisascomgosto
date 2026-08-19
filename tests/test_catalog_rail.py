@@ -87,21 +87,25 @@ class TestTheRail:
         assert card(page, "Filigrana").get_attribute("aria-pressed") == "true"
         assert card(page, "Ver tudo").get_attribute("aria-pressed") == "false"
 
-    def test_it_drives_the_same_filter_as_the_sidebar(self, catalogue):
-        """One piece of state, not a mode of its own: the badge, the sidebar entry
-        and the URL all follow from the same selection, so Limpar tudo clears the
-        rail too."""
+    def test_the_sidebar_does_not_ask_the_same_question(self, catalogue):
+        """The cards are the only way to choose a collection. A checkbox list beside
+        them was the same question asked twice — and it carried the count and the
+        selected tick that the card already carries."""
+        page, _, _ = catalogue
+
+        assert page.locator('[data-facet="collections"]').count() == 0
+        labels = page.locator("#filter-groups .menu-label").all_text_contents()
+        assert [label.strip() for label in labels] == ["Tipo", "Material"]
+
+    def test_it_still_drives_the_ordinary_filter_state(self, catalogue):
+        """One piece of state, not a mode of its own: the URL, the badge and Limpar
+        tudo all follow from the same selection the sidebar's own groups use."""
         page, _, ids = catalogue
         card(page, "Filigrana").click()
         page.wait_for_function("() => location.search.includes('collection_id')")
 
         assert f"collection_id={ids['filigrana']['id']}" in page.url
         assert "Filigrana" in page.locator("#active-filters").inner_text()
-
-        sidebar_entry = page.locator(
-            '[data-facet="collections"] .filter-entry[aria-pressed="true"]'
-        )
-        assert "Filigrana" in sidebar_entry.inner_text()
 
         page.locator("#clear-filters").click()
         # The grid, not the URL: the URL is rewritten before the products are
@@ -454,19 +458,43 @@ class TestACrowdedRail:
 
 
 class TestWhenThereIsNothingToChoose:
-    def test_one_collection_is_not_a_choice(
-        self, browser, live_server, client, make_collection, make_product
-    ):
-        """A rail with a single cover next to "Ver tudo" is furniture, not a
-        decision, so it stays out of the way."""
-        only = make_collection("Filigrana")
-        make_product("Caixa", collection_id=only["id"])
-
+    def _catalogue(self, browser, live_server):
         context = browser.new_context(viewport={"width": 1280, "height": 900})
         page = context.new_page()
         page.set_default_timeout(5000)
         page.goto(f"{live_server}/products")
         page.wait_for_selector("#product-grid > *")
+        return context, page
 
-        assert not page.locator("#collection-rail").is_visible()
-        context.close()
+    def test_a_single_collection_still_gets_a_rail(
+        self, browser, live_server, client, make_collection, make_product
+    ):
+        """It used to hide below two collections, on the grounds that one cover
+        beside "Ver tudo" is furniture rather than a decision. That reasoning died
+        with the sidebar's Colecção group: the rail is now the only way to filter by
+        collection, so hiding it removes the filter instead of tidying it away."""
+        only = make_collection("Filigrana")
+        make_product("Caixa", collection_id=only["id"])
+        make_product("Peça sem colecção")
+
+        context, page = self._catalogue(browser, live_server)
+        try:
+            page.wait_for_selector("#collection-strip .collection-card")
+            names = page.locator(".collection-card-name").all_text_contents()
+            assert names == ["Ver tudo", "Filigrana"]
+        finally:
+            context.close()
+
+    def test_no_collections_at_all_hides_it(
+        self, browser, live_server, client, make_product
+    ):
+        """Nothing to choose between, so the rail is not drawn — and the catalogue
+        is still a catalogue."""
+        make_product("Caixa")
+
+        context, page = self._catalogue(browser, live_server)
+        try:
+            assert not page.locator("#collection-rail").is_visible()
+            assert page.locator("#product-grid > *").count() == 1
+        finally:
+            context.close()

@@ -507,19 +507,6 @@ a.card:hover {
     color: var(--ccg-blue-700);
 }
 
-/* The colour sets a collection is made of, under its name. Indented to the
-   name's own left edge, past the checkbox.
-
-   One per row, unlike the cards': the sidebar column is ~215px and two abreast
-   truncated every name to "Branco e Dou…", which is the half of the badge that
-   carries the meaning. */
-.filter-sets {
-    display: grid;
-    grid-template-columns: minmax(0, max-content);
-    gap: .25rem;
-    margin: .45rem 0 .15rem 1.6rem;
-}
-
 /* A Bulma column is a flex item, and a flex item's min-width is auto — it refuses
    to be narrower than its content. So the collection rail, which is meant to scroll
    inside this column, grew the column to 1320px instead and the whole catalogue
