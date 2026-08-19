@@ -2,6 +2,7 @@
 
 from flask import request
 
+import uploads
 from db import get_db_connection
 from api.models.products import (
     facet_counts_model,
@@ -211,5 +212,7 @@ class Product(Resource):
             if not product:
                 ns.abort(404, f"Product #{product_id} not found")
 
-            products.delete(product_id)
+            # Its photographs' files go with their rows, product-level and
+            # per-colour alike; anything it merely pointed at is left alone.
+            uploads.delete_many(products.delete(product_id))
             return product, 200

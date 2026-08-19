@@ -115,6 +115,17 @@ def save(file_storage, *, folder=None, url_prefix=None) -> str:
     return f"{url_prefix}/{name}"
 
 
+def delete_many(urls) -> None:
+    """Remove the files behind rows that have just been deleted.
+
+    The repositories hand back the URLs whose rows they removed; a URL that was
+    never an upload of ours is ignored by `delete`, so seeded assets and
+    hand-written paths survive a cascade the same way they survive a single delete.
+    """
+    for url in urls or ():
+        delete(url)
+
+
 def delete_cover(url: str) -> None:
     """Remove a collection cover, and only ever one stored *as* a cover.
 

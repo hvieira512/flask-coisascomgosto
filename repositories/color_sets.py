@@ -120,7 +120,8 @@ class ColorSetRepository:
         """Delete a colour set, its colour membership and any variant using it.
 
         Variants go through ProductVariantRepository so their images are
-        removed too, which the schema no longer does for us.
+        removed too, which the schema no longer does for us. Returns those
+        photographs' URLs, for the caller to remove the files.
         """
         from repositories.variants import ProductVariantRepository
 
@@ -130,13 +131,15 @@ class ColorSetRepository:
         variant_ids = [row["id"] for row in self._cursor.fetchall()]
 
         variants = ProductVariantRepository(self._cursor)
+        urls = []
         for variant_id in variant_ids:
-            variants.delete(variant_id)
+            urls += variants.delete(variant_id)
 
         self._cursor.execute(
             "DELETE FROM color_set_colors WHERE color_set_id = %s", (color_set_id,)
         )
         self._cursor.execute("DELETE FROM color_sets WHERE id = %s", (color_set_id,))
+        return urls
 
     def _replace_colors(self, color_set_id: int, color_ids: list[int]) -> None:
         """Reset a set's colours to exactly `color_ids`, preserving order."""

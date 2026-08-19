@@ -1,5 +1,6 @@
 """The colour sets a product is offered in."""
 
+import uploads
 from db import get_db_connection
 from api.models.catalog import variant_list_model, variant_model, variant_write_model
 from api.routes.products import ns
@@ -86,5 +87,6 @@ class ProductVariant(Resource):
                 )
 
             variant = variants.get(variant_id)
-            variants.delete(variant_id)
+            # The photographs of this colour go with it.
+            uploads.delete_many(variants.delete(variant_id))
             return variant, 200

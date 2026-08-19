@@ -136,6 +136,84 @@ class TestUploadEndpoint:
         assert not path.exists()
 
 
+class TestACascadeTakesTheFilesWithIt:
+    """Every path that deletes an image row has to delete the file behind it.
+
+    Only the images endpoint did. Deleting a piece, dropping one of its colours, or
+    deleting a colour set removed the rows and left the photographs on disk — which
+    is where orphaned uploads come from, and 120 of them were deleted in 86d6b0b.
+    """
+
+    @pytest.fixture()
+    def variant(self, client, product, make_color, make_color_set):
+        color = make_color("Vermelho", hex="#B3282D")
+        color_set = make_color_set("Vermelho", [color["id"]])
+        created = client.post(
+            f"/api/products/{product['id']}/variants",
+            json={"color_set_id": color_set["id"]},
+        ).get_json()
+        return created, color_set
+
+    def _photo_of(self, client, product_id, photo, **form):
+        created = upload(client, product_id, photo(), **form).get_json()
+        path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
+        assert path.is_file()
+        return path
+
+    def test_deleting_the_piece_removes_its_photographs(self, client, product, photo):
+        product_photo = self._photo_of(client, product["id"], photo)
+
+        client.delete(f"/api/products/{product['id']}")
+        assert not product_photo.exists()
+
+    def test_deleting_the_piece_removes_its_colours_photographs(
+        self, client, product, photo, variant
+    ):
+        created, _ = variant
+        pinned = self._photo_of(
+            client, product["id"], photo, variant_id=str(created["id"])
+        )
+
+        client.delete(f"/api/products/{product['id']}")
+        assert not pinned.exists()
+
+    def test_dropping_a_colour_removes_that_colours_photographs(
+        self, client, product, photo, variant
+    ):
+        created, _ = variant
+        pinned = self._photo_of(
+            client, product["id"], photo, variant_id=str(created["id"])
+        )
+        kept = self._photo_of(client, product["id"], photo)
+
+        client.delete(f"/api/products/{product['id']}/variants/{created['id']}")
+
+        assert not pinned.exists()
+        assert kept.is_file(), "the piece's own photograph is not the colour's"
+
+    def test_deleting_a_colour_set_removes_the_photographs_of_its_variants(
+        self, client, product, photo, variant
+    ):
+        """The colour set cascades to every variant offered in it, wherever they are."""
+        created, color_set = variant
+        pinned = self._photo_of(
+            client, product["id"], photo, variant_id=str(created["id"])
+        )
+
+        client.delete(f"/api/color-sets/{color_set['id']}")
+        assert not pinned.exists()
+
+    def test_a_photograph_it_did_not_upload_is_left_alone(self, client, product):
+        """A row may point at a seeded asset or a path written by hand."""
+        client.post(
+            f"/api/products/{product['id']}/images",
+            json={"url": "/static/img/logo.png"},
+        )
+
+        client.delete(f"/api/products/{product['id']}")
+        assert (uploads.PROJECT_ROOT / "static" / "img" / "logo.png").is_file()
+
+
 class TestFilenameSafety:
     """The name arrives from the browser, so it is never trusted as a path."""
 

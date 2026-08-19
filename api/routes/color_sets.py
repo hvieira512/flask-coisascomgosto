@@ -9,6 +9,7 @@ variants pointing at four colour sets.
 from flask import request
 from flask_restx import Namespace, Resource
 
+import uploads
 from db import get_db_connection
 from api.models.catalog import (
     collection_ref_model,
@@ -161,5 +162,7 @@ class ColorSet(Resource):
             if not color_set:
                 ns.abort(404, f"Colour set #{color_set_id} not found")
 
-            color_sets.delete(color_set_id)
+            # Deleting a set removes every variant offered in it, so the
+            # photographs of those colours go too.
+            uploads.delete_many(color_sets.delete(color_set_id))
             return color_set, 200

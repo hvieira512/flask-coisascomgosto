@@ -175,12 +175,21 @@ class ProductRepository:
             ),
         )
 
-    def delete(self, product_id: int) -> None:
+    def delete(self, product_id: int) -> list[str]:
         """Delete a product and everything hanging off it.
 
         The schema has no foreign keys, so the rows a cascade would remove are
         removed explicitly here — otherwise they would linger as orphans.
+
+        Returns the URLs of the photographs whose rows have gone, product-level and
+        per-colour alike, so the caller can remove the files. Deleting a piece used
+        to leave every one of its photographs on disk.
         """
+        self._cursor.execute(
+            "SELECT url FROM product_images WHERE product_id = %s", (product_id,)
+        )
+        urls = [row["url"] for row in self._cursor.fetchall()]
+
         self._cursor.execute(
             "DELETE FROM product_images WHERE product_id = %s", (product_id,)
         )
@@ -191,6 +200,7 @@ class ProductRepository:
             "DELETE FROM product_variants WHERE product_id = %s", (product_id,)
         )
         self._cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
+        return urls
 
     # ----------------
     # Sizes a product is available in
