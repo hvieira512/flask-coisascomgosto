@@ -57,14 +57,16 @@ services:
       # Live reload: with FLASK_DEBUG=1 the dev server watches these files, so
       # editing on the host restarts the app without a rebuild. Harmless in
       # production mode, where gunicorn simply never re-reads them.
-      - ./api:/app/api
-      - ./web:/app/web
-      - ./templates:/app/templates
-      - ./static:/app/static
-      - ./db/schema.sql:/app/db/schema.sql
-      - ./app.py:/app/app.py
-      - ./config.py:/app/config.py
-      - ./extensions.py:/app/extensions.py
+      #
+      # The whole project rather than a list of paths, because a single-file bind
+      # mount binds the *inode*: an editor that saves by writing a temp file and
+      # renaming it over the original leaves the container pointing at the old
+      # inode for the rest of its life. app.py was mounted that way, and the
+      # container served a half-written copy of it — cut off mid-decorator at
+      # `@cl` — with a SyntaxError on every request, while the file on disk was
+      # perfectly valid. Mounting the directory means a replaced file is simply
+      # the new file.
+      - .:/app
 
   # Same image, same MySQL server, throwaway schema. Kept as a profile so it
   # never starts as part of a plain `docker compose up`.
