@@ -89,6 +89,26 @@ class ColorSetRepository:
         self._cursor.execute(sql, params)
         return self._cursor.fetchone() is not None
 
+    def set_collection(self, collection_id: int, color_set_ids: list[int]) -> None:
+        """Make exactly `color_set_ids` the sets belonging to this collection.
+
+        A colour set belongs to at most one collection, so this is a move rather than
+        a link: a set listed here leaves whichever collection it was in, and one that
+        was in this collection and is no longer listed is left belonging to none.
+        """
+        self._cursor.execute(
+            "UPDATE color_sets SET collection_id = NULL WHERE collection_id = %s",
+            (collection_id,),
+        )
+        if not color_set_ids:
+            return
+
+        placeholders = ", ".join(["%s"] * len(color_set_ids))
+        self._cursor.execute(
+            f"UPDATE color_sets SET collection_id = %s WHERE id IN ({placeholders})",
+            [collection_id, *color_set_ids],
+        )
+
     def create(
         self, *, name: str, collection_id: Optional[int], color_ids: list[int]
     ) -> int:

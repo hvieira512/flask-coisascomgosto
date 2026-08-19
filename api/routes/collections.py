@@ -10,12 +10,16 @@ from werkzeug.datastructures import FileStorage
 import uploads
 from db import get_db_connection
 from api.models.catalog import (
+    collection_color_sets_write_model,
     collection_list_model,
     collection_model,
+    collection_ref_model,
     collection_write_model,
+    color_model,
+    color_set_model,
 )
 from api.models.common import pagination_model
-from repositories import CollectionRepository
+from repositories import CollectionRepository, ColorSetRepository
 from api.routes.crud import get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 
@@ -26,6 +30,12 @@ for model in [
     collection_model,
     collection_list_model,
     collection_write_model,
+    collection_color_sets_write_model,
+    # color_set_model nests both of these, and Swagger needs them registered here
+    # too or the schema for this namespace has dangling references.
+    collection_ref_model,
+    color_model,
+    color_set_model,
 ]:
     ns.models[model.name] = model
 
@@ -150,6 +160,54 @@ class Collection(Resource):
             # not, which is what the separate folder is for.
             uploads.delete_cover(collection.get("image_url"))
             return collection, 200
+
+
+@ns.route("/<int:collection_id>/color-sets")
+@ns.param("collection_id", "The collection identifier")
+class CollectionColorSets(Resource):
+    @ns.marshal_list_with(color_set_model)
+    @ns.response(200, "The colour sets belonging to this collection")
+    @ns.response(404, "Collection not found")
+    def get(self, collection_id):
+        """List the colour sets belonging to this collection."""
+        with get_db_connection() as (_, cursor):
+            collections = CollectionRepository(cursor)
+            get_or_404(ns, collections, collection_id, "Collection")
+
+            return ColorSetRepository(cursor).list(
+                collection_id=collection_id, limit=100, offset=0
+            )
+
+    @ns.expect(collection_color_sets_write_model, validate=True)
+    @ns.marshal_list_with(color_set_model)
+    @ns.response(200, "The collection's colour sets after the replacement")
+    @ns.response(400, "Missing or invalid fields")
+    @ns.response(404, "Collection or colour set not found")
+    @ns.doc(**PROTECTED_DOC)
+    @auth_required
+    def put(self, collection_id):
+        """Replace the set of colour sets belonging to this collection.
+
+        A colour set belongs to at most one collection, so this moves rather than
+        links: one listed here leaves the collection it was in, and one that was here
+        and is no longer listed ends up belonging to none. Send an empty list to
+        empty the collection.
+        """
+        color_set_ids = ns.payload["color_set_ids"]
+
+        with get_db_connection() as (_, cursor):
+            collections = CollectionRepository(cursor)
+            get_or_404(ns, collections, collection_id, "Collection")
+
+            color_sets = ColorSetRepository(cursor)
+            missing = [
+                set_id for set_id in color_set_ids if not color_sets.exists(set_id)
+            ]
+            if missing:
+                ns.abort(404, f"Unknown colour set IDs: {sorted(missing)}")
+
+            color_sets.set_collection(collection_id, color_set_ids)
+            return color_sets.list(collection_id=collection_id, limit=100, offset=0)
 
 
 @ns.route("/<int:collection_id>/cover")

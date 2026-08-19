@@ -38,6 +38,20 @@ collection_ref_model = Model(
 
 collection_list_model = list_model("CollectionList", "collections", collection_model)
 
+collection_color_sets_write_model = Model(
+    "CollectionColorSetsWrite",
+    {
+        "color_set_ids": fields.List(
+            fields.Integer,
+            required=True,
+            description="Full replacement set of colour set IDs. A colour set "
+            "belongs to at most one collection, so listing one here takes it from "
+            "whichever collection it was in; omitting one that was here leaves it "
+            "belonging to none. Empty means the collection owns no colour sets.",
+        ),
+    },
+)
+
 collection_write_model = Model(
     "CollectionWrite",
     {
@@ -261,6 +275,7 @@ CATALOG_MODELS = [
     collection_ref_model,
     collection_list_model,
     collection_write_model,
+    collection_color_sets_write_model,
     color_model,
     color_list_model,
     color_write_model,

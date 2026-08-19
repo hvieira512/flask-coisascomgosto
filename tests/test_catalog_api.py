@@ -71,6 +71,145 @@ class TestCollections:
         assert body["collection"] is None
 
 
+class TestWhichColourSetsBelongToACollection:
+    """A collection owns colour sets, and the owners edit that from the collection.
+
+    It is a move, not a link: color_sets.collection_id holds one collection, so
+    listing a set here takes it from wherever it was.
+    """
+
+    @pytest.fixture()
+    def sets(self, make_color, make_color_set):
+        white = make_color("Branco", hex="#FFFFFF")
+        return {
+            "gold": make_color_set("Branco e Dourado", color_ids=[white["id"]]),
+            "black": make_color_set("Preto e Branco", color_ids=[white["id"]]),
+            "blue": make_color_set("Azul e Branco", color_ids=[white["id"]]),
+        }
+
+    def _put(self, client, collection_id, ids):
+        return client.put(
+            f"/api/collections/{collection_id}/color-sets",
+            json={"color_set_ids": ids},
+        )
+
+    def test_a_new_collection_owns_none(self, client, make_collection):
+        collection = make_collection("Filigrana")
+        body = client.get(f"/api/collections/{collection['id']}/color-sets").get_json()
+        assert body == []
+
+    def test_they_can_be_assigned(self, client, make_collection, sets):
+        collection = make_collection("Filigrana")
+        response = self._put(
+            client, collection["id"], [sets["gold"]["id"], sets["black"]["id"]]
+        )
+
+        assert response.status_code == 200
+        assert sorted(s["name"] for s in response.get_json()) == [
+            "Branco e Dourado", "Preto e Branco"
+        ]
+
+    def test_the_colour_set_now_names_its_collection(
+        self, client, make_collection, sets
+    ):
+        collection = make_collection("Filigrana")
+        self._put(client, collection["id"], [sets["gold"]["id"]])
+
+        body = client.get(f"/api/color-sets/{sets['gold']['id']}").get_json()
+        assert body["collection"]["name"] == "Filigrana"
+
+    def test_leaving_one_out_takes_it_out(self, client, make_collection, sets):
+        collection = make_collection("Filigrana")
+        self._put(client, collection["id"], [sets["gold"]["id"], sets["black"]["id"]])
+        self._put(client, collection["id"], [sets["gold"]["id"]])
+
+        remaining = client.get(
+            f"/api/collections/{collection['id']}/color-sets"
+        ).get_json()
+        assert [s["name"] for s in remaining] == ["Branco e Dourado"]
+
+        # Left belonging to none rather than deleted.
+        orphan = client.get(f"/api/color-sets/{sets['black']['id']}").get_json()
+        assert orphan["collection"] is None
+
+    def test_an_empty_list_empties_the_collection(self, client, make_collection, sets):
+        collection = make_collection("Filigrana")
+        self._put(client, collection["id"], [sets["gold"]["id"]])
+
+        assert self._put(client, collection["id"], []).get_json() == []
+
+    def test_taking_one_from_another_collection_moves_it(
+        self, client, make_collection, sets
+    ):
+        """The consequence of a colour set having one collection: choosing it here
+        is choosing it away from there."""
+        bordados = make_collection("Bordados")
+        filigrana = make_collection("Filigrana")
+        self._put(client, bordados["id"], [sets["gold"]["id"]])
+
+        self._put(client, filigrana["id"], [sets["gold"]["id"]])
+
+        assert client.get(
+            f"/api/collections/{bordados['id']}/color-sets"
+        ).get_json() == []
+        assert [
+            s["name"]
+            for s in client.get(
+                f"/api/collections/{filigrana['id']}/color-sets"
+            ).get_json()
+        ] == ["Branco e Dourado"]
+
+    def test_it_does_not_disturb_the_other_collections(
+        self, client, make_collection, sets
+    ):
+        bordados = make_collection("Bordados")
+        filigrana = make_collection("Filigrana")
+        self._put(client, bordados["id"], [sets["black"]["id"]])
+
+        self._put(client, filigrana["id"], [sets["gold"]["id"]])
+
+        assert [
+            s["name"]
+            for s in client.get(
+                f"/api/collections/{bordados['id']}/color-sets"
+            ).get_json()
+        ] == ["Preto e Branco"]
+
+    def test_an_unknown_colour_set_is_404_and_changes_nothing(
+        self, client, make_collection, sets
+    ):
+        collection = make_collection("Filigrana")
+        self._put(client, collection["id"], [sets["gold"]["id"]])
+
+        response = self._put(client, collection["id"], [9999])
+        assert response.status_code == 404
+        assert [
+            s["name"]
+            for s in client.get(
+                f"/api/collections/{collection['id']}/color-sets"
+            ).get_json()
+        ] == ["Branco e Dourado"], "a rejected write must not have emptied it"
+
+    def test_an_unknown_collection_is_404(self, client, sets):
+        assert self._put(client, 9999, [sets["gold"]["id"]]).status_code == 404
+        assert client.get("/api/collections/9999/color-sets").status_code == 404
+
+    def test_it_needs_a_token(self, anon_client, client, make_collection, sets):
+        collection = make_collection("Filigrana")
+        response = anon_client.put(
+            f"/api/collections/{collection['id']}/color-sets",
+            json={"color_set_ids": [sets["gold"]["id"]]},
+        )
+        assert response.status_code == 401
+
+    def test_reading_them_does_not(self, anon_client, client, make_collection):
+        """The storefront reads collections without signing in."""
+        collection = make_collection("Filigrana")
+        assert anon_client.get(
+            f"/api/collections/{collection['id']}/color-sets"
+        ).status_code == 200
+
+
 class TestCollectionCover:
     """The photograph that stands for a collection on the catalogue.
 
