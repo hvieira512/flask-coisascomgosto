@@ -1,5 +1,7 @@
 {# Page furniture for the dashboard, so the pages cannot drift apart. #}
 
+{% from 'components/forms.html' import field_icon %}
+
 {% macro page_head(eyebrow, title, subtitle=None) %}
 <header class="mb-5">
     <p class="eyebrow mb-2">{{ eyebrow }}</p>
@@ -26,19 +28,26 @@
 </header>
 {% endmacro %}
 
-{# One filter control, as a cell of the filter bar's row. Repeated four times. #}
-{% macro filter_field(id, label, options=None, placeholder=None) %}
+{# One filter control, as a cell of the filter bar's row. Repeated four times.
+
+   `icon` defaults to the filter mark, which is what a select in this bar is;
+   text cells pass their own. #}
+{% macro filter_field(id, label, options=None, placeholder=None,
+                      icon='fa-solid fa-filter') %}
 <div class="col">
     <label class="form-label fs-7" for="{{ id }}">{{ label }}</label>
-    {% if options is none %}
-    <input class="form-control form-control-sm" id="{{ id }}"
-           placeholder="{{ placeholder or '' }}">
-    {% else %}
-    <select class="form-select form-select-sm" id="{{ id }}">
-        {% for value, text in options %}
-        <option value="{{ value }}">{{ text }}</option>
-        {% endfor %}
-    </select>
-    {% endif %}
+    <div class="input-group input-group-sm">
+        {% if options is none %}
+        <input class="form-control form-control-sm" id="{{ id }}"
+               placeholder="{{ placeholder or '' }}">
+        {% else %}
+        <select class="form-select form-select-sm" id="{{ id }}">
+            {% for value, text in options %}
+            <option value="{{ value }}">{{ text }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        {{ field_icon(icon) }}
+    </div>
 </div>
 {% endmacro %}

@@ -3,6 +3,7 @@
 {% block page_title %}Contactos{% endblock %}
 
 {% from 'dashboard/components/page.html' import page_head %}
+{% from 'components/forms.html' import field_icon %}
 
 {% block content %}
 {{ page_head('A loja', 'Contactos',
@@ -15,14 +16,20 @@
 
             <div class="mb-3">
                 <label class="form-label fs-7" for="cf-address">Morada</label>
-                <input class="form-control" id="cf-address" name="address"
-                       placeholder="Rua de Cardielos, n. 222, Viana do Castelo">
+                <div class="input-group">
+                    <input class="form-control" id="cf-address" name="address"
+                           placeholder="Rua de Cardielos, n. 222, Viana do Castelo">
+                    {{ field_icon('fa-solid fa-location-dot') }}
+                </div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fs-7" for="cf-maps_url">Ligação do mapa</label>
-                <input class="form-control" id="cf-maps_url" name="maps_url"
-                       placeholder="https://maps.app.goo.gl/...">
+                <div class="input-group">
+                    <input class="form-control" id="cf-maps_url" name="maps_url"
+                           placeholder="https://maps.app.goo.gl/...">
+                    {{ field_icon('fa-solid fa-map') }}
+                </div>
                 <p class="help mb-0">
                     Onde abre o cartão da morada. Prefira a ligação curta do Google Maps.
                 </p>
@@ -30,29 +37,41 @@
 
             <div class="mb-3">
                 <label class="form-label fs-7" for="cf-email">E-mail</label>
-                <input class="form-control" id="cf-email" name="email" type="email"
-                       placeholder="geral@coisascomgosto.pt">
+                <div class="input-group">
+                    <input class="form-control" id="cf-email" name="email" type="email"
+                           placeholder="geral@coisascomgosto.pt">
+                    {{ field_icon('fa-solid fa-envelope') }}
+                </div>
             </div>
 
             <h2 class="h6 mt-4 mb-3">Redes</h2>
 
             <div class="mb-3">
                 <label class="form-label fs-7" for="cf-whatsapp">WhatsApp</label>
-                <input class="form-control" id="cf-whatsapp" name="whatsapp"
-                       placeholder="939320334">
+                <div class="input-group">
+                    <input class="form-control" id="cf-whatsapp" name="whatsapp"
+                           placeholder="939320334">
+                    {{ field_icon('fa-brands fa-whatsapp') }}
+                </div>
                 <p class="help mb-0" id="cf-whatsapp-preview"></p>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fs-7" for="cf-facebook_url">Facebook</label>
-                <input class="form-control" id="cf-facebook_url" name="facebook_url"
-                       placeholder="https://www.facebook.com/...">
+                <div class="input-group">
+                    <input class="form-control" id="cf-facebook_url" name="facebook_url"
+                           placeholder="https://www.facebook.com/...">
+                    {{ field_icon('fa-brands fa-facebook-f') }}
+                </div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fs-7" for="cf-instagram_url">Instagram</label>
-                <input class="form-control" id="cf-instagram_url" name="instagram_url"
-                       placeholder="https://www.instagram.com/...">
+                <div class="input-group">
+                    <input class="form-control" id="cf-instagram_url" name="instagram_url"
+                           placeholder="https://www.instagram.com/...">
+                    {{ field_icon('fa-brands fa-instagram') }}
+                </div>
             </div>
 
             <div class="d-flex gap-2 mt-4">

@@ -1,5 +1,5 @@
 import { PhotoPicker } from "../../core/photo-picker.js";
-import { escapeHtml } from "../../core/html.js";
+import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import { ColorSet } from "../../store/color-set.js";
@@ -85,8 +85,11 @@ function collectionForm(collection = null) {
         <div class="col-md">
           <div class="mb-3">
             <label class="form-label fs-7" for="cof-name">Nome</label>
-            <input class="form-control" id="cof-name" name="name" required
-                   value="${escapeHtml(collection?.name ?? "")}" placeholder="Filigrana">
+            <div class="input-group">
+              <input class="form-control" id="cof-name" name="name" required
+                     value="${escapeHtml(collection?.name ?? "")}" placeholder="Filigrana">
+              ${fieldIcon("fa-solid fa-tag")}
+            </div>
           </div>
 
           <div>

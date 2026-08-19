@@ -1,4 +1,4 @@
-import { escapeHtml } from "../../core/html.js";
+import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { bodyOf, confirmDialog, footOf, formDialog, modal, open, submitting } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import {
@@ -90,8 +90,11 @@ function typeForm(type = null) {
     <form id="type-form" data-type-id="${type?.id ?? ""}">
       <div class="mb-3">
         <label class="form-label fs-7" for="tf-name">Nome</label>
-        <input class="form-control" id="tf-name" name="name" required
-               value="${escapeHtml(type?.name ?? "")}" placeholder="Caixa">
+        <div class="input-group">
+          <input class="form-control" id="tf-name" name="name" required
+                 value="${escapeHtml(type?.name ?? "")}" placeholder="Caixa">
+          ${fieldIcon("fa-solid fa-tag")}
+        </div>
         <p class="help mb-0">
           A família da peça. A forma vai no nome da peça — "Caixa rectangular".
         </p>
@@ -106,10 +109,13 @@ function typeForm(type = null) {
 
       <div>
         <label class="form-label fs-7" for="tf-icon">Ícone</label>
-        <select class="form-select" id="tf-icon" name="icon">
-          <option value="">Adivinhar pelo nome</option>
-          ${iconOptions}
-        </select>
+        <div class="input-group">
+          <select class="form-select" id="tf-icon" name="icon">
+            <option value="">Adivinhar pelo nome</option>
+            ${iconOptions}
+          </select>
+          ${fieldIcon("fa-solid fa-icons")}
+        </div>
         <p class="help mb-0">
           Desenhado nas peças sem fotografia. <span id="tf-icon-preview"></span>
         </p>

@@ -1,4 +1,4 @@
-import { escapeHtml } from "../../core/html.js";
+import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { confirmDialog, formDialog, modal, submitting } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import { ColorSet } from "../../store/color-set.js";
@@ -81,8 +81,11 @@ function setForm(set = null) {
     <form id="set-form" data-set-id="${set?.id ?? ""}">
       <div class="mb-3">
         <label class="form-label fs-7" for="sf-name">Nome</label>
-        <input class="form-control" id="sf-name" name="name" required
-               value="${escapeHtml(set?.name ?? "")}" placeholder="Branco e Dourado">
+        <div class="input-group">
+          <input class="form-control" id="sf-name" name="name" required
+                 value="${escapeHtml(set?.name ?? "")}" placeholder="Branco e Dourado">
+          ${fieldIcon("fa-solid fa-tag")}
+        </div>
       </div>
 
       <div class="mb-3">
@@ -97,10 +100,13 @@ function setForm(set = null) {
 
       <div class="mb-3">
         <label class="form-label fs-7" for="sf-collection">Colecção</label>
-        <select class="form-select" id="sf-collection" name="collection_id">
-          <option value="">Sem colecção</option>
-          ${options}
-        </select>
+        <div class="input-group">
+          <select class="form-select" id="sf-collection" name="collection_id">
+            <option value="">Sem colecção</option>
+            ${options}
+          </select>
+          ${fieldIcon("fa-solid fa-layer-group")}
+        </div>
       </div>
 
       <div>
@@ -265,7 +271,10 @@ function openColorForm(color) {
           <form id="color-edit-form">
             <div class="mb-3">
               <label class="form-label fs-7" for="cf-name">Nome</label>
-              <input class="form-control" id="cf-name" required value="${escapeHtml(color.name)}">
+              <div class="input-group">
+                <input class="form-control" id="cf-name" required value="${escapeHtml(color.name)}">
+                ${fieldIcon("fa-solid fa-tag")}
+              </div>
             </div>
             <div>
               <label class="form-label fs-7" for="cf-hex">Cor</label>

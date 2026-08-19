@@ -1,5 +1,6 @@
 import { API } from "../core/api.js";
 import { Notify } from "../core/notify.js";
+import { fieldIcon } from "../core/html.js";
 
 const submitBtn = document.querySelector("#submitBtn");
 const usernameField = document.querySelector("#usernameField");
@@ -154,12 +155,14 @@ function appendInput({ icon, type, id, name, placeholder }) {
     if (document.querySelector(`#${id}`)) return;
 
     const field = document.createElement("div");
-    field.className = "auth-field mb-3";
+    field.className = "mb-3";
 
     field.innerHTML = `
-        <input type="${type}" class="form-control form-control-lg" placeholder="${placeholder}"
-               name="${name}" id="${id}" required>
-        <span class="field-icon"><i class="fa-solid ${icon}"></i></span>
+        <div class="input-group input-group-lg">
+            <input type="${type}" class="form-control form-control-lg" placeholder="${placeholder}"
+                   name="${name}" id="${id}" required>
+            ${fieldIcon(`fa-solid ${icon}`)}
+        </div>
     `;
 
     // Insert above the row the submit button sits in.

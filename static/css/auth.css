@@ -68,23 +68,3 @@
         padding: 1.5rem 0;
     }
 }
-
-/* The glyph sits inside the field rather than in a bordered box beside it, which
-   is what an input-group would give. */
-.auth-field {
-    position: relative;
-}
-
-.auth-field .form-control {
-    padding-left: 2.5rem;
-}
-
-.auth-field .field-icon {
-    position: absolute;
-    top: 1.5rem;
-    left: .9rem;
-    transform: translateY(-50%);
-    color: var(--ccg-ink-faint);
-    font-size: .85rem;
-    pointer-events: none;
-}

@@ -10,11 +10,15 @@
 
 <div class="card dash-panel p-3 mb-3">
     <div class="row row-cols-2 row-cols-lg-5 g-2 align-items-end">
-        {{ filter_field('filter-q', 'Pesquisar', placeholder='Nome do produto…') }}
-        {{ filter_field('filter-type', 'Tipo', [('', 'Todos')]) }}
-        {{ filter_field('filter-collection', 'Colecção', [('', 'Todas')]) }}
+        {{ filter_field('filter-q', 'Pesquisar', placeholder='Nome do produto…',
+                icon='fa-solid fa-magnifying-glass') }}
+        {{ filter_field('filter-type', 'Tipo', [('', 'Todos')],
+                icon='fa-solid fa-shapes') }}
+        {{ filter_field('filter-collection', 'Colecção', [('', 'Todas')],
+                icon='fa-solid fa-layer-group') }}
         {{ filter_field('filter-photos', 'Fotografias', [
-            ('', 'Todas'), ('none', 'Sem fotografia'), ('some', 'Com fotografia')]) }}
+            ('', 'Todas'), ('none', 'Sem fotografia'), ('some', 'Com fotografia')],
+            icon='fa-solid fa-image') }}
 
         <div class="col d-flex align-items-end">
             <button class="btn btn-sm btn-ghost" id="filter-clear" hidden>

@@ -1,5 +1,5 @@
 import { API, request } from "../../core/api.js";
-import { escapeHtml } from "../../core/html.js";
+import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { reference, typeOptions } from "./reference.js";
 
 const option = (value, label, selected) =>
@@ -28,16 +28,22 @@ export async function productForm(product = null) {
       <div data-step="identity">
         <div class="mb-3">
           <label class="form-label fs-7" for="pf-name">Nome</label>
-          <input class="form-control" id="pf-name" name="name" required
-                 value="${escapeHtml(product?.name ?? "")}" placeholder="Caixa Redonda Filigrana">
+          <div class="input-group">
+            <input class="form-control" id="pf-name" name="name" required
+                   value="${escapeHtml(product?.name ?? "")}" placeholder="Caixa Redonda Filigrana">
+            ${fieldIcon("fa-solid fa-tag")}
+          </div>
         </div>
 
         <div class="mb-3">
           <label class="form-label fs-7" for="pf-type">Tipo</label>
-          <select class="form-select" id="pf-type" name="type_id" required>
-            <option value="">Escolher…</option>
-            ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
-          </select>
+          <div class="input-group">
+            <select class="form-select" id="pf-type" name="type_id" required>
+              <option value="">Escolher…</option>
+              ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
+            </select>
+            ${fieldIcon("fa-solid fa-shapes")}
+          </div>
           <p class="help mb-0">A família da peça — Caixa, Moldura, Coração.</p>
         </div>
       </div>
@@ -52,17 +58,23 @@ export async function productForm(product = null) {
         <div class="row g-3 mb-3">
           <div class="col">
             <label class="form-label fs-7" for="pf-material">Material</label>
-            <select class="form-select" id="pf-material" name="material_id">
-              <option value="">—</option>
-              ${materials.map((m) => option(m.id, m.name, product?.material?.id)).join("")}
-            </select>
+            <div class="input-group">
+              <select class="form-select" id="pf-material" name="material_id">
+                <option value="">—</option>
+                ${materials.map((m) => option(m.id, m.name, product?.material?.id)).join("")}
+              </select>
+              ${fieldIcon("fa-solid fa-cube")}
+            </div>
           </div>
           <div class="col">
             <label class="form-label fs-7" for="pf-collection">Colecção</label>
-            <select class="form-select" id="pf-collection" name="collection_id">
-              <option value="">—</option>
-              ${collections.map((c) => option(c.id, c.name, product?.collection?.id)).join("")}
-            </select>
+            <div class="input-group">
+              <select class="form-select" id="pf-collection" name="collection_id">
+                <option value="">—</option>
+                ${collections.map((c) => option(c.id, c.name, product?.collection?.id)).join("")}
+              </select>
+              ${fieldIcon("fa-solid fa-layer-group")}
+            </div>
           </div>
         </div>
 

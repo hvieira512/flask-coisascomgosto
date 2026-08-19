@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% from 'components/forms.html' import field_icon %}
+
 {% block title %}Entrar · Coisas com Gosto{% endblock %}
 
 {% block styles %}
@@ -24,10 +26,12 @@
                     <p class="text-body-secondary">Qual é o teu nome?</p>
                 </div>
 
-                <div class="auth-field mb-3">
-                    <input type="text" class="form-control form-control-lg" placeholder="Utilizador"
-                           name="username" id="usernameField" aria-label="Utilizador" required autofocus>
-                    <span class="field-icon"><i class="fa-solid fa-user"></i></span>
+                <div class="mb-3">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control form-control-lg" placeholder="Utilizador"
+                               name="username" id="usernameField" aria-label="Utilizador" required autofocus>
+                        {{ field_icon('fa-solid fa-user') }}
+                    </div>
                     <p id="usernameErrorField" class="help text-danger mb-0"></p>
                 </div>
 

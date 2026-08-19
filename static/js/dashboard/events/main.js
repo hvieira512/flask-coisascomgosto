@@ -2,7 +2,7 @@ import { API, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { stepDialog } from "../../core/steps.js";
-import { escapeHtml } from "../../core/html.js";
+import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { eventDates, stateChip } from "./dates.js";
 
 async function loadEvents() {
@@ -66,21 +66,30 @@ function eventForm(event = null) {
       <div data-step="when">
         <div class="mb-3">
           <label class="form-label fs-7" for="ef-name">Nome</label>
-          <input class="form-control" id="ef-name" name="name" required
-                 value="${escapeHtml(event?.name ?? "")}"
-                 placeholder="Feira de Artesanato da Romaria d'Agonia">
+          <div class="input-group">
+            <input class="form-control" id="ef-name" name="name" required
+                   value="${escapeHtml(event?.name ?? "")}"
+                   placeholder="Feira de Artesanato da Romaria d'Agonia">
+            ${fieldIcon("fa-solid fa-tag")}
+          </div>
         </div>
 
         <div class="row g-3">
           <div class="col">
             <label class="form-label fs-7" for="ef-starts">Início</label>
-            <input class="form-control" id="ef-starts" name="starts_on" type="date" required
-                   value="${escapeHtml(event?.starts_on ?? "")}">
+            <div class="input-group">
+              <input class="form-control" id="ef-starts" name="starts_on" type="date" required
+                     value="${escapeHtml(event?.starts_on ?? "")}">
+              ${fieldIcon("fa-solid fa-calendar-day")}
+            </div>
           </div>
           <div class="col">
             <label class="form-label fs-7" for="ef-ends">Fim</label>
-            <input class="form-control" id="ef-ends" name="ends_on" type="date"
-                   value="${escapeHtml(event?.ends_on ?? "")}">
+            <div class="input-group">
+              <input class="form-control" id="ef-ends" name="ends_on" type="date"
+                     value="${escapeHtml(event?.ends_on ?? "")}">
+              ${fieldIcon("fa-solid fa-calendar-check")}
+            </div>
             <p class="help mb-0">Deixe vazio se for de um só dia.</p>
           </div>
         </div>
@@ -89,9 +98,12 @@ function eventForm(event = null) {
       <div data-step="details">
         <div class="mb-3">
           <label class="form-label fs-7" for="ef-location">Local</label>
-          <input class="form-control" id="ef-location" name="location"
-                 value="${escapeHtml(event?.location ?? "")}"
-                 placeholder="Jardim Público, Viana do Castelo">
+          <div class="input-group">
+            <input class="form-control" id="ef-location" name="location"
+                   value="${escapeHtml(event?.location ?? "")}"
+                   placeholder="Jardim Público, Viana do Castelo">
+            ${fieldIcon("fa-solid fa-location-dot")}
+          </div>
         </div>
 
         <div class="mb-3">
@@ -102,8 +114,11 @@ function eventForm(event = null) {
 
         <div>
           <label class="form-label fs-7" for="ef-url">Ligação</label>
-          <input class="form-control" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
-                 placeholder="https://...">
+          <div class="input-group">
+            <input class="form-control" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
+                   placeholder="https://...">
+            ${fieldIcon("fa-solid fa-link")}
+          </div>
         </div>
       </div>
     </form>`;

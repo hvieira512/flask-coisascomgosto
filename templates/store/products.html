@@ -2,6 +2,8 @@
 
 {% block page_title %}Catálogo{% endblock %}
 
+{% from 'components/forms.html' import field_icon %}
+
 {% block content %}
 {# base.html renders <main> bare so the landing page can supply full-bleed
    sections; inner pages provide their own section/container. #}
@@ -21,8 +23,11 @@
 
             <div class="mb-4">
                 <label class="form-label fs-7" for="filter-search">Pesquisar</label>
-                <input id="filter-search" class="form-control form-control-sm" type="search"
-                       placeholder="Nome do produto…" autocomplete="off">
+                <div class="input-group">
+                    <input id="filter-search" class="form-control form-control-sm" type="search"
+                           placeholder="Nome do produto…" autocomplete="off">
+                    {{ field_icon('fa-solid fa-magnifying-glass') }}
+                </div>
             </div>
 
             {# Each group is populated from its API endpoint by products.js.
