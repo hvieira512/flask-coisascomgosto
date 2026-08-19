@@ -735,9 +735,20 @@ class TestTheCollectionFormIsSplit:
             cover = dialog.locator("#cof-cover .photo-slot").bounding_box()
 
             assert cover["y"] > name["y"] + name["height"], "still side by side at 390px"
-            assert not page.evaluate(
-                "() => document.documentElement.scrollWidth > window.innerWidth"
+
+            # Asked by trying to scroll rather than by comparing scrollWidth: the
+            # dashboard's shell holds a fixed offcanvas and a table in its own
+            # scrollport, and scrollWidth counts both — it reads 918 on a page that
+            # cannot move a pixel sideways.
+            moved = page.evaluate(
+                """() => {
+                    window.scrollTo(200, 0);
+                    const x = window.scrollX;
+                    window.scrollTo(0, 0);
+                    return x;
+                }"""
             )
+            assert moved == 0, "the page scrolls sideways with the dialog open"
         finally:
             context.close()
 

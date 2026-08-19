@@ -62,8 +62,10 @@ export const PhotoPicker = (function () {
         // what it is given, and the column it sits in does the constraining — the
         // collections form puts it beside the fields rather than under them.
         container.classList.add("photo-tray", "row", "g-2");
+        // Small slots: a tray is a row of thumbnails, and at three per line in a
+        // 700px dialog each one came out 230px wide and dwarfed the form.
         container.classList.add(...(multiple
-            ? ["row-cols-2", "row-cols-sm-3"]
+            ? ["row-cols-3", "row-cols-md-5"]
             : ["row-cols-1"]));
 
         function preview(item) {

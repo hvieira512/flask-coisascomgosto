@@ -430,6 +430,10 @@ html {
     min-width: 0;
     padding: .3rem .6rem;
     font-size: .75rem;
+    /* Its own, not inherited: the wizard's .variant-choice wraps the badge in a
+       button with line-height 0 — so the swatches showed and the set's name was
+       laid out with a zero-height line box, present but invisible. */
+    line-height: 1.4;
     border-radius: 999px;
     background-color: var(--cs-bg);
     border: 1px solid var(--cs-border);

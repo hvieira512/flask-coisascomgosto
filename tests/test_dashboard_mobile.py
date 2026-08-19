@@ -112,6 +112,29 @@ class TestTheNavbar:
         assert page.locator("#sidebar .nav-link.active").count() == 1
 
 
+class TestTheTable:
+    def test_the_first_row_is_not_behind_the_header(self, phone):
+        """The header is sticky on a desktop, where the page is the scrollport. At
+        this width the table's own wrapper is the scrollport, so sticky pinned the
+        header 52px down inside it — on top of the first piece in the catalogue.
+        The override lives after the rule it overrides: at equal specificity the
+        later declaration wins, and it lost silently the other way round."""
+        page, _ = phone
+        state = page.evaluate(
+            """() => {
+                const th = document.querySelector('.dash-table thead th');
+                const first = document.querySelector('#product-list tr');
+                return {
+                    position: getComputedStyle(th).position,
+                    headBottom: Math.round(th.getBoundingClientRect().bottom),
+                    firstTop: Math.round(first.getBoundingClientRect().top),
+                };
+            }"""
+        )
+        assert state["position"] == "static"
+        assert state["firstTop"] >= state["headBottom"] - 1, state
+
+
 class TestTheModalScrollsItsOwnBody:
     def test_a_tall_panel_scrolls_inside_the_dialog(self, phone):
         """The max-height was on the <dialog>, which capped nothing inside it: the
