@@ -880,6 +880,80 @@ class TestChoosingACollectionsColourSets:
         )
 
 
+class TestAPhotographBelongsToAColour:
+    """The Fotografias tab offered "Todas as cores (fallback)".
+
+    A photograph of a piece is a photograph of the piece in one of its colours. If
+    there is a photograph there is a colour, so the fallback was an invitation to
+    create something the shop cannot describe — and the storefront then had to caption
+    it to explain what the visitor was looking at.
+    """
+
+    @pytest.fixture()
+    def photos_tab(self, products_page, make_color, make_color_set):
+        color = make_color("Branco", hex="#FFFFFF")
+        make_color_set("Branco e Dourado", color_ids=[color["id"]])
+
+        page, errors = products_page
+        page.reload()
+        page.wait_for_selector("#new-product")
+        return page, errors
+
+    def _open_photos(self, page, colours=True):
+        """Create a piece, optionally with a colour, and land on its Fotografias tab."""
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+        if colours:
+            dialog.locator(".variant-choice").first.click()
+        dialog.locator("[data-step-next]").click()
+
+        edit = page.locator("#editProductModal")
+        edit.wait_for(state="visible")
+        return edit
+
+    def test_the_picker_offers_colours_and_no_fallback(self, photos_tab):
+        page, errors = photos_tab
+        edit = self._open_photos(page)
+
+        options = edit.locator("#image-variant option").all_text_contents()
+        assert options == ["Branco e Dourado"]
+        assert not any("Todas as cores" in option for option in options)
+        assert errors == []
+
+    def test_a_piece_with_no_colours_is_told_to_add_one_first(self, photos_tab):
+        """Rather than letting a photograph in with nothing to belong to."""
+        page, _ = photos_tab
+        edit = self._open_photos(page, colours=False)
+
+        assert edit.locator("#image-variant").is_disabled()
+        assert edit.locator("#add-image").is_disabled()
+        assert "separador Cores" in edit.locator('[data-panel="images"]').inner_text()
+
+    def test_the_helpers_refuse_a_photograph_with_no_colour(self, photos_tab):
+        """Belt as well as braces: the panel cannot ask for one, and the functions
+        behind it will not do it either."""
+        page, _ = photos_tab
+        self._open_photos(page)
+
+        refusals = page.evaluate(
+            """async () => {
+                const module = await import('/static/js/dashboard/products/images.js');
+                const out = [];
+                for (const call of [
+                    () => module.uploadImage(1, { file: new File(['x'], 'a.jpg') }),
+                    () => module.addImage(1, { url: '/static/img/logo.png' }),
+                ]) {
+                    try { await call(); out.push(null); }
+                    catch (error) { out.push(error.message); }
+                }
+                return out;
+            }"""
+        )
+        assert all(message and "cor" in message for message in refusals), refusals
+
+
 class TestConfirmRaisedFromInsideADialog:
     """Removing a colour asks "Remover esta cor?" while the edit dialog is open.
 

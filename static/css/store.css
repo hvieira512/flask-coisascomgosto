@@ -870,7 +870,11 @@ a.card:hover {
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    /* cover, not contain. The stage takes its height from the panel beside it and is
+       therefore not quite square, so a square photograph under `contain` left a 10px
+       band of paper down each side. Cropping 3% of a square photograph in a
+       97%-square frame is not visible; the bands were. */
+    object-fit: cover;
 }
 
 /* gallery.js hides the photograph with the attribute when a colour has none, and an

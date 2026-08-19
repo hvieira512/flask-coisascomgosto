@@ -15,8 +15,10 @@ export function allImages(product) {
 }
 
 /**
- * The photographs panel. An image with no variant is the product-wide fallback;
- * one pinned to a variant shows only for that colour set.
+ * The photographs panel. Every photograph belongs to one of the piece's colours: a
+ * photograph of a piece is a photograph of it in a colour, so there is no product-wide
+ * one to add. The rows can still show photographs that have none — the seeded ones do
+ * — and those read as something to deal with.
  */
 export function imagesPanel(product) {
     const images = allImages(product);
@@ -30,7 +32,13 @@ export function imagesPanel(product) {
                 <span class="is-size-7 mr-auto">
                   ${variant
                       ? ColorSet.badge(variant.color_set)
-                      : `<span class="tag is-light is-rounded">Todas as cores</span>`}
+                      // Cannot be made any more; the ones that exist predate that and
+                      // each needs pointing at a colour, so it reads as a job to do
+                      // rather than as a choice that was available.
+                      : `<span class="tag is-rounded chip is-attention"
+                               title="Esta fotografia não está associada a nenhuma cor">
+                           Sem cor
+                         </span>`}
                 </span>
                 <button class="button is-small is-ghost has-text-danger"
                         data-remove-image="${img.id}" title="Remover">
@@ -67,26 +75,41 @@ export function imagesPanel(product) {
       <div class="field has-addons">
         <div class="control is-expanded">
           <div class="select is-fullwidth is-small">
-            <select id="image-variant">
-              <option value="">Todas as cores (fallback)</option>
-              ${product.variants.map((v) =>
-                  `<option value="${v.id}">${escapeHtml(v.color_set.name)}</option>`).join("")}
+            <select id="image-variant"${product.variants.length ? "" : " disabled"}>
+              ${product.variants.length
+                  ? product.variants.map((v) =>
+                        `<option value="${v.id}">${escapeHtml(v.color_set.name)}</option>`).join("")
+                  : `<option value="">Nenhuma cor associada</option>`}
             </select>
           </div>
         </div>
         <div class="control">
-          <button class="button is-small is-dark" id="add-image">Adicionar</button>
+          <button class="button is-small is-dark" id="add-image"${
+              product.variants.length ? "" : " disabled"}>Adicionar</button>
         </div>
-      </div>`;
+      </div>
+
+      ${product.variants.length
+          ? `<p class="help">Cada fotografia é de uma cor. Escolha qual.</p>`
+          : `<p class="help has-text-weight-medium">
+               Associe primeiro uma cor à peça, no separador Cores: uma fotografia é
+               sempre de uma cor.
+             </p>`}`;
 }
 
-/** Uploads the chosen file and attaches it in one request. */
+/**
+ * Uploads the chosen file and attaches it in one request.
+ *
+ * A colour is required. The API still accepts a photograph without one — which is how
+ * the seeded photographs came to have none — but nothing here creates another.
+ */
 export async function uploadImage(productId, { file, variantId, alt }) {
     if (!file) throw new Error("Escolha uma fotografia.");
+    if (!variantId) throw new Error("Escolha a cor a que a fotografia pertence.");
 
     const body = new FormData();
     body.append("file", file);
-    if (variantId) body.append("variant_id", variantId);
+    body.append("variant_id", variantId);
     if (alt) body.append("alt", alt);
 
     await request(API.products.uploadImage(productId), {
@@ -98,9 +121,9 @@ export async function uploadImage(productId, { file, variantId, alt }) {
 
 export async function addImage(productId, { url, variantId, alt }) {
     if (!url) throw new Error("Indique o caminho da fotografia.");
+    if (!variantId) throw new Error("Escolha a cor a que a fotografia pertence.");
 
-    const payload = { url, alt: alt || null };
-    if (variantId) payload.variant_id = Number(variantId);
+    const payload = { url, alt: alt || null, variant_id: Number(variantId) };
 
     await request(API.products.images(productId), {
         method: "POST",

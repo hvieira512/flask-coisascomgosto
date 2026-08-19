@@ -310,6 +310,25 @@ class TestTheTwoHalvesEndTogether:
         )
         assert abs(ends[0] - ends[1]) <= 2, f"the halves end {ends} apart"
 
+    def test_no_paper_shows_around_the_photograph(self, page):
+        """The stage is not quite square, since its height comes from the panel. Under
+        `contain` a square photograph left a 10px band of paper down each side."""
+        view, _ = page
+        edges = view.evaluate(
+            """() => {
+                const stage = document.getElementById('gallery-stage');
+                const box = stage.getBoundingClientRect();
+                const points = [
+                    [box.x + 6, box.y + box.height / 2],
+                    [box.right - 6, box.y + box.height / 2],
+                    [box.x + box.width / 2, box.y + 6],
+                    [box.x + box.width / 2, box.bottom - 6],
+                ];
+                return points.map(([x, y]) => document.elementFromPoint(x, y)?.id);
+            }"""
+        )
+        assert edges == ["stage-image"] * 4, f"paper showing at the edges: {edges}"
+
     def test_the_photograph_is_not_what_decides_the_height(self, page):
         """An <img> at height: 100% falls back to its own aspect ratio while the height
         is being worked out, so in flow it went on setting the row's height."""
