@@ -26,11 +26,6 @@
             <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
             <span>CoisasComGosto</span>
         </a>
-
-        {# Opens the sidebar as an overlay on small screens. #}
-        <button class="button is-white dash-burger" id="sidebarToggle" aria-label="Abrir menu">
-            <span class="icon"><i class="fa-solid fa-bars"></i></span>
-        </button>
     </div>
 
     <div class="navbar-menu is-active dash-navbar-menu">
@@ -38,7 +33,7 @@
             <div class="navbar-item has-dropdown" data-dropdown>
                 <button class="button is-white" data-dropdown-trigger aria-haspopup="true" aria-expanded="false">
                     <span class="icon"><i class="fa-solid fa-user"></i></span>
-                    <span>{{ session["user"]["username"] }}</span>
+                    <span class="dash-user-name">{{ session["user"]["username"] }}</span>
                     <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
                 </button>
                 <div class="navbar-dropdown is-right">
@@ -50,6 +45,14 @@
             </div>
         </div>
     </div>
+
+    {# Opens the sidebar as an overlay on small screens. Outside .navbar-brand, where
+       Bulma puts a burger, precisely so it is the last thing in the bar and lands
+       against the right edge: inside the brand it could only ever be pushed to the
+       brand's own right edge, which is the middle of the bar. #}
+    <button class="button is-white dash-burger" id="sidebarToggle" aria-label="Abrir menu">
+        <span class="icon"><i class="fa-solid fa-bars"></i></span>
+    </button>
 </nav>
 
 <div class="is-flex is-align-items-flex-start">

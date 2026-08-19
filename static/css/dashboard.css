@@ -26,12 +26,24 @@
     min-height: 100vh;
 }
 
+/* One row at every width. Bulma's .navbar is only a flex row from 1024px up; below
+   that it is a block, so the brand and the menu stacked and the user's dropdown was
+   drawn *under* the 52px bar rather than inside it. */
 .dash-navbar {
+    display: flex;
+    align-items: stretch;
     border-bottom: 1px solid var(--dash-border);
     background: var(--ccg-surface);
     /* The 2rem logo pushed it to 53px, one pixel past what Bulma pads for. */
     min-height: var(--dash-navbar-height);
     height: var(--dash-navbar-height);
+}
+
+/* The brand takes the space, which puts everything after it against the right edge. */
+.dash-navbar .navbar-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: stretch;
 }
 
 .dash-logo {
@@ -42,14 +54,61 @@
 }
 
 /* Bulma hides .navbar-menu below 1024px; the dashboard needs its controls at
-   every width, so it is forced visible and laid out horizontally. */
+   every width, so it is forced visible and laid out horizontally. flex-grow is
+   deliberately not set — the brand takes the slack, and growing this too made the
+   dropdown's anchor a full-width box. */
 .dash-navbar-menu {
     display: flex;
-    flex-grow: 1;
+    flex: 0 0 auto;
+    align-items: stretch;
     justify-content: flex-end;
     box-shadow: none;
     padding: 0;
     background: transparent;
+}
+
+/* Bulma gives a fixed navbar's menu `overflow: auto` and a max-height, so its stacked
+   mobile menu can scroll. That clips anything hanging out of it: the user's dropdown
+   was drawn and then cut away entirely — display: block, opacity 1, a 192x61 box, and
+   absent from elementsFromPoint.
+   Written with Bulma's own specificity (.navbar.is-fixed-top .navbar-menu is three
+   classes); a single .dash-navbar-menu lost to it and the dropdown stayed invisible. */
+.navbar.is-fixed-top .dash-navbar-menu {
+    overflow: visible;
+    max-height: none;
+}
+
+/* Full height, so the dropdown's `top: 100%` means the bottom of the bar. Both of
+   these are content-height boxes otherwise, and the menu hung from 40px up. */
+.dash-navbar-menu .navbar-end {
+    align-items: stretch;
+    height: 100%;
+}
+
+/* Bulma drops the dropdown's absolute positioning below 1024px, where its navbar
+   becomes a stacked block and a "dropdown" is just more of the list. This one is a
+   dropdown at every width, so it keeps hanging off its trigger. */
+.dash-navbar .navbar-item.has-dropdown {
+    display: flex;
+    align-items: center;
+    /* static, deliberately: the containing block is then the fixed bar, so the
+       dropdown's `top: 100%` is the bar's own bottom edge. Anchored to the item — a
+       40px box centred in a 52px bar — it hung from 6px above the border and crossed
+       it. */
+    position: static;
+}
+
+.dash-navbar .navbar-dropdown {
+    position: absolute;
+    top: 100%;
+    right: .5rem;
+    left: auto;
+    min-width: 12rem;
+    border-top: 1px solid var(--dash-border);
+    box-shadow: 0 8px 24px rgba(22, 39, 69, .12);
+    background: var(--ccg-surface);
+    border-radius: 0 0 var(--radius) var(--radius);
+    z-index: 45;
 }
 
 /* Dropdowns are opened by toggling .is-active in menus.js. */
@@ -145,8 +204,17 @@
 }
 
 @media screen and (max-width: 1023px) {
+    /* Last in the bar, against the right edge, which is where a thumb expects it. */
     .dash-burger {
         display: inline-flex;
+        align-self: center;
+        margin-right: .5rem;
+    }
+
+    /* The username is the widest thing in the bar and the least useful part of it at
+       this width: the icon says whose menu this is, and the name is inside it. */
+    .dash-user-name {
+        display: none;
     }
 
     /* Sidebar slides in over the content instead of taking a column. */
@@ -567,7 +635,14 @@
     margin: auto;
 }
 
+/* The card is the height-constrained column, and its body is the part that scrolls.
+   The max-height was on the <dialog> alone, which capped nothing inside it: the
+   colours panel came out 1028px tall in a 732px dialog, spilled past the card, and the
+   page scrolled behind instead of the dialog's own content. */
 .dash-dialog .modal-card {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 3rem);
     background: var(--ccg-surface);
     border-radius: var(--radius-lg);
     /* Two shadows: a tight one to seat the card, a broad soft one for depth.
@@ -575,6 +650,26 @@
     box-shadow:
         0 1px 2px rgba(31, 56, 100, .08),
         0 24px 48px -12px rgba(31, 56, 100, .22);
+    overflow: hidden;
+}
+
+.dash-dialog .modal-card-body {
+    flex: 1 1 auto;
+    /* Without this the body's flex base is its content, so it never scrolls — it just
+       pushes past the cap, which is the bug above. */
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* The head and foot stay put while the body moves under them. */
+.dash-dialog .modal-card-head,
+.dash-dialog .modal-card-foot {
+    flex: none;
+}
+
+/* Nothing behind an open dialog should scroll. The top layer stops it being clicked,
+   not scrolled, so a wheel or a swipe over the backdrop moved the page underneath. */
+html:has(dialog[open]) {
     overflow: hidden;
 }
 
