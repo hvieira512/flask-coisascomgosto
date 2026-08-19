@@ -555,7 +555,9 @@ a.card:hover {
     gap: .1rem;
     padding: 0 0 .6rem;
     background: var(--ccg-surface);
-    border: 1px solid var(--ccg-line);
+    /* 2px in every state, so selecting one does not move anything. The width is
+       what the selected ring is made of — see .is-active. */
+    border: 2px solid var(--ccg-line);
     border-radius: var(--radius);
     cursor: pointer;
     text-align: left;
@@ -569,9 +571,14 @@ a.card:hover {
 
 /* The same inset outline the variant buttons use for "this one is chosen", so
    the two selected states in the shop read as one idea. */
+/* The border, and nothing else. This was an inset box-shadow over a 1px border,
+   copying the variant buttons on the product page — but an inset shadow paints
+   beneath content, and the cover fills the card absolutely. The ring came out 1px
+   thick over the photograph and 3px over the name, with a step where the two met
+   and a pale gap at each corner where the two radii disagreed. A border cannot be
+   painted over, and at a constant width it cannot shift the layout either. */
 .collection-card.is-active {
     border-color: var(--ccg-blue-500);
-    box-shadow: inset 0 0 0 2px var(--ccg-blue-500);
 }
 
 /* The frame decides the shape, not what is inside it. A cover is either a

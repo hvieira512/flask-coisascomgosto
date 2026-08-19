@@ -156,6 +156,93 @@ class TestTheRail:
         assert len(set(tops)) == 1, tops
 
 
+class TestTheSelectedRing:
+    """The ring around the chosen collection, measured in painted pixels.
+
+    It was built from a 1px border plus a 2px inset box-shadow, copying the
+    variant buttons on the product page. An inset shadow paints beneath content,
+    and the cover fills the card absolutely — so the ring came out 1px thick over
+    the photograph and 3px over the name, with a step where the two met. Computed
+    styles all looked correct; only the pixels showed it.
+    """
+
+    BLUE = (68, 114, 196)   # --ccg-blue-500
+
+    def _ring_thickness(self, image, x, y_range):
+        """How many of the pixels nearest an edge are ring-coloured.
+
+        Counted rather than walked from the very first pixel: the card's box lands
+        on a fraction of a device pixel, so an element screenshot carries a sliver
+        of the page behind it on one side and not the other.
+        """
+        ring = 0
+        for y in y_range:
+            pixel = image.getpixel((x, y))
+            distance = sum((a - b) ** 2 for a, b in zip(pixel, self.BLUE)) ** 0.5
+            if distance <= 70:      # room for antialiasing, not for another colour
+                ring += 1
+        return ring
+
+    def test_it_is_the_same_thickness_over_the_photo_as_over_the_name(
+        self, catalogue, tmp_path
+    ):
+        from PIL import Image
+
+        page, _, _ = catalogue
+        card(page, "Filigrana").click()
+        page.wait_for_function(
+            "() => document.querySelectorAll('#product-grid > *').length === 2"
+        )
+
+        # The storefront's loading overlay fades out over .45s and is then removed.
+        # Until it is gone every pixel is composited through it, which washed the
+        # ring out to (201, 212, 231) and the card's white body to (251, 250, 247).
+        page.wait_for_selector("#page-loader", state="detached")
+
+        # The border colour is transitioned, so a screenshot taken as soon as the
+        # grid arrives catches it partway — the ring came out (150, 175, 219),
+        # halfway between the resting colour and the accent.
+        page.wait_for_function(
+            """() => getComputedStyle(document.querySelector('.collection-card.is-active'))
+                       .borderTopColor === 'rgb(68, 114, 196)'"""
+        )
+
+        shot = tmp_path / "card.png"
+        page.locator(".collection-card.is-active").screenshot(path=shot)
+        image = Image.open(shot).convert("RGB")
+        width, height = image.size
+
+        middle = width // 2
+        top = self._ring_thickness(image, middle, range(0, 6))
+        bottom = self._ring_thickness(image, middle, range(height - 1, height - 7, -1))
+
+        edges = {
+            "top": [image.getpixel((middle, y)) for y in range(0, 6)],
+            "bottom": [image.getpixel((middle, height - 1 - y)) for y in range(0, 6)],
+        }
+        assert top >= 1, f"the ring is missing along the top edge: {edges}"
+        assert bottom >= 1, f"the ring is missing along the bottom edge: {edges}"
+        assert abs(top - bottom) <= 1, (
+            f"the ring is {top}px over the cover and {bottom}px over the name"
+        )
+
+    def test_choosing_a_collection_does_not_move_anything(self, catalogue):
+        """Whatever the ring is made of, it cannot change the card's size, or the
+        whole rail shifts under the cursor as you pick."""
+        page, _, _ = catalogue
+
+        before = page.locator(".collection-card").first.bounding_box()
+        card(page, "Filigrana").click()
+        page.wait_for_function(
+            "() => document.querySelectorAll('#product-grid > *').length === 2"
+        )
+        after = page.locator(".collection-card").first.bounding_box()
+
+        assert (round(before["width"]), round(before["height"])) == (
+            round(after["width"]), round(after["height"])
+        )
+
+
 class TestOnAPhone:
     @pytest.fixture()
     def phone(self, browser, live_server, client, make_collection, make_product):
