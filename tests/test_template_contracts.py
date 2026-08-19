@@ -115,8 +115,9 @@ class TestStorefrontHooks:
     def test_product_page_gallery_ids_exist(self, client, make_product):
         product = make_product("Caixa")
         html = client.get(f"/products/{product['id']}").get_data(as_text=True)
-        for element_id in ["gallery-stage", "stage-image", "thumb-rail",
-                           "stage-counter", "variant-options", "size-options"]:
+        for element_id in ["gallery-stage", "stage-image", "thumb-strip",
+                           "stage-note", "stage-counter", "variant-options",
+                           "size-options"]:
             assert f'id="{element_id}"' in html, element_id
 
 

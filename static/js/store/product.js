@@ -21,14 +21,21 @@ import { escapeHtml } from "../core/html.js";
     let gallery;
 
     /**
-     * A selected colour shows only its own photographs — never the product-level
-     * ones. Falling back to those made three of a piece's four colours show the
-     * same picture, so clicking a swatch looked broken rather than empty. With no
-     * colours at all, the product-level photographs are what there is.
+     * The chosen colour's photographs first, then the piece's own, each tagged with
+     * the group the strip labels it under.
+     *
+     * A colour used to show only its own, on the grounds that falling back to the
+     * piece's made three of four colours show the same picture and clicking a swatch
+     * look broken. That reasoning was about an unlabelled fallback: the piece's
+     * photographs are now a labelled group of their own, and the stage says
+     * "Fotografia da peça" when it is showing one — so they are reachable instead of
+     * invisible, which is what most of the catalogue's photographs were.
      */
     function imagesFor(product, variant) {
-        if (variant) return variant.images || [];
-        return product.images || [];
+        const tag = (list, group) => (list || []).map((image) => ({ ...image, group }));
+
+        if (!variant) return tag(product.images, "piece");
+        return [...tag(variant.images, "colour"), ...tag(product.images, "piece")];
     }
 
     /** The specification list: the facts a buyer asks about. */

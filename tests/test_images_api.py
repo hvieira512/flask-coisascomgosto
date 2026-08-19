@@ -252,5 +252,5 @@ class TestStorefrontPages:
 
         html = response.get_data(as_text=True)
         assert f'data-product-id="{product["id"]}"' in html
-        assert 'id="thumb-rail"' in html
+        assert 'id="thumb-strip"' in html
         assert 'id="gallery-stage"' in html

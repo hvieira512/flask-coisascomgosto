@@ -739,77 +739,71 @@ a.card:hover {
     text-align: right;
 }
 
-:root {
-    /* The stage's longest side. Product photographs are shot square, so a wide
-       stage letterboxed every one of them — 757x440 painted a 438px picture
-       between two 160px bands of paper. The stage is square and capped instead,
-       and 620px is what the information panel beside it runs to. */
-    --gallery-height: 620px;
-}
+/* The stage is square, because product photographs are shot square: a wide stage
+   letterboxed every one of them, painting a 438px picture between two 160px bands of
+   paper. Its size is its column's width now that nothing shares the row — the
+   --gallery-height cap went with the rail that made it necessary. */
 
-/* The stage track is capped rather than 1fr: it is square, so an unbounded
-   track would make it as tall as the column is wide. */
+/* Stage above, thumbnails below. It was a two-column grid with a 72px rail beside
+   the stage, which cost the photograph that width at every screen size and gave a
+   phone a layout it had no room for. */
 .gallery {
-    display: grid;
-    grid-template-columns: 72px minmax(0, var(--gallery-height));
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+/* One row, scrolling sideways when there are more thumbnails than fit. The groups
+   sit side by side — the chosen colour's photographs, then the piece's own — so a
+   mixed set reads as two labelled runs rather than one undifferentiated row. */
+.thumb-strip {
+    display: flex;
+    align-items: flex-end;
     gap: 1rem;
-    align-items: start;
-    /* Declares the query container the rail's cap is measured against. */
-    container-type: inline-size;
-}
-
-/* Set by gallery.js when there is nothing to scroll through: a hidden rail
-   leaves column 1 empty, so the stage would drop into the narrow track. */
-.gallery--no-rail {
-    grid-template-columns: minmax(0, var(--gallery-height));
-}
-
-/* `display: flex` outranks the [hidden] attribute's default display:none. */
-.gallery-rail[hidden] {
-    display: none;
-}
-
-/* Capped, not fixed: a rail of two thumbnails should not draw a 620px column
-   beside a stage it does not fill.
-
-   The cap is the stage's own height, which is its width — the gallery's width
-   less the rail and the gap — because the stage is square. Percentages here
-   would resolve against the grid row the rail is itself sizing, so this is
-   measured in cqw against .gallery. Without it a product with ten photographs
-   hung its rail 68px below the stage. */
-.gallery-rail {
-    display: flex;
-    flex-direction: column;
-    gap: .35rem;
-    max-height: min(var(--gallery-height), calc(100cqw - 88px));
-}
-
-.rail-track {
-    flex: 1 1 auto;
-    /* Without this the track's flex base is its content, so it never scrolls
-       inside the capped rail — it just pushes past the cap. */
-    min-height: 0;
-    overflow-y: auto;
+    overflow-x: auto;
     scroll-behavior: smooth;
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
     scrollbar-width: none;
+    /* Room for the focus ring, which a clipping scrollport would cut off. */
+    padding-bottom: .2rem;
 }
 
-.rail-track::-webkit-scrollbar {
+.thumb-strip::-webkit-scrollbar {
     display: none;
 }
 
-.rail-track li {
+.thumb-strip[hidden] {
+    display: none;
+}
+
+.strip-group {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+}
+
+/* A group is only labelled when there is another group to tell it from. */
+.strip-label {
+    font-size: .62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ccg-ink-faint);
+}
+
+.strip-track {
+    display: flex;
+    gap: .5rem;
+}
+
+.strip-track li {
     flex: 0 0 auto;
 }
 
-.rail-thumb {
+.strip-thumb {
     width: 72px;
     height: 72px;
     padding: 0;
-    border: 1px solid var(--bulma-border);
+    border: 2px solid var(--bulma-border);
     border-radius: var(--bulma-radius);
     background: var(--ccg-paper-deep);
     cursor: pointer;
@@ -819,41 +813,27 @@ a.card:hover {
     opacity: .75;
 }
 
-.rail-thumb img {
+.strip-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
 
-.rail-thumb:hover {
+.strip-thumb:hover {
     opacity: 1;
 }
 
-.rail-thumb.is-active {
+/* 2px in both states, so the active one does not resize its neighbours. */
+.strip-thumb.is-active {
     border-color: var(--ccg-blue-500);
     opacity: 1;
 }
 
-.rail-scroll {
-    border: 1px solid var(--bulma-border);
-    border-radius: var(--bulma-radius);
-    background: var(--ccg-surface);
-    cursor: pointer;
-    padding: .15rem 0;
-    font-size: .7rem;
-    color: var(--ccg-ink-faint);
-    line-height: 1;
-}
-
-.rail-scroll:hover {
-    background: var(--ccg-blue-50);
-    color: var(--ccg-blue-700);
-}
-
-.rail-scroll[disabled] {
-    opacity: .35;
-    cursor: default;
+@media (prefers-reduced-motion: reduce) {
+    .strip-thumb {
+        transition: none;
+    }
 }
 
 .gallery-stage {
@@ -911,15 +891,32 @@ a.card:hover {
     right: .75rem;
 }
 
-.stage-counter {
+.stage-counter,
+.stage-note {
     position: absolute;
-    right: .75rem;
     bottom: .75rem;
     background: rgba(255, 255, 255, .92);
     border-radius: 999px;
     padding: .1rem .6rem;
     font-size: .7rem;
     color: var(--ccg-ink-soft);
+}
+
+.stage-counter {
+    right: .75rem;
+}
+
+/* Opposite the counter: this photograph is of the piece, not of the colour chosen.
+   Said on the photograph itself, because the strip's label is only visible to
+   someone who looks down at the strip. */
+.stage-note {
+    left: .75rem;
+    color: var(--ccg-blue-800);
+    font-weight: 600;
+}
+
+.stage-note[hidden] {
+    display: none;
 }
 
 /* Colour and shape come from .color-set-badge; this adds only what makes it a
@@ -1015,20 +1012,15 @@ a.card:hover {
 }
 
 @media screen and (max-width: 768px) {
-    .gallery {
-        grid-template-columns: 1fr;
-    }
+    /* The strip is a row at every width now, so nothing has to be rearranged here:
+       the rules that turned the vertical rail into one are gone with it. */
 
-    .gallery-rail {
-        order: 2;
-        flex-direction: row;
-        height: auto;
-    }
-
-    .rail-track {
-        flex-direction: row;
-        overflow-x: auto;
-        overflow-y: hidden;
+    /* is-variable is-8 gives the columns a 2rem gap, which Bulma implements as a 2rem
+       negative margin on each side — more than the container's padding can absorb, so
+       the product page scrolled 8px sideways on a phone. The columns are stacked at
+       this width, so the horizontal gap is buying nothing. */
+    #product-detail.is-variable {
+        --bulma-column-gap: .75rem;
     }
 
     /* No hover on touch, so the arrows stay visible. */

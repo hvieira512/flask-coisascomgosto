@@ -24,17 +24,15 @@
 
 <div id="product-detail" class="columns is-variable is-8" data-product-id="{{ product_id }}">
 
-    {# ---------------- Gallery: vertical thumbnail rail + previewer -------- #}
+    {# ---------------- Gallery: previewer + a strip of thumbnails ---------- #}
     {# Even halves: the stage is square and capped, so a wider column only put
-       dead space between the photograph and the panel. #}
+       dead space between the photograph and the panel.
+
+       The thumbnails run underneath rather than in a column beside the stage: the
+       rail took 72px off the photograph's width, and a row is the same shape on a
+       phone as on a desktop, which a vertical rail is not. #}
     <div class="column is-6">
         <div class="gallery">
-            <div class="gallery-rail">
-                <button class="rail-scroll" data-rail-up type="button" aria-label="Imagens anteriores">▲</button>
-                <ul class="rail-track" id="thumb-rail"></ul>
-                <button class="rail-scroll" data-rail-down type="button" aria-label="Imagens seguintes">▼</button>
-            </div>
-
             <figure class="gallery-stage" id="gallery-stage">
                 <img id="stage-image" src="" alt="">
 
@@ -45,8 +43,13 @@
                     &#8250;
                 </button>
 
+                {# Says so when the photograph on the stage is of the piece rather
+                   than of the colour chosen. #}
+                <span class="stage-note" id="stage-note" hidden></span>
                 <span class="stage-counter" id="stage-counter"></span>
             </figure>
+
+            <div class="thumb-strip" id="thumb-strip"></div>
         </div>
 
         <p id="gallery-empty" class="notification is-light has-text-centered mt-3" hidden>
