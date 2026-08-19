@@ -373,6 +373,86 @@ class TestOnAPhone:
         ), "the catalogue must not scroll sideways"
 
 
+class TestACrowdedRail:
+    """Eight collections rather than the three the workshop has today.
+
+    The rail began as a wrapping grid, which was tidy at three and fell apart at
+    eight: a second, ragged row of three cards, 341px of rail, and the pieces pushed
+    off the fold — which is the one thing a rail is supposed to protect. Worse, once
+    it became a scrolling row it grew its own column instead of scrolling, because a
+    Bulma column is a flex item and a flex item will not go narrower than its
+    content, so the whole catalogue scrolled sideways.
+    """
+
+    NAMES = ["Filigrana", "Bordados", "Lenços", "Barra da Saia",
+             "Coração de Viana", "Presépios", "Natal", "Casamento"]
+
+    @pytest.fixture()
+    def crowded(self, browser, live_server, client, make_collection, make_product):
+        for name in self.NAMES:
+            collection = make_collection(name)
+            make_product(f"Peça de {name}", collection_id=collection["id"])
+
+        context = browser.new_context(viewport={"width": 1280, "height": 1000})
+        page = context.new_page()
+        page.set_default_timeout(5000)
+        page.goto(f"{live_server}/products")
+        page.wait_for_selector("#collection-strip .collection-card")
+        yield page
+        context.close()
+
+    def test_it_stays_one_row(self, crowded):
+        tops = crowded.eval_on_selector_all(
+            ".collection-card",
+            "els => els.map(el => Math.round(el.getBoundingClientRect().top))",
+        )
+        assert len(set(tops)) == 1, f"the rail wrapped onto {len(set(tops))} rows"
+
+    def test_the_rail_scrolls_and_the_catalogue_does_not(self, crowded):
+        state = crowded.evaluate(
+            """() => {
+                const strip = document.getElementById('collection-strip');
+                return {
+                    railScrolls: strip.scrollWidth > strip.clientWidth,
+                    stripFitsItsColumn:
+                        strip.clientWidth <= strip.closest('.column').clientWidth,
+                    pageScrolls:
+                        document.documentElement.scrollWidth > window.innerWidth,
+                };
+            }"""
+        )
+        assert state["railScrolls"], "nine cards must scroll, not squeeze"
+        assert state["stripFitsItsColumn"], "the rail grew its own column"
+        assert not state["pageScrolls"], "the catalogue must not scroll sideways"
+
+    def test_the_pieces_are_still_on_the_fold(self, crowded):
+        grid = crowded.locator("#product-grid").bounding_box()
+        assert grid["y"] < 500, f"the grid starts at {grid['y']}px"
+
+    def test_the_counts_line_up_even_when_a_name_wraps(self, crowded):
+        """"Coração de Viana" takes two lines in a crowded rail where "Natal" takes
+        one, so the count is pinned to the bottom of the card rather than following
+        the name."""
+        bottoms = crowded.eval_on_selector_all(
+            ".collection-card-detail",
+            "els => els.map(el => Math.round(el.getBoundingClientRect().bottom))",
+        )
+        assert len(set(bottoms)) == 1, bottoms
+
+    def test_a_few_collections_still_fill_the_width(self, catalogue):
+        """The other end of the same rule: three collections must not become three
+        narrow cards with a gap where the rest of the row would be."""
+        page, _, _ = catalogue
+        widths = page.eval_on_selector_all(
+            ".collection-card",
+            "els => els.map(el => Math.round(el.getBoundingClientRect().width))",
+        )
+        strip = page.locator("#collection-strip").bounding_box()
+
+        assert len(set(widths)) == 1, widths
+        assert sum(widths) > strip["width"] * 0.9, "the row left the column half empty"
+
+
 class TestWhenThereIsNothingToChoose:
     def test_one_collection_is_not_a_choice(
         self, browser, live_server, client, make_collection, make_product

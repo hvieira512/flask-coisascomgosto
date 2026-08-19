@@ -520,31 +520,39 @@ a.card:hover {
     margin: .45rem 0 .15rem 1.6rem;
 }
 
-/* The collection rail above the grid. auto-fit rather than a fixed count so the
-   four cards fill the column at any width, and a scroll-snapping row once the
-   column is too narrow to hold them — which is the behaviour every phone shop
-   has trained people to expect. */
+/* A Bulma column is a flex item, and a flex item's min-width is auto — it refuses
+   to be narrower than its content. So the collection rail, which is meant to scroll
+   inside this column, grew the column to 1320px instead and the whole catalogue
+   scrolled sideways. Any wide scrolling child would do the same, which is why this
+   sits on the column rather than on the rail. */
+.catalogue-main {
+    min-width: 0;
+}
+
+/* One row, always, whatever the count. `flex: 1 1` lets a handful of collections
+   grow to fill the column, and the min-width stops a crowd from shrinking instead
+   of scrolling — so the rail behaves like every phone shop's category row at every
+   width, and the pieces below it never move.
+
+   It was a wrapping grid, which was tidy at the three collections the workshop has
+   and fell apart at eight: a second, ragged row, 341px of rail, and the grid pushed
+   off the fold. The point of a rail rather than a gate is that the pieces are
+   already there. */
 .collection-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    display: flex;
     gap: .75rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* Room for the focus ring, which a clipping scrollport would cut off. */
+    padding-bottom: .35rem;
     list-style: none;
     margin: 0;
 }
 
-@media screen and (max-width: 768px) {
-    .collection-strip {
-        display: flex;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        /* Room for the focus ring, which a clipping scrollport would cut off. */
-        padding-bottom: .35rem;
-    }
-
-    .collection-strip > li {
-        flex: 0 0 8.5rem;
-        scroll-snap-align: start;
-    }
+.collection-strip > li {
+    flex: 1 1 8.5rem;
+    min-width: 8.5rem;
+    scroll-snap-align: start;
 }
 
 .collection-card {
@@ -619,7 +627,13 @@ a.card:hover {
     line-height: 1.25;
 }
 
+/* Pinned to the bottom of the card rather than following the name, because the
+   names are not all one line: "Coração de Viana" wraps in a crowded rail where
+   "Natal" does not, and the counts then sat at two different heights. Reserving a
+   second line everywhere would have cost 23px on every card for the sake of a name
+   the workshop may never have. */
 .collection-card-detail {
+    margin-top: auto;
     padding: 0 .6rem;
     font-size: .72rem;
     color: var(--ccg-ink-soft);
