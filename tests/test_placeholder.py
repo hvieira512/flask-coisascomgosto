@@ -153,16 +153,34 @@ def test_placeholder_tile_keeps_its_load_bearing_rules():
     rendering a bare icon in a corner — which no other test would notice. A
     comment-stripping regex deleted exactly this block once.
 
-    Only the two declarations that fail silently are pinned: without the flex
-    centring the icon sits top-left, and without container-type the circle's cqw
-    width resolves against the viewport instead of the tile.
+    Only the declarations that fail silently are pinned: without the flex centring
+    the icon sits top-left, and without container-type the circle's cqw width
+    resolves against the viewport instead of the tile.
     """
     import pathlib
 
-    css = pathlib.Path("static/css/store.css").read_text()
+    css = pathlib.Path("static/css/theme.css").read_text()
     block = css.split(".product-placeholder {")[1].split("}")[0]
 
     assert "display: flex" in block
     assert "align-items: center" in block
     assert "justify-content: center" in block
     assert "container-type: inline-size" in block
+
+
+def test_the_tile_is_styled_where_both_halves_of_the_product_load_it():
+    """theme.css, not store.css. The dashboard's product table draws this same tile
+    for a piece with no photograph and does not load store.css, so the rules there
+    left it a bare glyph on no background — the third time a shared component has
+    been styled in a stylesheet only the storefront loads."""
+    import pathlib
+    import re
+
+    store = pathlib.Path("static/css/store.css").read_text()
+    dashboard_base = pathlib.Path("templates/dashboard/base.html").read_text()
+
+    assert "css/store.css" not in dashboard_base
+    # The base rules, not the storefront's own `--stage` and `.product-card`
+    # refinements, which only the storefront needs.
+    for rule in (r"^\.product-placeholder \{", r"^\.product-placeholder-circle \{"):
+        assert not re.search(rule, store, re.M), rule

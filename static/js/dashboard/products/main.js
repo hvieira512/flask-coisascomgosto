@@ -17,6 +17,19 @@ const getProduct = (id) =>
     request(API.products.get(id), { fallback: "Produto não encontrado." });
 
 /**
+ * Where the colours and their photographs live, which is what is left to do for a
+ * piece that has just been created — and where to land again after adding or
+ * removing one, since the panel is rebuilt from the server each time.
+ *
+ * Bootstrap's own API rather than a click on the tab: the toggle is the button
+ * inside the <li>, and a synthetic click on the wrong element does nothing at all.
+ */
+const showVariantsTab = () =>
+    bootstrap.Tab.getOrCreateInstance(
+        document.querySelector('#edit-tabs [data-tab="variants"] .nav-link')
+    ).show();
+
+/**
  * Creating asks what the piece is, then the optional details, then the colours it
  * is offered in — and writes once at the end. A piece is on the storefront the
  * moment its row exists, so a half-answered form must not create one.
@@ -91,9 +104,7 @@ async function openCreate() {
         after: async (id) => {
             await mountFilters(fetchProducts).then(fetchProducts);
             await openEdit(id);
-            // Where the colours and their photographs now live, which is what is left
-            // to do for a piece that has just been created.
-            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+            showVariantsTab();
         },
     });
 }
@@ -104,20 +115,30 @@ async function openEdit(id) {
     // Two tabs, not three: every photograph belongs to a colour, so Cores holds the
     // colours and each colour's photographs together. Fotografias was the same
     // information asked for a second time, through a dropdown naming the colour.
+    // Bootstrap's tabs: data-bs-toggle does the switching, and the panes are a
+    // .tab-content, so there is no code here beyond building the two bodies.
     bodyOf("editProductModal").innerHTML = `
-        <ul class="nav nav-tabs mb-3" id="edit-tabs">
-          <li class="nav-item" data-tab="details">
-            <button class="nav-link active" type="button">Detalhes</button>
+        <ul class="nav nav-tabs mb-3" id="edit-tabs" role="tablist">
+          <li class="nav-item" role="presentation" data-tab="details">
+            <button class="nav-link active" data-bs-toggle="tab" type="button"
+                    data-bs-target="#edit-pane-details" role="tab"
+                    aria-controls="edit-pane-details" aria-selected="true">Detalhes</button>
           </li>
-          <li class="nav-item" data-tab="variants">
-            <button class="nav-link" type="button">Cores e fotografias</button>
+          <li class="nav-item" role="presentation" data-tab="variants">
+            <button class="nav-link" data-bs-toggle="tab" type="button"
+                    data-bs-target="#edit-pane-variants" role="tab"
+                    aria-controls="edit-pane-variants" aria-selected="false">Cores e fotografias</button>
           </li>
         </ul>
-        <div data-panel="details">${await productForm(product)}</div>
-        <div data-panel="variants" hidden>${await variantsPanel(product)}</div>`;
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="edit-pane-details" role="tabpanel"
+               data-panel="details">${await productForm(product)}</div>
+          <div class="tab-pane fade" id="edit-pane-variants" role="tabpanel"
+               data-panel="variants">${await variantsPanel(product)}</div>
+        </div>`;
 
     footOf("editProductModal").innerHTML = `
-        <button class="btn btn-outline-secondary" data-modal-close>Fechar</button>
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
         <button class="btn btn-dark" id="edit-submit">Guardar alterações</button>`;
 
     open("editProductModal");
@@ -127,30 +148,28 @@ async function openEdit(id) {
     document.getElementById("edit-submit").onclick = (event) =>
         submitting(event.currentTarget, async () => {
             await submitProductForm(modal("editProductModal"));
-            close("editProductModal");
+            await close("editProductModal");
             Notify.success("Produto actualizado.");
             await mountFilters(fetchProducts).then(fetchProducts);
         });
 }
 
+/**
+ * Only the details form has pending changes to save: colours and photographs are
+ * written the moment they are added or removed, so leaving "Guardar alterações" on
+ * that tab promised a save that never happened — and reported "Produto
+ * actualizado" for a form nobody had touched.
+ *
+ * Bootstrap announces the switch, so this listens rather than doing the switching.
+ */
 function wireEditTabs() {
     const root = modal("editProductModal");
-    const tabs = root.querySelector("#edit-tabs");
-    // Only the details form has pending changes to save: colours and
-    // photographs are written the moment they are added or removed, so leaving
-    // "Guardar alterações" on those tabs promised a save that never happened —
-    // and reported "Produto actualizado" for a form nobody had touched.
     const save = root.querySelector("#edit-submit");
 
-    tabs.querySelectorAll("li").forEach((tab) => {
-        tab.onclick = () => {
-            tabs.querySelectorAll(".nav-link").forEach((t) => t.classList.remove("active"));
-            tab.querySelector(".nav-link").classList.add("active");
-            root.querySelectorAll("[data-panel]").forEach((panel) => {
-                panel.hidden = panel.dataset.panel !== tab.dataset.tab;
-            });
-            save.hidden = tab.dataset.tab !== "details";
-        };
+    root.querySelectorAll('#edit-tabs [data-bs-toggle="tab"]').forEach((tab) => {
+        tab.addEventListener("shown.bs.tab", () => {
+            save.hidden = tab.closest("[data-tab]").dataset.tab !== "details";
+        });
     });
 }
 
@@ -168,7 +187,7 @@ function wireVariantPanel(product) {
                 await addVariant(product.id, document.getElementById("variant-picker").value);
                 Notify.success("Cor adicionada.");
                 await refreshEdit(product.id);
-                document.querySelector('#edit-tabs [data-tab="variants"]').click();
+                showVariantsTab();
             });
     }
 
@@ -194,7 +213,7 @@ function wireVariantPanel(product) {
                 await removeVariant(product.id, button.dataset.removeVariant);
                 Notify.success("Cor removida.");
                 await refreshEdit(product.id);
-                document.querySelector('#edit-tabs [data-tab="variants"]').click();
+                showVariantsTab();
             } catch (error) {
                 Notify.error(error.message);
             }
@@ -212,7 +231,7 @@ function wireVariantPanel(product) {
                 await removeImage(product.id, button.dataset.removeImage);
                 Notify.success("Fotografia removida.");
                 await refreshEdit(product.id);
-                document.querySelector('#edit-tabs [data-tab="variants"]').click();
+                showVariantsTab();
             } catch (error) {
                 Notify.error(error.message);
             }
@@ -232,7 +251,7 @@ function wireVariantPanel(product) {
             }
             Notify.success(files.length === 1 ? "Fotografia adicionada." : "Fotografias adicionadas.");
             await refreshEdit(product.id);
-            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+            showVariantsTab();
         },
         onRemove: async (image) => {
             const confirmed = await Notify.confirm("Remover esta fotografia?", {
@@ -245,7 +264,7 @@ function wireVariantPanel(product) {
             await removeImage(product.id, image.id);
             Notify.success("Fotografia removida.");
             await refreshEdit(product.id);
-            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+            showVariantsTab();
         },
     });
 }

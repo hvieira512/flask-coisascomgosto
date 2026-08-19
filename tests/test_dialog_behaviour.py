@@ -5,12 +5,12 @@ which catches a call that went missing but never a dialog that does not open. Th
 run the modules.
 
 A real browser rather than a DOM library, for two reasons. jsdom does not implement
-`HTMLDialogElement.showModal()`, which is the entire foundation of core/modal.js —
-the focus trap, Escape, the backdrop and returning focus all come from it. And it
-has no layout or cascade, so it cannot see the class of bug these dialogs actually
-hit: `back.hidden = true` once did nothing at all, because a class rule set its own
-`display` and outranked the attribute. `is_visible()` below is computed from real
-layout with the real stylesheets, so it fails on exactly that.
+enough of Bootstrap's environment to open a modal at all — the backdrop, the focus
+trap, Escape and the scroll lock all come from it. And it has no layout or cascade,
+so it cannot see the class of bug these dialogs actually hit: `back.hidden = true`
+once did nothing at all, because a class rule set its own `display` and outranked
+the attribute. `is_visible()` below is computed from real layout with the real
+stylesheets, so it fails on exactly that.
 
 Requires `playwright install chromium`; the whole module skips without it.
 """
@@ -68,10 +68,28 @@ def products_page(signed_in, live_server, make_product_type):
     return page, errors
 
 
+def _shown(page, modal_id):
+    """Wait until the modal is not merely visible but finished opening.
+
+    Bootstrap adds .show at the start of a 150ms fade and only moves focus into the
+    modal when it ends. Anything that acts on focus — or presses Escape, which
+    Bootstrap listens for on the modal element itself — has to wait for that, or it
+    is asking a question the modal cannot answer yet.
+    """
+    page.wait_for_function(
+        "(id) => document.getElementById(id).contains(document.activeElement)",
+        arg=modal_id,
+    )
+
+
 def _open_wizard(page):
     page.click("#new-product")
     dialog = page.locator("#newProductModal")
     dialog.wait_for(state="visible")
+    # Bootstrap slides the card in over 300ms, so `visible` is true while the
+    # footer buttons are still moving. Clicking a moving target is how one of these
+    # tests advanced twice on one click and created the product a step early.
+    _shown(page, "newProductModal")
     return dialog
 
 
@@ -164,14 +182,16 @@ class TestStepDialog:
         assert "Passo 1 de 3" in dialog.locator("[data-step-label]").text_content()
 
     def test_the_error_lands_in_front_of_the_dialog_not_behind_it(self, products_page):
-        """A showModal() dialog is in the top layer, which paints above every
-        z-index — so a toast appended to <body> came out behind its own backdrop.
-        The owner picked a type, left the name empty, was refused, and could not
-        see why.
+        """The owner picked a type, left the name empty, was refused, and could not
+        see why: the message was painting behind the dialog's own backdrop.
 
-        elementFromPoint is the only assertion that catches this: the toast is
-        present, sized and styled either way. The question is what a person
-        actually sees at those coordinates.
+        The stacking is a plain z-index race now — SweetAlert2's container is 1060
+        against the modal's 1055 — so the guard is that the ordering survives, and
+        that the reason is a number rather than an accident of source order.
+
+        elementFromPoint is the assertion that catches it: the toast is present,
+        sized and styled either way. The question is what a person actually sees at
+        those coordinates.
         """
         page, _ = products_page
         dialog = _open_wizard(page)
@@ -189,11 +209,16 @@ class TestStepDialog:
                 const box = toast.getBoundingClientRect();
                 const hit = document.elementFromPoint(
                     box.x + box.width / 2, box.y + box.height / 2);
-                return { covered: !toast.contains(hit), inTopLayer: !!toast.closest('dialog') };
+                const layer = (el) => Number(getComputedStyle(el).zIndex) || 0;
+                return {
+                    covered: !toast.contains(hit),
+                    toastLayer: layer(document.querySelector('.swal2-container')),
+                    modalLayer: layer(document.querySelector('.modal.show')),
+                };
             }"""
         )
         assert not on_top["covered"], "the message is painting behind the dialog"
-        assert on_top["inTopLayer"], "only the top layer can sit above a modal dialog"
+        assert on_top["toastLayer"] > on_top["modalLayer"], on_top
 
     def test_advancing_swaps_which_group_is_on_screen(self, products_page):
         page, _ = products_page
@@ -244,8 +269,15 @@ class TestStepDialog:
 
         dialog = _open_wizard(page)
         _fill_identity(dialog)
-        dialog.locator("[data-step-next]").click()
-        dialog.locator("[data-step-next]").click()
+        # Each advance is confirmed before the next click, so an overshoot shows up
+        # as this wait failing rather than as a product appearing out of nowhere.
+        for step in (2, 3):
+            dialog.locator("[data-step-next]").click()
+            page.wait_for_function(
+                "(n) => document.querySelector('[data-step-label]')"
+                ".textContent.includes(`Passo ${n} de 3`)",
+                arg=step,
+            )
         assert product_count() == 0, "reaching the last step must not create it"
 
         page.keyboard.press("Escape")
@@ -289,7 +321,7 @@ class TestStepDialog:
 
         edit = page.locator("#editProductModal")
         edit.wait_for(state="visible")
-        edit.locator('#edit-tabs [data-tab="details"]').click()
+        edit.locator('#edit-tabs [data-tab="details"] .nav-link').click()
 
         assert edit.locator('[name="name"]').is_visible()
         assert edit.locator('[name="description"]').is_visible()
@@ -1077,38 +1109,45 @@ class TestModalHelpers:
     def test_opening_starts_in_the_first_field_not_on_the_close_button(
         self, types_page
     ):
-        """The browser focuses the first focusable element, which is the ×  —
+        """Bootstrap focuses the modal box itself, so tabbing lands on the × next —
         leaving Enter wired to "close the dialog I have just opened"."""
         page, _ = types_page
         page.click("#new-type")
         page.locator("#newTypeModal").wait_for(state="visible")
+        _shown(page, "newTypeModal")
 
-        assert page.evaluate("document.activeElement.id") == "tf-name"
+        page.wait_for_function("() => document.activeElement.id === 'tf-name'")
 
     def test_escape_closes_it_and_the_markup_stays(self, types_page):
-        """Escape is the native dialog's, not ours. The dialog staying in the DOM
-        is why every form inside one has to be looked up through its own modal."""
+        """Escape is Bootstrap's, not ours. The modal staying in the DOM is why
+        every form inside one has to be looked up through its own modal."""
         page, _ = types_page
         page.click("#new-type")
         dialog = page.locator("#newTypeModal")
         dialog.wait_for(state="visible")
+        _shown(page, "newTypeModal")
 
         page.keyboard.press("Escape")
         dialog.wait_for(state="hidden")
         assert dialog.count() == 1
-        assert page.evaluate("document.getElementById('newTypeModal').open") is False
+        assert not page.evaluate(
+            "document.getElementById('newTypeModal').classList.contains('show')"
+        )
 
     def test_a_click_on_the_backdrop_still_closes_it(self, types_page):
-        """The other half of the rule that closing Cancelar broke: a click beside
-        the card is a dismissal, and ::backdrop has no click of its own."""
+        """A click beside the card is a dismissal. Bootstrap reads it off the .modal
+        element itself, which is the box the card floats in."""
         page, _ = types_page
         page.click("#new-type")
         dialog = page.locator("#newTypeModal")
         dialog.wait_for(state="visible")
+        _shown(page, "newTypeModal")
 
         page.mouse.click(8, 8)
         dialog.wait_for(state="hidden")
-        assert page.evaluate("document.getElementById('newTypeModal').open") is False
+        assert not page.evaluate(
+            "document.getElementById('newTypeModal').classList.contains('show')"
+        )
 
     def test_a_click_inside_the_card_does_not_close_it(self, types_page):
         page, _ = types_page
@@ -1188,14 +1227,18 @@ class TestModalHelpers:
         row.locator('[data-type-action="delete"]').click()
         confirm = page.locator("#deleteTypeModal")
         confirm.wait_for(state="visible")
+        # Bootstrap's hide() returns early while the show transition is still
+        # running, so a dismissal in those first 150ms is dropped.
+        _shown(page, "deleteTypeModal")
 
-        confirm.locator("[data-modal-close]").first.click()
+        confirm.locator('[data-bs-dismiss="modal"]').last.click()
         confirm.wait_for(state="hidden")
         body = page.request.get(f"{live_server}/api/product-types/").json()
         assert body["pagination"]["total"] == 1, "cancel must delete nothing"
 
         row.locator('[data-type-action="delete"]').click()
         confirm.wait_for(state="visible")
+        _shown(page, "deleteTypeModal")
         assert "btn-danger" in confirm.locator("[data-dialog-confirm]").get_attribute(
             "class"
         )

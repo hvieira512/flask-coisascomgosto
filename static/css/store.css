@@ -534,8 +534,10 @@ a.card:hover {
     gap: .75rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    /* Room for the focus ring, which a clipping scrollport would cut off. */
-    padding-bottom: .35rem;
+    /* Room for the focus ring, which a clipping scrollport would cut off. The
+       left is zeroed because a <ul> carries a 2rem indent of its own, which put
+       32px of paper before the first card. */
+    padding: 0 0 .35rem;
     list-style: none;
     margin: 0;
 }
@@ -657,34 +659,8 @@ a.card:hover {
     padding: .25em;
 }
 
-/* No-photo placeholder. --ph-color / --ph-wash / --ph-circle are set inline
-   per product by placeholder.js. */
-.product-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    background: var(--ph-wash, var(--ccg-blue-50));
-    /* Declares the query container, or the cqw sizing below silently resolves
-       against the viewport. */
-    container-type: inline-size;
-}
-
-.product-placeholder-circle {
-    width: 34%;
-    aspect-ratio: 1 / 1;
-    background: var(--ph-circle, var(--ccg-blue-100));
-    color: var(--ph-color, var(--ccg-blue-500));
-    font-size: clamp(1rem, 8cqw, 2.4rem);
-}
-
-.product-placeholder i {
-    font-size: 1.6em;
-    line-height: 1;
-}
-
-/* The gallery stage is not square, so let the placeholder fill it. */
+/* The gallery stage is not square, so let the placeholder fill it. The rest of
+   the placeholder lives in theme.css, which the dashboard loads too. */
 .product-placeholder--stage {
     height: 100%;
     aspect-ratio: auto;
@@ -806,6 +782,11 @@ a.card:hover {
 .strip-track {
     display: flex;
     gap: .5rem;
+    /* A <ul>'s own indent would push the first thumbnail 32px off the stage's
+       left edge. */
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .strip-track li {

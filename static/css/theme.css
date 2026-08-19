@@ -247,6 +247,38 @@ html {
     overflow-wrap: anywhere;
 }
 
+/* The no-photograph tile: the piece's type icon on a wash mixed from its own
+   name. --ph-color / --ph-wash / --ph-circle are set inline per product by
+   js/store/placeholder.js.
+
+   Here rather than in store.css because the dashboard's product table draws the
+   same tile for a piece with no photograph, and does not load store.css — so it
+   was rendering as a bare glyph with no wash and no circle behind it. */
+.product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--ph-wash, var(--ccg-blue-50));
+    /* Declares the query container, or the cqw sizing below silently resolves
+       against the viewport. */
+    container-type: inline-size;
+}
+
+.product-placeholder-circle {
+    width: 34%;
+    aspect-ratio: 1 / 1;
+    background: var(--ph-circle, var(--ccg-blue-100));
+    color: var(--ph-color, var(--ccg-blue-500));
+    font-size: clamp(1rem, 8cqw, 2.4rem);
+}
+
+.product-placeholder i {
+    font-size: 1.6em;
+    line-height: 1;
+}
+
 /* Used by the storefront's contact cards and by the dashboard's preview of
    them, so it cannot live in store.css — the dashboard does not load it. */
 .contact-icon {
@@ -428,12 +460,16 @@ html {
     /* Grid items refuse to shrink below their content without this, so a long
        name would spill out of its column. */
     min-width: 0;
-    padding: .3rem .6rem;
+    /* A pill two lines of its own text tall, which is what a tag is: padding-led
+       sizing made every badge 5px taller than the design and pushed the rows of
+       them apart. */
+    height: 2em;
+    padding: 0 .75em;
     font-size: .75rem;
     /* Its own, not inherited: the wizard's .variant-choice wraps the badge in a
        button with line-height 0 — so the swatches showed and the set's name was
        laid out with a zero-height line box, present but invisible. */
-    line-height: 1.4;
+    line-height: 1.5;
     border-radius: 999px;
     background-color: var(--cs-bg);
     border: 1px solid var(--cs-border);
@@ -474,6 +510,13 @@ html {
    points. Fixed columns keep every card's badges on the same lines — the row
    itself is `row row-cols-2`, set where it is rendered. */
 
+/* The cells hold nothing but a badge, and the body's 1.7 line-height wrapped each
+   one in a 27px line box around a 22px pill — five pixels of leading per row,
+   which is what made the two rows of badges taller than the card allowed for. */
+.swatch-row {
+    line-height: 1;
+}
+
 /* A column is ~134px and "Vermelho e Branco" wants 152px at the badge's normal
    size, so a card runs a tighter one. The product page, where there is no
    column to fit, keeps the larger badge. */
@@ -481,6 +524,10 @@ html {
     font-size: .68rem;
     gap: .3rem;
     justify-content: flex-start;
+    /* Fills its column. Left to its content each badge was as wide as its own
+       name, so the two columns never lined up and the row read as a set of
+       ragged gaps rather than a pair of cells. */
+    width: 100%;
 }
 
 /* Sits in the fourth cell when a card has more colour sets than fit, so it
@@ -488,7 +535,9 @@ html {
 .swatch-row .color-set-more {
     display: inline-flex;
     align-items: center;
-    padding: .3rem .6rem;
+    width: 100%;
+    height: 2em;
+    padding: 0 .75em;
     border-radius: 999px;
     font-size: .68rem;
     background: var(--ccg-paper-deep);

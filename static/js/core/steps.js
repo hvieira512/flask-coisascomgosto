@@ -28,7 +28,7 @@ export function stepDialog({
         ${body}`;
 
     footOf(id).innerHTML = `
-        <button class="btn btn-outline-secondary" data-modal-close>Cancelar</button>
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button class="btn btn-outline-secondary" data-step-back>Voltar</button>
         <button class="btn btn-dark" data-step-next></button>`;
 
@@ -80,7 +80,7 @@ export function stepDialog({
         return submitting(event.currentTarget, async () => {
             validate[current]?.(root);
             const result = await onFinish(root);
-            close(id);
+            await close(id);
             if (success) Notify.success(success);
             await after?.(result);
         });

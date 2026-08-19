@@ -143,7 +143,7 @@ class TestTheModalScrollsItsOwnBody:
         page, _ = phone
         page.evaluate("document.querySelector('#product-list tr[data-product-id]').click()")
         page.wait_for_selector("#editProductModal", state="visible")
-        page.evaluate("document.querySelector('#edit-tabs li[data-tab]:last-child').click()")
+        page.click('#edit-tabs li[data-tab="variants"] .nav-link')
 
         state = page.evaluate(
             """() => {
@@ -153,21 +153,36 @@ class TestTheModalScrollsItsOwnBody:
                     bodyWithinDialog:
                         body.getBoundingClientRect().height <= dialog.getBoundingClientRect().height,
                     bodyOverflow: getComputedStyle(body).overflowY,
-                    pageLocked: getComputedStyle(document.documentElement).overflow,
+                    // Bootstrap locks the scroll on <body>, not on <html>.
+                    pageLocked: getComputedStyle(document.body).overflow,
+                    modalOpen: document.body.classList.contains('modal-open'),
                 };
             }"""
         )
         assert state["bodyWithinDialog"], "the body is taller than the dialog holding it"
-        assert state["bodyOverflow"] == "auto"
+        assert state["bodyOverflow"] == "auto", (
+            "modal-dialog-scrollable is what makes the body the scroller"
+        )
+        assert state["modalOpen"]
         assert state["pageLocked"] == "hidden", "the page behind can still scroll"
 
     def test_the_page_scrolls_again_once_it_closes(self, phone):
         page, _ = phone
         page.evaluate("document.querySelector('#product-list tr[data-product-id]').click()")
         page.wait_for_selector("#editProductModal", state="visible")
+        # Escape is handled on the modal element, so it has to hold focus first.
+        page.wait_for_function(
+            "() => document.getElementById('editProductModal').contains(document.activeElement)"
+        )
         page.keyboard.press("Escape")
         page.wait_for_selector("#editProductModal", state="hidden")
+        # The lock lifts when the backdrop has finished fading, which is after the
+        # modal itself is already display: none.
+        page.wait_for_function(
+            "() => !document.body.classList.contains('modal-open')"
+        )
 
         assert page.evaluate(
-            "() => getComputedStyle(document.documentElement).overflow"
+            "() => getComputedStyle(document.body).overflow"
         ) != "hidden"
+        assert page.locator(".modal-backdrop").count() == 0

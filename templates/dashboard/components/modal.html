@@ -1,24 +1,24 @@
-{# A native <dialog> wearing Bootstrap's modal parts. Opened by the page's own
-   module through core/modal.js, which fills the body first; closed by the
-   backdrop, the × or any data-modal-close element, wired once in
-   static/js/dashboard/menus.js.
+{# A Bootstrap modal. The page's own module fills the body and the footer through
+   core/modal.js and opens it; everything else — the backdrop, the focus trap,
+   Escape, the scroll lock, the dismiss buttons and the fade — is Bootstrap's.
 
-   Native rather than Bootstrap's .modal div: the browser then supplies the top
-   layer, ::backdrop, the focus trap, Escape and returning focus to whatever
-   opened it. The top layer is also what keeps a confirmation raised from inside
-   a dialog in front of it rather than behind its own backdrop. #}
-<dialog class="dash-dialog" id="{{ modal_id }}" aria-labelledby="{{ modal_id }}-title">
-    <div class="modal-content">
-        <div class="modal-header">
-            <p class="modal-title" id="{{ modal_id }}-title">{{ modal_title }}</p>
-            <button class="btn-close" type="button" data-modal-close
-                    aria-label="Fechar"></button>
-        </div>
-        <div class="modal-body">
-            {{ modal_content | safe }}
-        </div>
-        <div class="modal-footer">
-            {{ modal_footer | safe }}
+   modal-lg because these are forms: the collections form puts the cover beside
+   the fields, and the product form's colour panel holds a tray per colour. #}
+<div class="modal fade dash-modal" id="{{ modal_id }}" tabindex="-1"
+     aria-labelledby="{{ modal_id }}-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <p class="modal-title" id="{{ modal_id }}-title">{{ modal_title }}</p>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                {{ modal_content | safe }}
+            </div>
+            <div class="modal-footer">
+                {{ modal_footer | safe }}
+            </div>
         </div>
     </div>
-</dialog>
+</div>

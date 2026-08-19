@@ -269,7 +269,7 @@ function openColorForm(color) {
             </div>
             <div>
               <label class="form-label fs-7" for="cf-hex">Cor</label>
-              <input class="form-control color-swatch-input" type="color" id="cf-hex"
+              <input class="form-control form-control-color" type="color" id="cf-hex"
                      value="${escapeHtml(color.hex || "#CCCCCC")}">
             </div>
           </form>`,

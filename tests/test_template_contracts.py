@@ -69,32 +69,28 @@ class TestDashboardHooks:
         html = client.get("/dashboard/products").get_data(as_text=True)
         assert 'id="product-list"' in html
 
-    def test_modals_close_through_our_own_attribute(self, client, make_user):
-        """Modals close via data-modal-close (menus.js) and open from
-        products/main.js, which needs the product before it can build a body — so
-        they are not driven by Bootstrap's modal data-api, which would try to open
-        an empty one."""
+    def test_modals_are_bootstraps(self, client, make_user):
+        """Bootstrap's modal supplies the backdrop, the focus trap, Escape, the
+        scroll lock and the fade; dismissing is its data-api. Opening is ours,
+        because a form needs the record it is editing before it is any use, so
+        there is no data-bs-toggle="modal" anywhere."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
 
-        assert "data-modal-close" in html
+        assert 'class="modal fade dash-modal"' in html
+        assert 'class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"' in html
+        assert 'data-bs-dismiss="modal"' in html
         assert 'data-bs-toggle="modal"' not in html
-        assert 'data-bs-dismiss="modal"' not in html
+        assert "<dialog" not in html
 
-    def test_modals_are_native_dialogs(self, client, make_user):
-        """A <dialog> is what supplies the top layer, the backdrop, the focus
-        trap, Escape and returning focus to whatever opened it — and the top layer
-        is what keeps a confirmation raised from inside a dialog in front of it.
-        A div-based .modal supplies none of that."""
+    def test_nothing_wires_the_chrome_by_hand(self, client, make_user):
+        """The sidebar, the user menu, the tabs and the modals are all Bootstrap's
+        data-api, which is why the page loads no chrome script of its own."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
 
-        assert '<dialog class="dash-dialog"' in html
-        # It wears Bootstrap's modal parts, but is not one of its modals: no
-        # .modal wrapper, and therefore no backdrop element of its own.
-        assert '<div class="modal ' not in html
-        assert '<div class="modal-backdrop' not in html
-        assert '<div class="modal-content">' in html
+        assert "js/dashboard/menus.js" not in html
+        assert not pathlib.Path("static/js/dashboard/menus.js").exists()
 
     def test_the_close_control_carries_an_accessible_name(self, client, make_user):
         """Bootstrap's .btn-close is a glyph and nothing else, so without the label

@@ -178,7 +178,7 @@ async function openDeleteType(id) {
               Mude essas peças para outro tipo primeiro, no separador Produtos.
             </p>`;
         footOf("deleteTypeModal").innerHTML = `
-            <button class="btn btn-outline-secondary" data-modal-close>Fechar</button>
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
             <a class="btn btn-dark" href="/dashboard/products">Ver as peças</a>`;
         open("deleteTypeModal");
         return;
