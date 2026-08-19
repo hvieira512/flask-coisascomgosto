@@ -190,11 +190,11 @@ class TestAColourWithNoPhotographsOfItsOwn:
 
 
 class TestAPiecePhotographedOncePerColour:
-    """The catalogue's commonest shape, and the one that showed nothing.
+    """Caixa Redonda Filigrana: four photographs, one on each of four colours.
 
-    Caixa Redonda Filigrana has four photographs, one on each of four colours. Since a
-    chosen colour had one photograph and there was nothing else to preview, the strip
-    hid itself, the arrows were disabled, and a visitor could reach one of the four.
+    Each colour shows its own and nothing else, so there is nothing to preview and the
+    strip stays away — the four are reached through the swatches, which is what the
+    swatches are for.
     """
 
     @pytest.fixture()
@@ -221,6 +221,14 @@ class TestAPiecePhotographedOncePerColour:
             )
             assert response.status_code == 201, response.get_json()
 
+        # A fifth colour nobody has photographed yet, and no photograph of the piece
+        # either: the only case left where the stage has nothing real to show.
+        unphotographed = make_color_set("Verde e Dourado", color_ids=[white["id"]])
+        client.post(
+            f"/api/products/{product['id']}/variants",
+            json={"color_set_id": unphotographed["id"]},
+        )
+
         return product, names
 
     @pytest.fixture()
@@ -232,76 +240,97 @@ class TestAPiecePhotographedOncePerColour:
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(f"{live_server}/products/{product['id']}")
-        page.wait_for_selector("#thumb-strip .strip-thumb")
+        # Not the strip: a colour with one photograph has nothing to preview.
+        page.wait_for_selector(".variant-option.is-active")
         yield page, names, errors
         context.close()
 
-    def test_all_four_photographs_are_offered(self, view):
+    def test_a_colour_nobody_has_photographed_shows_the_placeholder(self, view):
+        """And not the photograph of the colour looked at before it: [hidden] is
+        display: none, and an explicit display in a rule outranks it, so the previous
+        colour's photograph stayed on the stage behind the placeholder."""
+        page, _, _ = view
+        page.locator(".variant-option", has_text="Verde e Dourado").click()
+        page.wait_for_selector("#gallery-stage .product-placeholder")
+
+        assert page.locator("#stage-image").is_hidden()
+        assert page.locator("#stage-image").bounding_box() is None
+
+    def test_only_the_chosen_colours_photograph_is_offered(self, view):
+        """The gallery is about the colour chosen. It briefly offered every colour's
+        photographs in an "Outras cores" group, which turned the page into a tour of
+        the whole piece — another colour's photographs belong behind its swatch."""
         page, _, errors = view
 
-        assert page.locator(".strip-thumb").count() == 4
-        assert "1 / 4" in page.locator("#stage-counter").inner_text()
+        assert page.locator("#thumb-strip").is_hidden(), (
+            "one photograph for this colour, so there is nothing to preview"
+        )
+        assert page.locator("#stage-counter").is_hidden()
         assert errors == []
 
-    def test_the_other_colours_are_a_labelled_group(self, view):
+    def test_the_arrows_stay_within_the_colour(self, view):
         page, _, _ = view
-        assert [t.strip().lower() for t in page.locator(".strip-label").all_text_contents()] == [
-            "esta cor", "outras cores"
-        ]
+        assert page.locator("[data-prev]").is_disabled()
+        assert page.locator("[data-next]").is_disabled()
 
-    def test_each_other_colours_thumbnail_names_its_colour(self, view):
+    def test_another_colours_photograph_appears_by_choosing_that_colour(self, view):
         page, names, _ = view
-        marks = [
-            page.locator(".strip-thumb").nth(i).get_attribute("aria-label")
-            for i in range(1, 4)
-        ]
-        assert marks == [f"Ver {name}" for name in names[1:]]
+        before = page.locator("#stage-image").get_attribute("src")
 
-    def test_clicking_another_colours_photograph_chooses_that_colour(self, view):
-        """Otherwise the swatches would say one colour and the photograph show another."""
-        page, names, _ = view
-        page.locator(".strip-thumb").nth(2).click()
+        page.locator(".variant-option", has_text=names[2]).click()
         page.wait_for_function(
-            """(name) => document.querySelector('.variant-option.is-active')
-                    .textContent.trim() === name""",
-            arg=names[2],
+            """(previous) => document.getElementById('stage-image').src !== previous""",
+            arg=before,
         )
 
         assert page.locator("#stage-note").is_hidden(), (
-            "it is this colour's photograph now, so nothing to disclaim"
+            "it is this colour's own photograph, so nothing to disclaim"
         )
 
-    def test_the_arrows_tour_every_photograph_before_repeating(self, view):
-        """They used to step to the first other colour, hand over to it, and step
-        straight back — two photographs of four, for ever."""
-        page, _, _ = view
 
-        seen = [page.locator("#stage-image").get_attribute("src")]
-        for _ in range(3):
-            page.locator("[data-next]").click()
-            page.wait_for_function(
-                """(previous) => document.getElementById('stage-image').src !== previous""",
-                arg=seen[-1],
-            )
-            seen.append(page.locator("#stage-image").get_attribute("src"))
+class TestTheTwoHalvesEndTogether:
+    """The gallery takes its height from the panel beside it rather than setting it.
 
-        assert len(set(seen)) == 4, f"the tour repeated itself: {seen}"
+    A square stage made the left side taller than the right by however much the
+    photograph exceeded the panel — 714px against 600 — leaving a column of dead space
+    under the enquiry button.
+    """
 
-    def test_the_counter_counts_the_whole_piece(self, view):
-        page, _, _ = view
-        page.locator("[data-next]").click()
-        page.wait_for_function(
-            "() => document.getElementById('stage-counter').textContent.trim() === '2 / 4'"
+    def test_they_end_at_the_same_point(self, page):
+        view, _ = page
+        ends = view.evaluate(
+            """() => {
+                const columns = [...document.querySelectorAll('#product-detail > .column')];
+                const lastVisible = (column) => [...column.children]
+                    .filter((child) => child.getBoundingClientRect().height > 0)
+                    .pop();
+                return columns.map((column) =>
+                    Math.round(lastVisible(column).getBoundingClientRect().bottom));
+            }"""
         )
+        assert abs(ends[0] - ends[1]) <= 2, f"the halves end {ends} apart"
 
-    def test_the_swatch_follows_the_arrows(self, view):
-        page, names, _ = view
-        page.locator("[data-next]").click()
-        page.wait_for_function(
-            """(name) => document.querySelector('.variant-option.is-active')
-                    .textContent.trim() === name""",
-            arg=names[1],
-        )
+    def test_the_photograph_is_not_what_decides_the_height(self, page):
+        """An <img> at height: 100% falls back to its own aspect ratio while the height
+        is being worked out, so in flow it went on setting the row's height."""
+        view, _ = page
+        assert view.locator("#stage-image").evaluate(
+            "el => getComputedStyle(el).position"
+        ) == "absolute"
+
+
+class TestTheArrows:
+    def test_they_are_icons_rather_than_punctuation(self, page):
+        """They were ‹ and › characters, which needed 1.4rem to read as arrows."""
+        view, _ = page
+
+        for control in ("[data-prev]", "[data-next]"):
+            button = view.locator(control)
+            assert button.locator("i.fa-solid").count() == 1, control
+            assert button.inner_text().strip() == "", f"{control} still has a glyph"
+
+        assert view.locator("[data-prev] i").get_attribute("class") == "fa-solid fa-chevron-left"
+        assert view.locator("[data-next] i").get_attribute("class") == "fa-solid fa-chevron-right"
 
 
 class TestOnAPhone:

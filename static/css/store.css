@@ -746,11 +746,17 @@ a.card:hover {
 
 /* Stage above, thumbnails below. It was a two-column grid with a 72px rail beside
    the stage, which cost the photograph that width at every screen size and gave a
-   phone a layout it had no room for. */
+   phone a layout it had no room for.
+
+   Full height of its column, so the gallery ends where the information panel beside
+   it ends. The stage was square, which made the left side of the page taller than the
+   right by however much the photograph exceeded the panel — 714px of gallery against
+   600px of panel, and a column of dead space under the enquiry button. */
 .gallery {
     display: flex;
     flex-direction: column;
     gap: .75rem;
+    height: 100%;
 }
 
 /* One row, scrolling sideways when there are more thumbnails than fit. The groups
@@ -836,20 +842,42 @@ a.card:hover {
     }
 }
 
+/* Takes the height that is left rather than deciding it. The photographs are shot
+   square and drawn with object-fit: contain, so a stage that is not square letterboxes
+   them a little — which costs less than a page whose two halves end in different
+   places. min-height keeps it from collapsing beside a short panel. */
 .gallery-stage {
     position: relative;
+    flex: 1 1 auto;
+    /* A floor, not a size. At 18rem it refused to shrink below the panel and pushed
+       the gallery 26px past it on a shorter screen; 12rem is low enough to give way
+       and still keep the photograph worth looking at beside a very short panel. */
+    min-height: 12rem;
     background: var(--ccg-paper-deep);
     border: 1px solid var(--bulma-border);
     border-radius: var(--bulma-radius-large);
     overflow: hidden;
-    aspect-ratio: 1 / 1;
 }
 
-.gallery-stage img {
+/* Absolute, so the photograph is not what decides how tall the stage is. In flow, an
+   <img> with height: 100% falls back to its own aspect ratio while the height is being
+   worked out — 640px for a square photograph in a 640px column — which is how the
+   gallery went on setting the row's height after the aspect-ratio rule was removed,
+   and the left side stayed taller than the right. */
+.gallery-stage img,
+.gallery-stage .product-placeholder {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    display: block;
+}
+
+/* gallery.js hides the photograph with the attribute when a colour has none, and an
+   explicit `display` in a rule like the one above outranks [hidden]'s display: none —
+   so the previous colour's photograph stayed on the stage, behind the placeholder. */
+.gallery-stage img[hidden] {
+    display: none;
 }
 
 /* Arrows are revealed on hover but stay reachable by keyboard. */
@@ -862,7 +890,9 @@ a.card:hover {
     border: 1px solid var(--bulma-border);
     background: rgba(255, 255, 255, .94);
     color: var(--ccg-blue-800);
-    font-size: 1.4rem;
+    /* The chevrons are icons now, not ‹ and ›, which needed 1.4rem to read as
+       arrows at all. */
+    font-size: .9rem;
     line-height: 1;
     cursor: pointer;
     opacity: 0;
@@ -1014,6 +1044,17 @@ a.card:hover {
 @media screen and (max-width: 768px) {
     /* The strip is a row at every width now, so nothing has to be rearranged here:
        the rules that turned the vertical rail into one are gone with it. */
+
+    /* Stacked columns have no height to share, so the stage goes back to sizing
+       itself: flexing against an auto height would collapse it to nothing. */
+    .gallery {
+        height: auto;
+    }
+
+    .gallery-stage {
+        flex: none;
+        aspect-ratio: 1 / 1;
+    }
 
     /* is-variable is-8 gives the columns a 2rem gap, which Bulma implements as a 2rem
        negative margin on each side — more than the container's padding can absorb, so

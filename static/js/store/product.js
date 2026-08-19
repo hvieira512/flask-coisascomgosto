@@ -31,30 +31,18 @@ import { escapeHtml } from "../core/html.js";
      * "Fotografia da peça" when it is showing one — so they are reachable instead of
      * invisible, which is what most of the catalogue's photographs were.
      */
+    /**
+     * The chosen colour's photographs, then the piece's own.
+     *
+     * Deliberately not the other colours': a colour's photographs appear by choosing
+     * that colour, and nothing else. Offering them all made the gallery a tour of the
+     * whole piece, which is not what a shopper looking at one colour asked for.
+     */
     function imagesFor(product, variant) {
-        // Every photograph the piece has, always in the same order: each colour's in
-        // the colours' own order, then the piece's own. Which one is "this colour"
-        // changes with the choice; the sequence does not, because the arrows tour it
-        // — ordering it per colour made "next" step to the first other colour, hand
-        // over to it, and step straight back, so two of four photographs were
-        // reachable and the other two were not.
-        const chosenId = variant?.id ?? null;
+        const tag = (list, group) => (list || []).map((image) => ({ ...image, group }));
 
-        const fromVariants = (product.variants || []).flatMap((each) =>
-            (each.images || []).map((image) => ({
-                ...image,
-                group: each.id === chosenId ? "colour" : "other",
-                variantId: each.id,
-                colourName: each.color_set.name,
-            }))
-        );
-
-        const fromPiece = (product.images || []).map((image) => ({
-            ...image,
-            group: "piece",
-        }));
-
-        return [...fromVariants, ...fromPiece];
+        if (!variant) return tag(product.images, "piece");
+        return [...tag(variant.images, "colour"), ...tag(product.images, "piece")];
     }
 
     /** The specification list: the facts a buyer asks about. */
@@ -163,15 +151,9 @@ import { escapeHtml } from "../core/html.js";
         });
     }
 
-    /**
-     * Choose a colour: mark its swatch, tell the enquiry, and hand the gallery that
-     * colour's photographs.
-     *
-     * Its own function because the strip can choose one too — a photograph of another
-     * colour is only shown under that colour's name, so clicking it selects the
-     * colour rather than leaving the swatches contradicting the photograph.
-     */
-    function selectVariant(product, index, { openImageId = null } = {}) {
+    /** Choose a colour: mark its swatch, tell the enquiry, and hand the gallery that
+     *  colour's photographs. */
+    function selectVariant(product, index) {
         const variant = product.variants?.[index];
         if (!variant) return;
 
@@ -183,7 +165,7 @@ import { escapeHtml } from "../core/html.js";
 
         chosen.colorSet = variant.color_set.name;
         renderEnquiry(product);
-        gallery.render(imagesFor(product, variant), variant, { openImageId });
+        gallery.render(imagesFor(product, variant), variant);
     }
 
     (async function init() {
@@ -201,16 +183,7 @@ import { escapeHtml } from "../core/html.js";
         document.getElementById("product-name").textContent = product.name;
         document.getElementById("product-description").textContent = product.description || "";
 
-        gallery = StoreGallery.create(root, product, {
-            // A thumbnail under "Outras cores" belongs to a colour that is not
-            // chosen, so choosing it chooses that colour.
-            onPickVariant: (variantId, imageId) =>
-                selectVariant(
-                    product,
-                    product.variants.findIndex((variant) => variant.id === variantId),
-                    { openImageId: imageId }
-                ),
-        });
+        gallery = StoreGallery.create(root, product);
 
         // Open on the first colour that has been photographed, rather than
         // simply the first: a piece whose opening colour has no photograph yet
