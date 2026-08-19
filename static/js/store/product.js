@@ -32,10 +32,29 @@ import { escapeHtml } from "../core/html.js";
      * invisible, which is what most of the catalogue's photographs were.
      */
     function imagesFor(product, variant) {
-        const tag = (list, group) => (list || []).map((image) => ({ ...image, group }));
+        // Every photograph the piece has, always in the same order: each colour's in
+        // the colours' own order, then the piece's own. Which one is "this colour"
+        // changes with the choice; the sequence does not, because the arrows tour it
+        // — ordering it per colour made "next" step to the first other colour, hand
+        // over to it, and step straight back, so two of four photographs were
+        // reachable and the other two were not.
+        const chosenId = variant?.id ?? null;
 
-        if (!variant) return tag(product.images, "piece");
-        return [...tag(variant.images, "colour"), ...tag(product.images, "piece")];
+        const fromVariants = (product.variants || []).flatMap((each) =>
+            (each.images || []).map((image) => ({
+                ...image,
+                group: each.id === chosenId ? "colour" : "other",
+                variantId: each.id,
+                colourName: each.color_set.name,
+            }))
+        );
+
+        const fromPiece = (product.images || []).map((image) => ({
+            ...image,
+            group: "piece",
+        }));
+
+        return [...fromVariants, ...fromPiece];
     }
 
     /** The specification list: the facts a buyer asks about. */
@@ -140,19 +159,31 @@ import { escapeHtml } from "../core/html.js";
 
         options.addEventListener("click", (event) => {
             const button = event.target.closest("[data-variant-index]");
-            if (!button) return;
-
-            options.querySelectorAll(".variant-option").forEach((option) => {
-                const chosen = option === button;
-                option.classList.toggle("is-active", chosen);
-                option.setAttribute("aria-pressed", String(chosen));
-            });
-
-            const variant = product.variants[Number(button.dataset.variantIndex)];
-            chosen.colorSet = variant.color_set.name;
-            renderEnquiry(product);
-            gallery.render(imagesFor(product, variant), variant);
+            if (button) selectVariant(product, Number(button.dataset.variantIndex));
         });
+    }
+
+    /**
+     * Choose a colour: mark its swatch, tell the enquiry, and hand the gallery that
+     * colour's photographs.
+     *
+     * Its own function because the strip can choose one too — a photograph of another
+     * colour is only shown under that colour's name, so clicking it selects the
+     * colour rather than leaving the swatches contradicting the photograph.
+     */
+    function selectVariant(product, index, { openImageId = null } = {}) {
+        const variant = product.variants?.[index];
+        if (!variant) return;
+
+        document.querySelectorAll("#variant-options .variant-option").forEach((option) => {
+            const isChosen = Number(option.dataset.variantIndex) === index;
+            option.classList.toggle("is-active", isChosen);
+            option.setAttribute("aria-pressed", String(isChosen));
+        });
+
+        chosen.colorSet = variant.color_set.name;
+        renderEnquiry(product);
+        gallery.render(imagesFor(product, variant), variant, { openImageId });
     }
 
     (async function init() {
@@ -170,7 +201,16 @@ import { escapeHtml } from "../core/html.js";
         document.getElementById("product-name").textContent = product.name;
         document.getElementById("product-description").textContent = product.description || "";
 
-        gallery = StoreGallery.create(root, product);
+        gallery = StoreGallery.create(root, product, {
+            // A thumbnail under "Outras cores" belongs to a colour that is not
+            // chosen, so choosing it chooses that colour.
+            onPickVariant: (variantId, imageId) =>
+                selectVariant(
+                    product,
+                    product.variants.findIndex((variant) => variant.id === variantId),
+                    { openImageId: imageId }
+                ),
+        });
 
         // Open on the first colour that has been photographed, rather than
         // simply the first: a piece whose opening colour has no photograph yet

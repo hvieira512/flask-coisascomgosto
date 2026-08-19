@@ -189,6 +189,121 @@ class TestAColourWithNoPhotographsOfItsOwn:
         assert view.locator("#gallery-stage .product-placeholder").count() == 0
 
 
+class TestAPiecePhotographedOncePerColour:
+    """The catalogue's commonest shape, and the one that showed nothing.
+
+    Caixa Redonda Filigrana has four photographs, one on each of four colours. Since a
+    chosen colour had one photograph and there was nothing else to preview, the strip
+    hid itself, the arrows were disabled, and a visitor could reach one of the four.
+    """
+
+    @pytest.fixture()
+    def spread(self, client, make_product, make_color, make_color_set):
+        from tests.test_uploads import image_bytes
+
+        product = make_product("Caixa Redonda Filigrana")
+        white = make_color("Branco", hex="#FFFFFF")
+
+        names = ["Branco e Dourado", "Preto e Branco", "Vermelho e Branco", "Azul e Branco"]
+        for name in names:
+            color_set = make_color_set(name, color_ids=[white["id"]])
+            variant = client.post(
+                f"/api/products/{product['id']}/variants",
+                json={"color_set_id": color_set["id"]},
+            ).get_json()
+            response = client.post(
+                f"/api/products/{product['id']}/images/upload",
+                data={
+                    "file": (io.BytesIO(image_bytes()), f"{name}.jpg"),
+                    "variant_id": str(variant["id"]),
+                },
+                content_type="multipart/form-data",
+            )
+            assert response.status_code == 201, response.get_json()
+
+        return product, names
+
+    @pytest.fixture()
+    def view(self, browser, live_server, spread):
+        product, names = spread
+        context = browser.new_context(viewport={"width": 1280, "height": 1000})
+        page = context.new_page()
+        page.set_default_timeout(5000)
+        errors = []
+        page.on("pageerror", lambda error: errors.append(str(error)))
+        page.goto(f"{live_server}/products/{product['id']}")
+        page.wait_for_selector("#thumb-strip .strip-thumb")
+        yield page, names, errors
+        context.close()
+
+    def test_all_four_photographs_are_offered(self, view):
+        page, _, errors = view
+
+        assert page.locator(".strip-thumb").count() == 4
+        assert "1 / 4" in page.locator("#stage-counter").inner_text()
+        assert errors == []
+
+    def test_the_other_colours_are_a_labelled_group(self, view):
+        page, _, _ = view
+        assert [t.strip().lower() for t in page.locator(".strip-label").all_text_contents()] == [
+            "esta cor", "outras cores"
+        ]
+
+    def test_each_other_colours_thumbnail_names_its_colour(self, view):
+        page, names, _ = view
+        marks = [
+            page.locator(".strip-thumb").nth(i).get_attribute("aria-label")
+            for i in range(1, 4)
+        ]
+        assert marks == [f"Ver {name}" for name in names[1:]]
+
+    def test_clicking_another_colours_photograph_chooses_that_colour(self, view):
+        """Otherwise the swatches would say one colour and the photograph show another."""
+        page, names, _ = view
+        page.locator(".strip-thumb").nth(2).click()
+        page.wait_for_function(
+            """(name) => document.querySelector('.variant-option.is-active')
+                    .textContent.trim() === name""",
+            arg=names[2],
+        )
+
+        assert page.locator("#stage-note").is_hidden(), (
+            "it is this colour's photograph now, so nothing to disclaim"
+        )
+
+    def test_the_arrows_tour_every_photograph_before_repeating(self, view):
+        """They used to step to the first other colour, hand over to it, and step
+        straight back — two photographs of four, for ever."""
+        page, _, _ = view
+
+        seen = [page.locator("#stage-image").get_attribute("src")]
+        for _ in range(3):
+            page.locator("[data-next]").click()
+            page.wait_for_function(
+                """(previous) => document.getElementById('stage-image').src !== previous""",
+                arg=seen[-1],
+            )
+            seen.append(page.locator("#stage-image").get_attribute("src"))
+
+        assert len(set(seen)) == 4, f"the tour repeated itself: {seen}"
+
+    def test_the_counter_counts_the_whole_piece(self, view):
+        page, _, _ = view
+        page.locator("[data-next]").click()
+        page.wait_for_function(
+            "() => document.getElementById('stage-counter').textContent.trim() === '2 / 4'"
+        )
+
+    def test_the_swatch_follows_the_arrows(self, view):
+        page, names, _ = view
+        page.locator("[data-next]").click()
+        page.wait_for_function(
+            """(name) => document.querySelector('.variant-option.is-active')
+                    .textContent.trim() === name""",
+            arg=names[1],
+        )
+
+
 class TestOnAPhone:
     @pytest.fixture()
     def phone(self, browser, live_server, piece):
