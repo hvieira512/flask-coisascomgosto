@@ -26,6 +26,47 @@ const getProduct = (id) =>
  * all: they need both an id and a file, so the save hands over to the edit modal on
  * its Fotografias tab, which is where the work continues.
  */
+/**
+ * Sends the photographs the wizard collected, each against the variant it belongs
+ * to. The variant ids only exist now, so they are read back off the saved piece
+ * rather than guessed from the order they were posted in.
+ *
+ * A failed photograph does not fail the save. The piece and its colours are already
+ * written, and a retry would upload the ones that did work a second time — so this
+ * reports what did not arrive and lets the Fotografias tab, which the wizard is
+ * about to open, be where it is tried again.
+ */
+async function uploadChosenPhotos(productId, picks) {
+    const withPhotos = picks.filter((pick) => pick.file);
+    if (!withPhotos.length) return;
+
+    const product = await getProduct(productId);
+    const variantOf = new Map(
+        product.variants.map((variant) => [variant.color_set.id, variant.id])
+    );
+
+    const failed = [];
+    for (const { colorSetId, file } of withPhotos) {
+        try {
+            await uploadImage(productId, {
+                file,
+                variantId: variantOf.get(colorSetId),
+                alt: product.name,
+            });
+        } catch (error) {
+            failed.push(error.message);
+        }
+    }
+
+    if (failed.length) {
+        Notify.error(
+            `A peça foi criada, mas ${failed.length === 1
+                ? "uma fotografia não foi enviada"
+                : `${failed.length} fotografias não foram enviadas`}. Tente de novo no separador Fotografias.`
+        );
+    }
+}
+
 async function openCreate() {
     const { colorSets } = await reference();
     let chosenColorSets = () => [];
@@ -38,8 +79,10 @@ async function openCreate() {
         finishLabel: "Criar produto",
         afterRender: (root) => { chosenColorSets = wireVariantChoice(root); },
         onFinish: async (root) => {
+            const picks = chosenColorSets();
             const id = await submitProductForm(root);
-            await addVariants(id, chosenColorSets());
+            await addVariants(id, picks.map((pick) => pick.colorSetId));
+            await uploadChosenPhotos(id, picks);
             return id;
         },
         success: "Produto criado.",

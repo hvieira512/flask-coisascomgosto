@@ -88,6 +88,15 @@ def _to_the_end(dialog):
     dialog.locator("[data-step-next]").click()
 
 
+def _write_photo(tmp_path, name):
+    """A real JPEG on disk, since the uploader decodes what it is given."""
+    from tests.test_uploads import image_bytes
+
+    path = tmp_path / name
+    path.write_bytes(image_bytes())
+    return path
+
+
 class TestStepDialog:
     """core/steps.js, driven the way an owner drives it."""
 
@@ -352,6 +361,123 @@ class TestChoosingColoursWhileCreating:
         dialog.wait_for(state="hidden")
         body = page.request.get(f"{live_server}/api/products/").json()
         assert body["pagination"]["total"] == 0
+
+    def _at_the_colour_step(self, page):
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+        return dialog
+
+    def test_a_photo_slot_appears_only_for_the_colours_chosen(self, with_colour_sets):
+        """The dialog grows with the answer, not with the list: nine colour sets
+        must not mean nine file pickers."""
+        page, errors, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        assert not dialog.locator("#variant-photos").is_visible()
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        assert dialog.locator("#variant-photos").is_visible()
+        assert dialog.locator("[data-photo-for]").count() == 1
+
+        dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
+        assert dialog.locator("[data-photo-for]").count() == 2
+
+        dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
+        assert dialog.locator("[data-photo-for]").count() == 1
+        assert errors == []
+
+    def test_a_photo_chosen_for_one_colour_survives_ticking_another(
+        self, with_colour_sets, tmp_path
+    ):
+        """The rows are rebuilt on every toggle, and rebuilding an <input type=file>
+        empties it — so the files are held in a Map rather than in the inputs."""
+        page, _, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        photo = _write_photo(tmp_path, "caixa.jpg")
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator("[data-photo-input]").set_input_files(str(photo))
+        assert "caixa.jpg" in dialog.locator("[data-photo-for]").inner_text()
+
+        dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
+        rows = dialog.locator("[data-photo-for]")
+        assert rows.count() == 2
+        assert "caixa.jpg" in rows.first.inner_text(), "the chosen file was lost"
+
+    def test_the_photo_can_be_taken_back(self, with_colour_sets, tmp_path):
+        page, _, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator("[data-photo-input]").set_input_files(
+            str(_write_photo(tmp_path, "caixa.jpg"))
+        )
+        dialog.locator("[data-photo-clear]").click()
+
+        assert "caixa.jpg" not in dialog.locator("[data-photo-for]").inner_text()
+        assert dialog.locator("[data-photo-input]").count() == 1
+
+    def test_the_photo_lands_on_its_own_variant(
+        self, with_colour_sets, live_server, tmp_path
+    ):
+        """The whole point: a photograph chosen for Branco e Dourado has to arrive
+        pinned to that variant, not to the piece as a whole or to the other colour."""
+        page, errors, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
+        # The second row's picker: the first colour deliberately gets no photograph.
+        dialog.locator("[data-photo-for]").nth(1).locator(
+            "[data-photo-input]"
+        ).set_input_files(str(_write_photo(tmp_path, "preto.jpg")))
+
+        dialog.locator("[data-step-next]").click()
+        page.locator("#editProductModal").wait_for(state="visible")
+
+        product = page.request.get(f"{live_server}/api/products/").json()["products"][0]
+        by_set = {v["color_set"]["name"]: v for v in product["variants"]}
+        assert [i["url"] for i in by_set["Branco e Dourado"]["images"]] == []
+        assert len(by_set["Preto e Dourado"]["images"]) == 1
+        assert by_set["Preto e Dourado"]["images"][0]["url"].endswith(".jpg")
+        assert errors == []
+
+    def test_unticking_a_colour_drops_its_photo_too(
+        self, with_colour_sets, live_server, tmp_path
+    ):
+        """Otherwise the upload arrives for a variant the piece does not have."""
+        page, _, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator("[data-photo-input]").set_input_files(
+            str(_write_photo(tmp_path, "caixa.jpg"))
+        )
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
+
+        dialog.locator("[data-step-next]").click()
+        page.locator("#editProductModal").wait_for(state="visible")
+
+        product = page.request.get(f"{live_server}/api/products/").json()["products"][0]
+        assert [v["color_set"]["name"] for v in product["variants"]] == ["Preto e Dourado"]
+        assert product["variants"][0]["images"] == []
+
+    def test_a_photo_writes_nothing_before_the_last_button(
+        self, with_colour_sets, live_server, tmp_path
+    ):
+        page, _, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator("[data-photo-input]").set_input_files(
+            str(_write_photo(tmp_path, "caixa.jpg"))
+        )
+
+        body = page.request.get(f"{live_server}/api/products/").json()
+        assert body["pagination"]["total"] == 0, "choosing a photograph created the piece"
 
     def test_the_selected_ring_is_not_hidden_behind_the_badge(self, with_colour_sets):
         """The chip is only a wrapper — the badge inside brings its own background,

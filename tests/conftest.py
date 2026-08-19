@@ -21,6 +21,16 @@ if not _name.endswith("_test"):
 
 
 @pytest.fixture(scope="session")
+def monkeypatch_session():
+    """pytest's monkeypatch is function-scoped; the live server is not."""
+    from _pytest.monkeypatch import MonkeyPatch
+
+    patcher = MonkeyPatch()
+    yield patcher
+    patcher.undo()
+
+
+@pytest.fixture(scope="session")
 def database():
     from db import init_db
 
@@ -138,18 +148,29 @@ def cursor(app):
 
 
 @pytest.fixture(scope="session")
-def live_server(database):
+def live_server(database, tmp_path_factory, monkeypatch_session):
     """The app on a real socket, in a thread, against the test database.
 
     Shared by the browser tests. Werkzeug rather than gunicorn: it only has to
     answer one browser, and port 0 lets the OS pick so a developer's own
     `flask run` is not in the way.
+
+    Uploads are pointed somewhere disposable for the whole session. A browser test
+    that fills in the create wizard uploads a photograph for real, and the server
+    runs in this same process — so without this the suite files test photographs into
+    static/img/products/ and leaves them in the repository, which is how the 120
+    orphans deleted in 86d6b0b got there in the first place.
     """
     import threading
 
     from werkzeug.serving import make_server
 
+    import uploads
     from app import app as flask_app
+
+    uploaded = tmp_path_factory.mktemp("uploads")
+    monkeypatch_session.setattr(uploads, "UPLOAD_DIR", uploaded / "products")
+    monkeypatch_session.setattr(uploads, "COLLECTION_DIR", uploaded / "collections")
 
     flask_app.config.update(
         TESTING=True,

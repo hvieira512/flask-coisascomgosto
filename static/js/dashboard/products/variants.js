@@ -32,17 +32,84 @@ export function variantChoiceStep(colorSets) {
             <button type="button" class="variant-choice" data-color-set-id="${set.id}"
                     aria-pressed="false">${ColorSet.badge(set)}</button>`).join("")}
         </div>
-        <p class="help">
-          Em que cores a peça se faz. Opcional — pode associá-las mais tarde, e as
-          fotografias de cada cor entram no passo seguinte.
+        <p class="help mb-4">
+          Em que cores a peça se faz. Opcional — pode associá-las mais tarde.
         </p>
+
+        <!-- Only the chosen colours are asked for a photograph, so the dialog grows
+             with the answer rather than with the list. -->
+        <div id="variant-photos" hidden>
+          <label class="label is-small">Fotografias destas cores</label>
+          <ul class="panel is-shadowless mb-2" id="variant-photo-rows"></ul>
+          <p class="help">
+            Uma por cor, se já as tirou. As restantes entram no passo seguinte.
+          </p>
+        </div>
       </div>`;
 }
 
-/** Wires the chips and returns a reader for what is chosen. */
+/**
+ * Wires the chips and their photo slots, and returns a reader for both.
+ *
+ * The files live in a Map rather than in the inputs: the rows are re-rendered every
+ * time a chip is toggled, and re-rendering an <input type="file"> empties it — a
+ * photograph chosen for the first colour would vanish when the second was ticked.
+ */
 export function wireVariantChoice(root) {
     const choices = root.querySelector("#variant-choices");
     if (!choices) return () => [];
+
+    const photos = new Map();
+    const panel = root.querySelector("#variant-photos");
+    const rows = root.querySelector("#variant-photo-rows");
+
+    const chosen = () =>
+        [...choices.querySelectorAll('.variant-choice[aria-pressed="true"]')]
+            .map((chip) => Number(chip.dataset.colorSetId));
+
+    const nameOf = (id) =>
+        choices.querySelector(`[data-color-set-id="${id}"]`).textContent.trim();
+
+    const badgeOf = (id) =>
+        choices.querySelector(`[data-color-set-id="${id}"]`).innerHTML;
+
+    function drawRows() {
+        const ids = chosen();
+        panel.hidden = ids.length === 0;
+        // A colour that has been unticked takes its photograph with it, or the
+        // upload would arrive for a variant the piece does not have.
+        [...photos.keys()].forEach((id) => {
+            if (!ids.includes(id)) photos.delete(id);
+        });
+
+        rows.innerHTML = ids.map((id) => {
+            const file = photos.get(id);
+            return `
+              <li class="panel-block px-0 is-justify-content-space-between"
+                  data-photo-for="${id}">
+                <span class="is-flex is-align-items-center is-gap-1">${badgeOf(id)}</span>
+                <span class="is-flex is-align-items-center is-gap-1">
+                  ${file
+                      ? `<span class="is-size-7 has-text-grey">${escapeHtml(file.name)}</span>
+                         <button type="button" class="button is-small is-ghost has-text-danger"
+                                 data-photo-clear aria-label="Remover a fotografia de ${escapeHtml(nameOf(id))}">
+                           <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+                         </button>`
+                      : `<div class="file is-small">
+                           <label class="file-label">
+                             <input class="file-input" type="file" data-photo-input
+                                    accept="image/jpeg,image/png,image/webp"
+                                    aria-label="Fotografia de ${escapeHtml(nameOf(id))}">
+                             <span class="file-cta">
+                               <span class="file-icon"><i class="fa-solid fa-image"></i></span>
+                               <span class="file-label">Escolher…</span>
+                             </span>
+                           </label>
+                         </div>`}
+                </span>
+              </li>`;
+        }).join("");
+    }
 
     choices.addEventListener("click", (event) => {
         const chip = event.target.closest(".variant-choice");
@@ -51,11 +118,29 @@ export function wireVariantChoice(root) {
         const on = chip.getAttribute("aria-pressed") === "true";
         chip.setAttribute("aria-pressed", String(!on));
         chip.classList.toggle("is-active", !on);
+        drawRows();
     });
 
-    return () =>
-        [...choices.querySelectorAll('.variant-choice[aria-pressed="true"]')]
-            .map((chip) => Number(chip.dataset.colorSetId));
+    // Delegated because the rows are rebuilt on every toggle. `change` bubbles.
+    rows.addEventListener("change", (event) => {
+        const input = event.target.closest("[data-photo-input]");
+        if (!input) return;
+
+        const id = Number(input.closest("[data-photo-for]").dataset.photoFor);
+        const file = input.files[0];
+        if (file) photos.set(id, file);
+        drawRows();
+    });
+
+    rows.addEventListener("click", (event) => {
+        const clear = event.target.closest("[data-photo-clear]");
+        if (!clear) return;
+
+        photos.delete(Number(clear.closest("[data-photo-for]").dataset.photoFor));
+        drawRows();
+    });
+
+    return () => chosen().map((id) => ({ colorSetId: id, file: photos.get(id) ?? null }));
 }
 
 /** The variants panel inside the edit modal: what the product is offered in. */
