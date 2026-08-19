@@ -1,9 +1,9 @@
 import { API, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
-import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
+import { allImages, removeImage, uploadImage } from "./images.js";
 import {
     addVariant, addVariants, removeVariant, variantChoiceStep, variantsPanel,
-    wireVariantChoice,
+    wireVariantChoice, wireVariantPhotos,
 } from "./variants.js";
 import { reference } from "./reference.js";
 import { bodyOf, close, confirmDialog, footOf, modal, open, submitting } from "../../core/modal.js";
@@ -64,7 +64,7 @@ async function uploadChosenPhotos(productId, picks) {
         Notify.error(
             `A peça foi criada, mas ${failed.length === 1
                 ? "uma fotografia não foi enviada"
-                : `${failed.length} fotografias não foram enviadas`}. Tente de novo no separador Fotografias.`
+                : `${failed.length} fotografias não foram enviadas`}. Tente de novo no separador Cores e fotografias.`
         );
     }
 }
@@ -91,7 +91,9 @@ async function openCreate() {
         after: async (id) => {
             await mountFilters(fetchProducts).then(fetchProducts);
             await openEdit(id);
-            document.querySelector('#edit-tabs [data-tab="images"]').click();
+            // Where the colours and their photographs now live, which is what is left
+            // to do for a piece that has just been created.
+            document.querySelector('#edit-tabs [data-tab="variants"]').click();
         },
     });
 }
@@ -99,17 +101,18 @@ async function openCreate() {
 async function openEdit(id) {
     const product = await getProduct(id);
 
+    // Two tabs, not three: every photograph belongs to a colour, so Cores holds the
+    // colours and each colour's photographs together. Fotografias was the same
+    // information asked for a second time, through a dropdown naming the colour.
     bodyOf("editProductModal").innerHTML = `
         <div class="tabs is-small is-boxed mb-4" id="edit-tabs">
           <ul>
             <li class="is-active" data-tab="details"><a>Detalhes</a></li>
-            <li data-tab="variants"><a>Cores</a></li>
-            <li data-tab="images"><a>Fotografias</a></li>
+            <li data-tab="variants"><a>Cores e fotografias</a></li>
           </ul>
         </div>
         <div data-panel="details">${await productForm(product)}</div>
-        <div data-panel="variants" hidden>${await variantsPanel(product)}</div>
-        <div data-panel="images" hidden>${imagesPanel(product)}</div>`;
+        <div data-panel="variants" hidden>${await variantsPanel(product)}</div>`;
 
     footOf("editProductModal").innerHTML = `
         <button class="button" data-modal-close>Fechar</button>
@@ -118,7 +121,6 @@ async function openEdit(id) {
     open("editProductModal");
     wireEditTabs();
     wireVariantPanel(product);
-    wireImagePanel(product);
 
     document.getElementById("edit-submit").onclick = (event) =>
         submitting(event.currentTarget, async () => {
@@ -172,7 +174,22 @@ function wireVariantPanel(product) {
 
     document.querySelectorAll("[data-remove-variant]").forEach((button) => {
         button.onclick = async () => {
-            if (!(await Notify.confirm("Remover esta cor?", { danger: true, confirmText: "Remover" }))) return;
+            const removing = product.variants.find(
+                (variant) => String(variant.id) === button.dataset.removeVariant
+            );
+            const photos = removing?.images?.length ?? 0;
+
+            // The colour's photographs go with it, and there is no undo, so the number
+            // is on the question rather than discovered afterwards.
+            const confirmed = await Notify.confirm("Remover esta cor?", {
+                text: photos
+                    ? `${photos} ${photos === 1 ? "fotografia desta cor" : "fotografias desta cor"} também ${photos === 1 ? "desaparece" : "desaparecem"}.`
+                    : "",
+                danger: true,
+                confirmText: "Remover",
+            });
+            if (!confirmed) return;
+
             try {
                 await removeVariant(product.id, button.dataset.removeVariant);
                 Notify.success("Cor removida.");
@@ -183,51 +200,53 @@ function wireVariantPanel(product) {
             }
         };
     });
-}
 
-function wireImagePanel(product) {
-    const picker = document.getElementById("image-file");
-    if (picker) {
-        picker.onchange = () => {
-            document.getElementById("image-file-name").textContent =
-                picker.files[0]?.name ?? "Nenhum ficheiro";
-        };
-    }
-
-    const add = document.getElementById("add-image");
-    if (add) {
-        add.onclick = (event) =>
-            submitting(event.currentTarget, async () => {
-                const file = document.getElementById("image-file").files[0];
-                const variantId = document.getElementById("image-variant").value;
-
-                if (file) {
-                    await uploadImage(product.id, { file, variantId, alt: product.name });
-                } else {
-                    await addImage(product.id, {
-                        url: document.getElementById("image-url").value.trim(),
-                        variantId,
-                        alt: product.name,
-                    });
-                }
-                Notify.success("Fotografia adicionada.");
-                await refreshEdit(product.id);
-                document.querySelector('#edit-tabs [data-tab="images"]').click();
-            });
-    }
-
+    // The seeded photographs that belong to no colour, which can only be removed.
     document.querySelectorAll("[data-remove-image]").forEach((button) => {
         button.onclick = async () => {
-            if (!(await Notify.confirm("Remover esta fotografia?", { danger: true, confirmText: "Remover" }))) return;
+            if (!(await Notify.confirm("Remover esta fotografia?", {
+                danger: true, confirmText: "Remover",
+            }))) return;
+
             try {
                 await removeImage(product.id, button.dataset.removeImage);
                 Notify.success("Fotografia removida.");
                 await refreshEdit(product.id);
-                document.querySelector('#edit-tabs [data-tab="images"]').click();
+                document.querySelector('#edit-tabs [data-tab="variants"]').click();
             } catch (error) {
                 Notify.error(error.message);
             }
         };
+    });
+
+    // A tray per colour. The piece exists here, so a photograph is uploaded the moment
+    // it is chosen and the panel is rebuilt from what the server then has.
+    wireVariantPhotos(product, {
+        onUpload: async (variant, files) => {
+            for (const file of files) {
+                await uploadImage(product.id, {
+                    file,
+                    variantId: variant.id,
+                    alt: product.name,
+                });
+            }
+            Notify.success(files.length === 1 ? "Fotografia adicionada." : "Fotografias adicionadas.");
+            await refreshEdit(product.id);
+            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+        },
+        onRemove: async (image) => {
+            const confirmed = await Notify.confirm("Remover esta fotografia?", {
+                danger: true,
+                confirmText: "Remover",
+            });
+            // Throwing is how the picker is told to keep the photograph it is showing.
+            if (!confirmed) throw new Error("");
+
+            await removeImage(product.id, image.id);
+            Notify.success("Fotografia removida.");
+            await refreshEdit(product.id);
+            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+        },
     });
 }
 

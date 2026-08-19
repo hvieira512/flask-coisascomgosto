@@ -233,15 +233,19 @@ class TestColorSetBadges:
     load first; it is imported now, so the pages that draw a badge say so."""
 
     def test_every_page_that_draws_a_badge_imports_it(self):
-        for path in [
-            "static/js/store/products.js",
-            "static/js/store/product.js",
-            "static/js/dashboard/products/fetch.js",
-            "static/js/dashboard/products/variants.js",
-            "static/js/dashboard/products/images.js",
-        ]:
-            source = pathlib.Path(path).read_text(encoding="utf-8")
-            assert 'import { ColorSet }' in source, path
+        """Found rather than listed: a hardcoded list has to be edited when a badge
+        moves, and it went stale the first time one did — images.js stopped drawing
+        them when the colours and photographs panels became one."""
+        users, importers = set(), set()
+        for path in sorted(pathlib.Path("static/js").rglob("*.js")):
+            source = path.read_text(encoding="utf-8")
+            if "ColorSet." in source:
+                users.add(path.as_posix())
+            if "import { ColorSet }" in source:
+                importers.add(path.as_posix())
+
+        assert users, "nothing draws a colour set badge any more?"
+        assert users - importers == set(), f"draws a badge without importing: {users - importers}"
 
     def test_it_is_no_longer_a_script_tag(self, client, make_product):
         product = make_product("Caixa")

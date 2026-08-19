@@ -43,9 +43,15 @@ export const PhotoPicker = (function () {
      *   hint            the helper text under the camera
      *   initial         photographs already saved: [{ id, url }]
      *   onRemoveStored  async, called before dropping a saved one; throw to keep it
+     *   onAdd           async, called with the files just chosen. Given one, the
+     *                   component hands them over instead of holding them: the caller
+     *                   has somewhere to put them now and is expected to re-render
+     *                   from whatever came back. Without one the files are held for
+     *                   `files()`, which is what the create wizard needs.
      */
     function mount(container, {
         multiple = false, hint = DEFAULT_HINT, initial = [], onRemoveStored = null,
+        onAdd = null,
     } = {}) {
         // { file, preview } for one that is only held; { id, url } for one already
         // saved. Held in here rather than in the inputs: the slots are redrawn on
@@ -92,9 +98,22 @@ export const PhotoPicker = (function () {
         }
 
         /** `at` replaces that slot; otherwise the files are added to the end. */
-        function accept(files, at = null) {
+        async function accept(files, at = null) {
             const chosen = [...files].filter(acceptable);
             if (!chosen.length) return;
+
+            if (onAdd) {
+                // Marked while the upload runs, so a slow one does not look ignored.
+                container.classList.add("is-busy");
+                try {
+                    await onAdd(chosen);
+                } catch (error) {
+                    Notify.error(error.message);
+                } finally {
+                    container.classList.remove("is-busy");
+                }
+                return;
+            }
 
             if (at !== null) {
                 forget(items[at]);
@@ -115,7 +134,9 @@ export const PhotoPicker = (function () {
                 try {
                     await onRemoveStored(item);
                 } catch (error) {
-                    Notify.error(error.message);
+                    // A message means it went wrong; none means the caller simply said
+                    // no — a cancelled confirmation is not an error to report.
+                    if (error.message) Notify.error(error.message);
                     return;
                 }
             }

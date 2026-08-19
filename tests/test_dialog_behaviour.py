@@ -269,8 +269,10 @@ class TestStepDialog:
         assert body["products"][0]["name"] == "Caixa Redonda"
 
         # Landing on Detalhes would show the owner the form they just filled.
-        assert edit.locator("#edit-tabs li.is-active").inner_text().strip() == "Fotografias"
-        assert edit.locator('[data-panel="images"]').is_visible()
+        assert edit.locator("#edit-tabs li.is-active").inner_text().strip() == (
+            "Cores e fotografias"
+        )
+        assert edit.locator('[data-panel="variants"]').is_visible()
         assert not edit.locator('[data-panel="details"]').is_visible()
         assert errors == []
 
@@ -880,13 +882,13 @@ class TestChoosingACollectionsColourSets:
         )
 
 
-class TestAPhotographBelongsToAColour:
-    """The Fotografias tab offered "Todas as cores (fallback)".
+class TestColoursAndPhotographsAreOnePanel:
+    """Two tabs became one.
 
-    A photograph of a piece is a photograph of the piece in one of its colours. If
-    there is a photograph there is a colour, so the fallback was an invitation to
-    create something the shop cannot describe — and the storefront then had to caption
-    it to explain what the visitor was looking at.
+    A photograph belongs to a colour, so a tab of colours beside a tab of photographs
+    was the same fact twice — and the photographs tab had to name the colour again in a
+    dropdown, with a "Todas as cores (fallback)" option for a photograph of no colour
+    at all, which is not a thing the shop can describe.
     """
 
     @pytest.fixture()
@@ -899,8 +901,8 @@ class TestAPhotographBelongsToAColour:
         page.wait_for_selector("#new-product")
         return page, errors
 
-    def _open_photos(self, page, colours=True):
-        """Create a piece, optionally with a colour, and land on its Fotografias tab."""
+    def _open_colours(self, page, colours=True):
+        """Create a piece, optionally with a colour, and land on its Cores panel."""
         dialog = _open_wizard(page)
         _fill_identity(dialog)
         dialog.locator("[data-step-next]").click()
@@ -913,45 +915,55 @@ class TestAPhotographBelongsToAColour:
         edit.wait_for(state="visible")
         return edit
 
-    def test_the_picker_offers_colours_and_no_fallback(self, photos_tab):
+    def test_there_is_no_photographs_tab(self, photos_tab):
         page, errors = photos_tab
-        edit = self._open_photos(page)
+        edit = self._open_colours(page)
 
-        options = edit.locator("#image-variant option").all_text_contents()
-        assert options == ["Branco e Dourado"]
-        assert not any("Todas as cores" in option for option in options)
+        tabs = [t.strip() for t in edit.locator("#edit-tabs li").all_text_contents()]
+        assert tabs == ["Detalhes", "Cores e fotografias"]
+        assert edit.locator('[data-panel="images"]').count() == 0
         assert errors == []
 
-    def test_a_piece_with_no_colours_is_told_to_add_one_first(self, photos_tab):
-        """Rather than letting a photograph in with nothing to belong to."""
+    def test_each_colour_carries_its_own_photographs(self, photos_tab):
+        """One tray per colour, in the row that names the colour — so nothing has to
+        ask which colour a photograph belongs to."""
         page, _ = photos_tab
-        edit = self._open_photos(page, colours=False)
+        edit = self._open_colours(page)
 
-        assert edit.locator("#image-variant").is_disabled()
-        assert edit.locator("#add-image").is_disabled()
-        assert "separador Cores" in edit.locator('[data-panel="images"]').inner_text()
+        row = edit.locator("[data-variant-block]")
+        assert row.count() == 1
+        assert row.locator(".photo-slot").count() >= 1
+        assert row.locator("[data-remove-variant]").count() == 1
 
-    def test_the_helpers_refuse_a_photograph_with_no_colour(self, photos_tab):
-        """Belt as well as braces: the panel cannot ask for one, and the functions
+    def test_a_piece_with_no_colours_says_what_to_do(self, photos_tab):
+        page, _ = photos_tab
+        edit = self._open_colours(page, colours=False)
+
+        panel = edit.locator('[data-panel="variants"]')
+        assert panel.locator("[data-variant-block]").count() == 0
+        assert panel.locator(".photo-slot").count() == 0, (
+            "nowhere to put a photograph until there is a colour to put it in"
+        )
+        assert "Sem cores associadas" in panel.inner_text()
+
+    def test_uploading_refuses_a_photograph_with_no_colour(self, photos_tab):
+        """Belt as well as braces: the panel cannot ask for one, and the function
         behind it will not do it either."""
         page, _ = photos_tab
-        self._open_photos(page)
+        self._open_colours(page)
 
-        refusals = page.evaluate(
+        refusal = page.evaluate(
             """async () => {
                 const module = await import('/static/js/dashboard/products/images.js');
-                const out = [];
-                for (const call of [
-                    () => module.uploadImage(1, { file: new File(['x'], 'a.jpg') }),
-                    () => module.addImage(1, { url: '/static/img/logo.png' }),
-                ]) {
-                    try { await call(); out.push(null); }
-                    catch (error) { out.push(error.message); }
+                try {
+                    await module.uploadImage(1, { file: new File(['x'], 'a.jpg') });
+                    return null;
+                } catch (error) {
+                    return error.message;
                 }
-                return out;
             }"""
         )
-        assert all(message and "cor" in message for message in refusals), refusals
+        assert refusal and "cor" in refusal, refusal
 
 
 class TestConfirmRaisedFromInsideADialog:

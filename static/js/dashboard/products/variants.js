@@ -128,7 +128,39 @@ export function wireVariantChoice(root) {
         }));
 }
 
-/** The variants panel inside the edit modal: what the product is offered in. */
+/**
+ * A tray per colour, holding that colour's photographs. Mounted after the panel's
+ * markup is in the DOM, and returns nothing: in the edit modal the piece already
+ * exists, so a photograph chosen here is uploaded at once and the panel is rebuilt
+ * from what came back.
+ */
+export function wireVariantPhotos(product, { onUpload, onRemove }) {
+    product.variants.forEach((variant) => {
+        const host = document.querySelector(`[data-variant-photos="${variant.id}"]`);
+        if (!host) return;
+
+        PhotoPicker.mount(host, {
+            multiple: true,
+            hint: "Arraste, escolha ou tire",
+            initial: (variant.images || []).map((image) => ({
+                id: image.id,
+                url: image.url,
+            })),
+            onAdd: (files) => onUpload(variant, files),
+            onRemoveStored: (image) => onRemove(image),
+        });
+    });
+}
+
+/**
+ * The colours panel inside the edit modal: what the piece is offered in, and each
+ * colour's photographs with it.
+ *
+ * One panel rather than two tabs. Every photograph belongs to a colour, so a tab of
+ * colours and a tab of photographs were two views of the same fact — and the
+ * photographs tab had to name the colour again in a dropdown to say what it already
+ * knew.
+ */
 export async function variantsPanel(product) {
     const { colorSets } = await reference();
     const used = new Set(product.variants.map((v) => v.color_set.id));
@@ -136,17 +168,54 @@ export async function variantsPanel(product) {
 
     const rows = product.variants.length
         ? product.variants.map((v) => `
-            <li class="panel-block px-0 is-gap-1">
-              ${ColorSet.badge(v.color_set, "mr-auto")}
-              <button class="button is-small is-ghost has-text-danger"
-                      data-remove-variant="${v.id}" title="Remover">
-                <span class="icon"><i class="fa-solid fa-xmark"></i></span>
-              </button>
+            <li class="panel-block px-0 is-flex-direction-column is-align-items-stretch"
+                data-variant-block="${v.id}">
+              <span class="is-flex is-align-items-center is-gap-1 mb-2">
+                ${ColorSet.badge(v.color_set, "mr-auto")}
+                <button class="button is-small is-ghost has-text-danger"
+                        data-remove-variant="${v.id}" title="Remover esta cor"
+                        aria-label="Remover ${escapeHtml(v.color_set.name)}">
+                  <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+                </button>
+              </span>
+              <div data-variant-photos="${v.id}"></div>
             </li>`).join("")
-        : `<li class="has-text-grey is-size-7">Sem cores associadas.</li>`;
+        : `<li class="has-text-grey is-size-7">
+             Sem cores associadas. Escolha uma abaixo — as fotografias são de uma cor.
+           </li>`;
+
+    // Photographs belonging to no colour cannot be made any more, but the seeded ones
+    // exist. Without a place here they would be invisible again — and invisible is what
+    // the owners cannot fix. The block disappears by itself once they are dealt with.
+    const orphans = product.images || [];
+    const orphanBlock = orphans.length
+        ? `<div class="mb-4" id="colourless-photos">
+             <!-- Two whole sentences rather than a stem with suffixes spliced in: the
+                  first attempt read "Apague -a e volte a carregá-la". -->
+             <p class="help has-text-weight-medium mb-2">
+               ${orphans.length === 1
+                   ? "Uma fotografia sem cor. Apague-a e volte a carregá-la na cor a que pertence."
+                   : `${orphans.length} fotografias sem cor. Apague-as e volte a carregá-las nas cores a que pertencem.`}
+             </p>
+             <ul class="panel is-shadowless mb-0">
+               ${orphans.map((image) => `
+                 <li class="panel-block px-0 is-gap-1">
+                   <img class="dash-thumb" src="${escapeHtml(image.url)}"
+                        alt="${escapeHtml(image.alt ?? "")}">
+                   <span class="tag is-rounded chip is-attention mr-auto">Sem cor</span>
+                   <button class="button is-small is-ghost has-text-danger"
+                           data-remove-image="${image.id}" title="Remover"
+                           aria-label="Remover esta fotografia sem cor">
+                     <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+                   </button>
+                 </li>`).join("")}
+             </ul>
+           </div>`
+        : "";
 
     return `
       <ul class="panel is-shadowless mb-3" id="variant-rows">${rows}</ul>
+      ${orphanBlock}
       <div class="field has-addons">
         <div class="control is-expanded">
           <div class="select is-fullwidth is-small">
