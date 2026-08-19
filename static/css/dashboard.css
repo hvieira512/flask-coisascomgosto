@@ -248,6 +248,29 @@
     box-shadow: inset 0 0 0 2px var(--ccg-blue-400);
 }
 
+/* A colour set the piece will be offered in, chosen in the create wizard. The
+   button is only a wrapper: the badge inside brings its own colours, so selection
+   has to show on the ring around it.
+
+   A border rather than the inset shadow .color-chip uses. The badge fills this
+   button, and an inset shadow paints beneath content — the same way it hid the ring
+   on the storefront's collection cards. Transparent at rest so the 2px never moves
+   anything. */
+.variant-choice {
+    padding: 1px;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    /* The badge is inline; without this the button reserves a descender's worth of
+       space under it and the chips sit unevenly. */
+    line-height: 0;
+}
+
+.variant-choice.is-active {
+    border-color: var(--ccg-blue-500);
+}
+
 /* <input type="color"> on Bulma's .input is a full-width field with a swatch
    lost inside it; it only ever needs to be the swatch. */
 .color-swatch-input {

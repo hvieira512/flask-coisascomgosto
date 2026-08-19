@@ -1,7 +1,11 @@
 import { API, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
 import { addImage, allImages, imagesPanel, removeImage, uploadImage } from "./images.js";
-import { addVariant, removeVariant, variantsPanel } from "./variants.js";
+import {
+    addVariant, addVariants, removeVariant, variantChoiceStep, variantsPanel,
+    wireVariantChoice,
+} from "./variants.js";
+import { reference } from "./reference.js";
 import { bodyOf, close, confirmDialog, footOf, modal, open, submitting } from "../../core/modal.js";
 import { escapeHtml } from "../../core/html.js";
 import { fetchProducts } from "./fetch.js";
@@ -13,27 +17,36 @@ const getProduct = (id) =>
     request(API.products.get(id), { fallback: "Produto não encontrado." });
 
 /**
- * Creating asks what the piece is, then the optional details, and writes once at
- * the end — a piece is on the storefront the moment its row exists, so a
- * half-answered form must not create one.
+ * Creating asks what the piece is, then the optional details, then the colours it
+ * is offered in — and writes once at the end. A piece is on the storefront the
+ * moment its row exists, so a half-answered form must not create one.
  *
- * Colours and photographs cannot be steps here: both need an id. The save hands
- * straight over to the edit modal on its Cores tab, which is where the work
- * continues.
+ * The colours are chosen here but attached afterwards, because a variant needs a
+ * product id. Photographs are the one thing that cannot be chosen in advance at
+ * all: they need both an id and a file, so the save hands over to the edit modal on
+ * its Fotografias tab, which is where the work continues.
  */
 async function openCreate() {
+    const { colorSets } = await reference();
+    let chosenColorSets = () => [];
+
     stepDialog({
         id: "newProductModal",
-        body: await productForm(),
-        titles: PRODUCT_STEPS,
-        validate: [validateIdentity, validateIdentity],
+        body: (await productForm()) + variantChoiceStep(colorSets),
+        titles: [...PRODUCT_STEPS, "Cores"],
+        validate: [validateIdentity, validateIdentity, validateIdentity],
         finishLabel: "Criar produto",
-        onFinish: (root) => submitProductForm(root),
+        afterRender: (root) => { chosenColorSets = wireVariantChoice(root); },
+        onFinish: async (root) => {
+            const id = await submitProductForm(root);
+            await addVariants(id, chosenColorSets());
+            return id;
+        },
         success: "Produto criado.",
         after: async (id) => {
             await mountFilters(fetchProducts).then(fetchProducts);
             await openEdit(id);
-            document.querySelector('#edit-tabs [data-tab="variants"]').click();
+            document.querySelector('#edit-tabs [data-tab="images"]').click();
         },
     });
 }

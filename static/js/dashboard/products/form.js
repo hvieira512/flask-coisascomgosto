@@ -137,6 +137,12 @@ export async function submitProductForm(root = document) {
 
     const productId = id || saved.id;
 
+    // Remembered on the form, so a second press updates the piece rather than
+    // creating another one. Everything after the product itself — the sizes here,
+    // the colours the wizard chose — happens in its own request, and a failure in
+    // any of them leaves the dialog open on a piece that already exists.
+    form.dataset.productId = productId;
+
     const sizeIds = [...root.querySelectorAll("#pf-sizes input:checked")]
         .map((input) => Number(input.value));
     await request(API.products.sizes(productId), {

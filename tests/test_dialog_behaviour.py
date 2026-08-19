@@ -75,6 +75,19 @@ def _open_wizard(page):
     return dialog
 
 
+def _fill_identity(dialog, name="Caixa Redonda"):
+    """The first step's two required answers."""
+    dialog.locator('[name="name"]').fill(name)
+    dialog.locator('[name="type_id"]').select_option(label="Caixa")
+
+
+def _to_the_end(dialog):
+    """Walk from wherever the wizard is to the button that writes."""
+    while dialog.locator("[data-step-next]").inner_text().strip() == "Continuar":
+        dialog.locator("[data-step-next]").click()
+    dialog.locator("[data-step-next]").click()
+
+
 class TestStepDialog:
     """core/steps.js, driven the way an owner drives it."""
 
@@ -82,7 +95,7 @@ class TestStepDialog:
         page, errors = products_page
         dialog = _open_wizard(page)
 
-        assert "Passo 1 de 2" in dialog.locator("[data-step-label]").text_content()
+        assert "Passo 1 de 3" in dialog.locator("[data-step-label]").text_content()
         assert dialog.locator("[data-step-progress]").get_attribute("value") == "1"
 
         # The one that regressed: Bulma's .button outranks [hidden], so this has
@@ -99,14 +112,14 @@ class TestStepDialog:
         dialog.locator("[data-step-next]").click()
         page.wait_for_selector(".swal2-container")
         assert "nome é obrigatório" in page.locator(".swal2-container").inner_text()
-        assert "Passo 1 de 2" in dialog.locator("[data-step-label]").text_content()
+        assert "Passo 1 de 3" in dialog.locator("[data-step-label]").text_content()
 
         # A name but no type still is not enough.
         dialog.locator('[name="name"]').fill("Caixa Redonda")
         dialog.locator("[data-step-next]").click()
         page.wait_for_timeout(300)
         assert "tipo é obrigatório" in page.locator(".swal2-container").inner_text()
-        assert "Passo 1 de 2" in dialog.locator("[data-step-label]").text_content()
+        assert "Passo 1 de 3" in dialog.locator("[data-step-label]").text_content()
 
     def test_the_error_lands_in_front_of_the_dialog_not_behind_it(self, products_page):
         """A showModal() dialog is in the top layer, which paints above every
@@ -148,12 +161,12 @@ class TestStepDialog:
         dialog.locator('[name="type_id"]').select_option(label="Caixa")
         dialog.locator("[data-step-next]").click()
 
-        assert "Passo 2 de 2" in dialog.locator("[data-step-label]").text_content()
+        assert "Passo 2 de 3" in dialog.locator("[data-step-label]").text_content()
         assert dialog.locator("[data-step-progress]").get_attribute("value") == "2"
         assert not dialog.locator('[name="name"]').is_visible()
         assert dialog.locator('[name="description"]').is_visible()
         assert dialog.locator("[data-step-back]").is_visible()
-        assert dialog.locator("[data-step-next]").inner_text().strip() == "Criar produto"
+        assert dialog.locator("[data-step-next]").inner_text().strip() == "Continuar"
 
     def test_going_back_keeps_every_answer(self, products_page):
         """The groups stay in the DOM precisely so this holds. Re-rendering the
@@ -187,8 +200,8 @@ class TestStepDialog:
         assert product_count() == 0
 
         dialog = _open_wizard(page)
-        dialog.locator('[name="name"]').fill("Caixa Redonda")
-        dialog.locator('[name="type_id"]').select_option(label="Caixa")
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
         dialog.locator("[data-step-next]").click()
         assert product_count() == 0, "reaching the last step must not create it"
 
@@ -196,16 +209,16 @@ class TestStepDialog:
         dialog.wait_for(state="hidden")
         assert product_count() == 0, "abandoning the wizard must not create it"
 
-    def test_the_last_step_writes_once_and_hands_over_to_the_colours(
+    def test_the_last_step_writes_once_and_hands_over_to_the_photographs(
         self, products_page, live_server
     ):
+        """The colours are chosen in the wizard now, so photographs are what is
+        left: the only thing that needs both an id and a file."""
         page, errors = products_page
         dialog = _open_wizard(page)
 
-        dialog.locator('[name="name"]').fill("Caixa Redonda")
-        dialog.locator('[name="type_id"]').select_option(label="Caixa")
-        dialog.locator("[data-step-next]").click()
-        dialog.locator("[data-step-next]").click()
+        _fill_identity(dialog)
+        _to_the_end(dialog)
 
         edit = page.locator("#editProductModal")
         edit.wait_for(state="visible")
@@ -215,8 +228,8 @@ class TestStepDialog:
         assert body["products"][0]["name"] == "Caixa Redonda"
 
         # Landing on Detalhes would show the owner the form they just filled.
-        assert edit.locator("#edit-tabs li.is-active").inner_text().strip() == "Cores"
-        assert edit.locator('[data-panel="variants"]').is_visible()
+        assert edit.locator("#edit-tabs li.is-active").inner_text().strip() == "Fotografias"
+        assert edit.locator('[data-panel="images"]').is_visible()
         assert not edit.locator('[data-panel="details"]').is_visible()
         assert errors == []
 
@@ -226,10 +239,8 @@ class TestStepDialog:
         page, _ = products_page
         dialog = _open_wizard(page)
 
-        dialog.locator('[name="name"]').fill("Caixa Redonda")
-        dialog.locator('[name="type_id"]').select_option(label="Caixa")
-        dialog.locator("[data-step-next]").click()
-        dialog.locator("[data-step-next]").click()
+        _fill_identity(dialog)
+        _to_the_end(dialog)
 
         edit = page.locator("#editProductModal")
         edit.wait_for(state="visible")
@@ -238,6 +249,130 @@ class TestStepDialog:
         assert edit.locator('[name="name"]').is_visible()
         assert edit.locator('[name="description"]').is_visible()
         assert edit.locator("[data-step-label]").count() == 0
+
+
+class TestChoosingColoursWhileCreating:
+    """The colours a piece is offered in, chosen in the wizard rather than after it.
+
+    A variant needs a product id, so the choice is held in the page and posted once
+    the product exists. That must not weaken the wizard's promise: until the last
+    button, nothing at all is written.
+    """
+
+    @pytest.fixture()
+    def with_colour_sets(self, products_page, make_color_set, make_color):
+        white = make_color("Branco", hex="#FFFFFF")
+        gold = make_color("Dourado", hex="#C8A24B")
+        black = make_color("Preto", hex="#111111")
+        sets = {
+            "Branco e Dourado": make_color_set(
+                "Branco e Dourado", color_ids=[white["id"], gold["id"]]),
+            "Preto e Dourado": make_color_set(
+                "Preto e Dourado", color_ids=[black["id"], gold["id"]]),
+        }
+        page, errors = products_page
+        page.reload()
+        page.wait_for_selector("#new-product")
+        return page, errors, sets
+
+    def test_the_third_step_offers_every_colour_set(self, with_colour_sets):
+        page, errors, _ = with_colour_sets
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+
+        assert "Passo 3 de 3" in dialog.locator("[data-step-label]").text_content()
+        assert dialog.locator(".variant-choice").count() == 2
+        assert dialog.locator("[data-step-next]").inner_text().strip() == "Criar produto"
+        assert errors == []
+
+    def test_choosing_none_is_allowed(self, with_colour_sets, live_server):
+        """A piece may be made in one colour, or its colours decided later."""
+        page, _, _ = with_colour_sets
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        _to_the_end(dialog)
+        page.locator("#editProductModal").wait_for(state="visible")
+
+        body = page.request.get(f"{live_server}/api/products/").json()
+        assert body["products"][0]["variants"] == []
+
+    def test_the_chosen_colours_are_attached_to_the_new_piece(
+        self, with_colour_sets, live_server
+    ):
+        page, errors, _ = with_colour_sets
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
+        dialog.locator("[data-step-next]").click()
+        page.locator("#editProductModal").wait_for(state="visible")
+
+        body = page.request.get(f"{live_server}/api/products/").json()
+        names = sorted(v["color_set"]["name"] for v in body["products"][0]["variants"])
+        assert names == ["Branco e Dourado", "Preto e Dourado"]
+        assert errors == []
+
+    def test_a_chip_can_be_unchosen(self, with_colour_sets, live_server):
+        page, _, _ = with_colour_sets
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+
+        chip = dialog.locator(".variant-choice", has_text="Branco e Dourado")
+        chip.click()
+        assert chip.get_attribute("aria-pressed") == "true"
+        chip.click()
+        assert chip.get_attribute("aria-pressed") == "false"
+
+        dialog.locator("[data-step-next]").click()
+        page.locator("#editProductModal").wait_for(state="visible")
+        body = page.request.get(f"{live_server}/api/products/").json()
+        assert body["products"][0]["variants"] == []
+
+    def test_choosing_colours_writes_nothing_before_the_last_button(
+        self, with_colour_sets, live_server
+    ):
+        page, _, _ = with_colour_sets
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+        dialog.locator(".variant-choice").first.click()
+
+        body = page.request.get(f"{live_server}/api/products/").json()
+        assert body["pagination"]["total"] == 0, "picking a colour created the piece"
+
+        page.keyboard.press("Escape")
+        dialog.wait_for(state="hidden")
+        body = page.request.get(f"{live_server}/api/products/").json()
+        assert body["pagination"]["total"] == 0
+
+    def test_the_selected_ring_is_not_hidden_behind_the_badge(self, with_colour_sets):
+        """The chip is only a wrapper — the badge inside brings its own background,
+        and an inset shadow would paint beneath it, which is exactly how the ring
+        went missing on the storefront's collection cards."""
+        page, _, _ = with_colour_sets
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+
+        chip = dialog.locator(".variant-choice").first
+        before = chip.bounding_box()
+        chip.click()
+        after = chip.bounding_box()
+
+        assert chip.evaluate("el => getComputedStyle(el).boxShadow") == "none"
+        assert chip.evaluate("el => getComputedStyle(el).borderTopWidth") == "2px"
+        assert (round(before["width"]), round(before["height"])) == (
+            round(after["width"]), round(after["height"])
+        ), "choosing a colour resized the chip"
 
 
 class TestConfirmRaisedFromInsideADialog:
