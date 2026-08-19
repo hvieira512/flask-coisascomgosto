@@ -690,6 +690,65 @@ class TestThePhotoPicker:
         assert _filled(row) == 0
 
 
+class TestTheCollectionFormIsSplit:
+    """The fields on one side, the cover on the other — and stacked on a phone."""
+
+    def _open(self, page, live_server):
+        page.goto(f"{live_server}/dashboard/collections")
+        page.wait_for_selector("#new-collection")
+        page.click("#new-collection")
+        dialog = page.locator("#newCollectionModal")
+        dialog.wait_for(state="visible")
+        return dialog
+
+    def test_the_cover_sits_beside_the_fields(self, signed_in, live_server):
+        page, errors = signed_in
+        dialog = self._open(page, live_server)
+
+        name = dialog.locator("#cof-name").bounding_box()
+        cover = dialog.locator("#cof-cover .photo-slot").bounding_box()
+
+        assert cover["x"] > name["x"] + name["width"], "the cover is not to the right"
+        assert abs(cover["y"] - name["y"]) < 40, "they are not on the same row"
+        assert errors == []
+
+    def test_it_stacks_on_a_phone(self, browser, live_server, make_user):
+        """Bulma's columns stack below 769px, so the cover follows the fields rather
+        than being squeezed into a third of a phone screen."""
+        make_user("phone", password="Passw0rd!")
+        context = browser.new_context(viewport={"width": 390, "height": 780})
+        context.request.post(
+            f"{live_server}/api/auth/login",
+            data=json.dumps({"username": "phone", "password": "Passw0rd!"}),
+            headers={"Content-Type": "application/json"},
+        )
+        page = context.new_page()
+        page.set_default_timeout(5000)
+        try:
+            dialog = self._open(page, live_server)
+
+            name = dialog.locator("#cof-name").bounding_box()
+            cover = dialog.locator("#cof-cover .photo-slot").bounding_box()
+
+            assert cover["y"] > name["y"] + name["height"], "still side by side at 390px"
+            assert not page.evaluate(
+                "() => document.documentElement.scrollWidth > window.innerWidth"
+            )
+        finally:
+            context.close()
+
+    def test_the_dialog_does_not_have_to_be_scrolled_to_reach_the_cover(
+        self, signed_in, live_server
+    ):
+        """The point of the split: both halves are visible at once."""
+        page, _ = signed_in
+        dialog = self._open(page, live_server)
+
+        assert not dialog.locator(".modal-card-body").evaluate(
+            "el => el.scrollHeight > el.clientHeight + 1"
+        )
+
+
 class TestConfirmRaisedFromInsideADialog:
     """Removing a colour asks "Remover esta cor?" while the edit dialog is open.
 

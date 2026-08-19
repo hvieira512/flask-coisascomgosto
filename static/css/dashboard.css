@@ -258,10 +258,11 @@
     gap: .5rem;
 }
 
-/* One photograph and nowhere for a second, so the slot does not stretch across the
-   dialog: a collection has one cover. */
+/* One photograph and nowhere for a second. It fills what it is given, and the column
+   it sits in does the constraining — the collections form puts it beside the fields
+   rather than under them. */
 .photo-tray.is-single {
-    grid-template-columns: minmax(0, 13rem);
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .photo-slot {

@@ -423,6 +423,13 @@ class TestDashboardCollections:
                      "uploadCover", "removeCover"]:
             assert call in source, call
 
+    def test_the_form_is_split_in_two(self):
+        """What the collection is on the left, what it looks like on the right."""
+        source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
+            encoding="utf-8"
+        )
+        assert '<div class="columns' in source
+
     def test_editing_carries_the_existing_cover_through(self):
         """PUT replaces the row, so a form that does not send image_url would
         clear a cover the owner never touched."""
@@ -631,6 +638,24 @@ class TestOneModuleSystem:
                 if "sweetalert2" in tag or "fontawesome" in tag:
                     continue
                 assert 'type="module"' in tag, f"{page}: {tag}"
+
+
+def test_no_template_syntax_from_another_language_in_the_markup_builders():
+    """The dashboard builds its markup in JavaScript template literals, where a Jinja
+    comment and a JSX comment are both just text — and both render.
+
+    Written because it happened twice within an hour: `{/* … */}` in the wizard's
+    colour step and `{# … #}` in the collections form. Neither is a syntax error, so
+    nothing else notices until the words appear on screen.
+    """
+    offenders = []
+    for path in sorted(pathlib.Path("static/js").rglob("*.js")):
+        source = path.read_text(encoding="utf-8")
+        for opener in ("{#", "{/*"):
+            if opener in source:
+                offenders.append(f"{path}: {opener}")
+
+    assert offenders == [], offenders
 
 
 def test_row_actions_reveal_on_any_row_not_only_a_table():

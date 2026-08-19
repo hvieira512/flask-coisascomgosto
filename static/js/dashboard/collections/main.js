@@ -72,26 +72,36 @@ async function loadCollections() {
 function collectionForm(collection = null) {
     return `
     <form id="collection-form" data-collection-id="${collection?.id ?? ""}">
-      <div class="field">
-        <label class="label is-small" for="cof-name">Nome</label>
-        <input class="input" id="cof-name" name="name" required
-               value="${escapeHtml(collection?.name ?? "")}" placeholder="Filigrana">
-      </div>
+      <!-- What it is on the left, what it looks like on the right. Bulma's columns
+           stack below 769px, so on a phone the cover simply follows the fields. -->
+      <div class="columns is-variable is-4 mb-0">
+        <div class="column">
+          <div class="field">
+            <label class="label is-small" for="cof-name">Nome</label>
+            <input class="input" id="cof-name" name="name" required
+                   value="${escapeHtml(collection?.name ?? "")}" placeholder="Filigrana">
+          </div>
 
-      <div class="field">
-        <label class="label is-small" for="cof-description">Descrição</label>
-        <textarea class="textarea" id="cof-description" name="description" rows="2"
-                  placeholder="O que reúne esta colecção."
-                  >${escapeHtml(collection?.description ?? "")}</textarea>
-      </div>
+          <div class="field mb-0">
+            <label class="label is-small" for="cof-description">Descrição</label>
+            <!-- Taller than the two lines it needs, so the column of fields reaches
+                 roughly the depth of the cover beside it. -->
+            <textarea class="textarea" id="cof-description" name="description" rows="6"
+                      placeholder="O que reúne esta colecção."
+                      >${escapeHtml(collection?.description ?? "")}</textarea>
+          </div>
+        </div>
 
-      <div class="field mb-0">
-        <label class="label is-small">Capa</label>
-        <div id="cof-cover"></div>
-        <p class="help">
-          A fotografia que representa a colecção no catálogo. jpg, png ou webp, até
-          5 MB.
-        </p>
+        <div class="column">
+          <div class="field mb-0">
+            <label class="label is-small">Capa</label>
+            <div id="cof-cover"></div>
+            <p class="help">
+              A fotografia que representa a colecção no catálogo. jpg, png ou webp,
+              até 5 MB.
+            </p>
+          </div>
+        </div>
       </div>
     </form>`;
 }
