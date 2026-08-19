@@ -1,5 +1,6 @@
 import { API, request } from "../../core/api.js";
 import { ColorSet } from "../../store/color-set.js";
+import { PhotoPicker } from "../../core/photo-picker.js";
 import { escapeHtml } from "../../core/html.js";
 import { reference } from "./reference.js";
 
@@ -42,24 +43,27 @@ export function variantChoiceStep(colorSets) {
           <label class="label is-small">Fotografias destas cores</label>
           <ul class="panel is-shadowless mb-2" id="variant-photo-rows"></ul>
           <p class="help">
-            Uma por cor, se já as tirou. As restantes entram no passo seguinte.
+            Quantas quiser por cor, se já as tirou. As restantes podem entrar depois,
+            no separador Fotografias.
           </p>
         </div>
       </div>`;
 }
 
 /**
- * Wires the chips and their photo slots, and returns a reader for both.
+ * Wires the chips and a photo tray for each colour chosen, and returns a reader for
+ * both.
  *
- * The files live in a Map rather than in the inputs: the rows are re-rendered every
- * time a chip is toggled, and re-rendering an <input type="file"> empties it — a
- * photograph chosen for the first colour would vanish when the second was ticked.
+ * Each colour gets its own tray because a variant may be photographed more than
+ * once. The trays are kept in a Map and moved in and out of the DOM rather than
+ * rebuilt, so a photograph chosen for the first colour survives a second being
+ * ticked — a redrawn tray would lose the files it was holding.
  */
 export function wireVariantChoice(root) {
     const choices = root.querySelector("#variant-choices");
     if (!choices) return () => [];
 
-    const photos = new Map();
+    const trays = new Map();
     const panel = root.querySelector("#variant-photos");
     const rows = root.querySelector("#variant-photo-rows");
 
@@ -67,48 +71,44 @@ export function wireVariantChoice(root) {
         [...choices.querySelectorAll('.variant-choice[aria-pressed="true"]')]
             .map((chip) => Number(chip.dataset.colorSetId));
 
-    const nameOf = (id) =>
-        choices.querySelector(`[data-color-set-id="${id}"]`).textContent.trim();
+    const chipOf = (id) => choices.querySelector(`[data-color-set-id="${id}"]`);
 
-    const badgeOf = (id) =>
-        choices.querySelector(`[data-color-set-id="${id}"]`).innerHTML;
+    /** One row per chosen colour: its badge, and a tray under it. */
+    function rowFor(id) {
+        if (trays.has(id)) return trays.get(id).row;
+
+        const row = document.createElement("li");
+        row.className = "panel-block px-0 is-flex-direction-column is-align-items-stretch";
+        row.dataset.photoFor = String(id);
+        row.innerHTML = `
+            <span class="is-flex is-align-items-center is-gap-1 mb-2">${chipOf(id).innerHTML}</span>
+            <div data-photo-tray></div>`;
+
+        const tray = PhotoPicker.mount(row.querySelector("[data-photo-tray]"), {
+            multiple: true,
+            hint: "Arraste, escolha ou tire",
+        });
+        trays.set(id, { row, tray });
+        return row;
+    }
 
     function drawRows() {
         const ids = chosen();
         panel.hidden = ids.length === 0;
-        // A colour that has been unticked takes its photograph with it, or the
-        // upload would arrive for a variant the piece does not have.
-        [...photos.keys()].forEach((id) => {
-            if (!ids.includes(id)) photos.delete(id);
+
+        // A colour that has been unticked takes its photographs with it, or the
+        // upload would arrive for a variant the piece does not have. The row has to
+        // be taken out of the list by hand: nothing here rebuilds the list, so
+        // forgetting the tray alone left the row on screen.
+        [...trays.keys()].forEach((id) => {
+            if (ids.includes(id)) return;
+            trays.get(id).row.remove();
+            trays.delete(id);
         });
 
-        rows.innerHTML = ids.map((id) => {
-            const file = photos.get(id);
-            return `
-              <li class="panel-block px-0 is-justify-content-space-between"
-                  data-photo-for="${id}">
-                <span class="is-flex is-align-items-center is-gap-1">${badgeOf(id)}</span>
-                <span class="is-flex is-align-items-center is-gap-1">
-                  ${file
-                      ? `<span class="is-size-7 has-text-grey">${escapeHtml(file.name)}</span>
-                         <button type="button" class="button is-small is-ghost has-text-danger"
-                                 data-photo-clear aria-label="Remover a fotografia de ${escapeHtml(nameOf(id))}">
-                           <span class="icon"><i class="fa-solid fa-xmark"></i></span>
-                         </button>`
-                      : `<div class="file is-small">
-                           <label class="file-label">
-                             <input class="file-input" type="file" data-photo-input
-                                    accept="image/jpeg,image/png,image/webp"
-                                    aria-label="Fotografia de ${escapeHtml(nameOf(id))}">
-                             <span class="file-cta">
-                               <span class="file-icon"><i class="fa-solid fa-image"></i></span>
-                               <span class="file-label">Escolher…</span>
-                             </span>
-                           </label>
-                         </div>`}
-                </span>
-              </li>`;
-        }).join("");
+        // Appending an element that is already in the list moves it, so the rows
+        // end up in the chips' order without any of them being re-created.
+        ids.forEach((id) => rows.appendChild(rowFor(id)));
     }
 
     choices.addEventListener("click", (event) => {
@@ -121,26 +121,11 @@ export function wireVariantChoice(root) {
         drawRows();
     });
 
-    // Delegated because the rows are rebuilt on every toggle. `change` bubbles.
-    rows.addEventListener("change", (event) => {
-        const input = event.target.closest("[data-photo-input]");
-        if (!input) return;
-
-        const id = Number(input.closest("[data-photo-for]").dataset.photoFor);
-        const file = input.files[0];
-        if (file) photos.set(id, file);
-        drawRows();
-    });
-
-    rows.addEventListener("click", (event) => {
-        const clear = event.target.closest("[data-photo-clear]");
-        if (!clear) return;
-
-        photos.delete(Number(clear.closest("[data-photo-for]").dataset.photoFor));
-        drawRows();
-    });
-
-    return () => chosen().map((id) => ({ colorSetId: id, file: photos.get(id) ?? null }));
+    return () =>
+        chosen().map((id) => ({
+            colorSetId: id,
+            files: trays.get(id)?.tray.files() ?? [],
+        }));
 }
 
 /** The variants panel inside the edit modal: what the product is offered in. */

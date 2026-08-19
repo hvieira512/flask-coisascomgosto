@@ -1,3 +1,4 @@
+import { PhotoPicker } from "../../core/photo-picker.js";
 import { escapeHtml } from "../../core/html.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
@@ -86,53 +87,33 @@ function collectionForm(collection = null) {
 
       <div class="field mb-0">
         <label class="label is-small">Capa</label>
-        <div class="is-flex is-align-items-center is-gap-1 mb-2" id="cof-current">
-          ${collection?.image_url
-              ? `<img class="dash-thumb" src="${escapeHtml(collection.image_url)}" alt="">
-                 <button type="button" class="button is-small is-ghost has-text-danger"
-                         id="cof-remove">Remover capa</button>`
-              : `<span class="has-text-grey is-size-7">Sem capa.</span>`}
-        </div>
-        <div class="file is-small has-name">
-          <label class="file-label">
-            <input class="file-input" type="file" id="cof-file"
-                   accept="image/jpeg,image/png,image/webp">
-            <span class="file-cta">
-              <span class="file-icon"><i class="fa-solid fa-upload"></i></span>
-              <span class="file-label">Escolher fotografia</span>
-            </span>
-            <span class="file-name" id="cof-file-name">Nenhum ficheiro</span>
-          </label>
-        </div>
-        <p class="help">jpg, png ou webp, até 5 MB. Substitui a capa actual.</p>
+        <div id="cof-cover"></div>
+        <p class="help">
+          A fotografia que representa a colecção no catálogo. jpg, png ou webp, até
+          5 MB.
+        </p>
       </div>
     </form>`;
 }
 
-/** The picked filename, and the button that clears an existing cover. */
+/**
+ * The cover slot. One photograph, so one slot: it shows the cover the collection
+ * already has, and clearing it removes the cover then and there — the collection
+ * exists, unlike a piece being created.
+ */
 function wireCoverField(modalId, collection, after) {
     const root = modal(modalId);
-    const picker = root.querySelector("#cof-file");
 
-    picker.onchange = () => {
-        root.querySelector("#cof-file-name").textContent =
-            picker.files[0]?.name ?? "Nenhum ficheiro";
-    };
-
-    const remove = root.querySelector("#cof-remove");
-    if (remove) {
-        remove.onclick = async () => {
-            try {
-                await removeCover(collection.id);
-                Notify.success("Capa removida.");
-                root.querySelector("#cof-current").innerHTML =
-                    `<span class="has-text-grey is-size-7">Sem capa.</span>`;
-                await after();
-            } catch (error) {
-                Notify.error(error.message);
-            }
-        };
-    }
+    return PhotoPicker.mount(root.querySelector("#cof-cover"), {
+        initial: collection?.image_url
+            ? [{ id: collection.id, url: collection.image_url }]
+            : [],
+        onRemoveStored: async () => {
+            await removeCover(collection.id);
+            Notify.success("Capa removida.");
+            await after();
+        },
+    });
 }
 
 /** The API answers a duplicate in English; the owners read Portuguese. */
@@ -140,11 +121,13 @@ const nameTaken = (error) =>
     error.status === 409 ? "Já existe uma colecção com esse nome." : error.message;
 
 function openForm({ modalId, collection = null }) {
+    let cover = { files: () => [] };
+
     formDialog({
         id: modalId,
         body: collectionForm(collection),
         submitLabel: collection ? "Guardar alterações" : "Criar colecção",
-        afterRender: () => wireCoverField(modalId, collection, loadCollections),
+        afterRender: () => { cover = wireCoverField(modalId, collection, loadCollections); },
         onSubmit: async (dialog) => {
             const form = dialog.querySelector("#collection-form");
             const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
@@ -167,7 +150,7 @@ function openForm({ modalId, collection = null }) {
 
             // The cover needs an id, so it follows the save rather than riding
             // along with it.
-            const file = dialog.querySelector("#cof-file").files[0];
+            const [file] = cover.files();
             if (file) await uploadCover(saved.id, file);
 
             return saved;

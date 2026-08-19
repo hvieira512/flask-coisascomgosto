@@ -248,6 +248,147 @@
     box-shadow: inset 0 0 0 2px var(--ccg-blue-400);
 }
 
+/* ----------------------------------------------------------------
+   Photographs: the picker, used wherever one is taken
+   ---------------------------------------------------------------- */
+
+.photo-tray {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    gap: .5rem;
+}
+
+/* One photograph and nowhere for a second, so the slot does not stretch across the
+   dialog: a collection has one cover. */
+.photo-tray.is-single {
+    grid-template-columns: minmax(0, 13rem);
+}
+
+.photo-slot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    padding: .4rem;
+    border: 2px dashed var(--ccg-blue-200);
+    border-radius: var(--radius);
+    background: var(--ccg-blue-50);
+    cursor: pointer;
+    overflow: hidden;
+    text-align: center;
+    /* So the hint can stand down in a slot too narrow to read it. */
+    container-type: inline-size;
+}
+
+/* focus-within, because the input that opens the file dialog is visually hidden —
+   without it a keyboard user has no idea where they are. */
+.photo-slot:hover,
+.photo-slot:focus-within,
+.photo-slot.is-over {
+    border-color: var(--ccg-blue-400);
+    background: var(--ccg-blue-100);
+}
+
+.photo-slot.is-over {
+    border-color: var(--ccg-blue-500);
+}
+
+/* Hidden but still focusable. display: none would take it out of the tab order and
+   the picker would be mouse-only. */
+.photo-slot input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.photo-slot-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    pointer-events: none;
+}
+
+.photo-slot-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--ccg-blue-400);
+}
+
+.photo-slot-hint {
+    font-size: .68rem;
+    line-height: 1.25;
+    color: var(--ccg-ink-soft);
+}
+
+/* A variant's slots are small. The camera says enough on its own there, and the
+   full sentence would overflow a 100px box. */
+@container (max-width: 8rem) {
+    .photo-slot-hint {
+        display: none;
+    }
+}
+
+.photo-slot.is-filled {
+    padding: 0;
+    border-style: solid;
+    border-color: var(--ccg-line);
+    background: var(--ccg-paper-deep);
+}
+
+.photo-slot.is-filled img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Enough shade for the × to read against a pale photograph. */
+.photo-slot.is-filled:hover::after,
+.photo-slot.is-filled:focus-visible::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(22, 39, 69, .22);
+}
+
+.photo-slot-x {
+    position: absolute;
+    top: .35rem;
+    right: .35rem;
+    width: 26px;
+    height: 26px;
+    background: rgba(22, 39, 69, .78);
+    color: #fff;
+    font-size: .72rem;
+    opacity: 0;
+    transition: opacity .12s;
+    /* Above the scrim, which is the ::after of the same element. */
+    z-index: 1;
+}
+
+.photo-slot.is-filled:hover .photo-slot-x,
+.photo-slot.is-filled:focus-visible .photo-slot-x {
+    opacity: 1;
+}
+
+/* Nothing hovers on a phone, so the way to remove a photograph must be visible. */
+@media (hover: none) {
+    .photo-slot-x {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .photo-slot-x {
+        transition: none;
+    }
+}
+
 /* A colour set the piece will be offered in, chosen in the create wizard. The
    button is only a wrapper: the badge inside brings its own colours, so selection
    has to show on the ring around it.

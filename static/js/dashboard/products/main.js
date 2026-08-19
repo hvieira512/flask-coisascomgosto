@@ -37,7 +37,7 @@ const getProduct = (id) =>
  * about to open, be where it is tried again.
  */
 async function uploadChosenPhotos(productId, picks) {
-    const withPhotos = picks.filter((pick) => pick.file);
+    const withPhotos = picks.filter((pick) => pick.files.length);
     if (!withPhotos.length) return;
 
     const product = await getProduct(productId);
@@ -46,15 +46,17 @@ async function uploadChosenPhotos(productId, picks) {
     );
 
     const failed = [];
-    for (const { colorSetId, file } of withPhotos) {
-        try {
-            await uploadImage(productId, {
-                file,
-                variantId: variantOf.get(colorSetId),
-                alt: product.name,
-            });
-        } catch (error) {
-            failed.push(error.message);
+    for (const { colorSetId, files } of withPhotos) {
+        for (const file of files) {
+            try {
+                await uploadImage(productId, {
+                    file,
+                    variantId: variantOf.get(colorSetId),
+                    alt: product.name,
+                });
+            } catch (error) {
+                failed.push(error.message);
+            }
         }
     }
 

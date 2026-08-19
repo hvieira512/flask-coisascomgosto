@@ -97,6 +97,38 @@ def _write_photo(tmp_path, name):
     return path
 
 
+def _put_photo(scope, tmp_path, name):
+    """Choose a photograph in `scope`'s empty slot, the way the file dialog would."""
+    scope.locator('.photo-slot:not(.is-filled) input[type="file"]').set_input_files(
+        str(_write_photo(tmp_path, name))
+    )
+
+
+def _filled(scope):
+    return scope.locator(".photo-slot.is-filled").count()
+
+
+def _drop_photo(page, slot, name):
+    """Drop a photograph onto a slot, which no file input can stand in for."""
+    slot.evaluate(
+        """(element, name) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 8;
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => {
+                    const transfer = new DataTransfer();
+                    transfer.items.add(new File([blob], name, { type: 'image/png' }));
+                    const event = new DragEvent('drop', { bubbles: true, cancelable: true });
+                    Object.defineProperty(event, 'dataTransfer', { value: transfer });
+                    element.dispatchEvent(event);
+                    resolve();
+                }, 'image/png');
+            });
+        }""",
+        name,
+    )
+
+
 class TestStepDialog:
     """core/steps.js, driven the way an owner drives it."""
 
@@ -391,33 +423,48 @@ class TestChoosingColoursWhileCreating:
     def test_a_photo_chosen_for_one_colour_survives_ticking_another(
         self, with_colour_sets, tmp_path
     ):
-        """The rows are rebuilt on every toggle, and rebuilding an <input type=file>
-        empties it — so the files are held in a Map rather than in the inputs."""
+        """A tray redrawn from scratch would lose the files it holds, so the rows are
+        moved rather than rebuilt when the chips change."""
         page, _, _ = with_colour_sets
         dialog = self._at_the_colour_step(page)
 
-        photo = _write_photo(tmp_path, "caixa.jpg")
         dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
-        dialog.locator("[data-photo-input]").set_input_files(str(photo))
-        assert "caixa.jpg" in dialog.locator("[data-photo-for]").inner_text()
+        _put_photo(dialog.locator("[data-photo-for]").first, tmp_path, "caixa.jpg")
+        assert _filled(dialog) == 1
 
         dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
-        rows = dialog.locator("[data-photo-for]")
-        assert rows.count() == 2
-        assert "caixa.jpg" in rows.first.inner_text(), "the chosen file was lost"
+        assert dialog.locator("[data-photo-for]").count() == 2
+        assert _filled(dialog) == 1, "the held photograph was lost"
+        assert _filled(dialog.locator("[data-photo-for]").first) == 1
 
-    def test_the_photo_can_be_taken_back(self, with_colour_sets, tmp_path):
+    def test_a_colour_can_hold_several_photographs(self, with_colour_sets, tmp_path):
+        """A variant may be photographed more than once, so the tray keeps an empty
+        slot after the filled ones."""
         page, _, _ = with_colour_sets
         dialog = self._at_the_colour_step(page)
 
         dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
-        dialog.locator("[data-photo-input]").set_input_files(
-            str(_write_photo(tmp_path, "caixa.jpg"))
-        )
-        dialog.locator("[data-photo-clear]").click()
+        row = dialog.locator("[data-photo-for]").first
 
-        assert "caixa.jpg" not in dialog.locator("[data-photo-for]").inner_text()
-        assert dialog.locator("[data-photo-input]").count() == 1
+        _put_photo(row, tmp_path, "uma.jpg")
+        _put_photo(row, tmp_path, "outra.jpg")
+
+        assert _filled(row) == 2
+        assert row.locator(".photo-slot:not(.is-filled)").count() == 1
+
+    def test_the_photo_can_be_taken_back(self, with_colour_sets, tmp_path):
+        """Clicking the photograph removes it — the whole area, not just the ×."""
+        page, _, _ = with_colour_sets
+        dialog = self._at_the_colour_step(page)
+
+        dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
+        row = dialog.locator("[data-photo-for]").first
+        _put_photo(row, tmp_path, "caixa.jpg")
+
+        row.locator(".photo-slot.is-filled").click()
+
+        assert _filled(row) == 0
+        assert row.locator(".photo-slot").count() == 1
 
     def test_the_photo_lands_on_its_own_variant(
         self, with_colour_sets, live_server, tmp_path
@@ -429,10 +476,8 @@ class TestChoosingColoursWhileCreating:
 
         dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
         dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
-        # The second row's picker: the first colour deliberately gets no photograph.
-        dialog.locator("[data-photo-for]").nth(1).locator(
-            "[data-photo-input]"
-        ).set_input_files(str(_write_photo(tmp_path, "preto.jpg")))
+        # The second row's tray: the first colour deliberately gets no photograph.
+        _put_photo(dialog.locator("[data-photo-for]").nth(1), tmp_path, "preto.jpg")
 
         dialog.locator("[data-step-next]").click()
         page.locator("#editProductModal").wait_for(state="visible")
@@ -452,9 +497,7 @@ class TestChoosingColoursWhileCreating:
         dialog = self._at_the_colour_step(page)
 
         dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
-        dialog.locator("[data-photo-input]").set_input_files(
-            str(_write_photo(tmp_path, "caixa.jpg"))
-        )
+        _put_photo(dialog.locator("[data-photo-for]").first, tmp_path, "caixa.jpg")
         dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
         dialog.locator(".variant-choice", has_text="Preto e Dourado").click()
 
@@ -472,9 +515,7 @@ class TestChoosingColoursWhileCreating:
         dialog = self._at_the_colour_step(page)
 
         dialog.locator(".variant-choice", has_text="Branco e Dourado").click()
-        dialog.locator("[data-photo-input]").set_input_files(
-            str(_write_photo(tmp_path, "caixa.jpg"))
-        )
+        _put_photo(dialog.locator("[data-photo-for]").first, tmp_path, "caixa.jpg")
 
         body = page.request.get(f"{live_server}/api/products/").json()
         assert body["pagination"]["total"] == 0, "choosing a photograph created the piece"
@@ -499,6 +540,154 @@ class TestChoosingColoursWhileCreating:
         assert (round(before["width"]), round(before["height"])) == (
             round(after["width"]), round(after["height"])
         ), "choosing a colour resized the chip"
+
+
+class TestThePhotoPicker:
+    """core/photo-picker.js: the area a photograph is dropped, chosen or shot into.
+
+    Driven through the create wizard's colour step, which is one of its callers, so
+    the component is exercised where it actually runs rather than on a scratch page.
+    """
+
+    @pytest.fixture()
+    def slot(self, products_page, make_color, make_color_set, tmp_path):
+        color = make_color("Branco", hex="#FFFFFF")
+        make_color_set("Branco e Dourado", color_ids=[color["id"]])
+
+        page, errors = products_page
+        page.reload()
+        page.wait_for_selector("#new-product")
+
+        dialog = _open_wizard(page)
+        _fill_identity(dialog)
+        dialog.locator("[data-step-next]").click()
+        dialog.locator("[data-step-next]").click()
+        dialog.locator(".variant-choice").first.click()
+        return page, dialog.locator("[data-photo-for]").first, errors
+
+    def test_the_empty_state_invites_all_three_ways_in(self, slot):
+        """Drop, choose, or take one: one input covers the last two — accept for the
+        file dialog, capture for a phone's camera — and the slot itself takes drops."""
+        _, row, errors = slot
+        empty = row.locator(".photo-slot")
+
+        assert empty.locator(".photo-slot-icon .fa-camera").count() == 1
+        assert empty.locator('input[type="file"]').get_attribute("capture") == "environment"
+        assert "image/jpeg" in empty.locator('input[type="file"]').get_attribute("accept")
+        assert errors == []
+
+    def test_the_input_is_hidden_but_still_reachable_by_keyboard(self, slot):
+        """display: none would take it out of the tab order and the picker would be
+        mouse-only; the slot lights up through :focus-within instead."""
+        _, row, _ = slot
+        state = row.locator('.photo-slot input[type="file"]').evaluate(
+            """el => {
+                const style = getComputedStyle(el);
+                return { display: style.display, opacity: style.opacity };
+            }"""
+        )
+        assert state["display"] != "none"
+        assert state["opacity"] == "0"
+
+    def test_a_chosen_photograph_fills_the_area(self, slot, tmp_path):
+        page, row, _ = slot
+        _put_photo(row, tmp_path, "caixa.jpg")
+
+        filled = row.locator(".photo-slot.is-filled")
+        # Against the slot's inner box: bounding_box() includes the 2px border, which
+        # the image sits inside rather than under.
+        fills = filled.evaluate(
+            """el => {
+                const image = el.querySelector('img').getBoundingClientRect();
+                return Math.abs(image.width - el.clientWidth) < 1
+                    && Math.abs(image.height - el.clientHeight) < 1;
+            }"""
+        )
+        assert fills, "the photograph does not fill its slot"
+        assert filled.locator("img").evaluate("el => getComputedStyle(el).objectFit") == "cover"
+        assert filled.locator("img").get_attribute("src").startswith("blob:")
+
+    def test_the_border_goes_solid_once_it_holds_something(self, slot, tmp_path):
+        """Dashed says "put something here"; it has something now."""
+        _, row, _ = slot
+        assert row.locator(".photo-slot").evaluate(
+            "el => getComputedStyle(el).borderTopStyle"
+        ) == "dashed"
+
+        _put_photo(row, tmp_path, "caixa.jpg")
+        assert row.locator(".photo-slot.is-filled").evaluate(
+            "el => getComputedStyle(el).borderTopStyle"
+        ) == "solid"
+
+    def test_the_cross_appears_on_hover_and_the_whole_area_removes(self, slot, tmp_path):
+        page, row, _ = slot
+        _put_photo(row, tmp_path, "caixa.jpg")
+        filled = row.locator(".photo-slot.is-filled")
+
+        assert filled.locator(".photo-slot-x").evaluate(
+            "el => getComputedStyle(el).opacity"
+        ) == "0"
+
+        filled.hover()
+        page.wait_for_function(
+            """() => getComputedStyle(
+                document.querySelector('.photo-slot.is-filled .photo-slot-x')).opacity === '1'"""
+        )
+
+        # Not the × itself: clicking anywhere in the area takes the photograph back.
+        filled.click(position={"x": 8, "y": 40})
+        assert _filled(row) == 0
+
+    def test_dropping_over_a_filled_slot_replaces_what_is_there(self, slot, tmp_path):
+        """The one way to swap a photograph, since clicking removes it."""
+        page, row, _ = slot
+        _put_photo(row, tmp_path, "primeira.jpg")
+        first = row.locator(".photo-slot.is-filled img").get_attribute("src")
+
+        _drop_photo(page, row.locator(".photo-slot.is-filled"), "segunda.jpg")
+
+        assert _filled(row) == 1, "the drop added a slot instead of replacing"
+        assert row.locator(".photo-slot.is-filled img").get_attribute("src") != first
+
+    def test_dragging_over_it_says_so(self, slot):
+        page, row, _ = slot
+        empty = row.locator(".photo-slot")
+
+        page.evaluate(
+            """() => {
+                const slot = document.querySelector('.photo-slot');
+                const event = new DragEvent('dragover', { bubbles: true, cancelable: true });
+                Object.defineProperty(event, 'dataTransfer', { value: new DataTransfer() });
+                slot.dispatchEvent(event);
+            }"""
+        )
+        assert "is-over" in empty.get_attribute("class")
+
+    def test_a_file_that_is_not_an_image_is_refused_before_any_upload(
+        self, slot, tmp_path
+    ):
+        """The server checks too. Refusing here means the owner is not told after
+        watching an upload finish."""
+        page, row, _ = slot
+        notes = tmp_path / "notas.txt"
+        notes.write_text("nada")
+
+        row.locator('.photo-slot input[type="file"]').set_input_files(str(notes))
+        page.wait_for_selector(".swal2-container")
+
+        assert "não é uma imagem" in page.locator(".swal2-container").inner_text()
+        assert _filled(row) == 0
+
+    def test_a_file_over_five_megabytes_is_refused(self, slot, tmp_path):
+        page, row, _ = slot
+        heavy = tmp_path / "grande.jpg"
+        heavy.write_bytes(b"\xff\xd8\xff\xe0" + b"0" * (5 * 1024 * 1024))
+
+        row.locator('.photo-slot input[type="file"]').set_input_files(str(heavy))
+        page.wait_for_selector(".swal2-container")
+
+        assert "MB" in page.locator(".swal2-container").inner_text()
+        assert _filled(row) == 0
 
 
 class TestConfirmRaisedFromInsideADialog:
