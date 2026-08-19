@@ -86,6 +86,7 @@ export const API = {
         update: (id) => `/api/collections/${id}`,
         delete: (id) => `/api/collections/${id}`,
         cover: (id) => `/api/collections/${id}/cover`,
+        colorSets: (id) => `/api/collections/${id}/color-sets`,
     },
     colorSets: {
         list: "/api/color-sets/",

@@ -46,3 +46,19 @@ export const removeCover = (id) =>
         method: "DELETE",
         fallback: "Não foi possível remover a capa.",
     });
+
+export async function listColorSets() {
+    const { color_sets: sets } = await request(
+        `${API.colorSets.list}?limit=100`,
+        { fallback: "Erro ao carregar os conjuntos de cores." }
+    );
+    return sets;
+}
+
+/** A colour set belongs to one collection, so this moves them, not links them. */
+export const setColorSets = (id, colorSetIds) =>
+    request(API.collections.colorSets(id), {
+        method: "PUT",
+        body: { color_set_ids: colorSetIds },
+        fallback: "Não foi possível guardar os conjuntos de cores.",
+    });

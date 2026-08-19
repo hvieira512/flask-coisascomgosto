@@ -749,6 +749,137 @@ class TestTheCollectionFormIsSplit:
         )
 
 
+class TestChoosingACollectionsColourSets:
+    """The collections form says which colour sets are the collection's own.
+
+    The relationship lived only at the other end before: a colour set could name a
+    collection, and a collection could not take one.
+    """
+
+    @pytest.fixture()
+    def form(self, signed_in, live_server, client, make_collection, make_color,
+             make_color_set):
+        white = make_color("Branco", hex="#FFFFFF")
+        blue = make_color("Azul", hex="#2C5FA8")
+        filigrana = make_collection("Filigrana")
+        bordados = make_collection("Bordados")
+
+        mine = make_color_set("Branco e Dourado", color_ids=[white["id"]])
+        theirs = make_color_set("Branco e Azul", color_ids=[blue["id"]])
+        free = make_color_set("Preto e Branco", color_ids=[white["id"]])
+        client.put(
+            f"/api/collections/{filigrana['id']}/color-sets",
+            json={"color_set_ids": [mine["id"]]},
+        )
+        client.put(
+            f"/api/collections/{bordados['id']}/color-sets",
+            json={"color_set_ids": [theirs["id"]]},
+        )
+
+        page, errors = signed_in
+        page.goto(f"{live_server}/dashboard/collections")
+        page.wait_for_selector("#collection-rows tr")
+        page.locator("#collection-rows tr", has_text="Filigrana").first.click()
+        dialog = page.locator("#editCollectionModal")
+        dialog.wait_for(state="visible")
+        page.wait_for_selector("#cof-sets .variant-choice")
+        return page, dialog, errors, {"mine": mine, "theirs": theirs, "free": free}
+
+    def _chip(self, dialog, name):
+        return dialog.locator(".variant-choice", has_text=name).first
+
+    def test_every_colour_set_is_offered(self, form):
+        page, dialog, errors, _ = form
+        names = dialog.locator("#cof-sets .variant-choice").all_text_contents()
+
+        assert sorted(n.strip() for n in names) == [
+            "Branco e Azul", "Branco e Dourado", "Preto e Branco"
+        ]
+        assert errors == []
+
+    def test_the_collections_own_are_already_chosen(self, form):
+        _, dialog, _, _ = form
+        assert self._chip(dialog, "Branco e Dourado").get_attribute("aria-pressed") == "true"
+        assert self._chip(dialog, "Preto e Branco").get_attribute("aria-pressed") == "false"
+
+    def test_one_that_belongs_elsewhere_says_where(self, form):
+        """Choosing it would take it from that collection, so the form says so."""
+        _, dialog, _, _ = form
+        assert self._chip(dialog, "Branco e Azul").get_attribute("title") == "Está em Bordados"
+
+    def test_the_collections_own_come_first(self, form):
+        _, dialog, _, _ = form
+        names = [
+            n.strip()
+            for n in dialog.locator("#cof-sets .variant-choice").all_text_contents()
+        ]
+        assert names[0] == "Branco e Dourado"
+
+    def test_choosing_one_assigns_it_on_save(self, form, live_server):
+        page, dialog, _, ids = form
+        self._chip(dialog, "Preto e Branco").click()
+        dialog.locator("[data-dialog-submit]").click()
+        dialog.wait_for(state="hidden")
+
+        page.wait_for_function(
+            """async () => {
+                const body = await fetch('/api/color-sets/?limit=100').then(r => r.json());
+                const set = body.color_sets.find(s => s.name === 'Preto e Branco');
+                return set.collection && set.collection.name === 'Filigrana';
+            }"""
+        )
+
+    def test_unchoosing_one_leaves_it_belonging_to_none(self, form, live_server):
+        page, dialog, _, _ = form
+        self._chip(dialog, "Branco e Dourado").click()
+        dialog.locator("[data-dialog-submit]").click()
+        dialog.wait_for(state="hidden")
+
+        page.wait_for_function(
+            """async () => {
+                const body = await fetch('/api/color-sets/?limit=100').then(r => r.json());
+                const set = body.color_sets.find(s => s.name === 'Branco e Dourado');
+                return set.collection === null;
+            }"""
+        )
+
+    def test_the_ring_is_not_mistaken_for_the_badges_own_border(self, form):
+        """A colour set's badge carries a 1px border in its own colour. A blue set's
+        looked exactly like the chosen ring pressed against it, so the chip keeps a
+        gap — and the ring is a border rather than an inset shadow, which the badge
+        would paint over."""
+        _, dialog, _, _ = form
+        chip = self._chip(dialog, "Branco e Dourado")
+
+        style = chip.evaluate(
+            """el => {
+                const s = getComputedStyle(el);
+                return { padding: s.paddingTop, shadow: s.boxShadow, width: s.borderTopWidth };
+            }"""
+        )
+        assert style["shadow"] == "none"
+        assert style["width"] == "2px"
+        assert int(style["padding"].replace("px", "")) >= 2
+
+    def test_choosing_does_not_move_the_chip(self, form):
+        page, dialog, _, _ = form
+        # The dialog scales in over .18s, so a box measured too early is a
+        # transformed one: this read 131x33 opening and 133x34 settled, and blamed
+        # the click.
+        page.wait_for_function(
+            "() => document.getElementById('editCollectionModal').getAnimations().length === 0"
+        )
+
+        chip = self._chip(dialog, "Preto e Branco")
+        before = chip.bounding_box()
+        chip.click()
+        after = chip.bounding_box()
+
+        assert (round(before["width"]), round(before["height"])) == (
+            round(after["width"]), round(after["height"])
+        )
+
+
 class TestConfirmRaisedFromInsideADialog:
     """Removing a colour asks "Remover esta cor?" while the edit dialog is open.
 

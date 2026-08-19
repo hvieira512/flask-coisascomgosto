@@ -398,8 +398,11 @@
    button, and an inset shadow paints beneath content — the same way it hid the ring
    on the storefront's collection cards. Transparent at rest so the 2px never moves
    anything. */
+/* 3px of gap, not 1: a colour set's badge carries its own 1px border in its own
+   colour, and a blue set's looked exactly like the chosen ring sitting right against
+   it. The gap is what makes the ring read as a ring. */
 .variant-choice {
-    padding: 1px;
+    padding: 3px;
     background: none;
     border: 2px solid transparent;
     border-radius: 999px;

@@ -2,9 +2,10 @@ import { PhotoPicker } from "../../core/photo-picker.js";
 import { escapeHtml } from "../../core/html.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
+import { ColorSet } from "../../store/color-set.js";
 import {
     countByCollection, createCollection, deleteCollection, listCollections,
-    removeCover, updateCollection, uploadCover,
+    listColorSets, removeCover, setColorSets, updateCollection, uploadCover,
 } from "./api.js";
 
 /**
@@ -15,6 +16,7 @@ import {
  */
 
 let collections = [];
+let colorSets = [];
 let pieceCounts = new Map();
 
 const findCollection = (id) =>
@@ -56,9 +58,14 @@ function collectionRow(collection) {
 }
 
 async function loadCollections() {
-    const [all, counts] = await Promise.all([listCollections(), countByCollection()]);
+    // The colour sets come along because the form offers all of them, and because
+    // which collection each belongs to changes when one is saved.
+    const [all, counts, sets] = await Promise.all([
+        listCollections(), countByCollection(), listColorSets(),
+    ]);
     pieceCounts = counts;
     collections = all;
+    colorSets = sets;
 
     document.getElementById("collection-rows").innerHTML = all.length
         ? all.map(collectionRow).join("")
@@ -103,7 +110,64 @@ function collectionForm(collection = null) {
           </div>
         </div>
       </div>
+
+      <!-- Across the full width, under both columns: nine badges need the room, and
+           they are about the collection as a whole rather than about either side. -->
+      <div class="field mt-4 mb-0">
+        <label class="label is-small">Conjuntos de cores</label>
+        <div class="tags" id="cof-sets"></div>
+        <p class="help">
+          As combinações em que esta colecção se faz. Cada conjunto pertence a uma só
+          colecção, por isso escolher um que esteja noutra passa-o para esta.
+        </p>
+      </div>
     </form>`;
+}
+
+/**
+ * The colour sets, as the badges the storefront draws, with the ones already in this
+ * collection chosen. Same chip and same ring as the create wizard's colour step, so
+ * "chosen" looks the same wherever it is asked.
+ *
+ * Sorted so the collection's own come first, then the unowned, then the ones that
+ * would have to be taken from another collection — whose name is in the title, since
+ * choosing one of those moves it.
+ */
+function wireColorSetField(modalId, collection) {
+    const root = modal(modalId);
+    const container = root.querySelector("#cof-sets");
+
+    const rank = (set) => {
+        if (set.collection?.id === collection?.id) return 0;
+        return set.collection ? 2 : 1;
+    };
+
+    container.innerHTML = [...colorSets]
+        .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "pt"))
+        .map((set) => {
+            const mine = collection && set.collection?.id === collection.id;
+            const elsewhere = set.collection && !mine ? set.collection.name : null;
+            return `
+              <button type="button" class="variant-choice${mine ? " is-active" : ""}"
+                      data-color-set-id="${set.id}" aria-pressed="${Boolean(mine)}"
+                      title="${elsewhere ? `Está em ${escapeHtml(elsewhere)}` : escapeHtml(set.name)}">
+                ${ColorSet.badge(set)}
+              </button>`;
+        })
+        .join("");
+
+    container.onclick = (event) => {
+        const chip = event.target.closest(".variant-choice");
+        if (!chip) return;
+
+        const on = chip.getAttribute("aria-pressed") === "true";
+        chip.setAttribute("aria-pressed", String(!on));
+        chip.classList.toggle("is-active", !on);
+    };
+
+    return () =>
+        [...container.querySelectorAll('.variant-choice[aria-pressed="true"]')]
+            .map((chip) => Number(chip.dataset.colorSetId));
 }
 
 /**
@@ -132,12 +196,16 @@ const nameTaken = (error) =>
 
 function openForm({ modalId, collection = null }) {
     let cover = { files: () => [] };
+    let chosenSets = () => [];
 
     formDialog({
         id: modalId,
         body: collectionForm(collection),
         submitLabel: collection ? "Guardar alterações" : "Criar colecção",
-        afterRender: () => { cover = wireCoverField(modalId, collection, loadCollections); },
+        afterRender: () => {
+            cover = wireCoverField(modalId, collection, loadCollections);
+            chosenSets = wireColorSetField(modalId, collection);
+        },
         onSubmit: async (dialog) => {
             const form = dialog.querySelector("#collection-form");
             const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
@@ -158,8 +226,10 @@ function openForm({ modalId, collection = null }) {
                 throw new Error(nameTaken(error));
             }
 
-            // The cover needs an id, so it follows the save rather than riding
+            // Both of these need an id, so they follow the save rather than riding
             // along with it.
+            await setColorSets(saved.id, chosenSets());
+
             const [file] = cover.files();
             if (file) await uploadCover(saved.id, file);
 
