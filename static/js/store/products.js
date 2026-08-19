@@ -167,7 +167,10 @@ import { escapeHtml } from "../core/html.js";
                 const groupLabel = StoreFilters.GROUPS[group].label;
                 const valueLabel = StoreFilters.labelFor(group, value);
                 return `
-                  <span class="tag is-dark is-medium filter-badge"
+                  <!-- Not is-medium. The badges live on the heading line now, and a
+                       32px tag in a 30px line box grew the row by 5px the moment a
+                       filter was chosen, nudging the whole grid down. -->
+                  <span class="tag is-dark filter-badge"
                         data-remove-filter="${group}" data-remove-value="${escapeHtml(value)}"
                         role="button" tabindex="0"
                         title="Remover ${escapeHtml(valueLabel)}">

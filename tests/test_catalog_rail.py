@@ -243,6 +243,73 @@ class TestTheSelectedRing:
         )
 
 
+class TestWhereTheAppliedFiltersLive:
+    """On the heading line, beside the count they explain.
+
+    They had a row of their own between the collections and the grid, so choosing
+    anything pushed the pieces 48px down the page — on a heading line that was
+    otherwise 1224px of empty space.
+    """
+
+    def test_they_sit_above_the_collections_not_between_them_and_the_grid(
+        self, catalogue
+    ):
+        page, _, _ = catalogue
+        card(page, "Filigrana").click()
+        page.wait_for_selector("#active-filters .filter-badge")
+
+        badges = page.locator("#active-filters").bounding_box()
+        rail = page.locator("#collection-rail").bounding_box()
+        assert badges["y"] < rail["y"]
+
+    def test_they_sit_next_to_the_count(self, catalogue):
+        page, _, _ = catalogue
+        card(page, "Filigrana").click()
+        page.wait_for_selector("#active-filters .filter-badge")
+
+        badge = page.locator(".filter-badge").bounding_box()
+        count = page.locator("#result-count").bounding_box()
+        assert 0 <= count["x"] - (badge["x"] + badge["width"]) < 24, (
+            "the badge drifted away from the number it explains"
+        )
+
+    def test_choosing_a_filter_does_not_push_the_grid_down(self, catalogue):
+        """The whole point of the move. A badge taller than the heading's line box
+        grew the row instead, which cost 5px of the same fault."""
+        page, _, _ = catalogue
+        before = page.locator("#product-grid").bounding_box()["y"]
+
+        card(page, "Filigrana").click()
+        page.wait_for_function(
+            "() => document.querySelectorAll('#product-grid > *').length === 2"
+        )
+        after = page.locator("#product-grid").bounding_box()["y"]
+
+        assert round(before) == round(after)
+
+    def test_a_badge_is_still_big_enough_to_hit(self, catalogue):
+        """Shrinking it to fit the line must not shrink it below a target anyone
+        can tap. The whole badge removes the filter, not just the ×."""
+        page, _, _ = catalogue
+        card(page, "Filigrana").click()
+        page.wait_for_selector("#active-filters .filter-badge")
+
+        badge = page.locator(".filter-badge").bounding_box()
+        assert badge["height"] >= 24
+        assert badge["width"] >= 24
+
+    def test_clicking_the_badge_removes_the_filter(self, catalogue):
+        page, _, _ = catalogue
+        card(page, "Filigrana").click()
+        page.wait_for_selector("#active-filters .filter-badge")
+
+        page.locator(".filter-badge").click()
+        page.wait_for_function(
+            "() => document.querySelectorAll('#product-grid > *').length === 4"
+        )
+        assert page.locator("#active-filters").is_hidden()
+
+
 class TestOnAPhone:
     @pytest.fixture()
     def phone(self, browser, live_server, client, make_collection, make_product):
@@ -282,6 +349,28 @@ class TestOnAPhone:
 
     def test_the_grid_is_still_there_underneath(self, phone):
         assert phone.locator("#product-grid > *").count() == 3
+
+    def test_several_filters_wrap_instead_of_squeezing_the_heading(self, phone):
+        """Bulma's .level never wraps, which is why the heading row is a plain flex
+        container. One short badge does fit beside the title at 390px; two do not,
+        and they have to drop onto a line of their own rather than crush the title
+        and the count or push the page sideways."""
+        phone.locator(".collection-card", has_text="Filigrana").first.click()
+        phone.wait_for_selector("#active-filters .filter-badge")
+        phone.locator('[data-facet="types"] .filter-entry').first.click()
+        phone.wait_for_function(
+            "() => document.querySelectorAll('.filter-badge').length === 2"
+        )
+
+        title = phone.locator(".title.is-4").bounding_box()
+        badges = phone.locator("#active-filters").bounding_box()
+
+        assert badges["y"] >= title["y"] + title["height"] - 4, (
+            "two badges stayed on the title's line and squeezed it"
+        )
+        assert not phone.evaluate(
+            "() => document.documentElement.scrollWidth > window.innerWidth"
+        ), "the catalogue must not scroll sideways"
 
 
 class TestWhenThereIsNothingToChoose:

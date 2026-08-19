@@ -53,11 +53,21 @@
 
     {# ---------------- Product grid ---------------- #}
     <section class="column">
-        <div class="level is-mobile mb-2">
-            <div class="level-left">
-                <h1 class="title is-4 mb-0">Catálogo</h1>
-            </div>
-            <div class="level-right">
+        {# The applied filters sit on the heading line, beside the count they
+           explain: "Colecção: Filigrana · 9 produtos". They had a row of their own
+           between the collections and the grid, which pushed the pieces 48px down
+           the moment anything was filtered — on a line that was otherwise 1224px
+           of empty space.
+
+           Not Bulma's .level, which never wraps: with several filters chosen on a
+           phone the badges have to be allowed onto a line of their own rather than
+           squeezing the title and the count. The badges and the count travel as one
+           group, so the badges sit against the number rather than drifting into the
+           middle, and the count still ends up on the right when they are hidden. #}
+        <div class="is-flex is-flex-wrap-wrap is-align-items-center is-gap-1 mb-2">
+            <h1 class="title is-4 mb-0">Catálogo</h1>
+            <div class="is-flex is-flex-wrap-wrap is-align-items-center is-gap-1 ml-auto">
+                <div id="active-filters" class="tags mb-0" hidden></div>
                 <span id="result-count" class="is-size-7 has-text-grey"></span>
             </div>
         </div>
@@ -80,9 +90,6 @@
             <p class="eyebrow mb-2">Colecções</p>
             <ul id="collection-strip" class="collection-strip"></ul>
         </nav>
-
-        {# Applied filters: one Bulma delete-tag per active filter #}
-        <div id="active-filters" class="tags mb-4" hidden></div>
 
         <div id="product-grid" class="grid is-col-min-12"></div>
 
