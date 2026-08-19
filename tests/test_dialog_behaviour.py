@@ -8,9 +8,9 @@ A real browser rather than a DOM library, for two reasons. jsdom does not implem
 `HTMLDialogElement.showModal()`, which is the entire foundation of core/modal.js —
 the focus trap, Escape, the backdrop and returning focus all come from it. And it
 has no layout or cascade, so it cannot see the class of bug these dialogs actually
-hit: `back.hidden = true` did nothing because Bulma's `.button` is
-`display: inline-flex` and outranks the attribute. `is_visible()` below is computed
-from real layout with the real stylesheets, so it fails on exactly that.
+hit: `back.hidden = true` once did nothing at all, because a class rule set its own
+`display` and outranked the attribute. `is_visible()` below is computed from real
+layout with the real stylesheets, so it fails on exactly that.
 
 Requires `playwright install chromium`; the whole module skips without it.
 """
@@ -137,10 +137,11 @@ class TestStepDialog:
         dialog = _open_wizard(page)
 
         assert "Passo 1 de 3" in dialog.locator("[data-step-label]").text_content()
-        assert dialog.locator("[data-step-progress]").get_attribute("value") == "1"
+        assert dialog.locator("[data-step-progress]").get_attribute(
+            "aria-valuenow") == "1"
 
-        # The one that regressed: Bulma's .button outranks [hidden], so this has
-        # to be a real visibility check rather than an attribute read.
+        # A real visibility check rather than an attribute read: this regressed
+        # once, when a class rule's own display outranked [hidden].
         assert not dialog.locator("[data-step-back]").is_visible()
         assert dialog.locator("[data-step-next]").inner_text().strip() == "Continuar"
         assert errors == []
@@ -203,7 +204,8 @@ class TestStepDialog:
         dialog.locator("[data-step-next]").click()
 
         assert "Passo 2 de 3" in dialog.locator("[data-step-label]").text_content()
-        assert dialog.locator("[data-step-progress]").get_attribute("value") == "2"
+        assert dialog.locator("[data-step-progress]").get_attribute(
+            "aria-valuenow") == "2"
         assert not dialog.locator('[name="name"]').is_visible()
         assert dialog.locator('[name="description"]').is_visible()
         assert dialog.locator("[data-step-back]").is_visible()
@@ -269,7 +271,7 @@ class TestStepDialog:
         assert body["products"][0]["name"] == "Caixa Redonda"
 
         # Landing on Detalhes would show the owner the form they just filled.
-        assert edit.locator("#edit-tabs li.is-active").inner_text().strip() == (
+        assert edit.locator("#edit-tabs .nav-link.active").inner_text().strip() == (
             "Cores e fotografias"
         )
         assert edit.locator('[data-panel="variants"]').is_visible()
@@ -715,8 +717,8 @@ class TestTheCollectionFormIsSplit:
         assert errors == []
 
     def test_it_stacks_on_a_phone(self, browser, live_server, make_user):
-        """Bulma's columns stack below 769px, so the cover follows the fields rather
-        than being squeezed into a third of a phone screen."""
+        """col-md stacks below 768px, so the cover follows the fields rather than
+        being squeezed into half a phone screen."""
         make_user("phone", password="Passw0rd!")
         context = browser.new_context(viewport={"width": 390, "height": 780})
         context.request.post(
@@ -746,7 +748,7 @@ class TestTheCollectionFormIsSplit:
         page, _ = signed_in
         dialog = self._open(page, live_server)
 
-        assert not dialog.locator(".modal-card-body").evaluate(
+        assert not dialog.locator(".modal-body").evaluate(
             "el => el.scrollHeight > el.clientHeight + 1"
         )
 
@@ -1103,7 +1105,7 @@ class TestModalHelpers:
         dialog = page.locator("#newTypeModal")
         dialog.wait_for(state="visible")
 
-        dialog.locator(".modal-card-body").click(position={"x": 4, "y": 4})
+        dialog.locator(".modal-body").click(position={"x": 4, "y": 4})
         page.wait_for_timeout(200)
         assert dialog.is_visible()
 
@@ -1183,7 +1185,7 @@ class TestModalHelpers:
 
         row.locator('[data-type-action="delete"]').click()
         confirm.wait_for(state="visible")
-        assert "is-danger" in confirm.locator("[data-dialog-confirm]").get_attribute(
+        assert "btn-danger" in confirm.locator("[data-dialog-confirm]").get_attribute(
             "class"
         )
         confirm.locator("[data-dialog-confirm]").click()

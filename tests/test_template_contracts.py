@@ -1,6 +1,6 @@
 """Guards for the element IDs and wrappers the front-end JavaScript depends on.
 
-These exist because a template rewrite silently broke the login page: the Bulma
+These exist because a template rewrite silently broke the login page: a framework
 migration dropped `id="form-header"` and `id="auth-container"`, and
 `document.querySelector` returned null at runtime. Nothing else in the suite
 caught it, because the server-rendered HTML was still perfectly valid — only the
@@ -51,12 +51,17 @@ class TestDashboardHooks:
         make_user("dash", password="pw")
         client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
 
-    def test_sidebar_and_overlay_ids_exist(self, client, make_user):
+    def test_the_sidebar_is_an_offcanvas_the_burger_opens(self, client, make_user):
+        """Bootstrap's offcanvas brings its own backdrop, which is why there is no
+        #overlay element and no code of ours toggling one."""
         self._login(client, make_user)
         html = client.get("/dashboard/home").get_data(as_text=True)
+
         assert 'id="sidebar"' in html
-        assert 'id="overlay"' in html
         assert 'id="sidebarToggle"' in html
+        assert 'class="offcanvas-lg offcanvas-start dash-sidebar"' in html
+        assert 'data-bs-target="#sidebar"' in html
+        assert 'id="overlay"' not in html
 
     def test_product_list_container_exists(self, client, make_user):
         """fetch.js renders into #product-list."""
@@ -64,37 +69,41 @@ class TestDashboardHooks:
         html = client.get("/dashboard/products").get_data(as_text=True)
         assert 'id="product-list"' in html
 
-    def test_modals_use_the_data_attribute_api(self, client, make_user):
+    def test_modals_close_through_our_own_attribute(self, client, make_user):
         """Modals close via data-modal-close (menus.js) and open from
-        products/main.js, which needs the product before it can build a body.
-        Neither is Bootstrap's data-bs-*."""
+        products/main.js, which needs the product before it can build a body — so
+        they are not driven by Bootstrap's modal data-api, which would try to open
+        an empty one."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
+
         assert "data-modal-close" in html
-        assert "data-bs-" not in html
+        assert 'data-bs-toggle="modal"' not in html
+        assert 'data-bs-dismiss="modal"' not in html
 
     def test_modals_are_native_dialogs(self, client, make_user):
         """A <dialog> is what supplies the top layer, the backdrop, the focus
-        trap, Escape and returning focus to whatever opened it. Bulma's .modal
-        div supplied none of that, and its display: none could not animate."""
+        trap, Escape and returning focus to whatever opened it — and the top layer
+        is what keeps a confirmation raised from inside a dialog in front of it.
+        A div-based .modal supplies none of that."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
 
         assert '<dialog class="dash-dialog"' in html
-        # The old div-based markup, including the backdrop element a <dialog>
-        # replaces with ::backdrop.
-        assert 'class="modal-background"' not in html
-        assert '<div class="modal "' not in html
+        # It wears Bootstrap's modal parts, but is not one of its modals: no
+        # .modal wrapper, and therefore no backdrop element of its own.
+        assert '<div class="modal ' not in html
+        assert '<div class="modal-backdrop' not in html
+        assert '<div class="modal-content">' in html
 
-    def test_the_close_control_is_a_button_with_an_icon(self, client, make_user):
-        """Bulma's .delete disc reads as dismissing a badge, not closing a
-        window, and carried no accessible name."""
+    def test_the_close_control_carries_an_accessible_name(self, client, make_user):
+        """Bootstrap's .btn-close is a glyph and nothing else, so without the label
+        a screen reader reads an unnamed button."""
         self._login(client, make_user)
         html = client.get("/dashboard/products").get_data(as_text=True)
 
-        assert 'class="dash-dialog-close"' in html
+        assert 'class="btn-close"' in html
         assert 'aria-label="Fechar"' in html
-        assert 'class="delete"' not in html
 
     def test_no_token_helper_is_loaded(self, client, make_user):
         """The page modules call fetch() directly; the cookie rides along."""
@@ -149,7 +158,7 @@ class TestPageLayoutWrappers:
 
     def test_error_page_wraps_content_in_a_container(self, client):
         body = self._main_block(client.get("/not-found").get_data(as_text=True))
-        # Bulma modifiers may follow the base class, e.g. "section is-medium".
+        # A modifier may follow the base class, e.g. "section is-medium".
         assert 'class="section' in body
         assert 'class="container' in body
 
@@ -196,13 +205,12 @@ class TestNotifications:
 
 
 class TestColorScheme:
-    """Every page must pin Bulma to its light scheme.
+    """Every page must pin the light scheme.
 
-    Bulma 1.x ships a `prefers-color-scheme: dark` block that repaints the
-    navbar, cards, inputs and borders near-black. theme.css only overrides the
-    scheme hue and saturation, not its lightness, so on a machine set to dark
-    mode that block wins and the warm paper palette is lost. `data-theme=light`
-    on <html> is declared after the media query in bulma.min.css, so it wins.
+    Bootstrap 5.3 carries a full dark palette under `[data-bs-theme=dark]`, and
+    its components read their colours from those variables. The shop is a warm
+    paper palette with no dark counterpart, so the scheme is declared rather than
+    left to whatever the visitor's machine is set to.
     """
 
     @pytest.mark.parametrize(
@@ -211,12 +219,12 @@ class TestColorScheme:
     def test_html_pins_the_light_scheme(self, anon_client, path):
         """Anonymous: /auth redirects a signed-in visitor to the dashboard."""
         html = anon_client.get(path).get_data(as_text=True)
-        assert 'data-theme="light"' in html, f"{path} would go dark in dark mode"
+        assert 'data-bs-theme="light"' in html, f"{path} leaves the scheme open"
 
     def test_product_page_pins_the_light_scheme(self, client, make_product):
         product = make_product("Caixa")
         html = client.get(f"/products/{product['id']}").get_data(as_text=True)
-        assert 'data-theme="light"' in html
+        assert 'data-bs-theme="light"' in html
 
     def test_dashboard_pins_the_light_scheme(self, client):
         """The dashboard has its own base template, so it needs its own guard."""
@@ -224,7 +232,7 @@ class TestColorScheme:
             flask_session["user"] = {"id": 1, "username": "admin", "is_admin": True}
 
         html = client.get("/dashboard/home").get_data(as_text=True)
-        assert 'data-theme="light"' in html
+        assert 'data-bs-theme="light"' in html
 
 
 class TestColorSetBadges:
@@ -433,7 +441,8 @@ class TestDashboardCollections:
         source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
             encoding="utf-8"
         )
-        assert '<div class="columns' in source
+        assert '<div class="row g-3">' in source
+        assert source.count('<div class="col-md">') == 2
 
     def test_editing_carries_the_existing_cover_through(self):
         """PUT replaces the row, so a form that does not send image_url would
@@ -483,12 +492,17 @@ class TestSteppedCreateForms:
         assert "if (!last())" in steps
         assert "onFinish(root)" in steps
 
-    def test_back_is_hidden_with_the_class_not_the_attribute(self):
-        """Bulma's .button is display:inline-flex, which outranks [hidden] — so
-        `back.hidden = true` left Voltar sitting on the first step."""
+    def test_back_is_hidden_with_the_attribute(self):
+        """Bootstrap ships `[hidden]{display:none!important}`, so the attribute is
+        enough here. Under Bulma it was not — .button set its own display, which
+        outranked [hidden], and Voltar sat there on the first step."""
         steps = self._module("static/js/core/steps.js")
-        assert 'back.classList.toggle("is-hidden"' in steps
-        assert "back.hidden" not in steps
+        assert "back.hidden = index === 0" in steps
+
+        bootstrap = pathlib.Path("static/bootstrap/bootstrap.min.css").read_text(
+            encoding="utf-8"
+        )
+        assert "[hidden]{display:none!important}" in bootstrap
 
     def test_the_slide_has_a_reduced_motion_escape(self):
         css = pathlib.Path("static/css/dashboard.css").read_text(encoding="utf-8")
@@ -531,12 +545,17 @@ class TestDashboardChrome:
         assert "Ver a loja" in html
         assert "dash-sidebar-foot" in html
 
-    def test_navbar_uses_bulma_fixed_top(self, client, make_user):
-        """The shell relies on Bulma's own fixed navbar, which needs
-        has-navbar-fixed-top on <html> for the page padding to match."""
+    def test_the_navbar_is_fixed_and_the_page_reserves_room_for_it(self, client,
+                                                                   make_user):
+        """Bootstrap's .fixed-top takes the bar out of the flow and reserves
+        nothing for it, so the padding is dashboard.css's own — and both have to
+        agree on the height, which is why it is a variable."""
         html = self._page(client, make_user)
-        assert "navbar is-fixed-top" in html
-        assert 'class="has-navbar-fixed-top"' in html
+        assert 'class="navbar fixed-top dash-navbar"' in html
+
+        css = pathlib.Path("static/css/dashboard.css").read_text(encoding="utf-8")
+        assert "padding-top: var(--dash-navbar-height)" in css
+        assert "--dash-navbar-height:" in css
 
 
 class TestProductGallery:
@@ -626,8 +645,9 @@ class TestOneModuleSystem:
         assert offenders == [], offenders
 
     def test_every_script_tag_is_a_module(self, client, make_user, make_product):
-        """The one exception is the vendored SweetAlert2 bundle, which only
-        publishes a global."""
+        """The exceptions are vendored bundles that only publish a global:
+        SweetAlert2, Font Awesome's loader, and Bootstrap's own bundle — which has
+        to be a classic script so its data-api is wired before any module runs."""
         make_user("dash", password="pw")
         client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
         product = make_product("Caixa")
@@ -640,7 +660,8 @@ class TestOneModuleSystem:
         for page in pages:
             html = client.get(page).get_data(as_text=True)
             for tag in re.findall(r"<script[^>]*src=[^>]*>", html):
-                if "sweetalert2" in tag or "fontawesome" in tag:
+                if any(vendor in tag for vendor in
+                       ("sweetalert2", "fontawesome", "bootstrap")):
                     continue
                 assert 'type="module"' in tag, f"{page}: {tag}"
 
@@ -691,3 +712,44 @@ def test_the_materials_panel_offers_the_full_set(client, make_user):
     source = pathlib.Path("static/js/dashboard/types/main.js").read_text(encoding="utf-8")
     for call in ["createMaterial", "updateMaterial", "deleteMaterial", "listMaterials"]:
         assert call in source, call
+
+
+class TestStylesheetsParse:
+    """A stray comment terminator silently deletes the rule after it.
+
+    This happened: a comment reading "py-*/px-* would have to be repeated" closed
+    itself at the `*/` in the middle, and the `.section` rule underneath became
+    part of the garbage that followed — every storefront band lost its padding and
+    the landing page scrolled 12px sideways on a phone. Nothing failed; the
+    stylesheet still served with a 200.
+    """
+
+    @staticmethod
+    def _sheets():
+        return sorted(pathlib.Path("static/css").glob("*.css"))
+
+    def test_every_comment_is_closed_exactly_once(self):
+        for sheet in self._sheets():
+            text = sheet.read_text(encoding="utf-8")
+            assert text.count("/*") == text.count("*/"), (
+                f"{sheet}: {text.count('/*')} comments opened, "
+                f"{text.count('*/')} closed — a stray terminator eats the next rule"
+            )
+
+    def test_the_braces_balance(self):
+        """The same failure the other way round: a rule left open takes the rest of
+        the file with it."""
+        for sheet in self._sheets():
+            text = re.sub(r"/\*.*?\*/", "", sheet.read_text(encoding="utf-8"),
+                          flags=re.S)
+            assert text.count("{") == text.count("}"), sheet
+
+    def test_the_storefront_bands_carry_their_padding(self, client):
+        """The rule that went missing, asserted where it is used rather than only
+        as a character count."""
+        css = pathlib.Path("static/css/theme.css").read_text(encoding="utf-8")
+        section = css[css.index(".section {"):]
+        assert "padding: 3rem 1.5rem" in section[:120]
+
+        html = client.get("/").get_data(as_text=True)
+        assert 'class="section' in html

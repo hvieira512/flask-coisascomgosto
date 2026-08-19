@@ -91,9 +91,10 @@ class TestTheStrip:
         view, _ = page
         fills = view.locator("#gallery-stage").evaluate(
             """el => {
-                // Against the column's content box: Bulma pads a .column by .75rem,
-                // which the stage sits inside rather than covering.
-                const column = el.closest('.column');
+                // Against the column's content box: a grid column carries half the
+                // row's gutter as padding, which the stage sits inside rather than
+                // covering.
+                const column = el.closest('[class*="col-"]');
                 const style = getComputedStyle(column);
                 const inner = column.clientWidth
                     - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
@@ -300,7 +301,8 @@ class TestTheTwoHalvesEndTogether:
         view, _ = page
         ends = view.evaluate(
             """() => {
-                const columns = [...document.querySelectorAll('#product-detail > .column')];
+                const columns = [
+                    ...document.querySelectorAll('#product-detail > [class*="col-"]')];
                 const lastVisible = (column) => [...column.children]
                     .filter((child) => child.getBoundingClientRect().height > 0)
                     .pop();

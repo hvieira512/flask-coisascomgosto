@@ -144,14 +144,6 @@ h2 {
     list-style: none;
 }
 
-/* Wider tracks than the labels alone need: a card carries a street address or a
-   long social handle. Bootstrap's 12-column row cannot say "as many as fit". */
-.contact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
-    gap: .75rem;
-}
-
 /* Long handles like "coisascomgosto.vianadocastelo" overflow a 250px card,
    so values wrap on any character rather than pushing the card wider. */
 #contacts .card {
@@ -647,6 +639,10 @@ a.card:hover {
     background: var(--ccg-blue-800);
     color: #fff;
     font-size: .75rem;
+    /* Not the body's 1.7: at that height the pill came out 30px in a 28.8px line
+       box and pushed the whole grid down 1px the moment a filter was chosen. 1.25
+       is as tight as it goes and still clears a 24px tap target. */
+    line-height: 1.25;
     border-radius: 999px;
     cursor: pointer;
 }
@@ -697,14 +693,6 @@ a.card:hover {
 .product-placeholder--stage .product-placeholder-circle {
     width: 26%;
     max-width: 160px;
-}
-
-/* auto-fill rather than auto-fit: auto-fit collapses the empty tracks and
-   stretches a single result across the whole row. */
-#product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
-    gap: .75rem;
 }
 
 /* Catalog tiles: uniform squares whatever the source image. */
@@ -973,23 +961,13 @@ a.card:hover {
 }
 
 /* Colour and shape come from .color-set-badge; this adds only what makes it a
-   control rather than a label. */
-/* Equal cells, not content-sized chips. Sized to their names, the five sets of
-   one box came out 183, 190, 200, 212 and 216px wide and wrapped 3 + 2, so the
-   group looked like a mistake rather than a set of options. A grid gives every
-   option the same box and lines the rows up.
-
-   11.5rem is what puts three across the 630px panel; auto-fill then drops to two
-   and to one as the panel narrows, with no breakpoints to keep in step. The
-   chip's own metrics below are trimmed to fit the resulting 204px track without
-   truncating "Vermelho e Branco", the longest name the workshop uses.
-
-   min(100%, ...) rather than a bare 11.5rem: below that width the track would
-   overflow its column instead of collapsing to one per row. */
-.variant-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11.5rem), 1fr));
-    gap: .6rem;
+   control rather than a label. Equal cells come from the row's own columns:
+   sized to their names, the five sets of one box came out 183, 190, 200, 212 and
+   216px wide and wrapped 3 + 2, so the group looked like a mistake rather than a
+   set of options. */
+.variant-option {
+    /* Fills its column, which is what makes the cells equal. */
+    width: 100%;
 }
 
 /* The piece's main choice, so it is sized as a control rather than as a label:
@@ -1114,20 +1092,8 @@ a.card:hover {
     border-top: 1px solid var(--ccg-line);
 }
 
-/* One column on a phone, three from 769px up — the landing page's craft steps
-   and type cards. A .row of col-md-4 says the same thing in three times the
-   markup, and needs a wrapper per cell. */
-.three-up {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: .75rem;
+/* The craft steps are an <ol> laid out as a row, so the browser's own list
+   marker would show the step number twice: "1. 01". */
+.craft-steps {
     list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-@media screen and (min-width: 769px) {
-    .three-up {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
 }

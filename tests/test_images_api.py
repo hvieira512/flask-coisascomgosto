@@ -242,7 +242,7 @@ class TestStorefrontPages:
         html = response.get_data(as_text=True)
         assert 'id="product-grid"' in html
         assert 'id="active-filters"' in html
-        assert "bulma.min.css" in html
+        assert "bootstrap/bootstrap.min.css" in html
 
     def test_product_page_renders_with_its_id(self, client, make_product):
         product = make_product("Caixa")

@@ -253,7 +253,9 @@ import { escapeHtml } from "../core/html.js";
             );
         }
 
-        return `<div class="swatch-row">${cells.join("")}</div>`;
+        return `<div class="swatch-row row row-cols-2 g-1">${
+            cells.map((cell) => `<div class="col">${cell}</div>`).join("")
+        }</div>`;
     }
 
     function renderCard(product) {
@@ -269,14 +271,16 @@ import { escapeHtml } from "../core/html.js";
             .join(" · ");
 
         return `
-          <a class="card product-card" href="/products/${product.id}">
-            ${media}
-            <div class="card-body">
-              <p class="h6 mb-1">${escapeHtml(product.name)}</p>
-              ${subtitle ? `<p class="fs-7 text-body-secondary">${subtitle}</p>` : ""}
-              ${renderColorSets(product)}
-            </div>
-          </a>`;
+          <div class="col">
+            <a class="card product-card" href="/products/${product.id}">
+              ${media}
+              <div class="card-body">
+                <p class="h6 mb-1">${escapeHtml(product.name)}</p>
+                ${subtitle ? `<p class="fs-7 text-body-secondary">${subtitle}</p>` : ""}
+                ${renderColorSets(product)}
+              </div>
+            </a>
+          </div>`;
     }
 
     async function loadProducts() {

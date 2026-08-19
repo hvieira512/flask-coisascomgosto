@@ -150,8 +150,9 @@ Without that browser the module skips, so the suite stays green for anyone who
 has not installed it. A browser rather than jsdom for two reasons: jsdom has no
 `HTMLDialogElement.showModal()`, which is what `core/modal.js` is built on, and no
 cascade — so it cannot see the bugs these dialogs actually hit. `back.hidden =
-true` did nothing because Bulma's `.button` is `display: inline-flex` and outranks
-the attribute, and only a real layout notices that the button is still there.
+true` once did nothing at all, because a class rule set its own `display` and
+outranked the attribute, and only a real layout notices that the button is still
+there.
 
 ---
 
@@ -379,14 +380,21 @@ the catalog has a single source of truth.
 | Product | `/products/<id>` | Image previewer + vertical thumbnail carousel + details |
 | Not found | any unmatched path | Custom 404 keeping the site chrome |
 
-**Styling is [Bulma](https://bulma.io/) 1.0.2**, vendored at
-`static/bulma/bulma.min.css`. `static/css/store.css` adds only what Bulma does
-not ship: the gallery, the thumbnail rail and the grid tiles.
+**Styling is [Bootstrap](https://getbootstrap.com/) 5.3.8**, vendored at
+`static/bootstrap/`. `static/css/theme.css` retints it through its own
+`--bs-*` custom properties — no Sass build — and `static/css/store.css` adds only
+what Bootstrap does not ship: the gallery, the thumbnail rail and the grid tiles.
 
-Bootstrap has been removed from the project entirely — `static/bootstrap/` is
-gone and the dashboard and login pages are on Bulma too. jQuery, toastr and
-FontAwesome remain, since none of them depended on Bootstrap. Social icons are
-inline SVG partials under `templates/store/components/`.
+Bulma has been removed entirely. Layout is Bootstrap's own grid (`row` with
+`col-*`, or `row-cols-*` where every cell behaves the same) rather than bespoke
+CSS grid rules, and the navbar, offcanvas sidebar, dropdown, tabs, pagination and
+modal parts are all the framework's. The one place we do not use its component is
+the modal element itself: a native `<dialog>` wearing Bootstrap's `.modal-*`
+classes, because the browser's top layer is what keeps a confirmation raised from
+inside a dialog in front of it rather than behind its own backdrop.
+
+FontAwesome, SweetAlert2 and PhotoSwipe remain, none of which depended on either
+framework.
 
 ### Error pages
 
@@ -399,10 +407,9 @@ clients never receive HTML.
 
 - Filters live in the sidebar: search, material, product type (with sub-types
   indented under their parent) and collection.
-- Every applied filter renders as a Bulma
-  [delete-tag](https://bulma.io/documentation/elements/tag/#delete-tag) reading
-  `Group: Value ×`. Clicking the badge removes that filter; the sidebar and the
-  badge row are two views of the same state.
+- Every applied filter renders as a navy pill reading `Group: Value ×`, with
+  Bootstrap's `.btn-close` as the ×. Clicking the badge removes that filter; the
+  sidebar and the badge row are two views of the same state.
 - Filters are mirrored into the query string, so a filtered view is shareable
   and survives a reload.
 - Selecting a parent type also matches products filed under its sub-types.

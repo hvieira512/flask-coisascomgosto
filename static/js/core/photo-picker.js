@@ -58,8 +58,13 @@ export const PhotoPicker = (function () {
         // every change, and redrawing an <input type="file"> empties it.
         const items = initial.map((item) => ({ ...item }));
 
-        container.classList.add("photo-tray");
-        container.classList.toggle("is-single", !multiple);
+        // One photograph and nowhere for a second gets a single column: it fills
+        // what it is given, and the column it sits in does the constraining — the
+        // collections form puts it beside the fields rather than under them.
+        container.classList.add("photo-tray", "row", "g-2");
+        container.classList.add(...(multiple
+            ? ["row-cols-2", "row-cols-sm-3"]
+            : ["row-cols-1"]));
 
         function preview(item) {
             if (item.url) return item.url;
@@ -74,24 +79,28 @@ export const PhotoPicker = (function () {
 
         function draw() {
             const slots = items.map((item, index) => `
-                <button type="button" class="photo-slot is-filled" data-photo-remove="${index}"
-                        title="Remover" aria-label="Remover esta fotografia">
-                  <img src="${escapeHtml(preview(item))}" alt="">
-                  <span class="photo-slot-x disc" aria-hidden="true">
-                    <i class="fa-solid fa-xmark"></i>
-                  </span>
-                </button>`);
+                <div class="col">
+                  <button type="button" class="photo-slot is-filled" data-photo-remove="${index}"
+                          title="Remover" aria-label="Remover esta fotografia">
+                    <img src="${escapeHtml(preview(item))}" alt="">
+                    <span class="photo-slot-x disc" aria-hidden="true">
+                      <i class="fa-solid fa-xmark"></i>
+                    </span>
+                  </button>
+                </div>`);
 
             if (multiple || items.length === 0) {
                 slots.push(`
-                  <label class="photo-slot" data-photo-empty>
-                    <input type="file" accept="${ACCEPT}" capture="environment"
-                           ${multiple ? "multiple" : ""} aria-label="Escolher fotografia">
-                    <span class="photo-slot-prompt">
-                      <span class="photo-slot-icon"><i class="fa-solid fa-camera"></i></span>
-                      <span class="photo-slot-hint">${escapeHtml(hint)}</span>
-                    </span>
-                  </label>`);
+                  <div class="col">
+                    <label class="photo-slot" data-photo-empty>
+                      <input type="file" accept="${ACCEPT}" capture="environment"
+                             ${multiple ? "multiple" : ""} aria-label="Escolher fotografia">
+                      <span class="photo-slot-prompt">
+                        <span class="photo-slot-icon"><i class="fa-solid fa-camera"></i></span>
+                        <span class="photo-slot-hint">${escapeHtml(hint)}</span>
+                      </span>
+                    </label>
+                  </div>`);
             }
 
             container.innerHTML = slots.join("");

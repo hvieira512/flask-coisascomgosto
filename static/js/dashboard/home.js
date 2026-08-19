@@ -26,17 +26,18 @@ const dayLabel = (days) => {
  */
 function attentionCard({ tone, icon, headline, detail, href, action }) {
     return `
-      <a class="card p-3 flex-row gap-2 align-items-start text-body text-decoration-none"
-         href="${href}">
-        <span class="icon" style="color: var(--ccg-${tone})">
-          <i class="fa-solid ${icon}"></i>
-        </span>
-        <span class="d-flex flex-column">
-          <span class="fw-semibold">${headline}</span>
-          <span class="fs-7 text-body-secondary">${detail}</span>
-          <span class="fs-7 mt-2" style="color: var(--ccg-blue-600)">${action} →</span>
-        </span>
-      </a>`;
+      <div class="col">
+        <a class="card h-100 p-3 flex-row gap-2 align-items-start text-body" href="${href}">
+          <span class="icon" style="color: var(--ccg-${tone})">
+            <i class="fa-solid ${icon}"></i>
+          </span>
+          <span class="d-flex flex-column">
+            <span class="fw-semibold">${headline}</span>
+            <span class="fs-7 text-body-secondary">${detail}</span>
+            <span class="fs-7 mt-2" style="color: var(--ccg-blue-600)">${action} →</span>
+          </span>
+        </a>
+      </div>`;
 }
 
 async function renderAttention(products, events) {
@@ -76,10 +77,10 @@ async function renderAttention(products, events) {
         }));
     }
 
-    // Auto-fit rather than a fixed two columns: with one thing waiting, a card
-    // in half a row reads as a card with something missing beside it.
+    // One per row until there is room for two side by side: with one thing
+    // waiting, a card in half a row reads as a card with something missing.
     document.getElementById("attention").innerHTML = cards.length
-        ? `<div class="dash-attention-grid">${cards.join("")}</div>`
+        ? `<div class="row row-cols-1 row-cols-xl-2 g-2">${cards.join("")}</div>`
         : `<div class="card dash-panel p-3 flex-row gap-2 align-items-center">
              <span class="icon" style="color: var(--ccg-ready)">
                <i class="fa-solid fa-circle-check"></i>
@@ -99,8 +100,10 @@ const statCard = ({ label, value, href }) => {
       <span class="eyebrow mb-0">${escapeHtml(label)}</span>`;
 
     return href
-        ? `<a class="card p-3 text-body text-decoration-none" href="${href}">${inner}</a>`
-        : `<div class="card p-3">${inner}</div>`;
+        ? `<div class="col">
+             <a class="card h-100 p-3 text-body" href="${href}">${inner}</a>
+           </div>`
+        : `<div class="col"><div class="card h-100 p-3">${inner}</div></div>`;
 };
 
 async function renderStats() {

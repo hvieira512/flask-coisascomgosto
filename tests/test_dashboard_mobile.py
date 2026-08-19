@@ -39,31 +39,28 @@ def phone(browser, live_server, client, make_user, make_product):
 
 class TestTheNavbar:
     def test_everything_stays_inside_the_bar(self, phone):
-        """Bulma's .navbar is only a flex row from 1024px up; below that it is a block,
-        so the brand and the menu stacked and the user's control was drawn under the
-        52px bar rather than in it."""
+        """Under Bulma the bar was only a flex row from 1024px up; below that the
+        brand and the menu stacked and the user's control was drawn under the 52px
+        bar rather than in it. Bootstrap's navbar is a row at every width."""
         page, errors = phone
         state = page.evaluate(
             """() => {
                 const bar = document.querySelector('.dash-navbar').getBoundingClientRect();
-                const menu = document.querySelector('.dash-navbar-menu').getBoundingClientRect();
+                const user = document.querySelector('.dash-user-btn').getBoundingClientRect();
                 const burger = document.getElementById('sidebarToggle').getBoundingClientRect();
                 return {
                     barBottom: Math.round(bar.bottom),
-                    menuBottom: Math.round(menu.bottom),
+                    userBottom: Math.round(user.bottom),
                     burgerBottom: Math.round(burger.bottom),
-                    burgerRight: Math.round(burger.right),
-                    viewport: window.innerWidth,
                 };
             }"""
         )
-        assert state["menuBottom"] <= state["barBottom"] + 1, "the menu hangs below the bar"
+        assert state["userBottom"] <= state["barBottom"] + 1, "the control hangs below"
         assert state["burgerBottom"] <= state["barBottom"] + 1
         assert errors == []
 
     def test_the_burger_is_against_the_right_edge(self, phone):
-        """It lives outside .navbar-brand for this: inside it, it could only ever be
-        pushed to the brand's own right edge, which is the middle of the bar."""
+        """It is the last thing in the bar, which is where a thumb expects it."""
         page, _ = phone
         state = page.evaluate(
             """() => ({
@@ -74,22 +71,23 @@ class TestTheNavbar:
         assert state["viewport"] - state["burgerRight"] < 24, state
 
     def test_the_dropdown_opens_below_the_bar_and_on_top(self, phone):
-        """A fixed navbar's menu has overflow: auto in Bulma so a stacked mobile menu
-        can scroll, which clipped the dropdown out of existence — it had a box and was
-        absent from elementsFromPoint."""
+        """It used to be drawn and then clipped out of existence by the fixed bar's
+        own overflow: a box, opacity 1, and absent from elementsFromPoint. Popper
+        places it against the trigger instead."""
         page, _ = phone
         page.click("[data-dropdown-trigger]")
+        page.wait_for_selector(".dropdown-menu.show")
 
         state = page.evaluate(
             """() => {
-                const menu = document.querySelector('.navbar-dropdown');
+                const menu = document.querySelector('.dropdown-menu.show');
                 const box = menu.getBoundingClientRect();
                 const bar = document.querySelector('.dash-navbar').getBoundingClientRect();
                 const top = document.elementFromPoint(
                     box.x + box.width / 2, box.y + box.height / 2);
                 return {
                     hasSize: box.height > 0,
-                    startsAtTheBarsEdge: Math.abs(box.top - bar.bottom) <= 2,
+                    belowTheBar: box.top >= bar.bottom - 2,
                     withinViewport: box.right <= window.innerWidth && box.left >= 0,
                     isOnTop: menu.contains(top),
                 };
@@ -97,18 +95,21 @@ class TestTheNavbar:
         )
         assert state["hasSize"], "the dropdown has no box"
         assert state["isOnTop"], "something is painted over the dropdown"
-        assert state["startsAtTheBarsEdge"], state
+        assert state["belowTheBar"], state
         assert state["withinViewport"], state
 
     def test_the_burger_opens_the_sidebar(self, phone):
+        """The offcanvas brings its own backdrop, so there is no #overlay of ours."""
         page, _ = phone
         page.click("#sidebarToggle")
+        page.wait_for_selector("#sidebar.show")
         # The class lands before the slide-in runs, so the box is still off-screen.
         page.wait_for_function(
             "() => document.getElementById('sidebar').getBoundingClientRect().x >= -1"
         )
 
-        assert page.locator("#overlay.is-open").count() == 1
+        assert page.locator(".offcanvas-backdrop").count() == 1
+        assert page.locator("#sidebar .nav-link.active").count() == 1
 
 
 class TestTheModalScrollsItsOwnBody:
@@ -124,7 +125,7 @@ class TestTheModalScrollsItsOwnBody:
         state = page.evaluate(
             """() => {
                 const dialog = document.getElementById('editProductModal');
-                const body = dialog.querySelector('.modal-card-body');
+                const body = dialog.querySelector('.modal-body');
                 return {
                     bodyWithinDialog:
                         body.getBoundingClientRect().height <= dialog.getBoundingClientRect().height,

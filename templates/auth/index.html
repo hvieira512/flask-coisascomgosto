@@ -8,12 +8,12 @@
 
 {% block content %}
 <main class="auth-shell">
-    <div class="auth-wrapper">
+    <div class="auth-wrapper row g-4">
 
         {# ---------------- Form ---------------- #}
         {# id="auth-container" and id="form-header" are queried by
            static/js/auth/auth.js — renaming them breaks the register flow. #}
-        <div class="auth-panel" id="auth-container">
+        <div class="auth-panel col-12 col-md-5 col-lg-4" id="auth-container">
             <a href="{{ url_for('web.auth.home') }}" class="auth-logo">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Coisas com Gosto">
             </a>
@@ -45,7 +45,7 @@
         </div>
 
         {# ---------------- Marketing panel ---------------- #}
-        <aside class="auth-aside">
+        <aside class="auth-aside col d-none d-md-block">
             <div class="auth-glass">
                 <p class="text-uppercase fs-7">Coisas com Gosto</p>
                 <div class="text-end">

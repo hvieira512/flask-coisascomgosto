@@ -272,19 +272,6 @@
    Photographs: the picker, used wherever one is taken
    ---------------------------------------------------------------- */
 
-.photo-tray {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-    gap: .5rem;
-}
-
-/* One photograph and nowhere for a second. It fills what it is given, and the column
-   it sits in does the constraining — the collections form puts it beside the fields
-   rather than under them. */
-.photo-tray.is-single {
-    grid-template-columns: minmax(0, 1fr);
-}
-
 .photo-slot {
     position: relative;
     display: flex;
@@ -626,8 +613,15 @@ html:has(dialog[open]) {
     color: var(--ccg-blue-900);
 }
 
+/* The only part that scrolls. Bootstrap gives .modal-body `flex: 1 1 auto` but
+   only makes it a scroller for .modal-dialog-scrollable, which is a class on a
+   wrapper this dialog does not have — so without this a tall panel pushes past
+   the card's cap and the page scrolls behind instead. min-height: 0 because a
+   flex item's base size is its content, which would never overflow. */
 .dash-dialog .modal-body {
     padding: 1.25rem;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .dash-dialog .modal-footer {
@@ -705,41 +699,6 @@ html:has(dialog[open]) {
     background: var(--ccg-blue-50);
     color: var(--ccg-blue-600);
     font-size: .8rem;
-}
-
-/* ----------------------------------------------------------------
-   Page grids Bootstrap's 12-column row cannot express
-   ---------------------------------------------------------------- */
-
-/* The filter bar: as many controls per line as fit, each at least 7rem, all
-   sitting on the same baseline as the Limpar button beside them. */
-.dash-filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
-    gap: .75rem;
-    align-items: end;
-}
-
-/* Counters. Two per line on a phone, four on anything wider — a .row of
-   col-6 col-md-3 says the same thing in twice the markup. */
-.dash-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .75rem;
-}
-
-@media screen and (min-width: 768px) {
-    .dash-stat-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
-
-/* The attention strip: with one thing waiting, a card in half a row reads as a
-   card with something missing beside it, so the tracks fit themselves. */
-.dash-attention-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
-    gap: .75rem;
 }
 
 /* The wizard's progress bar. Bootstrap's default is 1rem tall, which next to a

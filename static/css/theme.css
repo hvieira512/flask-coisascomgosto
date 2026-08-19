@@ -124,16 +124,13 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -.02em;
 }
 
-/* Bootstrap underlines every link. On a page whose links are mostly navigation —
-   a product name in a table, a section in the sidebar, a card that is a link —
-   that reads as a document full of footnotes, so the underline is kept for the
-   hover instead. */
+/* Bootstrap underlines every link, in both states. Almost nothing here is a link
+   in prose: they are cards, filter rows, table rows, nav items and section
+   headings, and an underline on any of them — at rest or on hover — reads as a
+   document full of footnotes. Colour carries the affordance instead, and the few
+   links inside real prose bring their own rule (see .timeline-body a). */
 a {
     text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
 }
 
 html {
@@ -178,24 +175,24 @@ html {
     margin-left: .35rem;
 }
 
-/* Vertical rhythm for a full-width band. Bootstrap has only spacing
-   utilities, and py-* would have to be repeated with its own breakpoints at
-   every one of the storefront's sections. */
+/* Vertical rhythm for a full-width band. Bootstrap has only spacing utilities,
+   and a py/px pair would have to be repeated, with its own breakpoints, at every
+   one of the storefront's sections. */
 .section {
-    padding: var(--space-lg) var(--space-sm);
+    padding: 3rem 1.5rem;
 }
 
 .section.is-medium {
-    padding: var(--space-xl) var(--space-sm);
+    padding: 9rem 1.5rem;
 }
 
-@media (max-width: 768px) {
+@media screen and (min-width: 992px) {
     .section {
-        padding: var(--space-md) var(--space-sm);
+        padding: 3rem 3rem;
     }
 
     .section.is-medium {
-        padding: var(--space-lg) var(--space-sm);
+        padding: 9rem 4.5rem;
     }
 }
 
@@ -469,13 +466,9 @@ html {
 }
 
 /* Two fixed columns rather than wrapping: a card with five colour sets used to
-   break 3 + 2 and leave a ragged edge, and neighbouring cards broke at
-   different points. A grid keeps every card's badges on the same lines. */
-.swatch-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .35rem;
-}
+   break 3 + 2 and leave a ragged edge, and neighbouring cards broke at different
+   points. Fixed columns keep every card's badges on the same lines — the row
+   itself is `row row-cols-2`, set where it is rendered. */
 
 /* A column is ~134px and "Vermelho e Branco" wants 152px at the badge's normal
    size, so a card runs a tighter one. The product page, where there is no

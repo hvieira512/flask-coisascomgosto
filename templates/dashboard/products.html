@@ -9,14 +9,14 @@
                     'new-product', 'Novo produto') }}
 
 <div class="card dash-panel p-3 mb-3">
-    <div class="dash-filter-grid">
+    <div class="row row-cols-2 row-cols-lg-5 g-2 align-items-end">
         {{ filter_field('filter-q', 'Pesquisar', placeholder='Nome do produto…') }}
         {{ filter_field('filter-type', 'Tipo', [('', 'Todos')]) }}
         {{ filter_field('filter-collection', 'Colecção', [('', 'Todas')]) }}
         {{ filter_field('filter-photos', 'Fotografias', [
             ('', 'Todas'), ('none', 'Sem fotografia'), ('some', 'Com fotografia')]) }}
 
-        <div class="d-flex align-items-end">
+        <div class="col d-flex align-items-end">
             <button class="btn btn-sm btn-ghost" id="filter-clear" hidden>
                 <span class="icon"><i class="fa-solid fa-xmark"></i></span>
                 <span>Limpar</span>

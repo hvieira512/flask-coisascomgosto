@@ -138,12 +138,14 @@ import { escapeHtml } from "../core/html.js";
             .map((variant, position) => {
                 const chosen = position === activeIndex;
                 return `
-                  <button class="color-set-badge variant-option${chosen ? " is-active" : ""}"
-                          type="button" data-variant-index="${position}"
-                          aria-pressed="${chosen}"
-                          style="${ColorSet.style(variant.color_set)}">
-                    ${ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span><span class="variant-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
-                  </button>`;
+                  <div class="col">
+                    <button class="color-set-badge variant-option${chosen ? " is-active" : ""}"
+                            type="button" data-variant-index="${position}"
+                            aria-pressed="${chosen}"
+                            style="${ColorSet.style(variant.color_set)}">
+                      ${ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span><span class="variant-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                  </div>`;
             })
             .join("");
 

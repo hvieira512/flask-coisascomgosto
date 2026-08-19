@@ -12,10 +12,8 @@
     padding: 1.5rem;
 }
 
+/* The columns themselves are Bootstrap's; this only bounds the pair. */
 .auth-wrapper {
-    display: grid;
-    grid-template-columns: minmax(320px, 380px) 1fr;
-    gap: 1.5rem;
     width: 100%;
     max-width: 1200px;
 }
@@ -64,15 +62,7 @@
     background: linear-gradient(180deg, rgba(0, 0, 0, .15) 0%, rgba(0, 0, 0, .55) 100%);
 }
 
-@media screen and (max-width: 768px) {
-    .auth-wrapper {
-        grid-template-columns: 1fr;
-    }
-
-    .auth-aside {
-        display: none;
-    }
-
+@media screen and (max-width: 767.98px) {
     .auth-panel {
         border: none;
         padding: 1.5rem 0;

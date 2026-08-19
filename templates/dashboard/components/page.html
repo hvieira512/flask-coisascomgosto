@@ -26,9 +26,9 @@
 </header>
 {% endmacro %}
 
-{# One filter control. The dashboard's filter bar repeats this four times. #}
+{# One filter control, as a cell of the filter bar's row. Repeated four times. #}
 {% macro filter_field(id, label, options=None, placeholder=None) %}
-<div>
+<div class="col">
     <label class="form-label fs-7" for="{{ id }}">{{ label }}</label>
     {% if options is none %}
     <input class="form-control form-control-sm" id="{{ id }}"

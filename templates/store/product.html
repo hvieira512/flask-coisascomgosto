@@ -65,7 +65,9 @@
         <div class="product-panel">
             <div class="mb-4" id="variants-block" hidden>
                 <p class="eyebrow mb-2">Cores</p>
-                <div class="variant-options" id="variant-options"></div>
+                {# Two per line, not three: "Vermelho e Branco" is the longest name
+                   the workshop uses and a third of the panel truncates it. #}
+                <div class="row row-cols-1 row-cols-sm-2 g-2" id="variant-options"></div>
             </div>
 
             <div class="mb-4" id="sizes-block" hidden>
@@ -83,7 +85,10 @@
                     <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
                     <span>Pedir informações</span>
                 </a>
-                <p class="fs-7 text-body-secondary mt-3">
+                {# mb-0 so the panel ends where its last line ends: Bootstrap gives
+                   every <p> a bottom margin, where Bulma spared the last one, and
+                   the gallery beside it takes its height from this column. #}
+                <p class="fs-7 text-body-secondary mt-3 mb-0">
                     Cada peça é feita e pintada à mão, por isso não há duas
                     exactamente iguais. Fale connosco para encomendas ou
                     personalizações.

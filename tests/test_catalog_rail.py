@@ -94,7 +94,7 @@ class TestTheRail:
         page, _, _ = catalogue
 
         assert page.locator('[data-facet="collections"]').count() == 0
-        labels = page.locator("#filter-groups .menu-label").all_text_contents()
+        labels = page.locator("#filter-groups .filter-group-label").all_text_contents()
         assert [label.strip() for label in labels] == ["Tipo", "Material"]
 
     def test_it_still_drives_the_ordinary_filter_state(self, catalogue):
@@ -355,8 +355,9 @@ class TestOnAPhone:
         assert phone.locator("#product-grid > *").count() == 3
 
     def test_several_filters_wrap_instead_of_squeezing_the_heading(self, phone):
-        """Bulma's .level never wraps, which is why the heading row is a plain flex
-        container. One short badge does fit beside the title at 390px; two do not,
+        """The heading row is a wrapping flex container on purpose: a row that never
+        wraps crushes the title instead. One short badge fits beside it at 390px; two
+        do not,
         and they have to drop onto a line of their own rather than crush the title
         and the count or push the page sideways."""
         phone.locator(".collection-card", has_text="Filigrana").first.click()
@@ -366,7 +367,7 @@ class TestOnAPhone:
             "() => document.querySelectorAll('.filter-badge').length === 2"
         )
 
-        title = phone.locator(".title.is-4").bounding_box()
+        title = phone.locator("h1.h4").bounding_box()
         badges = phone.locator("#active-filters").bounding_box()
 
         assert badges["y"] >= title["y"] + title["height"] - 4, (
@@ -384,8 +385,8 @@ class TestACrowdedRail:
     eight: a second, ragged row of three cards, 341px of rail, and the pieces pushed
     off the fold — which is the one thing a rail is supposed to protect. Worse, once
     it became a scrolling row it grew its own column instead of scrolling, because a
-    Bulma column is a flex item and a flex item will not go narrower than its
-    content, so the whole catalogue scrolled sideways.
+    grid column is a flex item and a flex item will not go narrower than its content,
+    so the whole catalogue scrolled sideways.
     """
 
     NAMES = ["Filigrana", "Bordados", "Lenços", "Barra da Saia",
@@ -419,7 +420,7 @@ class TestACrowdedRail:
                 return {
                     railScrolls: strip.scrollWidth > strip.clientWidth,
                     stripFitsItsColumn:
-                        strip.clientWidth <= strip.closest('.column').clientWidth,
+                        strip.clientWidth <= strip.closest('.catalogue-main').clientWidth,
                     pageScrolls:
                         document.documentElement.scrollWidth > window.innerWidth,
                 };

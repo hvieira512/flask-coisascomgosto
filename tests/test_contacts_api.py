@@ -95,7 +95,7 @@ class TestLandingPage:
             "Começou numa bancada pequena",              # 2. Origem
             "três mãos-cheias de tempo",                 # 3. O ofício
             "As peças que saem da oficina",              # 4. O que fazemos
-            'is-spaced">Onde nos encontra</h2>',         # 6. Contactos
+            "Onde nos encontra</h2>",                    # 6. Contactos
         ]
         positions = [html.index(h) for h in headings]
         assert positions == sorted(positions), "sections are out of order"
@@ -115,20 +115,19 @@ class TestLandingPage:
         navbar = html[html.index("<nav"):html.index("</nav>")]
         assert "wa.me" not in navbar, "socials must not live in the navbar"
         assert 'id="contacts"' in html
-        # Cards are Bulma .card now; contact-icon is the bit that stays ours.
+        # Cards are Bootstrap's .card; contact-icon is the bit that stays ours.
         assert "contact-icon" in html
 
-    def test_grid_cards_cancel_bulma_stacking_margin(self, client,
-                                                     make_product_type):
-        """Bulma gives .card:not(:last-child) a 1.5rem bottom margin for cards
-        stacked in flow. Inside a grid the row gap already spaces them, and the
-        margin inflates the row track: the last card stretches 24px past its
-        siblings and the grid leaves dead space beneath it."""
+    def test_the_cards_fill_their_row(self, client, make_product_type):
+        """A .card is only as tall as its content, so a row of them ends ragged
+        wherever one address wraps to two lines and its neighbour does not."""
         make_product_type("Caixa")
         html = client.get("/").get_data(as_text=True)
 
-        for card in re.findall(r'class="cell card[^"]*"', html):
-            assert "mb-0" in card, card
+        cards = re.findall(r'class="card [^"]*"', html)
+        assert cards, "no cards on the landing page"
+        for card in cards:
+            assert "h-100" in card, card
 
     def _contacts_section(self, client):
         html = client.get("/").get_data(as_text=True)
@@ -166,11 +165,11 @@ class TestLandingPage:
             assert label in visible, label
 
     def test_label_sits_beside_the_icon(self, client):
-        """Bulma's .card is a flex column, so the label drops onto its own line
-        without an explicit row direction."""
+        """A .card is a flex column, so the label drops onto its own line without
+        an explicit row direction."""
         contacts = self._contacts_section(client)
 
-        assert "is-flex-direction-row" in contacts
+        assert "flex-row" in contacts
 
     def test_address_card_opens_the_map(self, client):
         contacts = self._contacts_section(client)
@@ -195,15 +194,15 @@ class TestLandingPage:
         assert "Área Reservada" in html
         assert ">Entrar<" not in html
 
-    def test_landing_page_uses_bulma_not_bootstrap(self, client):
+    def test_the_page_is_styled_by_bootstrap_alone(self, client):
         html = client.get("/").get_data(as_text=True)
-        assert "bulma.min.css" in html
-        assert "bootstrap" not in html
+        assert "bootstrap/bootstrap.min.css" in html
+        assert "bulma" not in html
 
     def test_navbar_shows_the_logo(self, client):
         html = client.get("/").get_data(as_text=True)
         assert "img/logo.png" in html
-        assert 'class="navbar-item store-brand"' in html
+        assert "navbar-brand store-brand" in html
 
     def test_contact_details_render_in_the_footer(self, client):
         html = client.get("/").get_data(as_text=True)
@@ -256,7 +255,7 @@ class TestErrorPages:
 
     def test_the_404_page_keeps_the_site_chrome(self, client):
         html = client.get("/not-found").get_data(as_text=True)
-        assert "bulma.min.css" in html
+        assert "bootstrap/bootstrap.min.css" in html
         assert "Coisas com Gosto" in html
 
     def test_unknown_product_page_returns_404(self, client):
