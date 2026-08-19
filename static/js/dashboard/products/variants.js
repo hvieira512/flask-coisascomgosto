@@ -19,7 +19,7 @@ export function variantChoiceStep(colorSets) {
     if (!colorSets.length) {
         return `
           <div data-step="variants">
-            <p class="has-text-grey is-size-7">
+            <p class="text-body-secondary fs-7">
               Ainda não há conjuntos de cores. Crie-os em Cores e depois associe-os
               a esta peça.
             </p>
@@ -28,20 +28,20 @@ export function variantChoiceStep(colorSets) {
 
     return `
       <div data-step="variants">
-        <div class="tags" id="variant-choices">
+        <div class="d-flex flex-wrap gap-1" id="variant-choices">
           ${colorSets.map((set) => `
             <button type="button" class="variant-choice" data-color-set-id="${set.id}"
                     aria-pressed="false">${ColorSet.badge(set)}</button>`).join("")}
         </div>
-        <p class="help mb-4">
+        <p class="help mt-2 mb-3">
           Em que cores a peça se faz. Opcional — pode associá-las mais tarde.
         </p>
 
         <!-- Only the chosen colours are asked for a photograph, so the dialog grows
              with the answer rather than with the list. -->
         <div id="variant-photos" hidden>
-          <label class="label is-small">Fotografias destas cores</label>
-          <ul class="panel is-shadowless mb-2" id="variant-photo-rows"></ul>
+          <label class="form-label fs-7">Fotografias destas cores</label>
+          <ul class="list-group list-group-flush mb-2" id="variant-photo-rows"></ul>
           <p class="help">
             Quantas quiser por cor, se já as tirou. As restantes podem entrar depois,
             no separador Fotografias.
@@ -78,10 +78,10 @@ export function wireVariantChoice(root) {
         if (trays.has(id)) return trays.get(id).row;
 
         const row = document.createElement("li");
-        row.className = "panel-block px-0 is-flex-direction-column is-align-items-stretch";
+        row.className = "list-group-item px-0 d-flex flex-column align-items-stretch";
         row.dataset.photoFor = String(id);
         row.innerHTML = `
-            <span class="is-flex is-align-items-center is-gap-1 mb-2">${chipOf(id).innerHTML}</span>
+            <span class="d-flex align-items-center gap-1 mb-2">${chipOf(id).innerHTML}</span>
             <div data-photo-tray></div>`;
 
         const tray = PhotoPicker.mount(row.querySelector("[data-photo-tray]"), {
@@ -168,11 +168,11 @@ export async function variantsPanel(product) {
 
     const rows = product.variants.length
         ? product.variants.map((v) => `
-            <li class="panel-block px-0 is-flex-direction-column is-align-items-stretch"
+            <li class="list-group-item px-0 d-flex flex-column align-items-stretch"
                 data-variant-block="${v.id}">
-              <span class="is-flex is-align-items-center is-gap-1 mb-2">
-                ${ColorSet.badge(v.color_set, "mr-auto")}
-                <button class="button is-small is-ghost has-text-danger"
+              <span class="d-flex align-items-center gap-1 mb-2">
+                ${ColorSet.badge(v.color_set, "me-auto")}
+                <button class="btn btn-sm btn-ghost text-danger"
                         data-remove-variant="${v.id}" title="Remover esta cor"
                         aria-label="Remover ${escapeHtml(v.color_set.name)}">
                   <span class="icon"><i class="fa-solid fa-xmark"></i></span>
@@ -180,7 +180,7 @@ export async function variantsPanel(product) {
               </span>
               <div data-variant-photos="${v.id}"></div>
             </li>`).join("")
-        : `<li class="has-text-grey is-size-7">
+        : `<li class="text-body-secondary fs-7">
              Sem cores associadas. Escolha uma abaixo — as fotografias são de uma cor.
            </li>`;
 
@@ -192,18 +192,18 @@ export async function variantsPanel(product) {
         ? `<div class="mb-4" id="colourless-photos">
              <!-- Two whole sentences rather than a stem with suffixes spliced in: the
                   first attempt read "Apague -a e volte a carregá-la". -->
-             <p class="help has-text-weight-medium mb-2">
+             <p class="help fw-medium mb-2">
                ${orphans.length === 1
                    ? "Uma fotografia sem cor. Apague-a e volte a carregá-la na cor a que pertence."
                    : `${orphans.length} fotografias sem cor. Apague-as e volte a carregá-las nas cores a que pertencem.`}
              </p>
-             <ul class="panel is-shadowless mb-0">
+             <ul class="list-group list-group-flush">
                ${orphans.map((image) => `
-                 <li class="panel-block px-0 is-gap-1">
+                 <li class="list-group-item px-0 d-flex align-items-center gap-1">
                    <img class="dash-thumb" src="${escapeHtml(image.url)}"
                         alt="${escapeHtml(image.alt ?? "")}">
-                   <span class="tag is-rounded chip is-attention mr-auto">Sem cor</span>
-                   <button class="button is-small is-ghost has-text-danger"
+                   <span class="badge rounded-pill chip is-attention me-auto">Sem cor</span>
+                   <button class="btn btn-sm btn-ghost text-danger"
                            data-remove-image="${image.id}" title="Remover"
                            aria-label="Remover esta fotografia sem cor">
                      <span class="icon"><i class="fa-solid fa-xmark"></i></span>
@@ -214,23 +214,17 @@ export async function variantsPanel(product) {
         : "";
 
     return `
-      <ul class="panel is-shadowless mb-3" id="variant-rows">${rows}</ul>
+      <ul class="list-group list-group-flush mb-3" id="variant-rows">${rows}</ul>
       ${orphanBlock}
-      <div class="field has-addons">
-        <div class="control is-expanded">
-          <div class="select is-fullwidth is-small">
-            <select id="variant-picker"${available.length ? "" : " disabled"}>
-              ${available.length
-                  ? available.map((cs) => `<option value="${cs.id}">${escapeHtml(cs.name)}</option>`).join("")
-                  : `<option>Todos os conjuntos já estão associados</option>`}
-            </select>
-          </div>
-        </div>
-        <div class="control">
-          <button class="button is-small is-dark" id="add-variant"${available.length ? "" : " disabled"}>
-            Adicionar
-          </button>
-        </div>
+      <div class="input-group input-group-sm">
+        <select class="form-select" id="variant-picker"${available.length ? "" : " disabled"}>
+          ${available.length
+              ? available.map((cs) => `<option value="${cs.id}">${escapeHtml(cs.name)}</option>`).join("")
+              : `<option>Todos os conjuntos já estão associados</option>`}
+        </select>
+        <button class="btn btn-dark" id="add-variant"${available.length ? "" : " disabled"}>
+          Adicionar
+        </button>
       </div>`;
 }
 

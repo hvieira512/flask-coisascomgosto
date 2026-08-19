@@ -12,35 +12,33 @@
 {# Attention first, counters second: the owner opens this page to find out what
    is waiting for her, not to read four totals. js/dashboard/home.js fills both
    from the API, so the numbers cannot drift from what the storefront shows. #}
-<section id="attention" class="mb-5"></section>
+<section id="attention" class="mb-4"></section>
 
-<div class="columns">
-    <div class="column is-7">
-        <div class="card dash-panel p-5">
-            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
-                <h2 class="title is-6 mb-0">Peças sem fotografia</h2>
-                <a class="is-size-7" href="{{ url_for('web.dashboard.products') }}?fotos=none">
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card dash-panel p-4">
+            <header class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 class="h6 mb-0">Peças sem fotografia</h2>
+                <a class="fs-7" href="{{ url_for('web.dashboard.products') }}?fotos=none">
                     Ver no catálogo
                 </a>
             </header>
             <div id="missing-photos"></div>
         </div>
     </div>
-    <div class="column is-5">
-        <div class="card dash-panel p-5">
-            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
-                <h2 class="title is-6 mb-0">Próximos eventos</h2>
-                <a class="is-size-7" href="{{ url_for('web.dashboard.events') }}">Ver todos</a>
+    <div class="col-lg-5">
+        <div class="card dash-panel p-4">
+            <header class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 class="h6 mb-0">Próximos eventos</h2>
+                <a class="fs-7" href="{{ url_for('web.dashboard.events') }}">Ver todos</a>
             </header>
             <div id="upcoming-events"></div>
         </div>
     </div>
 </div>
 
-<h2 class="eyebrow mt-6 mb-3">No catálogo</h2>
-<div class="fixed-grid has-2-cols-mobile has-4-cols-tablet">
-    <div class="grid" id="stat-cards"></div>
-</div>
+<h2 class="eyebrow mt-5 mb-3">No catálogo</h2>
+<div class="dash-stat-grid" id="stat-cards"></div>
 {% endblock %}
 
 {% block page_scripts %}

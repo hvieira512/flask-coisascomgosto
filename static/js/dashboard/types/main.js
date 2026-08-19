@@ -36,22 +36,22 @@ function typeRow(type) {
           </span>
         </td>
         <td>
-          <p class="has-text-weight-medium">${escapeHtml(type.name)}</p>
+          <p class="fw-medium mb-0">${escapeHtml(type.name)}</p>
         </td>
-        <td class="is-size-7 has-text-grey">${escapeHtml(type.description ?? "—")}</td>
+        <td class="fs-7 text-body-secondary">${escapeHtml(type.description ?? "—")}</td>
         <td>
           ${pieces
-              ? `<span class="data has-text-grey">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
-              : `<span class="tag is-rounded chip is-quiet">Sem peças</span>`}
+              ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
+              : `<span class="badge rounded-pill chip is-quiet">Sem peças</span>`}
         </td>
         <td class="dash-col-actions">
-          <span class="dash-row-actions is-flex is-gap-1">
-            <button class="button is-small is-ghost" data-type-action="edit"
+          <span class="dash-row-actions d-flex gap-1">
+            <button class="btn btn-sm btn-ghost" data-type-action="edit"
                     data-type-id="${type.id}" title="Editar"
                     aria-label="Editar ${escapeHtml(type.name)}">
               <span class="icon"><i class="fa-solid fa-pencil"></i></span>
             </button>
-            <button class="button is-small is-ghost has-text-danger" data-type-action="delete"
+            <button class="btn btn-sm btn-ghost text-danger" data-type-action="delete"
                     data-type-id="${type.id}" title="Apagar"
                     aria-label="Apagar ${escapeHtml(type.name)}">
               <span class="icon"><i class="fa-solid fa-trash"></i></span>
@@ -72,7 +72,7 @@ async function loadTypes() {
 
     document.getElementById("type-rows").innerHTML = rows.length
         ? rows.join("")
-        : `<tr><td colspan="5" class="has-text-centered has-text-grey py-6">
+        : `<tr><td colspan="5" class="text-center text-body-secondary py-5">
              Ainda não há tipos. Cada peça precisa de um.</td></tr>`;
 
     document.getElementById("type-count").textContent =
@@ -88,31 +88,29 @@ function typeForm(type = null) {
 
     return `
     <form id="type-form" data-type-id="${type?.id ?? ""}">
-      <div class="field">
-        <label class="label is-small" for="tf-name">Nome</label>
-        <input class="input" id="tf-name" name="name" required
+      <div class="mb-3">
+        <label class="form-label fs-7" for="tf-name">Nome</label>
+        <input class="form-control" id="tf-name" name="name" required
                value="${escapeHtml(type?.name ?? "")}" placeholder="Caixa">
-        <p class="help">
+        <p class="help mb-0">
           A família da peça. A forma vai no nome da peça — "Caixa rectangular".
         </p>
       </div>
 
-      <div class="field">
-        <label class="label is-small" for="tf-description">Descrição</label>
-        <textarea class="textarea" id="tf-description" name="description" rows="2"
+      <div class="mb-3">
+        <label class="form-label fs-7" for="tf-description">Descrição</label>
+        <textarea class="form-control" id="tf-description" name="description" rows="2"
                   placeholder="O que é esta família de peças."
                   >${escapeHtml(type?.description ?? "")}</textarea>
       </div>
 
-      <div class="field">
-        <label class="label is-small" for="tf-icon">Ícone</label>
-        <div class="select is-fullwidth">
-          <select id="tf-icon" name="icon">
-            <option value="">Adivinhar pelo nome</option>
-            ${iconOptions}
-          </select>
-        </div>
-        <p class="help">
+      <div>
+        <label class="form-label fs-7" for="tf-icon">Ícone</label>
+        <select class="form-select" id="tf-icon" name="icon">
+          <option value="">Adivinhar pelo nome</option>
+          ${iconOptions}
+        </select>
+        <p class="help mb-0">
           Desenhado nas peças sem fotografia. <span id="tf-icon-preview"></span>
         </p>
       </div>
@@ -175,13 +173,13 @@ async function openDeleteType(id) {
         bodyOf("deleteTypeModal").innerHTML = `
             <p><strong>${escapeHtml(type.name)}</strong> ainda tem
                ${pieces} ${pieces === 1 ? "peça" : "peças"}.</p>
-            <p class="has-text-grey is-size-7 mt-2">
+            <p class="text-body-secondary fs-7 mt-2">
               Cada peça tem de ter um tipo, por isso este não pode ser apagado.
               Mude essas peças para outro tipo primeiro, no separador Produtos.
             </p>`;
         footOf("deleteTypeModal").innerHTML = `
-            <button class="button" data-modal-close>Fechar</button>
-            <a class="button is-dark" href="/dashboard/products">Ver as peças</a>`;
+            <button class="btn btn-outline-secondary" data-modal-close>Fechar</button>
+            <a class="btn btn-dark" href="/dashboard/products">Ver as peças</a>`;
         open("deleteTypeModal");
         return;
     }
@@ -201,17 +199,17 @@ async function loadMaterials() {
     const materials = await listMaterials();
 
     document.getElementById("material-rows").innerHTML = materials.length
-        ? `<ul class="panel is-shadowless mb-0">${materials
+        ? `<ul class="list-group list-group-flush">${materials
               .map((m) => `
-                <li class="panel-block px-0 is-justify-content-space-between">
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                   <span data-material-name="${m.id}">${escapeHtml(m.name)}</span>
-                  <span class="dash-row-actions is-flex is-gap-1">
-                    <button class="button is-small is-ghost" data-material-action="rename"
+                  <span class="dash-row-actions d-flex gap-1">
+                    <button class="btn btn-sm btn-ghost" data-material-action="rename"
                             data-material-id="${m.id}" title="Mudar o nome"
                             aria-label="Mudar o nome de ${escapeHtml(m.name)}">
                       <span class="icon"><i class="fa-solid fa-pencil"></i></span>
                     </button>
-                    <button class="button is-small is-ghost has-text-danger"
+                    <button class="btn btn-sm btn-ghost text-danger"
                             data-material-action="delete" data-material-id="${m.id}"
                             title="Apagar" aria-label="Apagar ${escapeHtml(m.name)}">
                       <span class="icon"><i class="fa-solid fa-xmark"></i></span>
@@ -219,7 +217,7 @@ async function loadMaterials() {
                   </span>
                 </li>`)
               .join("")}</ul>`
-        : `<p class="has-text-grey is-size-7">Ainda não há materiais.</p>`;
+        : `<p class="text-body-secondary fs-7">Ainda não há materiais.</p>`;
 
     document.getElementById("material-count").textContent = String(materials.length);
 }

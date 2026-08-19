@@ -90,7 +90,7 @@ import { escapeHtml } from "../core/html.js";
         try {
             payload = await StoreApi.get(endpoint, { limit: 100 });
         } catch (error) {
-            list.innerHTML = '<li><span class="has-text-grey is-size-7">Indisponível</span></li>';
+            list.innerHTML = '<li><span class="text-body-secondary fs-7">Indisponível</span></li>';
             return;
         }
 
@@ -118,8 +118,8 @@ import { escapeHtml } from "../core/html.js";
         const empty = count === 0;
 
         return `
-          <li>
-            <a class="filter-entry${empty ? " is-empty" : ""}"
+          <li class="nav-item">
+            <a class="nav-link filter-entry${empty ? " is-empty" : ""}"
                data-filter-group="${group}" data-filter-value="${item.id}"
                data-filter-label="${escapeHtml(item.name)}"
                ${empty ? 'aria-disabled="true" title="Sem peças"' : ""}>
@@ -162,8 +162,8 @@ import { escapeHtml } from "../core/html.js";
     // ----------------------------------------------------------------
 
     /**
-     * One Bulma tag per selected value, shaped "Group: Value ×" — three ticked
-     * types are three tags, each removable on its own.
+     * One pill per selected value, shaped "Group: Value ×" — three ticked types
+     * are three pills, each removable on its own.
      */
     function renderBadges() {
         const chosen = StoreFilters.selections();
@@ -175,15 +175,16 @@ import { escapeHtml } from "../core/html.js";
                 const groupLabel = StoreFilters.GROUPS[group].label;
                 const valueLabel = StoreFilters.labelFor(group, value);
                 return `
-                  <!-- Not is-medium. The badges live on the heading line now, and a
-                       32px tag in a 30px line box grew the row by 5px the moment a
+                  <!-- Deliberately small: the badges live on the heading line, and a
+                       32px pill in a 30px line box grew the row by 5px the moment a
                        filter was chosen, nudging the whole grid down. -->
-                  <span class="tag is-dark filter-badge"
+                  <span class="filter-badge"
                         data-remove-filter="${group}" data-remove-value="${escapeHtml(value)}"
                         role="button" tabindex="0"
                         title="Remover ${escapeHtml(valueLabel)}">
                     ${escapeHtml(groupLabel)}: ${escapeHtml(valueLabel)}
-                    <button class="delete is-small" aria-label="Remover ${escapeHtml(valueLabel)}"></button>
+                    <button class="btn-close btn-close-white"
+                            aria-label="Remover ${escapeHtml(valueLabel)}"></button>
                   </span>`;
             })
             .join("");
@@ -246,7 +247,7 @@ import { escapeHtml } from "../core/html.js";
         if (overflows) {
             const rest = sets.length - visible;
             cells.push(
-                `<span class="tag is-rounded color-set-more">+${rest} ${
+                `<span class="color-set-more">+${rest} ${
                     rest === 1 ? "cor" : "cores"
                 }</span>`
             );
@@ -258,7 +259,8 @@ import { escapeHtml } from "../core/html.js";
     function renderCard(product) {
         const image = product.primary_image;
         const media = image
-            ? `<img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt || product.name)}" loading="lazy">`
+            ? `<img class="card-img-top" src="${escapeHtml(image.url)}"
+                    alt="${escapeHtml(image.alt || product.name)}" loading="lazy">`
             : ProductPlaceholder.markup(product);
 
         const subtitle = [product.type?.name, product.collection?.name]
@@ -267,16 +269,14 @@ import { escapeHtml } from "../core/html.js";
             .join(" · ");
 
         return `
-          <div class="cell">
-            <a class="card product-card" href="/products/${product.id}">
-              <div class="card-image">${media}</div>
-              <div class="card-content">
-                <p class="title is-6 mb-1">${escapeHtml(product.name)}</p>
-                ${subtitle ? `<p class="is-size-7 has-text-grey">${subtitle}</p>` : ""}
-                ${renderColorSets(product)}
-              </div>
-            </a>
-          </div>`;
+          <a class="card product-card" href="/products/${product.id}">
+            ${media}
+            <div class="card-body">
+              <p class="h6 mb-1">${escapeHtml(product.name)}</p>
+              ${subtitle ? `<p class="fs-7 text-body-secondary">${subtitle}</p>` : ""}
+              ${renderColorSets(product)}
+            </div>
+          </a>`;
     }
 
     async function loadProducts() {
@@ -338,8 +338,8 @@ import { escapeHtml } from "../core/html.js";
     }
 
     const arrow = (icon, label, target, disabled) => `
-      <li>
-        <button class="pagination-link" type="button" data-page="${target}"
+      <li class="page-item${disabled ? " disabled" : ""}">
+        <button class="page-link" type="button" data-page="${target}"
                 aria-label="${label}"${disabled ? " disabled" : ""}>
           <span class="icon is-small"><i class="fa-solid ${icon}"></i></span>
         </button>
@@ -355,10 +355,9 @@ import { escapeHtml } from "../core/html.js";
         const numbers = pageWindow()
             .map((number) =>
                 number === null
-                    ? `<li><span class="pagination-ellipsis">&hellip;</span></li>`
-                    : `<li>
-                         <button class="pagination-link${number === page ? " is-current" : ""}"
-                                 type="button" data-page="${number}"
+                    ? `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`
+                    : `<li class="page-item${number === page ? " active" : ""}">
+                         <button class="page-link" type="button" data-page="${number}"
                                  aria-label="Página ${number}"
                                  ${number === page ? 'aria-current="page"' : ""}>
                            ${number}

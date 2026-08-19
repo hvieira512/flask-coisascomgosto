@@ -106,8 +106,8 @@ form.addEventListener("submit", async (e) => {
 
 function renderLoginForm(username) {
     formHeader.innerHTML = `
-        <h1 class="title is-4 mb-1">Olá, ${username}!</h1>
-        <p class="has-text-grey">Introduz a tua password para entrar.</p>
+        <h1 class="h4 mb-1">Olá, ${username}!</h1>
+        <p class="text-body-secondary">Introduz a tua password para entrar.</p>
     `;
     appendInput({
         icon: "fa-lock",
@@ -121,8 +121,8 @@ function renderLoginForm(username) {
 
 async function renderRegisterForm(username) {
     formHeader.innerHTML = `
-        <h1 class="title is-4 mb-1">Olá, ${username}!</h1>
-        <p class="has-text-grey">Define a tua palavra-passe para continuares.</p>
+        <h1 class="h4 mb-1">Olá, ${username}!</h1>
+        <p class="text-body-secondary">Define a tua palavra-passe para continuares.</p>
     `;
 
     appendInput({
@@ -154,19 +154,15 @@ function appendInput({ icon, type, id, name, placeholder }) {
     if (document.querySelector(`#${id}`)) return;
 
     const field = document.createElement("div");
-    field.className = "field";
+    field.className = "auth-field mb-3";
 
     field.innerHTML = `
-        <div class="control has-icons-left">
-            <input type="${type}" class="input is-medium" placeholder="${placeholder}"
-                   name="${name}" id="${id}" required>
-            <span class="icon is-small is-left">
-                <i class="fa-solid ${icon}"></i>
-            </span>
-        </div>
+        <input type="${type}" class="form-control form-control-lg" placeholder="${placeholder}"
+               name="${name}" id="${id}" required>
+        <span class="field-icon"><i class="fa-solid ${icon}"></i></span>
     `;
 
-    // Insert above the submit button's field wrapper.
-    const anchor = submitBtn.closest(".field") || submitBtn;
+    // Insert above the row the submit button sits in.
+    const anchor = submitBtn.parentElement;
     anchor.parentNode.insertBefore(field, anchor);
 }

@@ -38,15 +38,15 @@ function renderPreview() {
     ].filter((card) => card.value.trim());
 
     document.getElementById("contact-preview").innerHTML = cards.length
-        ? `<ul class="panel is-shadowless mb-0">${cards.map((card) => `
-             <li class="panel-block px-0">
-               <span class="disc contact-icon mr-3"><i class="${card.icon}"></i></span>
+        ? `<ul class="list-group list-group-flush">${cards.map((card) => `
+             <li class="list-group-item d-flex align-items-center px-0">
+               <span class="disc contact-icon me-3"><i class="${card.icon}"></i></span>
                <span class="contact-body">
                  <span class="eyebrow mb-0">${escapeHtml(card.label)}</span>
                  <span class="contact-value">${escapeHtml(card.value.trim())}</span>
                </span>
              </li>`).join("")}</ul>`
-        : `<p class="has-text-grey is-size-7">Sem contactos preenchidos.</p>`;
+        : `<p class="text-body-secondary fs-7">Sem contactos preenchidos.</p>`;
 
     const number = field("whatsapp").value;
     document.getElementById("cf-whatsapp-preview").textContent =

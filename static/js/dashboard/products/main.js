@@ -105,18 +105,20 @@ async function openEdit(id) {
     // colours and each colour's photographs together. Fotografias was the same
     // information asked for a second time, through a dropdown naming the colour.
     bodyOf("editProductModal").innerHTML = `
-        <div class="tabs is-small is-boxed mb-4" id="edit-tabs">
-          <ul>
-            <li class="is-active" data-tab="details"><a>Detalhes</a></li>
-            <li data-tab="variants"><a>Cores e fotografias</a></li>
-          </ul>
-        </div>
+        <ul class="nav nav-tabs mb-3" id="edit-tabs">
+          <li class="nav-item" data-tab="details">
+            <button class="nav-link active" type="button">Detalhes</button>
+          </li>
+          <li class="nav-item" data-tab="variants">
+            <button class="nav-link" type="button">Cores e fotografias</button>
+          </li>
+        </ul>
         <div data-panel="details">${await productForm(product)}</div>
         <div data-panel="variants" hidden>${await variantsPanel(product)}</div>`;
 
     footOf("editProductModal").innerHTML = `
-        <button class="button" data-modal-close>Fechar</button>
-        <button class="button is-dark" id="edit-submit">Guardar alterações</button>`;
+        <button class="btn btn-outline-secondary" data-modal-close>Fechar</button>
+        <button class="btn btn-dark" id="edit-submit">Guardar alterações</button>`;
 
     open("editProductModal");
     wireEditTabs();
@@ -142,14 +144,12 @@ function wireEditTabs() {
 
     tabs.querySelectorAll("li").forEach((tab) => {
         tab.onclick = () => {
-            tabs.querySelectorAll("li").forEach((t) => t.classList.remove("is-active"));
-            tab.classList.add("is-active");
+            tabs.querySelectorAll(".nav-link").forEach((t) => t.classList.remove("active"));
+            tab.querySelector(".nav-link").classList.add("active");
             root.querySelectorAll("[data-panel]").forEach((panel) => {
                 panel.hidden = panel.dataset.panel !== tab.dataset.tab;
             });
-            // Bulma's .button is display:inline-flex, which outranks the
-            // [hidden] attribute — is-hidden carries the !important.
-            save.classList.toggle("is-hidden", tab.dataset.tab !== "details");
+            save.hidden = tab.dataset.tab !== "details";
         };
     });
 }
@@ -257,7 +257,7 @@ async function openDelete(id) {
         id: "deleteProductModal",
         body: `
             <p>Apagar <strong>${escapeHtml(product.name)}</strong>?</p>
-            <p class="has-text-grey is-size-7 mt-2">
+            <p class="text-body-secondary fs-7 mt-2">
               Remove também as suas ${product.variants.length} cores e
               ${allImages(product).length} fotografias. Não pode ser anulado.
             </p>`,

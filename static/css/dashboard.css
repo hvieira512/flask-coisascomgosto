@@ -6,15 +6,16 @@
  * deeper paper with white work surfaces sitting on it, and state is carried by
  * colour and shape rather than by prose.
  *
- * Bulma provides the navbar, menu, table, card, tag and modal; this file adds
- * the app shell, the density, and the state chips it has no vocabulary for.
+ * Bootstrap provides the navbar, offcanvas sidebar, dropdown, table, card,
+ * badge and modal parts; this file adds the app shell, the density, and the
+ * state chips it has no vocabulary for.
  */
 
 :root {
     --dash-border: var(--ccg-line);
     --dash-sidebar-width: 232px;
-    /* Bulma's own navbar height, and what it pads <html> by for is-fixed-top.
-       Pinned here so the sidebar can subtract exactly the same amount. */
+    /* Pinned so the sidebar, the sticky table headers and the body's own top
+       padding all subtract exactly the same amount. */
     --dash-navbar-height: 3.25rem;
 }
 
@@ -24,26 +25,25 @@
     background: var(--ccg-paper-deep);
     color: var(--ccg-ink);
     min-height: 100vh;
+    /* Bootstrap's .fixed-top takes the bar out of the flow without reserving
+       room for it. */
+    padding-top: var(--dash-navbar-height);
 }
 
-/* One row at every width. Bulma's .navbar is only a flex row from 1024px up; below
-   that it is a block, so the brand and the menu stacked and the user's dropdown was
-   drawn *under* the 52px bar rather than inside it. */
 .dash-navbar {
-    display: flex;
-    align-items: stretch;
     border-bottom: 1px solid var(--dash-border);
     background: var(--ccg-surface);
-    /* The 2rem logo pushed it to 53px, one pixel past what Bulma pads for. */
     min-height: var(--dash-navbar-height);
     height: var(--dash-navbar-height);
+    padding: 0 .75rem;
 }
 
-/* The brand takes the space, which puts everything after it against the right edge. */
 .dash-navbar .navbar-brand {
-    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    color: var(--ccg-blue-900);
+    font-size: 1rem;
     min-width: 0;
-    align-items: stretch;
 }
 
 .dash-logo {
@@ -53,71 +53,26 @@
     margin-right: .5rem;
 }
 
-/* Bulma hides .navbar-menu below 1024px; the dashboard needs its controls at
-   every width, so it is forced visible and laid out horizontally. flex-grow is
-   deliberately not set — the brand takes the slack, and growing this too made the
-   dropdown's anchor a full-width box. */
-.dash-navbar-menu {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: stretch;
-    justify-content: flex-end;
-    box-shadow: none;
-    padding: 0;
-    background: transparent;
+.dash-user-btn {
+    --bs-btn-color: var(--ccg-ink);
+    --bs-btn-padding-x: .6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
 }
 
-/* Bulma gives a fixed navbar's menu `overflow: auto` and a max-height, so its stacked
-   mobile menu can scroll. That clips anything hanging out of it: the user's dropdown
-   was drawn and then cut away entirely — display: block, opacity 1, a 192x61 box, and
-   absent from elementsFromPoint.
-   Written with Bulma's own specificity (.navbar.is-fixed-top .navbar-menu is three
-   classes); a single .dash-navbar-menu lost to it and the dropdown stayed invisible. */
-.navbar.is-fixed-top .dash-navbar-menu {
-    overflow: visible;
-    max-height: none;
+.dash-navbar .dropdown-menu {
+    --bs-dropdown-min-width: 12rem;
+    --bs-dropdown-border-color: var(--dash-border);
+    --bs-dropdown-border-radius: var(--radius);
+    --bs-dropdown-box-shadow: 0 8px 24px rgba(22, 39, 69, .12);
+    margin-top: .35rem;
 }
 
-/* Full height, so the dropdown's `top: 100%` means the bottom of the bar. Both of
-   these are content-height boxes otherwise, and the menu hung from 40px up. */
-.dash-navbar-menu .navbar-end {
-    align-items: stretch;
-    height: 100%;
-}
-
-/* Bulma drops the dropdown's absolute positioning below 1024px, where its navbar
-   becomes a stacked block and a "dropdown" is just more of the list. This one is a
-   dropdown at every width, so it keeps hanging off its trigger. */
-.dash-navbar .navbar-item.has-dropdown {
+.dash-navbar .dropdown-item {
     display: flex;
     align-items: center;
-    /* static, deliberately: the containing block is then the fixed bar, so the
-       dropdown's `top: 100%` is the bar's own bottom edge. Anchored to the item — a
-       40px box centred in a 52px bar — it hung from 6px above the border and crossed
-       it. */
-    position: static;
-}
-
-.dash-navbar .navbar-dropdown {
-    position: absolute;
-    top: 100%;
-    right: .5rem;
-    left: auto;
-    min-width: 12rem;
-    border-top: 1px solid var(--dash-border);
-    box-shadow: 0 8px 24px rgba(22, 39, 69, .12);
-    background: var(--ccg-surface);
-    border-radius: 0 0 var(--radius) var(--radius);
-    z-index: 45;
-}
-
-/* Dropdowns are opened by toggling .is-active in menus.js. */
-.navbar-item.has-dropdown .navbar-dropdown {
-    display: none;
-}
-
-.navbar-item.has-dropdown.is-active .navbar-dropdown {
-    display: block;
+    gap: .5rem;
 }
 
 /* ----------------------------------------------------------------
@@ -125,20 +80,46 @@
    ---------------------------------------------------------------- */
 
 /* Sticky under the fixed navbar, sized to exactly the space left below it, so
-   the foot of the menu is always on screen however long the page gets. Its own
-   overflow-y means a very long menu can still scroll. */
+   the foot of the menu is always on screen however long the page gets. */
 .dash-sidebar {
     flex: 0 0 var(--dash-sidebar-width);
     width: var(--dash-sidebar-width);
-    padding: 1rem .75rem;
-    background: var(--ccg-surface);
-    border-right: 1px solid var(--dash-border);
-    position: sticky;
-    top: var(--dash-navbar-height);
-    height: calc(100vh - var(--dash-navbar-height));
-    overflow-y: auto;
-    display: flex;
+    /* !important because Bootstrap forces an .offcanvas-lg transparent with one
+       of its own above the breakpoint, and the sidebar is a white surface. */
+    background: var(--ccg-surface) !important;
+}
+
+/* Bootstrap pads the body below the breakpoint and zeroes it above; the padding
+   belongs to the sidebar at both widths. */
+.dash-sidebar .offcanvas-body {
     flex-direction: column;
+    padding: 1rem .75rem;
+}
+
+.dash-sidebar .offcanvas-header {
+    border-bottom: 1px solid var(--dash-border);
+}
+
+@media screen and (min-width: 992px) {
+    .dash-sidebar {
+        position: sticky;
+        top: var(--dash-navbar-height);
+        height: calc(100vh - var(--dash-navbar-height));
+        /* Bootstrap only makes an .offcanvas a flex column below its breakpoint;
+           above it the body has to be told to fill the sidebar, or the foot's
+           margin-top: auto has no space to push into and "Ver a loja" sits right
+           under the tabs. */
+        display: flex;
+        flex-direction: column;
+        /* The border only exists in the offcanvas half of Bootstrap's own
+           breakpoint, so above it the column has none. */
+        border-right: 1px solid var(--dash-border);
+    }
+
+    .dash-sidebar .offcanvas-body {
+        flex-grow: 1;
+        overflow-y: auto;
+    }
 }
 
 /* Pushed to the bottom, away from the section tabs: leaving the dashboard is
@@ -146,37 +127,37 @@
 .dash-sidebar-foot {
     margin-top: auto;
     padding-top: .75rem;
-    border-top: 1px solid var(--bulma-border);
+    border-top: 1px solid var(--ccg-line);
 }
 
-.dash-sidebar .menu-list a {
+.dash-sidebar .nav-link {
     display: flex;
     align-items: center;
     gap: .6rem;
     padding: .5rem .7rem;
     font-size: .875rem;
-    border-radius: var(--bulma-radius);
+    border-radius: var(--radius);
     color: var(--ccg-ink);
     transition: background-color .15s ease, color .15s ease;
 }
 
 /* The icons carry the section; at full ink they competed with the label. */
-.dash-sidebar .menu-list a .icon {
+.dash-sidebar .nav-link .icon {
     color: var(--ccg-ink-faint);
     transition: color .15s ease;
 }
 
-.dash-sidebar .menu-list a:hover .icon,
-.dash-sidebar .menu-list a.is-active .icon {
+.dash-sidebar .nav-link:hover .icon,
+.dash-sidebar .nav-link.active .icon {
     color: currentColor;
 }
 
-.dash-sidebar .menu-list a:hover {
+.dash-sidebar .nav-link:hover {
     background-color: var(--ccg-blue-50);
     color: var(--ccg-blue-800);
 }
 
-.dash-sidebar .menu-list a.is-active {
+.dash-sidebar .nav-link.active {
     background-color: var(--ccg-blue-800);
     color: var(--ccg-surface);
 }
@@ -187,54 +168,16 @@
     min-width: 0;
 }
 
-.dash-burger {
-    display: none;
-}
-
-.dash-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(10, 10, 10, .45);
-    z-index: 30;
-}
-
-.dash-overlay.is-open {
-    display: block;
-}
-
-@media screen and (max-width: 1023px) {
-    /* Last in the bar, against the right edge, which is where a thumb expects it. */
-    .dash-burger {
-        display: inline-flex;
-        align-self: center;
-        margin-right: .5rem;
-    }
-
-    /* The username is the widest thing in the bar and the least useful part of it at
-       this width: the icon says whose menu this is, and the name is inside it. */
-    .dash-user-name {
-        display: none;
-    }
-
-    /* Sidebar slides in over the content instead of taking a column. */
-    .dash-sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        z-index: 40;
-        transform: translateX(-100%);
-        transition: transform .2s ease;
-        min-height: 100vh;
-    }
-
-    .dash-sidebar.is-open {
-        transform: translateX(0);
-    }
-
+@media screen and (max-width: 991.98px) {
     .dash-main {
         padding: 1.25rem;
+    }
+
+    /* The username is the widest thing in the bar and the least useful part of
+       it at this width: the icon says whose menu this is, and the name is
+       inside it. */
+    .dash-user-name {
+        display: none;
     }
 }
 
@@ -243,7 +186,7 @@
    ---------------------------------------------------------------- */
 
 .dash-panel {
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
     height: 100%;
 }
 
@@ -257,8 +200,9 @@
     white-space: nowrap;
 }
 
-/* State, as a shape and a colour rather than a sentence. Bulma's .tag supplies
-   the pill; these supply the meaning, from the semantic tokens in theme.css. */
+/* State, as a shape and a colour rather than a sentence. Bootstrap's .badge
+   supplies the pill; these supply the meaning, from the semantic tokens in
+   theme.css. */
 .chip {
     font-size: .6875rem;
     font-weight: 600;
@@ -302,11 +246,19 @@
     }
 }
 
-/* A colour you click to put into the set you are building. Bulma's .tags wraps
-   them and .tag draws the pill; it has no notion of a chosen tag, and the chosen
-   state matches the storefront's variant buttons so the two read alike. */
+/* A colour you click to put into the set you are building. The chosen state
+   matches the storefront's variant buttons so the two read alike. */
+/* A bare .badge has no ground of its own — the colour ones bring theirs from the
+   set they show, and this one has to supply it. */
 .color-chip {
+    display: inline-flex;
+    align-items: center;
     gap: .35rem;
+    padding: .35rem .6rem;
+    border: 0;
+    background-color: var(--ccg-paper-deep);
+    color: var(--ccg-ink);
+    font-size: .75rem;
     cursor: pointer;
 }
 
@@ -484,8 +436,8 @@
     border-color: var(--ccg-blue-500);
 }
 
-/* <input type="color"> on Bulma's .input is a full-width field with a swatch
-   lost inside it; it only ever needs to be the swatch. */
+/* <input type="color"> as a full-width field is a swatch lost inside a box; it
+   only ever needs to be the swatch. */
 .color-swatch-input {
     width: 3rem;
     padding: .25rem;
@@ -495,16 +447,16 @@
    The catalogue table
    ---------------------------------------------------------------- */
 
-/* Deliberately NOT Bulma's .table-container. Its overflow-x makes it the
-   scrollport, and a sticky thead then pins to the top of the container rather
-   than the viewport — which put the header 52px *below* the first row. The page
-   has to be the scrollport for that to work, so horizontal scrolling is only
-   turned on at the widths that actually need it. */
+/* A wrapper with overflow-x would become the scrollport, and a sticky thead then
+   pins to the top of the container rather than the viewport — which put the
+   header 52px *below* the first row. The page has to be the scrollport for that
+   to work, so horizontal scrolling is only turned on at the widths that actually
+   need it. */
 .dash-table-wrap {
     min-width: 0;
 }
 
-@media screen and (max-width: 1023px) {
+@media screen and (max-width: 991.98px) {
     .dash-table-wrap {
         overflow-x: auto;
     }
@@ -518,11 +470,14 @@
 }
 
 .dash-table {
-    /* Bulma's table draws a line under every cell; one line per row reads as a
-       list of records rather than a grid of boxes. */
-    --bulma-table-cell-border-width: 0 0 1px;
-    --bulma-table-cell-padding: .625rem .75rem;
+    --bs-table-hover-bg: var(--ccg-blue-50);
+    --bs-table-border-color: var(--ccg-line-soft);
     font-size: .875rem;
+    margin-bottom: 0;
+}
+
+.dash-table > :not(caption) > * > * {
+    padding: .625rem .75rem;
 }
 
 /* Only the tables carrying colour chips need a floor: three chips alone want
@@ -595,7 +550,7 @@
 }
 
 /* Any row, not just a table's. The rule used to name .dash-table tbody tr, so the
-   materials list — panel-blocks, not table rows — kept its rename and delete
+   materials list — list items, not table rows — kept its rename and delete
    buttons at opacity 0 at every mouse position: present, clickable, invisible.
    The owners could add a material and nothing else. */
 :is(tr, li):hover .dash-row-actions,
@@ -611,19 +566,20 @@
 
 @media (prefers-reduced-motion: reduce) {
     .dash-row-actions,
-    .dash-sidebar,
-    .dash-sidebar .menu-list a {
+    .dash-sidebar .nav-link {
         transition: none;
     }
 }
 
 /* ----------------------------------------------------------------
-   Modals — a native <dialog>
+   Modals — a native <dialog> wearing Bootstrap's modal parts
    ---------------------------------------------------------------- */
 
-/* The dialog box itself is only a frame around .modal-card, which keeps Bulma's
-   layout. The browser centres it in the top layer, so there is no positioning
-   here beyond the margin auto that centring needs. */
+/* Native rather than Bootstrap's .modal div: the browser then supplies the top
+   layer, ::backdrop, the focus trap, Escape and returning focus to whatever
+   opened it — and the top layer is what keeps a confirmation raised from inside
+   a dialog above it rather than behind its backdrop.
+   The dialog box itself is only a frame around .modal-content. */
 .dash-dialog {
     border: 0;
     padding: 0;
@@ -635,36 +591,19 @@
     margin: auto;
 }
 
-/* The card is the height-constrained column, and its body is the part that scrolls.
-   The max-height was on the <dialog> alone, which capped nothing inside it: the
-   colours panel came out 1028px tall in a 732px dialog, spilled past the card, and the
-   page scrolled behind instead of the dialog's own content. */
-.dash-dialog .modal-card {
-    display: flex;
-    flex-direction: column;
+/* The content is the height-constrained column and its body is the part that
+   scrolls. The cap has to be here rather than on the <dialog> alone, which
+   constrains nothing inside it: a tall panel spilled past the card and the page
+   scrolled behind instead of the dialog's own content. */
+.dash-dialog .modal-content {
     max-height: calc(100vh - 3rem);
-    background: var(--ccg-surface);
+    border: 0;
     border-radius: var(--radius-lg);
-    /* Two shadows: a tight one to seat the card, a broad soft one for depth.
-       Bulma's single hard shadow made it look pasted on. */
+    /* Two shadows: a tight one to seat the card, a broad soft one for depth. */
     box-shadow:
         0 1px 2px rgba(31, 56, 100, .08),
         0 24px 48px -12px rgba(31, 56, 100, .22);
     overflow: hidden;
-}
-
-.dash-dialog .modal-card-body {
-    flex: 1 1 auto;
-    /* Without this the body's flex base is its content, so it never scrolls — it just
-       pushes past the cap, which is the bug above. */
-    min-height: 0;
-    overflow-y: auto;
-}
-
-/* The head and foot stay put while the body moves under them. */
-.dash-dialog .modal-card-head,
-.dash-dialog .modal-card-foot {
-    flex: none;
 }
 
 /* Nothing behind an open dialog should scroll. The top layer stops it being clicked,
@@ -673,66 +612,27 @@ html:has(dialog[open]) {
     overflow: hidden;
 }
 
-/* Compact head. Bulma pads it by 2rem and sets the title to size-4 (1.5rem),
-   which on a form dialog gave the word "Editar produto" more room than the
-   fields under it. */
-.dash-dialog .modal-card-head {
+/* Compact head: on a form dialog the words "Editar produto" should not have more
+   room than the fields under them. */
+.dash-dialog .modal-header {
     padding: .9rem 1rem .9rem 1.25rem;
-    background: var(--ccg-surface);
     border-bottom: 1px solid var(--dash-border);
-    box-shadow: none;
 }
 
-.dash-dialog .modal-card-title {
+.dash-dialog .modal-title {
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.3;
     color: var(--ccg-blue-900);
 }
 
-/* Bulma's .delete is a grey disc with a cut-out cross, which reads as a badge
-   being dismissed rather than a window being closed. A square ghost button with
-   the same icon set as the rest of the dashboard reads as a control. */
-.dash-dialog-close {
-    flex: none;
-    width: 2rem;
-    height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: var(--bulma-radius);
-    background: transparent;
-    color: var(--ccg-ink-faint);
-    cursor: pointer;
-    transition: background-color .15s ease, color .15s ease;
-}
-
-.dash-dialog-close:hover {
-    background: var(--ccg-blue-50);
-    color: var(--ccg-blue-800);
-}
-
-.dash-dialog-close:focus-visible {
-    outline: 2px solid var(--ccg-blue-400);
-    outline-offset: 2px;
-}
-
-.dash-dialog .modal-card-body {
+.dash-dialog .modal-body {
     padding: 1.25rem;
 }
 
-/* Bulma 1.0's .modal-card-foot is justify-content: flex-start and has no gap —
-   0.9's `.button:not(:last-child) { margin-right: .5rem }` went away with it —
-   so every dialog's Cancelar and Guardar sat flush left and touching. Actions
-   belong at the trailing edge, primary last. */
-.modal-card-foot {
-    justify-content: flex-end;
-    gap: .75rem;
-}
-
-.dash-dialog .modal-card-foot {
+.dash-dialog .modal-footer {
     padding: .9rem 1.25rem;
+    gap: .25rem;
     background: var(--ccg-paper);
     border-top: 1px solid var(--dash-border);
 }
@@ -763,8 +663,8 @@ html:has(dialog[open]) {
     }
 }
 
-/* Ink rather than Bulma's near-black at 86%, and a touch of blur so the desk
-   behind reads as out of focus instead of merely dark. */
+/* Ink rather than near-black, and a touch of blur so the desk behind reads as
+   out of focus instead of merely dark. */
 .dash-dialog::backdrop {
     background: rgba(22, 39, 69, .42);
     backdrop-filter: blur(2px);
@@ -791,8 +691,8 @@ html:has(dialog[open]) {
     width: 46px;
     height: 46px;
     object-fit: cover;
-    border-radius: var(--bulma-radius);
-    border: 1px solid var(--bulma-border);
+    border-radius: var(--radius);
+    border: 1px solid var(--ccg-line);
 }
 
 /* ----------------------------------------------------------------
@@ -805,4 +705,46 @@ html:has(dialog[open]) {
     background: var(--ccg-blue-50);
     color: var(--ccg-blue-600);
     font-size: .8rem;
+}
+
+/* ----------------------------------------------------------------
+   Page grids Bootstrap's 12-column row cannot express
+   ---------------------------------------------------------------- */
+
+/* The filter bar: as many controls per line as fit, each at least 7rem, all
+   sitting on the same baseline as the Limpar button beside them. */
+.dash-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+    gap: .75rem;
+    align-items: end;
+}
+
+/* Counters. Two per line on a phone, four on anything wider — a .row of
+   col-6 col-md-3 says the same thing in twice the markup. */
+.dash-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+@media screen and (min-width: 768px) {
+    .dash-stat-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* The attention strip: with one thing waiting, a card in half a row reads as a
+   card with something missing beside it, so the tracks fit themselves. */
+.dash-attention-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+    gap: .75rem;
+}
+
+/* The wizard's progress bar. Bootstrap's default is 1rem tall, which next to a
+   .eyebrow reads as a second heading. */
+.step-progress {
+    height: .35rem;
+    --bs-progress-bar-bg: var(--ccg-blue-500);
 }

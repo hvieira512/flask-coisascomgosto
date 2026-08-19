@@ -8,19 +8,19 @@
 {{ page_head_action('Catálogo', 'Tipos e materiais', 'type-count',
                     'new-type', 'Novo tipo') }}
 
-<div class="columns">
+<div class="row g-4">
     {# Types are the page's subject: every piece must have one. #}
-    <div class="column is-8">
+    <div class="col-lg-8">
         <div class="card dash-panel">
             <div class="dash-table-wrap">
-                <table class="table dash-table is-fullwidth is-hoverable mb-0">
+                <table class="table dash-table table-hover">
                     <thead>
                         <tr>
-                            <th class="dash-col-thumb"><span class="is-sr-only">Ícone</span></th>
+                            <th class="dash-col-thumb"><span class="visually-hidden">Ícone</span></th>
                             <th class="dash-col-name">Tipo</th>
                             <th>Descrição</th>
                             <th class="dash-col-photos">Peças</th>
-                            <th class="dash-col-actions"><span class="is-sr-only">Acções</span></th>
+                            <th class="dash-col-actions"><span class="visually-hidden">Acções</span></th>
                         </tr>
                     </thead>
                     <tbody id="type-rows"></tbody>
@@ -31,25 +31,21 @@
 
     {# Materials are a short lookup, so they sit beside rather than on their own
        page: the owners add one every few months, not every day. #}
-    <div class="column is-4">
-        <div class="card dash-panel p-5">
-            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
-                <h2 class="title is-6 mb-0">Materiais</h2>
-                <span class="data has-text-grey" id="material-count">—</span>
+    <div class="col-lg-4">
+        <div class="card dash-panel p-4">
+            <header class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 class="h6 mb-0">Materiais</h2>
+                <span class="data text-body-secondary" id="material-count">—</span>
             </header>
 
-            <div id="material-rows" class="mb-4"></div>
+            <div id="material-rows" class="mb-3"></div>
 
-            <form id="material-form" class="field has-addons mb-0">
-                <div class="control is-expanded">
-                    <input class="input is-small" id="material-name" required
-                           placeholder="Cortiça" aria-label="Nome do material">
-                </div>
-                <div class="control">
-                    <button class="button is-small is-dark" type="submit">Adicionar</button>
-                </div>
+            <form id="material-form" class="input-group input-group-sm">
+                <input class="form-control" id="material-name" required
+                       placeholder="Cortiça" aria-label="Nome do material">
+                <button class="btn btn-dark" type="submit">Adicionar</button>
             </form>
-            <p class="help">De que são feitas as peças. Opcional em cada peça.</p>
+            <p class="help mt-2 mb-0">De que são feitas as peças. Opcional em cada peça.</p>
         </div>
     </div>
 </div>

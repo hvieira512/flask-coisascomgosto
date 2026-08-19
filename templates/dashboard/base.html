@@ -12,7 +12,6 @@
 
 {% block title %}{% block page_title %}Painel{% endblock %} · Dashboard{% endblock %}
 
-{% block html_class %}has-navbar-fixed-top{% endblock %}
 {% block body_class %}dashboard-body{% endblock %}
 
 {% block styles %}
@@ -20,71 +19,79 @@
 {% endblock %}
 
 {% block body %}
-<nav class="navbar is-fixed-top dash-navbar" role="navigation" aria-label="navegação do painel">
-    <div class="navbar-brand">
-        <a class="navbar-item has-text-weight-bold" href="{{ url_for('web.dashboard.home') }}">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
-            <span>CoisasComGosto</span>
-        </a>
-    </div>
+<nav class="navbar fixed-top dash-navbar" aria-label="navegação do painel">
+    <a class="navbar-brand fw-bold" href="{{ url_for('web.dashboard.home') }}">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
+        <span>CoisasComGosto</span>
+    </a>
 
-    <div class="navbar-menu is-active dash-navbar-menu">
-        <div class="navbar-end">
-            <div class="navbar-item has-dropdown" data-dropdown>
-                <button class="button is-white" data-dropdown-trigger aria-haspopup="true" aria-expanded="false">
-                    <span class="icon"><i class="fa-solid fa-user"></i></span>
-                    <span class="dash-user-name">{{ session["user"]["username"] }}</span>
-                    <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
-                </button>
-                <div class="navbar-dropdown is-right">
-                    <a class="navbar-item" href="{{ url_for('web.logout') }}">
+    <div class="d-flex align-items-center">
+        <div class="dropdown">
+            <button class="btn btn-ghost dash-user-btn" data-bs-toggle="dropdown"
+                    data-dropdown-trigger aria-expanded="false">
+                <span class="icon"><i class="fa-solid fa-user"></i></span>
+                <span class="dash-user-name">{{ session["user"]["username"] }}</span>
+                <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('web.logout') }}">
                         <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
                         <span>Sair</span>
                     </a>
-                </div>
-            </div>
+                </li>
+            </ul>
         </div>
-    </div>
 
-    {# Opens the sidebar as an overlay on small screens. Outside .navbar-brand, where
-       Bulma puts a burger, precisely so it is the last thing in the bar and lands
-       against the right edge: inside the brand it could only ever be pushed to the
-       brand's own right edge, which is the middle of the bar. #}
-    <button class="button is-white dash-burger" id="sidebarToggle" aria-label="Abrir menu">
-        <span class="icon"><i class="fa-solid fa-bars"></i></span>
-    </button>
+        {# Last in the bar, so it lands against the right edge, which is where a
+           thumb expects it. #}
+        <button class="btn btn-ghost dash-burger d-lg-none" data-bs-toggle="offcanvas"
+                data-bs-target="#sidebar" aria-controls="sidebar" id="sidebarToggle"
+                aria-label="Abrir menu">
+            <span class="icon"><i class="fa-solid fa-bars"></i></span>
+        </button>
+    </div>
 </nav>
 
-<div class="is-flex is-align-items-flex-start">
-    <aside class="dash-sidebar" id="sidebar">
-        <ul class="menu-list">
-            {% for tab in tabs %}
-            <li>
-                <a href="{{ url_for(tab.endpoint) }}"
-                   class="{{ 'is-active' if request.endpoint == tab.endpoint else '' }}">
-                    <span class="icon"><i class="fa-solid {{ tab.icon }}"></i></span>
-                    <span>{{ tab.label }}</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+<div class="d-flex align-items-start">
+    {# offcanvas-lg: a column of the page from 992px up, a slide-in panel with
+       Bootstrap's own backdrop, focus trap and scroll lock below it. #}
+    <aside class="offcanvas-lg offcanvas-start dash-sidebar" id="sidebar" tabindex="-1"
+           aria-label="Secções do painel">
+        <div class="offcanvas-header">
+            <span class="offcanvas-title fw-semibold">Secções</span>
+            <button class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
+                    aria-label="Fechar"></button>
+        </div>
 
-        <ul class="menu-list dash-sidebar-foot">
-            <li>
-                <a href="{{ url_for('web.store.home') }}">
-                    <span class="icon"><i class="fa-solid fa-arrow-left"></i></span>
-                    <span>Ver a loja</span>
-                </a>
-            </li>
-        </ul>
+        <div class="offcanvas-body">
+            <ul class="nav flex-column">
+                {% for tab in tabs %}
+                <li class="nav-item">
+                    <a href="{{ url_for(tab.endpoint) }}"
+                       class="nav-link{{ ' active' if request.endpoint == tab.endpoint else '' }}">
+                        <span class="icon"><i class="fa-solid {{ tab.icon }}"></i></span>
+                        <span>{{ tab.label }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <ul class="nav flex-column dash-sidebar-foot">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('web.store.home') }}">
+                        <span class="icon"><i class="fa-solid fa-arrow-left"></i></span>
+                        <span>Ver a loja</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </aside>
 
     <section class="dash-main">
         {% block content %}{% endblock %}
     </section>
 </div>
-
-<div id="overlay" class="dash-overlay"></div>
 {% endblock %}
 
 {% block scripts %}

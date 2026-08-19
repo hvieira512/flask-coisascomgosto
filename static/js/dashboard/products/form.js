@@ -26,70 +26,57 @@ export async function productForm(product = null) {
     return `
     <form id="product-form" data-product-id="${product?.id ?? ""}">
       <div data-step="identity">
-        <div class="field">
-          <label class="label is-small" for="pf-name">Nome</label>
-          <div class="control">
-            <input class="input" id="pf-name" name="name" required
-                   value="${escapeHtml(product?.name ?? "")}" placeholder="Caixa Redonda Filigrana">
-          </div>
+        <div class="mb-3">
+          <label class="form-label fs-7" for="pf-name">Nome</label>
+          <input class="form-control" id="pf-name" name="name" required
+                 value="${escapeHtml(product?.name ?? "")}" placeholder="Caixa Redonda Filigrana">
         </div>
 
-        <div class="field">
-          <label class="label is-small" for="pf-type">Tipo</label>
-          <div class="select is-fullwidth">
-            <select id="pf-type" name="type_id" required>
-              <option value="">Escolher…</option>
-              ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
-            </select>
-          </div>
-          <p class="help">A família da peça — Caixa, Moldura, Coração.</p>
+        <div class="mb-3">
+          <label class="form-label fs-7" for="pf-type">Tipo</label>
+          <select class="form-select" id="pf-type" name="type_id" required>
+            <option value="">Escolher…</option>
+            ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
+          </select>
+          <p class="help mb-0">A família da peça — Caixa, Moldura, Coração.</p>
         </div>
       </div>
 
       <div data-step="details">
-        <div class="field">
-          <label class="label is-small" for="pf-description">Descrição</label>
-          <div class="control">
-            <textarea class="textarea" id="pf-description" name="description" rows="2"
-                      placeholder="Como é a peça, numa linha.">${escapeHtml(product?.description ?? "")}</textarea>
+        <div class="mb-3">
+          <label class="form-label fs-7" for="pf-description">Descrição</label>
+          <textarea class="form-control" id="pf-description" name="description" rows="2"
+                    placeholder="Como é a peça, numa linha.">${escapeHtml(product?.description ?? "")}</textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col">
+            <label class="form-label fs-7" for="pf-material">Material</label>
+            <select class="form-select" id="pf-material" name="material_id">
+              <option value="">—</option>
+              ${materials.map((m) => option(m.id, m.name, product?.material?.id)).join("")}
+            </select>
+          </div>
+          <div class="col">
+            <label class="form-label fs-7" for="pf-collection">Colecção</label>
+            <select class="form-select" id="pf-collection" name="collection_id">
+              <option value="">—</option>
+              ${collections.map((c) => option(c.id, c.name, product?.collection?.id)).join("")}
+            </select>
           </div>
         </div>
 
-        <div class="columns is-mobile">
-          <div class="column">
-            <div class="field">
-              <label class="label is-small" for="pf-material">Material</label>
-              <div class="select is-fullwidth">
-                <select id="pf-material" name="material_id">
-                  <option value="">—</option>
-                  ${materials.map((m) => option(m.id, m.name, product?.material?.id)).join("")}
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="column">
-            <div class="field">
-              <label class="label is-small" for="pf-collection">Colecção</label>
-              <div class="select is-fullwidth">
-                <select id="pf-collection" name="collection_id">
-                  <option value="">—</option>
-                  ${collections.map((c) => option(c.id, c.name, product?.collection?.id)).join("")}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="field mb-0">
-          <label class="label is-small">Tamanhos</label>
-          <div class="control" id="pf-sizes">
+        <div>
+          <label class="form-label fs-7">Tamanhos</label>
+          <div id="pf-sizes">
             ${sizes.map((s) => `
-              <label class="checkbox mr-4">
-                <input type="checkbox" value="${s.id}"${selectedSizes.has(s.id) ? " checked" : ""}>
-                ${escapeHtml(s.name)}
-              </label>`).join("")}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="pf-size-${s.id}"
+                       value="${s.id}"${selectedSizes.has(s.id) ? " checked" : ""}>
+                <label class="form-check-label" for="pf-size-${s.id}">${escapeHtml(s.name)}</label>
+              </div>`).join("")}
           </div>
-          <p class="help">Deixe vazio se a peça só se faz num tamanho.</p>
+          <p class="help mb-0">Deixe vazio se a peça só se faz num tamanho.</p>
         </div>
       </div>
     </form>`;

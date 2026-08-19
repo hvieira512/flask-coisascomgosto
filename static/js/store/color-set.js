@@ -96,7 +96,7 @@ export const ColorSet = (function () {
 
     function badge(colorSet, extraClass = "") {
         if (!colorSet) return "";
-        return `<span class="tag is-rounded color-set-badge ${extraClass}"
+        return `<span class="color-set-badge ${extraClass}"
                       title="${escapeHtml(colorSet.name)}"
                       style="${style(colorSet)}">${dots(colorSet)}<span class="color-set-name">${escapeHtml(colorSet.name)}</span></span>`;
     }

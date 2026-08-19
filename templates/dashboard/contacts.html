@@ -8,71 +8,65 @@
 {{ page_head('A loja', 'Contactos',
              'O que aparece no fim da página inicial e no rodapé da loja.') }}
 
-<div class="columns">
-    <div class="column is-7">
-        <form class="card dash-panel p-5" id="contact-form">
-            <h2 class="title is-6 mb-4">Onde nos encontram</h2>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <form class="card dash-panel p-4" id="contact-form">
+            <h2 class="h6 mb-3">Onde nos encontram</h2>
 
-            <div class="field">
-                <label class="label is-small" for="cf-address">Morada</label>
-                <input class="input" id="cf-address" name="address"
+            <div class="mb-3">
+                <label class="form-label fs-7" for="cf-address">Morada</label>
+                <input class="form-control" id="cf-address" name="address"
                        placeholder="Rua de Cardielos, n. 222, Viana do Castelo">
             </div>
 
-            <div class="field">
-                <label class="label is-small" for="cf-maps_url">Ligação do mapa</label>
-                <input class="input" id="cf-maps_url" name="maps_url"
+            <div class="mb-3">
+                <label class="form-label fs-7" for="cf-maps_url">Ligação do mapa</label>
+                <input class="form-control" id="cf-maps_url" name="maps_url"
                        placeholder="https://maps.app.goo.gl/...">
-                <p class="help">
+                <p class="help mb-0">
                     Onde abre o cartão da morada. Prefira a ligação curta do Google Maps.
                 </p>
             </div>
 
-            <div class="field">
-                <label class="label is-small" for="cf-email">E-mail</label>
-                <input class="input" id="cf-email" name="email" type="email"
+            <div class="mb-3">
+                <label class="form-label fs-7" for="cf-email">E-mail</label>
+                <input class="form-control" id="cf-email" name="email" type="email"
                        placeholder="geral@coisascomgosto.pt">
             </div>
 
-            <h2 class="title is-6 mt-5 mb-4">Redes</h2>
+            <h2 class="h6 mt-4 mb-3">Redes</h2>
 
-            <div class="field">
-                <label class="label is-small" for="cf-whatsapp">WhatsApp</label>
-                <input class="input" id="cf-whatsapp" name="whatsapp"
+            <div class="mb-3">
+                <label class="form-label fs-7" for="cf-whatsapp">WhatsApp</label>
+                <input class="form-control" id="cf-whatsapp" name="whatsapp"
                        placeholder="939320334">
-                <p class="help" id="cf-whatsapp-preview"></p>
+                <p class="help mb-0" id="cf-whatsapp-preview"></p>
             </div>
 
-            <div class="field">
-                <label class="label is-small" for="cf-facebook_url">Facebook</label>
-                <input class="input" id="cf-facebook_url" name="facebook_url"
+            <div class="mb-3">
+                <label class="form-label fs-7" for="cf-facebook_url">Facebook</label>
+                <input class="form-control" id="cf-facebook_url" name="facebook_url"
                        placeholder="https://www.facebook.com/...">
             </div>
 
-            <div class="field">
-                <label class="label is-small" for="cf-instagram_url">Instagram</label>
-                <input class="input" id="cf-instagram_url" name="instagram_url"
+            <div class="mb-3">
+                <label class="form-label fs-7" for="cf-instagram_url">Instagram</label>
+                <input class="form-control" id="cf-instagram_url" name="instagram_url"
                        placeholder="https://www.instagram.com/...">
             </div>
 
-            <div class="field is-grouped mt-5">
-                <div class="control">
-                    <button class="button is-dark" id="contact-save" type="submit">
-                        Guardar
-                    </button>
-                </div>
-                <div class="control">
-                    <button class="button" id="contact-reset" type="button">Repor</button>
-                </div>
+            <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-dark" id="contact-save" type="submit">Guardar</button>
+                <button class="btn btn-outline-secondary" id="contact-reset" type="button">Repor</button>
             </div>
         </form>
     </div>
 
-    <div class="column is-5">
-        <div class="card dash-panel p-5">
-            <h2 class="title is-6 mb-4">Como aparece na loja</h2>
+    <div class="col-lg-5">
+        <div class="card dash-panel p-4">
+            <h2 class="h6 mb-3">Como aparece na loja</h2>
             <div id="contact-preview"></div>
-            <p class="help mt-4">
+            <p class="help mt-3 mb-0">
                 Um cartão só aparece quando o campo está preenchido.
             </p>
         </div>

@@ -7,28 +7,22 @@
    sections; inner pages provide their own section/container. #}
 <section class="section">
 <div class="container">
-<div class="columns is-variable is-6">
+<div class="row g-4">
 
     {# ---------------- Filter sidebar ---------------- #}
-    <aside class="column is-one-quarter">
+    <aside class="col-lg-3">
         <div class="filters-panel">
-            <div class="level is-mobile mb-4">
-                <div class="level-left">
-                    <h2 class="title is-5 mb-0">Filtros</h2>
-                </div>
-                <div class="level-right">
-                    <button id="clear-filters" class="button is-small is-ghost" type="button" hidden>
-                        Limpar tudo
-                    </button>
-                </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Filtros</h2>
+                <button id="clear-filters" class="btn btn-sm btn-ghost" type="button" hidden>
+                    Limpar tudo
+                </button>
             </div>
 
-            <div class="field mb-5">
-                <label class="label is-small" for="filter-search">Pesquisar</label>
-                <div class="control">
-                    <input id="filter-search" class="input is-small" type="search"
-                           placeholder="Nome do produto…" autocomplete="off">
-                </div>
+            <div class="mb-4">
+                <label class="form-label fs-7" for="filter-search">Pesquisar</label>
+                <input id="filter-search" class="form-control form-control-sm" type="search"
+                       placeholder="Nome do produto…" autocomplete="off">
             </div>
 
             {# Each group is populated from its API endpoint by products.js.
@@ -39,43 +33,43 @@
                choose one, and a checkbox list beside them was the same question
                asked twice. It also means the rail is the only way to filter by
                collection, so it no longer hides itself when there is just one. #}
-            <nav class="menu" id="filter-groups">
-                <p class="menu-label">Tipo</p>
-                <ul class="menu-list" data-filter-group="type_id" data-endpoint="/api/product-types/"
+            <nav id="filter-groups">
+                <p class="filter-group-label">Tipo</p>
+                <ul class="nav flex-column" data-filter-group="type_id" data-endpoint="/api/product-types/"
                     data-collection-key="product_types" data-facet="types"></ul>
 
-                <p class="menu-label">Material</p>
-                <ul class="menu-list" data-filter-group="material_id" data-endpoint="/api/materials/"
+                <p class="filter-group-label">Material</p>
+                <ul class="nav flex-column" data-filter-group="material_id" data-endpoint="/api/materials/"
                     data-collection-key="materials" data-facet="materials"></ul>
             </nav>
         </div>
     </aside>
 
     {# ---------------- Product grid ---------------- #}
-    <section class="column catalogue-main">
+    <section class="col-lg-9 catalogue-main">
         {# The applied filters sit on the heading line, beside the count they
            explain: "Colecção: Filigrana · 9 produtos". They had a row of their own
            between the collections and the grid, which pushed the pieces 48px down
            the moment anything was filtered — on a line that was otherwise 1224px
            of empty space.
 
-           Not Bulma's .level, which never wraps: with several filters chosen on a
-           phone the badges have to be allowed onto a line of their own rather than
-           squeezing the title and the count. The badges and the count travel as one
-           group, so the badges sit against the number rather than drifting into the
-           middle, and the count still ends up on the right when they are hidden. #}
-        <div class="is-flex is-flex-wrap-wrap is-align-items-center is-gap-1 mb-2">
-            <h1 class="title is-4 mb-0">Catálogo</h1>
-            <div class="is-flex is-flex-wrap-wrap is-align-items-center is-gap-1 ml-auto">
-                <div id="active-filters" class="tags mb-0" hidden></div>
-                <span id="result-count" class="is-size-7 has-text-grey"></span>
+           The badges and the count travel as one group, so the badges sit against
+           the number rather than drifting into the middle, and the count still ends
+           up on the right when they are hidden. Wrapping, so that with several
+           filters chosen on a phone the badges get a line of their own rather than
+           squeezing the title. #}
+        <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
+            <h1 class="h4 mb-0">Catálogo</h1>
+            <div class="d-flex flex-wrap align-items-center gap-1 ms-auto">
+                <div id="active-filters" class="d-flex flex-wrap gap-1" hidden></div>
+                <span id="result-count" class="fs-7 text-body-secondary"></span>
             </div>
         </div>
 
         {# There are no prices anywhere in the shop: everything is made to order
            and quoted by message. Saying so once, here, answers the question the
            cards otherwise leave open. #}
-        <p class="is-size-7 has-text-grey mb-4">
+        <p class="fs-7 text-body-secondary mb-3">
             Peças feitas à mão por encomenda. Preços sob consulta — fale
             connosco e dizemos-lhe tudo.
         </p>
@@ -83,25 +77,23 @@
         {# The collections, offered first: the owners say people ask for their work
            by collection rather than by the kind of object. A rail and not a gate —
            the grid underneath is already full, so choosing is an invitation rather
-           than a toll. Filled by js/store/products.js, and hidden until there is
-           more than one collection to choose between, because a single card is not
-           a choice. #}
-        <nav id="collection-rail" class="mb-5" aria-label="Colecções" hidden>
+           than a toll. Filled by js/store/products.js. #}
+        <nav id="collection-rail" class="mb-4" aria-label="Colecções" hidden>
             <p class="eyebrow mb-2">Colecções</p>
             <ul id="collection-strip" class="collection-strip"></ul>
         </nav>
 
-        <div id="product-grid" class="grid is-col-min-12"></div>
+        <div id="product-grid"></div>
 
-        <div id="grid-empty" class="notification is-light has-text-centered" hidden>
+        <div id="grid-empty" class="alert alert-light text-center" hidden>
             Nenhum produto corresponde aos filtros escolhidos.
         </div>
 
         {# One row: previous, every page number, next. products.js fills it, so
            the arrows sit beside the numbers rather than at opposite edges. #}
-        <nav id="pagination" class="pagination is-centered mt-5" role="navigation"
+        <nav id="pagination" class="mt-4 d-flex justify-content-center"
              aria-label="Paginação" hidden>
-            <ul class="pagination-list" id="page-list"></ul>
+            <ul class="pagination mb-0" id="page-list"></ul>
         </nav>
     </section>
 </div>

@@ -8,19 +8,19 @@
 {{ page_head_action('Catálogo', 'Cores e conjuntos', 'set-count',
                     'new-set', 'Novo conjunto') }}
 
-<div class="columns">
+<div class="row g-4">
     {# Conjuntos are the page's subject: a variant is a piece offered in one. #}
-    <div class="column is-8">
+    <div class="col-lg-8">
         <div class="card dash-panel">
             <div class="dash-table-wrap">
-                <table class="table dash-table is-fullwidth is-hoverable mb-0">
+                <table class="table dash-table table-hover">
                     <thead>
                         <tr>
                             <th class="dash-col-name">Conjunto</th>
                             <th>Cores</th>
                             <th>Colecção</th>
                             <th class="dash-col-photos">Peças</th>
-                            <th class="dash-col-actions"><span class="is-sr-only">Acções</span></th>
+                            <th class="dash-col-actions"><span class="visually-hidden">Acções</span></th>
                         </tr>
                     </thead>
                     <tbody id="set-rows"></tbody>
@@ -30,31 +30,25 @@
     </div>
 
     {# The individual colours, which only exist to be combined into a set. #}
-    <div class="column is-4">
-        <div class="card dash-panel p-5">
-            <header class="is-flex is-justify-content-space-between is-align-items-baseline mb-4">
-                <h2 class="title is-6 mb-0">Cores</h2>
-                <span class="data has-text-grey" id="color-count">—</span>
+    <div class="col-lg-4">
+        <div class="card dash-panel p-4">
+            <header class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 class="h6 mb-0">Cores</h2>
+                <span class="data text-body-secondary" id="color-count">—</span>
             </header>
 
-            <div id="color-rows" class="mb-4"></div>
+            <div id="color-rows" class="mb-3"></div>
 
             <form id="color-form" class="mb-0">
-                <div class="field has-addons mb-2">
-                    <div class="control">
-                        <input class="input is-small color-swatch-input" type="color"
-                               id="color-hex" value="#4472C4" aria-label="Cor">
-                    </div>
-                    <div class="control is-expanded">
-                        <input class="input is-small" id="color-name" required
-                               placeholder="Dourado" aria-label="Nome da cor">
-                    </div>
-                    <div class="control">
-                        <button class="button is-small is-dark" type="submit">Adicionar</button>
-                    </div>
+                <div class="input-group input-group-sm">
+                    <input class="form-control color-swatch-input" type="color"
+                           id="color-hex" value="#4472C4" aria-label="Cor">
+                    <input class="form-control" id="color-name" required
+                           placeholder="Dourado" aria-label="Nome da cor">
+                    <button class="btn btn-dark" type="submit">Adicionar</button>
                 </div>
             </form>
-            <p class="help">Cada cor pode entrar em vários conjuntos.</p>
+            <p class="help mt-2 mb-0">Cada cor pode entrar em vários conjuntos.</p>
         </div>
     </div>
 </div>

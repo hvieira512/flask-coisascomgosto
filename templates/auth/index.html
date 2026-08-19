@@ -19,33 +19,27 @@
             </a>
 
             <form id="auth-form" class="auth-form">
-                <div id="form-header" class="has-text-centered mb-5">
-                    <h1 class="title is-4 mb-1">Seja bem-vindo!</h1>
-                    <p class="has-text-grey">Qual é o teu nome?</p>
+                <div id="form-header" class="text-center mb-4">
+                    <h1 class="h4 mb-1">Seja bem-vindo!</h1>
+                    <p class="text-body-secondary">Qual é o teu nome?</p>
                 </div>
 
-                <div class="field">
-                    <div class="control has-icons-left">
-                        <input type="text" class="input is-medium" placeholder="Utilizador" name="username"
-                               id="usernameField" aria-label="Utilizador" required autofocus>
-                        <span class="icon is-small is-left">
-                            <i class="fa-solid fa-user"></i>
-                        </span>
-                    </div>
-                    <p id="usernameErrorField" class="help is-danger"></p>
+                <div class="auth-field mb-3">
+                    <input type="text" class="form-control form-control-lg" placeholder="Utilizador"
+                           name="username" id="usernameField" aria-label="Utilizador" required autofocus>
+                    <span class="field-icon"><i class="fa-solid fa-user"></i></span>
+                    <p id="usernameErrorField" class="help text-danger mb-0"></p>
                 </div>
 
-                <div class="field is-grouped is-grouped-right mt-5">
-                    <div class="control">
-                        <button type="submit" id="submitBtn" class="button is-dark">
-                            <span>Entrar</span>
-                            <span class="icon"><i class="fa-solid fa-arrow-right"></i></span>
-                        </button>
-                    </div>
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" id="submitBtn" class="btn btn-dark">
+                        <span>Entrar</span>
+                        <span class="icon"><i class="fa-solid fa-arrow-right"></i></span>
+                    </button>
                 </div>
             </form>
 
-            <a class="is-size-7 has-text-weight-semibold" role="button">
+            <a class="fs-7 fw-semibold" role="button">
                 Esqueceu-se da sua palavra-passe?
             </a>
         </div>
@@ -53,9 +47,9 @@
         {# ---------------- Marketing panel ---------------- #}
         <aside class="auth-aside">
             <div class="auth-glass">
-                <p class="is-uppercase is-size-7">Coisas com Gosto</p>
-                <div class="has-text-right">
-                    <h2 class="title is-2 has-text-white">
+                <p class="text-uppercase fs-7">Coisas com Gosto</p>
+                <div class="text-end">
+                    <h2 class="h1 text-white">
                         Tradição em Madeira<br>Inspirada na Filigrana<br>Portuguesa
                     </h2>
                     <p class="mt-3">

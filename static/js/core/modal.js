@@ -10,8 +10,8 @@
 import { Notify } from "./notify.js";
 
 export const modal = (id) => document.getElementById(id);
-export const bodyOf = (id) => modal(id).querySelector(".modal-card-body");
-export const footOf = (id) => modal(id).querySelector(".modal-card-foot");
+export const bodyOf = (id) => modal(id).querySelector(".modal-body");
+export const footOf = (id) => modal(id).querySelector(".modal-footer");
 
 export const open = (id) => {
     const dialog = modal(id);
@@ -21,7 +21,7 @@ export const open = (id) => {
     // The browser focuses the first focusable thing, which is the × — leaving
     // Enter wired to "close the dialog I have just opened". A form dialog starts
     // in its first field instead; one with no fields keeps the default.
-    dialog.querySelector(".modal-card-body :is(input, textarea, select)")?.focus();
+    dialog.querySelector(".modal-body :is(input, textarea, select)")?.focus();
 };
 
 export const close = (id) => {
@@ -42,8 +42,8 @@ export const close = (id) => {
 export function formDialog({ id, body, submitLabel, onSubmit, success, after, afterRender }) {
     bodyOf(id).innerHTML = body;
     footOf(id).innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-dark" data-dialog-submit>${submitLabel}</button>`;
+        <button class="btn btn-outline-secondary" data-modal-close>Cancelar</button>
+        <button class="btn btn-dark" data-dialog-submit>${submitLabel}</button>`;
     open(id);
     afterRender?.(modal(id));
 
@@ -60,8 +60,8 @@ export function formDialog({ id, body, submitLabel, onSubmit, success, after, af
 export function confirmDialog({ id, body, confirmLabel = "Apagar", onConfirm, success, after }) {
     bodyOf(id).innerHTML = body;
     footOf(id).innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button is-danger" data-dialog-confirm>${confirmLabel}</button>`;
+        <button class="btn btn-outline-secondary" data-modal-close>Cancelar</button>
+        <button class="btn btn-danger" data-dialog-confirm>${confirmLabel}</button>`;
     open(id);
 
     modal(id).querySelector("[data-dialog-confirm]").onclick = (event) =>

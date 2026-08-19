@@ -31,23 +31,23 @@ function collectionRow(collection) {
           ${collection.image_url
               ? `<img class="dash-thumb" src="${escapeHtml(collection.image_url)}"
                       alt="Capa de ${escapeHtml(collection.name)}">`
-              : `<span class="tag is-rounded chip is-attention">Sem capa</span>`}
+              : `<span class="badge rounded-pill chip is-attention">Sem capa</span>`}
         </td>
-        <td><p class="has-text-weight-medium">${escapeHtml(collection.name)}</p></td>
-        <td class="is-size-7 has-text-grey">${escapeHtml(collection.description ?? "—")}</td>
+        <td><p class="fw-medium mb-0">${escapeHtml(collection.name)}</p></td>
+        <td class="fs-7 text-body-secondary">${escapeHtml(collection.description ?? "—")}</td>
         <td>
           ${pieces
-              ? `<span class="data has-text-grey">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
-              : `<span class="tag is-rounded chip is-quiet">Sem peças</span>`}
+              ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
+              : `<span class="badge rounded-pill chip is-quiet">Sem peças</span>`}
         </td>
         <td class="dash-col-actions">
-          <span class="dash-row-actions is-flex is-gap-1">
-            <button class="button is-small is-ghost" data-collection-action="edit"
+          <span class="dash-row-actions d-flex gap-1">
+            <button class="btn btn-sm btn-ghost" data-collection-action="edit"
                     data-collection-id="${collection.id}" title="Editar"
                     aria-label="Editar ${escapeHtml(collection.name)}">
               <span class="icon"><i class="fa-solid fa-pencil"></i></span>
             </button>
-            <button class="button is-small is-ghost has-text-danger"
+            <button class="btn btn-sm btn-ghost text-danger"
                     data-collection-action="delete" data-collection-id="${collection.id}"
                     title="Apagar" aria-label="Apagar ${escapeHtml(collection.name)}">
               <span class="icon"><i class="fa-solid fa-trash"></i></span>
@@ -69,7 +69,7 @@ async function loadCollections() {
 
     document.getElementById("collection-rows").innerHTML = all.length
         ? all.map(collectionRow).join("")
-        : `<tr><td colspan="5" class="has-text-centered has-text-grey py-6">
+        : `<tr><td colspan="5" class="text-center text-body-secondary py-5">
              Ainda não há colecções.</td></tr>`;
 
     document.getElementById("collection-count").textContent =
@@ -79,44 +79,42 @@ async function loadCollections() {
 function collectionForm(collection = null) {
     return `
     <form id="collection-form" data-collection-id="${collection?.id ?? ""}">
-      <!-- What it is on the left, what it looks like on the right. Bulma's columns
-           stack below 769px, so on a phone the cover simply follows the fields. -->
-      <div class="columns is-variable is-4 mb-0">
-        <div class="column">
-          <div class="field">
-            <label class="label is-small" for="cof-name">Nome</label>
-            <input class="input" id="cof-name" name="name" required
+      <!-- What it is on the left, what it looks like on the right. The columns stack
+           below 768px, so on a phone the cover simply follows the fields. -->
+      <div class="row g-3">
+        <div class="col-md">
+          <div class="mb-3">
+            <label class="form-label fs-7" for="cof-name">Nome</label>
+            <input class="form-control" id="cof-name" name="name" required
                    value="${escapeHtml(collection?.name ?? "")}" placeholder="Filigrana">
           </div>
 
-          <div class="field mb-0">
-            <label class="label is-small" for="cof-description">Descrição</label>
+          <div>
+            <label class="form-label fs-7" for="cof-description">Descrição</label>
             <!-- Taller than the two lines it needs, so the column of fields reaches
                  roughly the depth of the cover beside it. -->
-            <textarea class="textarea" id="cof-description" name="description" rows="6"
+            <textarea class="form-control" id="cof-description" name="description" rows="6"
                       placeholder="O que reúne esta colecção."
                       >${escapeHtml(collection?.description ?? "")}</textarea>
           </div>
         </div>
 
-        <div class="column">
-          <div class="field mb-0">
-            <label class="label is-small">Capa</label>
-            <div id="cof-cover"></div>
-            <p class="help">
-              A fotografia que representa a colecção no catálogo. jpg, png ou webp,
-              até 5 MB.
-            </p>
-          </div>
+        <div class="col-md">
+          <label class="form-label fs-7">Capa</label>
+          <div id="cof-cover"></div>
+          <p class="help mb-0">
+            A fotografia que representa a colecção no catálogo. jpg, png ou webp,
+            até 5 MB.
+          </p>
         </div>
       </div>
 
       <!-- Across the full width, under both columns: nine badges need the room, and
            they are about the collection as a whole rather than about either side. -->
-      <div class="field mt-4 mb-0">
-        <label class="label is-small">Conjuntos de cores</label>
-        <div class="tags" id="cof-sets"></div>
-        <p class="help">
+      <div class="mt-3">
+        <label class="form-label fs-7">Conjuntos de cores</label>
+        <div class="d-flex flex-wrap gap-1" id="cof-sets"></div>
+        <p class="help mb-0">
           As combinações em que esta colecção se faz. Cada conjunto pertence a uma só
           colecção, por isso escolher um que esteja noutra passa-o para esta.
         </p>
@@ -249,7 +247,7 @@ function openDelete(id) {
     // Nothing is lost with the collection: its pieces and colour sets stay,
     // simply unowned. Saying so is what stops the owners fearing the button.
     const detail = pieces
-        ? `<p class="has-text-grey is-size-7 mt-2">
+        ? `<p class="text-body-secondary fs-7 mt-2">
              ${pieces} ${pieces === 1 ? "peça deixa" : "peças deixam"} de pertencer a
              uma colecção. ${pieces === 1 ? "A peça" : "As peças"} e as fotografias
              mantêm-se.

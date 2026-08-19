@@ -12,10 +12,10 @@
     5  Percurso        a timeline of the fairs we have attended
     6  Contactos       how to reach us
 
-  Layout is Bulma throughout: .hero / .section.is-medium for rhythm,
-  .columns for the split, .fixed-grid + .cell for the three-up rows, and .card
-  for the cards. Only genuinely missing pieces (eyebrow tracking, reading
-  measure, the hero wash) live in store.css.
+  Layout is Bootstrap throughout: .row/.col for the splits and .card for the
+  cards, with .section carrying the vertical rhythm. Only genuinely missing
+  pieces (eyebrow tracking, reading measure, the hero wash, the three-up rows)
+  live in store.css.
 #}
 
 {% block content %}
@@ -24,28 +24,27 @@
 
    Type on an empty wash, and the makers come one section down: a visitor who
    has just arrived should meet the workshop, not two faces at full width. #}
-<section class="hero is-medium store-hero">
-    <div class="hero-body">
-        <div class="container has-text-centered">
+<section class="store-hero">
+    <div class="store-hero-body">
+        <div class="container text-center">
             <p class="eyebrow">Viana do Castelo · desde sempre à mão</p>
 
-            <h1 class="title is-1 is-spaced store-display">
+            <h1 class="display-5 store-display mb-4">
                 Peças que guardam<br>a nossa terra.
             </h1>
 
-            <p class="subtitle is-5 has-text-grey mx-auto measure-narrow">
+            <p class="fs-5 text-body-secondary mx-auto measure-narrow">
                 Madeira e tecido trabalhados um a um, com os motivos que
                 atravessam gerações no Alto Minho.
             </p>
         </div>
     </div>
 
-    {# Direct child of the hero: Bulma's .container is position:relative, so a
-       cue placed inside it would anchor to the container, not the hero. #}
-    <a class="hero-scroll is-flex is-flex-direction-column is-align-items-center"
-       href="#origin">
-        <span class="is-size-7 is-uppercase">Conheça a nossa história</span>
-        <span class="disc hero-scroll-icon mt-4" aria-hidden="true">
+    {# Direct child of the hero: .container is not positioned, but a cue placed
+       inside it would still be constrained by its width. #}
+    <a class="hero-scroll d-flex flex-column align-items-center" href="#origin">
+        <span class="fs-7 text-uppercase">Conheça a nossa história</span>
+        <span class="disc hero-scroll-icon mt-3" aria-hidden="true">
             <i class="fa-solid fa-chevron-down"></i>
         </span>
     </a>
@@ -54,26 +53,23 @@
 {# ------------------------------------------------------------- 2. Origin #}
 <section class="section" id="origin">
     <div class="container">
-        <div class="columns is-variable is-8 is-vcentered">
-            <div class="column is-7">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-7">
                 <p class="eyebrow">Origem</p>
-                <h2 class="title is-3">Começou numa bancada pequena</h2>
+                <h2 class="h2 mb-3">Começou numa bancada pequena</h2>
                 <p class="measure">
                     A Coisas com Gosto nasceu do gosto por trabalhar madeira em
                     casa, ao fim do dia, em Viana do Castelo. Primeiro foram
                     lembranças para a família. Depois pediram-nos uma, e outra,
                     e a bancada deixou de chegar.
                 </p>
-                <p class="measure mt-4">
+                <p class="measure mt-3">
                     Continuamos a fazer tudo aqui, à mão, no mesmo sítio. Nada
                     sai da oficina sem passar por nós.
                 </p>
             </div>
 
-            {# No figure.image wrapper: Bulma's `.image img { height: auto }`
-               outranks .media-photo, so the photograph sized itself and the
-               section grew to whatever the source happened to be. #}
-            <div class="column is-5">
+            <div class="col-lg-5">
                 <img class="media-photo" src="{{ url_for('static', filename='img/hero.webp') }}"
                      alt="Os fundadores da Coisas com Gosto numa feira de artesanato, com uma caixa em forma de coração e uma moldura pintada à mão."
                      width="1440" height="1440" loading="lazy">
@@ -83,41 +79,39 @@
 </section>
 
 {# ----------------------------------------------------------- 3. O ofício #}
-<section class="section has-background-light">
+<section class="section bg-body-secondary">
     <div class="container">
-        <header class="mb-5">
+        <header class="mb-4">
             <p class="eyebrow">O ofício</p>
-            <h2 class="title is-3 measure">Cada peça passa por três mãos-cheias de tempo</h2>
+            <h2 class="h2 measure">Cada peça passa por três mãos-cheias de tempo</h2>
         </header>
 
-        <div class="fixed-grid has-1-cols-mobile has-3-cols-tablet">
-            <ol class="grid">
-                <li class="cell craft-step pt-5">
-                    <span class="eyebrow">01</span>
-                    <h3 class="title is-5 mb-3">Desenhar</h3>
-                    <p class="has-text-grey">
-                        Começa tudo no desenho. Pensamos a peça a partir do que
-                        ela vai servir, e é o uso que decide a forma que vai ter.
-                    </p>
-                </li>
-                <li class="cell craft-step pt-5">
-                    <span class="eyebrow">02</span>
-                    <h3 class="title is-5 mb-3">Pintar</h3>
-                    <p class="has-text-grey">
-                        As cores são dadas à mão, camada sobre camada, seguindo
-                        os padrões que herdámos dos trajes da região.
-                    </p>
-                </li>
-                <li class="cell craft-step pt-5">
-                    <span class="eyebrow">03</span>
-                    <h3 class="title is-5 mb-3">Acabar</h3>
-                    <p class="has-text-grey">
-                        Lixar, selar e montar. É aqui que se decide se leva fio
-                        para pendurar ou se fica de pé, à espera de companhia.
-                    </p>
-                </li>
-            </ol>
-        </div>
+        <ol class="three-up">
+            <li class="craft-step pt-4">
+                <span class="eyebrow">01</span>
+                <h3 class="h5 mb-2">Desenhar</h3>
+                <p class="text-body-secondary">
+                    Começa tudo no desenho. Pensamos a peça a partir do que
+                    ela vai servir, e é o uso que decide a forma que vai ter.
+                </p>
+            </li>
+            <li class="craft-step pt-4">
+                <span class="eyebrow">02</span>
+                <h3 class="h5 mb-2">Pintar</h3>
+                <p class="text-body-secondary">
+                    As cores são dadas à mão, camada sobre camada, seguindo
+                    os padrões que herdámos dos trajes da região.
+                </p>
+            </li>
+            <li class="craft-step pt-4">
+                <span class="eyebrow">03</span>
+                <h3 class="h5 mb-2">Acabar</h3>
+                <p class="text-body-secondary">
+                    Lixar, selar e montar. É aqui que se decide se leva fio
+                    para pendurar ou se fica de pé, à espera de companhia.
+                </p>
+            </li>
+        </ol>
     </div>
 </section>
 
@@ -129,47 +123,44 @@
 {% if product_types %}
 <section class="section">
     <div class="container">
-        <header class="mb-5 is-flex is-justify-content-space-between is-align-items-flex-end">
+        <header class="mb-4 d-flex justify-content-between align-items-end gap-3">
             <div>
                 <p class="eyebrow">O que fazemos</p>
-                <h2 class="title is-3 is-spaced">As peças que saem da oficina</h2>
-                <p class="subtitle is-6 has-text-grey measure mb-0">
+                <h2 class="h2 mb-3">As peças que saem da oficina</h2>
+                <p class="text-body-secondary measure mb-0">
                     Escolha uma família de peças para ver tudo o que temos dela.
                 </p>
             </div>
 
             {# Only six families lead here; the rest are one click away. #}
-            <a class="button is-light" href="{{ url_for('web.store.products') }}">
+            <a class="btn btn-light flex-shrink-0" href="{{ url_for('web.store.products') }}">
                 Ver tudo
             </a>
         </header>
 
-        <div class="fixed-grid has-1-cols-mobile has-3-cols-tablet">
-            <div class="grid">
-                {% for type in product_types %}
-                <a class="cell card mb-0 type-card"
-                   href="{{ url_for('web.store.products', type_id=type.id) }}">
-                    {% if type.cover %}
-                    <img class="type-card-media" src="{{ type.cover.url }}"
-                         alt="{{ type.cover.alt }}" loading="lazy">
-                    {% else %}
-                    <span class="type-card-media type-card-media--empty" aria-hidden="true">
-                        <span class="disc type-card-icon">
-                            <i class="fa-solid {{ type | type_icon }}"></i>
-                        </span>
+        <div class="three-up">
+            {% for type in product_types %}
+            <a class="card type-card" href="{{ url_for('web.store.products', type_id=type.id) }}">
+                {% if type.cover %}
+                <img class="type-card-media" src="{{ type.cover.url }}"
+                     alt="{{ type.cover.alt }}" loading="lazy">
+                {% else %}
+                <span class="type-card-media type-card-media--empty" aria-hidden="true">
+                    <span class="disc type-card-icon">
+                        <i class="fa-solid {{ type | type_icon }}"></i>
                     </span>
+                </span>
+                {% endif %}
+
+                <div class="p-4">
+                    <h3 class="h5 mb-2">{{ type.name }}</h3>
+
+                    {% if type.description %}
+                    <p class="text-body-secondary mb-0">{{ type.description }}</p>
                     {% endif %}
-
-                    <div class="p-5">
-                        <h3 class="title is-5 mb-2">{{ type.name }}</h3>
-
-                        {% if type.description %}
-                        <p class="has-text-grey is-size-6">{{ type.description }}</p>
-                        {% endif %}
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
+                </div>
+            </a>
+            {% endfor %}
         </div>
     </div>
 </section>

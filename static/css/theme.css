@@ -1,13 +1,11 @@
 /*
- * Design tokens. Loaded after bulma.min.css so it can retint Bulma through its
- * own HSL variables — no Sass rebuild.
+ * Design tokens. Loaded after bootstrap.min.css so it can retint Bootstrap
+ * through its own custom properties — no Sass build.
  *
  * Blue is sampled from the logo: #4472C4 = hsl(218, 52%, 52%).
  */
 
 :root {
-    /* Pairs with data-theme="light" on <html>, which stops Bulma's own
-       prefers-color-scheme: dark block repainting everything near-black. */
     color-scheme: light;
 
     --ccg-blue-50: #EFF3FA;
@@ -43,19 +41,15 @@
     --ccg-critical: #B3282D;
     --ccg-critical-wash: #FBEAEA;
 
-    /* Headlines, storefront only. Bulma's stack is the system UI sans, which
-       made a workshop's shop read like a settings screen — every heading was
-       the same voice as the buttons. A serif gives the display lines their own,
-       and it is a stack rather than a webfont because the project vendors its
-       assets and will not carry a font file for six headings. Iowan Old Style
-       ships with macOS, Palatino Linotype with Windows, Georgia with both. */
+    /* Headlines, storefront only. A serif gives the display lines their own
+       voice; it is a stack rather than a webfont because the project vendors
+       its assets and will not carry a font file for six headings. Iowan Old
+       Style ships with macOS, Palatino Linotype with Windows, Georgia with
+       both. */
     --font-display: "Iowan Old Style", "Palatino Linotype", Palatino,
         "Book Antiqua", Georgia, serif;
 
-    /* Data, not prose: counts, dates and ids line up in columns, so they get a
-       monospace face and lining figures. System stack — the project vendors its
-       assets and has no font files, and a webfont here would drift the
-       dashboard away from the storefront. */
+    /* Data, not prose: counts, dates and ids line up in columns. */
     --font-data: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
 
     --space-xs: .5rem;
@@ -70,90 +64,76 @@
     --radius: 10px;
     --radius-lg: 16px;
 
-    /* Bulma retheme: everything it derives follows from these. */
-    --bulma-primary-h: 218deg;
-    --bulma-primary-s: 52%;
-    --bulma-primary-l: 52%;
+    /* ------------------------------------------------------------------
+       Bootstrap retint. Everything it derives follows from these.
+       ------------------------------------------------------------------ */
 
-    --bulma-link-h: 218deg;
-    --bulma-link-s: 52%;
-    --bulma-link-l: 42%;
+    --bs-body-bg: var(--ccg-paper);
+    --bs-body-color: var(--ccg-ink);
+    --bs-body-color-rgb: 38, 34, 29;
+    --bs-body-line-height: 1.7;
 
-    /* is-dark is the brand navy, not Bulma's near-black. This was a
-       .button.is-dark override for a while, which left every other .is-dark on
-       the default: the catalogue's selected-filter tags came out black against a
-       page that has no black in it. Retinting the variable covers the tag, the
-       button and anything else derived from it. #1F3864 = --ccg-blue-800. */
-    --bulma-dark-h: 218deg;
-    --bulma-dark-s: 53%;
-    --bulma-dark-l: 26%;
+    --bs-heading-color: var(--ccg-blue-900);
 
-    --bulma-scheme-h: 35;
-    --bulma-scheme-s: 22%;
+    --bs-emphasis-color: var(--ccg-blue-900);
+    --bs-secondary-color: var(--ccg-ink-soft);
+    --bs-tertiary-color: var(--ccg-ink-faint);
+    --bs-secondary-bg: var(--ccg-paper-deep);
+    --bs-tertiary-bg: var(--ccg-line-soft);
+    /* The bg-* utilities compose their own alpha, so they read the triplet
+       rather than the colour above it. */
+    --bs-secondary-bg-rgb: 243, 239, 232;
+    --bs-tertiary-bg-rgb: 240, 235, 227;
+    --bs-body-bg-rgb: 250, 248, 245;
 
-    --bulma-body-background-color: var(--ccg-paper);
-    --bulma-body-color: var(--ccg-ink);
-    --bulma-body-line-height: 1.7;
+    --bs-border-color: var(--ccg-line);
+    --bs-border-color-translucent: var(--ccg-line);
+    --bs-border-radius: var(--radius);
+    --bs-border-radius-sm: 6px;
+    --bs-border-radius-lg: var(--radius-lg);
 
-    --bulma-text: var(--ccg-ink);
-    --bulma-text-strong: var(--ccg-blue-900);
-    --bulma-text-weak: var(--ccg-ink-soft);
+    --bs-link-color: var(--ccg-blue-600);
+    --bs-link-color-rgb: 51, 91, 162;
+    --bs-link-hover-color: var(--ccg-blue-800);
+    --bs-link-hover-color-rgb: 31, 56, 100;
 
-    --bulma-border: var(--ccg-line);
-    --bulma-border-weak: var(--ccg-line-soft);
+    --bs-primary: var(--ccg-blue-500);
+    --bs-primary-rgb: 68, 114, 196;
+    --bs-dark: var(--ccg-blue-800);
+    --bs-dark-rgb: 31, 56, 100;
 
-    --bulma-radius: var(--radius);
-    --bulma-radius-large: var(--radius-lg);
-
-    --bulma-title-color: var(--ccg-blue-900);
-    --bulma-title-weight: 700;
-    --bulma-subtitle-color: var(--ccg-ink-soft);
-
-    --bulma-card-background-color: var(--ccg-surface);
-    --bulma-card-shadow: none;
-    --bulma-card-radius: var(--radius);
-
-    /* Fields, retinted through Bulma's own variables so the storefront's search
-       box, the login form and every dashboard dialog share one treatment rather
-       than three. Bulma's defaults are a cool grey border, a 4px radius and an
-       inset shadow that reads as a dent — generic in a way the rest of this
-       palette is not.
-
-       The border sits in the paper family (h 35 / s 22%) instead, the corners
-       match everything else at 10px, the dent goes, and focus is a hairline in
-       brand blue with a soft ring rather than a heavy glow. */
-    --bulma-input-h: 35;
-    --bulma-input-s: 22%;
-    --bulma-input-border-l: 88%;
-    --bulma-input-hover-border-l-delta: -8%;
-    --bulma-input-radius: var(--radius);
-    --bulma-input-shadow: none;
-    --bulma-input-placeholder-color: var(--ccg-ink-faint);
-
-    --bulma-input-focus-h: 218deg;
-    --bulma-input-focus-s: 52%;
-    --bulma-input-focus-l: 52%;
-    --bulma-input-focus-shadow-size: 0 0 0 3px;
-    --bulma-input-focus-shadow-alpha: .13;
-
-    /* The select's chevron, which Bulma draws in the link colour. */
-    --bulma-input-arrow: var(--ccg-blue-600);
-
-    --bulma-label-color: var(--ccg-blue-900);
-    --bulma-label-weight: 600;
+    /* Focus is a hairline in brand blue with a soft ring, not Bootstrap's
+       heavy 4px glow at 25%. */
+    --bs-focus-ring-width: 3px;
+    --bs-focus-ring-opacity: .13;
+    --bs-focus-ring-color: rgba(68, 114, 196, .13);
 }
 
-/* Bulma puts the inset shadow on a second rule that its own variable does not
-   reach, so the dent survives --bulma-input-shadow: none. */
-.input,
-.textarea {
-    box-shadow: none;
+body {
+    background-color: var(--ccg-paper);
+    color: var(--ccg-ink);
+    -webkit-font-smoothing: antialiased;
 }
 
-/* A field's own label and its help text are a pair; the help sits quiet under
-   it rather than competing at full ink. */
-.help {
-    color: var(--ccg-ink-soft);
+/* Bootstrap's headings are 500 and inherit their colour; this project's are
+   bold navy, which is the single biggest thing separating its pages from
+   default Bootstrap. */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+/* Bootstrap underlines every link. On a page whose links are mostly navigation —
+   a product name in a table, a section in the sidebar, a card that is a link —
+   that reads as a document full of footnotes, so the underline is kept for the
+   hover instead. */
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 html {
@@ -166,17 +146,70 @@ html {
     }
 }
 
-.title,
-h1,
-h2,
-h3 {
-    letter-spacing: -.02em;
+/* ------------------------------------------------------------------
+   The primitives Bootstrap has no answer for.
+   ------------------------------------------------------------------ */
+
+/* A sized box for a Font Awesome glyph. Bootstrap ships no icon primitive and
+   the markup uses one everywhere — inside buttons, table cells, nav links —
+   so it stays a class rather than a utility pile at every call site. */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+}
+
+.icon.is-small {
+    width: 1rem;
+    height: 1rem;
+    font-size: .85em;
+}
+
+/* A button's glyph and its label are a pair, and Bootstrap leaves no gap
+   between inline children. */
+.btn .icon:not(:only-child):first-child {
+    margin-right: .35rem;
+}
+
+.btn .icon:not(:only-child):last-child {
+    margin-left: .35rem;
+}
+
+/* Vertical rhythm for a full-width band. Bootstrap has only spacing
+   utilities, and py-* would have to be repeated with its own breakpoints at
+   every one of the storefront's sections. */
+.section {
+    padding: var(--space-lg) var(--space-sm);
+}
+
+.section.is-medium {
+    padding: var(--space-xl) var(--space-sm);
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: var(--space-md) var(--space-sm);
+    }
+
+    .section.is-medium {
+        padding: var(--space-lg) var(--space-sm);
+    }
+}
+
+/* Bootstrap's font-size utilities stop at 1rem. */
+.fs-7 {
+    font-size: .78rem;
+}
+
+.measure {
+    max-width: var(--measure);
 }
 
 /* Shared primitives live here, not in store.css: theme.css is the only
-   stylesheet both the storefront and the dashboard load, and the dashboard had
-   its own copy of this rule under a different name. Bulma has is-uppercase and
-   is-size-7 but no letter-spacing helper. */
+   stylesheet both the storefront and the dashboard load. */
 /* 11.5px uppercase at .16em tracking is the hardest combination to read there
    is, and this is the most-repeated element in both halves of the product — so
    it gets the darker blue (4.12:1 against paper failed AA) and a size that does
@@ -192,10 +225,8 @@ h3 {
 
 /* A circle with its content centred. Six components repeated these four
    declarations — the contact icons, the product type icons, the no-photo
-   placeholder, the hero scroll cue and both sets of carousel arrows. Bulma
-   covers three of the four with is-inline-flex and is-align-items-center, but
-   .is-rounded is scoped to .button/.tag/.input, so there is no helper that
-   makes an arbitrary element a circle. Callers set only size and colour. */
+   placeholder, the hero scroll cue and both sets of carousel arrows. Callers
+   set only size and colour. */
 .disc {
     display: inline-flex;
     align-items: center;
@@ -220,8 +251,7 @@ h3 {
 }
 
 /* Used by the storefront's contact cards and by the dashboard's preview of
-   them, so it cannot live in store.css — the dashboard does not load it, and
-   the preview icons were rendering unstyled. */
+   them, so it cannot live in store.css — the dashboard does not load it. */
 .contact-icon {
     width: 38px;
     height: 38px;
@@ -229,12 +259,171 @@ h3 {
     color: var(--ccg-blue-600);
 }
 
-/* The colour-set badge: clipped swatches followed by the set's name, tinted in
+/* ------------------------------------------------------------------
+   Components, retinted through Bootstrap's own per-component variables.
+   ------------------------------------------------------------------ */
+
+.btn {
+    --bs-btn-border-radius: var(--radius);
+    --bs-btn-font-weight: 500;
+}
+
+/* A button that is waiting on a request. Bootstrap's own answer is a spinner
+   element inside the button, which every call site would have to build and then
+   put back — this keeps the label's width, so the dialog's footer does not jump,
+   and reuses Bootstrap's spinner animation. */
+.btn.is-loading {
+    color: transparent !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.btn.is-loading::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - .5em);
+    left: calc(50% - .5em);
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentcolor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    color: var(--bs-btn-color);
+    animation: .75s linear infinite spinner-border;
+}
+
+.btn-dark {
+    --bs-btn-bg: var(--ccg-blue-800);
+    --bs-btn-border-color: var(--ccg-blue-800);
+    --bs-btn-hover-bg: var(--ccg-blue-900);
+    --bs-btn-hover-border-color: var(--ccg-blue-900);
+    --bs-btn-active-bg: var(--ccg-blue-900);
+    --bs-btn-active-border-color: var(--ccg-blue-900);
+    --bs-btn-disabled-bg: var(--ccg-blue-800);
+    --bs-btn-disabled-border-color: var(--ccg-blue-800);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--ccg-blue-500);
+    --bs-btn-border-color: var(--ccg-blue-500);
+    --bs-btn-hover-bg: var(--ccg-blue-600);
+    --bs-btn-hover-border-color: var(--ccg-blue-600);
+    --bs-btn-active-bg: var(--ccg-blue-700);
+    --bs-btn-active-border-color: var(--ccg-blue-700);
+    --bs-btn-disabled-bg: var(--ccg-blue-500);
+    --bs-btn-disabled-border-color: var(--ccg-blue-500);
+}
+
+/* Carries a border because it sits on both --ccg-paper and --ccg-paper-deep
+   sections; without one it vanishes on the darker band. */
+.btn-light {
+    --bs-btn-bg: var(--ccg-surface);
+    --bs-btn-border-color: var(--ccg-line);
+    --bs-btn-color: var(--ccg-blue-800);
+    --bs-btn-hover-bg: var(--ccg-blue-50);
+    --bs-btn-hover-border-color: var(--ccg-blue-300);
+    --bs-btn-hover-color: var(--ccg-blue-800);
+    --bs-btn-active-bg: var(--ccg-blue-100);
+    --bs-btn-active-border-color: var(--ccg-blue-300);
+    --bs-btn-active-color: var(--ccg-blue-800);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--ccg-ink-soft);
+    --bs-btn-border-color: var(--ccg-line);
+    --bs-btn-hover-bg: var(--ccg-paper-deep);
+    --bs-btn-hover-border-color: var(--ccg-line);
+    --bs-btn-hover-color: var(--ccg-ink);
+    --bs-btn-active-bg: var(--ccg-paper-deep);
+    --bs-btn-active-border-color: var(--ccg-line);
+    --bs-btn-active-color: var(--ccg-ink);
+}
+
+/* Bootstrap's .btn-link keeps a button's padding; the storefront and dashboard
+   both use it as a plain text action beside a heading. */
+.btn-ghost {
+    --bs-btn-color: var(--ccg-blue-600);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--ccg-blue-800);
+    --bs-btn-hover-bg: var(--ccg-blue-50);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--ccg-blue-800);
+    --bs-btn-active-bg: var(--ccg-blue-100);
+    --bs-btn-active-border-color: transparent;
+}
+
+/* Fields. Bootstrap's defaults are a cool grey border, a 6px radius and a
+   heavy focus glow — generic in a way the rest of this palette is not. The
+   border sits in the paper family instead and focus is a hairline in brand
+   blue with a soft ring. */
+.form-control,
+.form-select {
+    border-radius: var(--radius);
+    border-color: var(--ccg-line);
+    color: var(--ccg-ink);
+}
+
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: var(--ccg-blue-200);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--ccg-blue-500);
+    box-shadow: 0 0 0 3px rgba(68, 114, 196, .13);
+}
+
+.form-control::placeholder {
+    color: var(--ccg-ink-faint);
+}
+
+.form-label {
+    color: var(--ccg-blue-900);
+    font-weight: 600;
+    margin-bottom: .3rem;
+}
+
+/* A field's own label and its help text are a pair; the help sits quiet under
+   it rather than competing at full ink. */
+.form-text,
+.help {
+    color: var(--ccg-ink-soft);
+    font-size: .8rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--ccg-blue-500);
+    border-color: var(--ccg-blue-500);
+}
+
+.card {
+    --bs-card-bg: var(--ccg-surface);
+    --bs-card-border-color: var(--ccg-line);
+    --bs-card-border-radius: var(--radius);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+/* Every list group in this project sits inside a white card, and Bootstrap's own
+   item background is the body's paper — which drew a band across the card. */
+.list-group {
+    --bs-list-group-bg: transparent;
+    --bs-list-group-border-color: var(--ccg-line-soft);
+    --bs-list-group-action-hover-bg: var(--ccg-blue-50);
+}
+
+/* ------------------------------------------------------------------
+   The colour-set badge: clipped swatches followed by the set's name, tinted in
    the set's first colour over a pale wash of the same. The three custom
    properties are set inline per set by js/store/color-set.js, which both the
    storefront and the dashboard load — so these rules cannot live in store.css
-   either, and the dashboard's badges were rendering with no swatches at all.
-   Bulma's .tag.is-rounded supplies the pill shape. */
+   either.
+   ------------------------------------------------------------------ */
+
 .color-set-badge {
     display: inline-flex;
     align-items: center;
@@ -242,6 +431,9 @@ h3 {
     /* Grid items refuse to shrink below their content without this, so a long
        name would spill out of its column. */
     min-width: 0;
+    padding: .3rem .6rem;
+    font-size: .75rem;
+    border-radius: 999px;
     background-color: var(--cs-bg);
     border: 1px solid var(--cs-border);
     color: var(--cs-fg);
@@ -291,19 +483,20 @@ h3 {
 .swatch-row .color-set-badge {
     font-size: .68rem;
     gap: .3rem;
-    /* Bulma's .tag centres its content. In a fixed-width badge that gave every
-       label a different offset, so the circles zigzagged down the column
-       (insets of 10, 14, 18, 9, 21px). Left-aligned, they line up. */
     justify-content: flex-start;
 }
 
 /* Sits in the fourth cell when a card has more colour sets than fit, so it
-   matches the badges' size rather than Bulma's default tag. */
+   matches the badges' size rather than a default badge. */
 .swatch-row .color-set-more {
+    display: inline-flex;
+    align-items: center;
+    padding: .3rem .6rem;
+    border-radius: 999px;
     font-size: .68rem;
     background: var(--ccg-paper-deep);
     color: var(--ccg-ink-soft);
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
     justify-content: flex-start;
 }
 
@@ -314,28 +507,4 @@ h3 {
 
 .swatch-row .swatch + .swatch {
     margin-left: -4px;
-}
-
-body {
-    background-color: var(--ccg-paper);
-    color: var(--ccg-ink);
-    -webkit-font-smoothing: antialiased;
-}
-
-.button {
-    border-radius: var(--radius);
-}
-
-/* Carries a border because is-light sits on both --ccg-paper and
-   --ccg-paper-deep sections; without one it vanishes on the darker band. */
-.button.is-light {
-    background-color: var(--ccg-surface);
-    border-color: var(--ccg-line);
-    color: var(--ccg-blue-800);
-}
-
-.button.is-light:hover {
-    background-color: var(--ccg-blue-50);
-    border-color: var(--ccg-blue-300);
-    color: var(--ccg-blue-800);
 }

@@ -3,8 +3,8 @@
  *
  * Holds the selected filters, keeps them in the URL query string so a filtered
  * view is shareable and survives a reload, and renders two views of the same
- * state: the sidebar (active entries highlighted) and the badge row (one Bulma
- * delete-tag per selected value, removable by clicking the tag).
+ * state: the sidebar (active entries highlighted) and the badge row (one pill per
+ * selected value, removable by clicking it).
  *
  * The three id filters hold a list, not a value: a shopper looking for boxes and
  * frames wants both families rather than having each click undo the last. Search

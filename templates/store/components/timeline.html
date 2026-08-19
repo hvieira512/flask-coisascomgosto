@@ -13,7 +13,7 @@
     {{ event.starts_on | event_dates(event.ends_on) }}
 </p>
 
-<h3 class="title is-6 mb-1">
+<h3 class="h6 mb-1">
     {% if event.url %}
     <a href="{{ event.url }}" target="_blank" rel="noopener">{{ event.name }}</a>
     {% else %}
@@ -22,20 +22,20 @@
 </h3>
 
 {% if event.location %}
-<p class="is-size-7 has-text-grey mb-2">{{ event.location }}</p>
+<p class="fs-7 text-body-secondary mb-2">{{ event.location }}</p>
 {% endif %}
 
 {% if event.description %}
-<p class="is-size-7 has-text-grey">{{ event.description }}</p>
+<p class="fs-7 text-body-secondary">{{ event.description }}</p>
 {% endif %}
 {% endmacro %}
 
-<section class="section pb-6" id="events">
+<section class="section pb-5" id="events">
     <div class="container">
-        <header class="mb-5">
+        <header class="mb-4">
             <p class="eyebrow">Percurso</p>
-            <h2 class="title is-3 is-spaced">Onde já estivemos</h2>
-            <p class="subtitle is-6 has-text-grey measure">
+            <h2 class="h2 mb-3">Onde já estivemos</h2>
+            <p class="text-body-secondary measure">
                 Feiras, mercados e mostras onde levámos as nossas peças.
             </p>
         </header>
@@ -43,7 +43,7 @@
         {# One event is not a history: the rail's markers, drag affordance and
            arrows all promise a sequence that is not there. #}
         {% if events | length == 1 %}
-        <div class="card p-5 measure">
+        <div class="card p-4 measure">
             <div class="timeline-body">{{ event_body(events[0]) }}</div>
         </div>
         {% else %}

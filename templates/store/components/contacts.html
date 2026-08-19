@@ -1,12 +1,11 @@
 {% macro contact_card(icon, label, value, href=None, external=False) -%}
 {%- set tag = 'a' if href else 'div' -%}
-{#- mb-0 and is-flex-direction-row undo Bulma .card defaults: a stacking
-    margin that inflates the grid row, and a flex column that would drop the
+{#- flex-row because a Bootstrap .card is a flex column, which would drop the
     label under the icon. -#}
-<{{ tag }} class="cell card p-5 mb-0 is-flex is-flex-direction-row is-align-items-center"
+<{{ tag }} class="card p-4 flex-row align-items-center text-body"
     {%- if href %} href="{{ href }}"{% endif %}
     {%- if external %} target="_blank" rel="noopener"{% endif %}>
-    <span class="disc contact-icon mr-3"><i class="{{ icon }}"></i></span>
+    <span class="disc contact-icon me-3"><i class="{{ icon }}"></i></span>
     {# The value was sr-only, so a sighted visitor read "MORADA" and had to
        click to find out where the workshop is. #}
     <span class="contact-body">
@@ -16,20 +15,18 @@
 </{{ tag }}>
 {%- endmacro %}
 
-<section class="section has-background-light" id="contacts">
+<section class="section bg-body-secondary" id="contacts">
     <div class="container">
-        <header class="mb-5">
+        <header class="mb-4">
             <p class="eyebrow">Contactos</p>
-            <h2 class="title is-3 is-spaced">Onde nos encontra</h2>
-            <p class="subtitle is-6 has-text-grey measure">
+            <h2 class="h2 mb-3">Onde nos encontra</h2>
+            <p class="text-body-secondary measure mb-0">
                 Estamos em Viana do Castelo. Fale connosco por mensagem, e-mail
                 ou passe pela loja.
             </p>
         </header>
 
-        {# Wider tracks than the labels alone needed: a card now carries a
-           street address or a long social handle. #}
-        <div class="grid is-col-min-14">
+        <div class="contact-grid">
             {% if contact.address %}
             {{ contact_card('fa-solid fa-location-dot', 'Morada',
                             contact.address, contact.maps_url, external=true) }}

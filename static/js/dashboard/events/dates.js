@@ -57,5 +57,5 @@ export function stateChip(event, { extraClass = "" } = {}) {
         ? ["is-ready", "A decorrer"]
         : ["is-quiet", "Por abrir"];
 
-    return `<span class="tag is-rounded chip ${tone} ${extraClass}">${label}</span>`;
+    return `<span class="badge rounded-pill chip ${tone} ${extraClass}">${label}</span>`;
 }

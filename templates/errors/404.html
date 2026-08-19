@@ -4,16 +4,16 @@
 
 {% block content %}
 <section class="section is-medium">
-    <div class="container has-text-centered">
+    <div class="container text-center">
         <p class="eyebrow">Erro 404</p>
-        <h1 class="title is-3 is-spaced">Página não encontrada</h1>
-        <p class="subtitle is-6 has-text-grey">
+        <h1 class="h2 mb-3">Página não encontrada</h1>
+        <p class="text-body-secondary">
             A página que procura não existe ou foi movida.
         </p>
 
-        <div class="buttons is-centered mt-6">
-            <a class="button is-dark" href="{{ url_for('web.store.home') }}">Voltar ao início</a>
-            <a class="button is-light" href="{{ url_for('web.store.products') }}">Ver catálogo</a>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-5">
+            <a class="btn btn-dark" href="{{ url_for('web.store.home') }}">Voltar ao início</a>
+            <a class="btn btn-light" href="{{ url_for('web.store.products') }}">Ver catálogo</a>
         </div>
     </div>
 </section>

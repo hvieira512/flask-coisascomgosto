@@ -12,11 +12,11 @@ const renderEmptyMessage = () => {
     const filtered = isFiltered();
     productList.innerHTML = `
         <tr>
-          <td colspan="${COLUMNS}" class="has-text-centered py-6">
-            <span class="icon is-large has-text-grey-light">
+          <td colspan="${COLUMNS}" class="text-center py-5">
+            <span class="text-body-tertiary">
               <i class="fa-solid ${filtered ? "fa-filter-circle-xmark" : "fa-box-open"} fa-2x"></i>
             </span>
-            <p class="mt-3 has-text-grey">
+            <p class="mt-3 text-body-secondary">
               ${filtered
                   ? "Nenhuma peça corresponde aos filtros."
                   : "Ainda não há peças no catálogo."}
@@ -37,12 +37,12 @@ const photoCount = (product) =>
 const photoCell = (product) => {
     const photos = photoCount(product);
     if (photos === 0) {
-        return `<span class="tag is-rounded chip is-attention">
+        return `<span class="badge rounded-pill chip is-attention d-inline-flex align-items-center gap-1">
                   <span class="icon is-small"><i class="fa-solid fa-triangle-exclamation"></i></span>
                   <span>Sem fotografia</span>
                 </span>`;
     }
-    return `<span class="data has-text-grey">${photos} ${photos === 1 ? "foto" : "fotos"}</span>`;
+    return `<span class="data text-body-secondary">${photos} ${photos === 1 ? "foto" : "fotos"}</span>`;
 };
 
 const row = (product) => {
@@ -62,11 +62,11 @@ const row = (product) => {
     const rest = product.variants.length - shown.length;
 
     const colours = product.variants.length
-        ? `<span class="is-flex is-align-items-center is-gap-1">
+        ? `<span class="d-flex align-items-center gap-1">
              ${shown.map((v) => ColorSet.badge(v.color_set)).join("")}
-             ${rest ? `<span class="data has-text-grey">+${rest}</span>` : ""}
+             ${rest ? `<span class="data text-body-secondary">+${rest}</span>` : ""}
            </span>`
-        : `<span class="tag is-rounded chip is-quiet">Sem cores</span>`;
+        : `<span class="badge rounded-pill chip is-quiet">Sem cores</span>`;
 
     // The type is what the piece is; the collection is which family it belongs
     // to. Both under the name, because the name alone rarely distinguishes two
@@ -74,8 +74,8 @@ const row = (product) => {
     tr.innerHTML = `
         <td>${image}</td>
         <td>
-          <p class="has-text-weight-medium">${escapeHtml(product.name)}</p>
-          <p class="is-size-7 has-text-grey">
+          <p class="fw-medium mb-0">${escapeHtml(product.name)}</p>
+          <p class="fs-7 text-body-secondary mb-0">
             ${escapeHtml(product.type.name)}
             ${product.collection ? ` · ${escapeHtml(product.collection.name)}` : ""}
           </p>
@@ -83,12 +83,12 @@ const row = (product) => {
         <td>${colours}</td>
         <td>${photoCell(product)}</td>
         <td class="dash-col-actions">
-          <span class="dash-row-actions is-flex is-gap-1">
-            <button class="button is-small is-ghost" data-product-action="edit"
+          <span class="dash-row-actions d-flex gap-1">
+            <button class="btn btn-sm btn-ghost" data-product-action="edit"
                     data-product-id="${product.id}" title="Editar" aria-label="Editar ${escapeHtml(product.name)}">
               <span class="icon"><i class="fa-solid fa-pencil"></i></span>
             </button>
-            <button class="button is-small is-ghost has-text-danger" data-product-action="delete"
+            <button class="btn btn-sm btn-ghost text-danger" data-product-action="delete"
                     data-product-id="${product.id}" title="Apagar" aria-label="Apagar ${escapeHtml(product.name)}">
               <span class="icon"><i class="fa-solid fa-trash"></i></span>
             </button>
@@ -117,15 +117,19 @@ const renderProducts = (products) => {
 
     const missing = products.filter((p) => photoCount(p) === 0).length;
     count.innerHTML = missing
-        ? `${pieces} · <span class="has-text-weight-medium"
+        ? `${pieces} · <span class="fw-medium"
              style="color: var(--ccg-attention)">${missing} sem fotografia</span>`
         : pieces;
 };
 
-/** Bulma's own skeleton, one row per record the table is about to hold. */
+/** One placeholder row per record the table is about to hold. */
 const renderSkeleton = () => {
     productList.innerHTML = `
-        <tr><td colspan="${COLUMNS}" class="skeleton-block"></td></tr>`.repeat(6);
+        <tr>
+          <td colspan="${COLUMNS}" class="placeholder-glow">
+            <span class="placeholder w-100"></span>
+          </td>
+        </tr>`.repeat(6);
 };
 
 export const fetchProducts = async () => {

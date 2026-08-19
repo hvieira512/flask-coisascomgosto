@@ -18,22 +18,25 @@ export function stepDialog({
     id, body, titles, validate = [], finishLabel, onFinish, success, after, afterRender,
 }) {
     bodyOf(id).innerHTML = `
-        <div class="mb-5">
+        <div class="mb-4">
           <p class="eyebrow mb-2" data-step-label></p>
-          <progress class="progress is-small is-link mb-0" data-step-progress
-                    max="${titles.length}" value="1"></progress>
+          <div class="progress step-progress" data-step-progress role="progressbar"
+               aria-label="Progresso" aria-valuemin="1" aria-valuemax="${titles.length}">
+            <div class="progress-bar" data-step-progress-bar></div>
+          </div>
         </div>
         ${body}`;
 
     footOf(id).innerHTML = `
-        <button class="button" data-modal-close>Cancelar</button>
-        <button class="button" data-step-back>Voltar</button>
-        <button class="button is-dark" data-step-next></button>`;
+        <button class="btn btn-outline-secondary" data-modal-close>Cancelar</button>
+        <button class="btn btn-outline-secondary" data-step-back>Voltar</button>
+        <button class="btn btn-dark" data-step-next></button>`;
 
     const root = modal(id);
     const panels = [...root.querySelectorAll("[data-step]")];
     const label = root.querySelector("[data-step-label]");
     const progress = root.querySelector("[data-step-progress]");
+    const progressBar = root.querySelector("[data-step-progress-bar]");
     const back = root.querySelector("[data-step-back]");
     const next = root.querySelector("[data-step-next]");
 
@@ -48,10 +51,9 @@ export function stepDialog({
         panels.forEach((panel, i) => { panel.hidden = i !== index; });
 
         label.textContent = `Passo ${index + 1} de ${panels.length} · ${titles[index]}`;
-        progress.value = index + 1;
-        // Not the hidden attribute: Bulma's .button is display:inline-flex, which
-        // outranks it, and Voltar sat there on the first step.
-        back.classList.toggle("is-hidden", index === 0);
+        progress.setAttribute("aria-valuenow", String(index + 1));
+        progressBar.style.width = `${((index + 1) / panels.length) * 100}%`;
+        back.hidden = index === 0;
         next.textContent = last() ? finishLabel : "Continuar";
 
         if (focus) {

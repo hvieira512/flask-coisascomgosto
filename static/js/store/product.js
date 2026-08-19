@@ -96,7 +96,7 @@ import { escapeHtml } from "../core/html.js";
         block.hidden = false;
         options.innerHTML = product.sizes
             .map((size) => `
-                <button class="button" type="button"
+                <button class="btn btn-light" type="button"
                         data-size="${escapeHtml(size.name)}"
                         aria-pressed="false">${escapeHtml(size.name)}</button>`)
             .join("");
@@ -109,11 +109,13 @@ import { escapeHtml } from "../core/html.js";
             // wanted to look is not stuck having asked for a size.
             const already = button.getAttribute("aria-pressed") === "true";
             options.querySelectorAll("[data-size]").forEach((option) => {
-                option.classList.remove("is-dark");
+                option.classList.remove("btn-dark");
+                option.classList.add("btn-light");
                 option.setAttribute("aria-pressed", "false");
             });
             if (!already) {
-                button.classList.add("is-dark");
+                button.classList.remove("btn-light");
+                button.classList.add("btn-dark");
                 button.setAttribute("aria-pressed", "true");
             }
 
@@ -136,7 +138,7 @@ import { escapeHtml } from "../core/html.js";
             .map((variant, position) => {
                 const chosen = position === activeIndex;
                 return `
-                  <button class="tag is-rounded color-set-badge variant-option${chosen ? " is-active" : ""}"
+                  <button class="color-set-badge variant-option${chosen ? " is-active" : ""}"
                           type="button" data-variant-index="${position}"
                           aria-pressed="${chosen}"
                           style="${ColorSet.style(variant.color_set)}">

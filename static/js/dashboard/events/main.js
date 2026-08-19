@@ -21,24 +21,24 @@ async function loadEvents() {
         ? events.map((event) => `
             <tr data-event-id="${event.id}">
               <td>
-                <p class="has-text-weight-medium">
+                <p class="fw-medium mb-0">
                   ${escapeHtml(event.name)}
-                  ${stateChip(event, { extraClass: "ml-2" })}
+                  ${stateChip(event, { extraClass: "ms-2" })}
                 </p>
                 ${event.description
-                    ? `<p class="is-size-7 has-text-grey">${escapeHtml(event.description)}</p>`
+                    ? `<p class="fs-7 text-body-secondary mb-0">${escapeHtml(event.description)}</p>`
                     : ""}
               </td>
-              <td class="is-size-7 has-text-grey">${escapeHtml(event.location ?? "—")}</td>
-              <td class="data has-text-grey">${escapeHtml(eventDates(event))}</td>
+              <td class="fs-7 text-body-secondary">${escapeHtml(event.location ?? "—")}</td>
+              <td class="data text-body-secondary">${escapeHtml(eventDates(event))}</td>
               <td class="dash-col-actions">
-                <span class="dash-row-actions is-flex is-gap-1">
-                  <button class="button is-small is-ghost" data-event-action="edit"
+                <span class="dash-row-actions d-flex gap-1">
+                  <button class="btn btn-sm btn-ghost" data-event-action="edit"
                           data-event-id="${event.id}" title="Editar"
                           aria-label="Editar ${escapeHtml(event.name)}">
                     <span class="icon"><i class="fa-solid fa-pencil"></i></span>
                   </button>
-                  <button class="button is-small is-ghost has-text-danger"
+                  <button class="btn btn-sm btn-ghost text-danger"
                           data-event-action="delete" data-event-id="${event.id}" title="Apagar"
                           aria-label="Apagar ${escapeHtml(event.name)}">
                     <span class="icon"><i class="fa-solid fa-trash"></i></span>
@@ -46,7 +46,7 @@ async function loadEvents() {
                 </span>
               </td>
             </tr>`).join("")
-        : `<tr><td colspan="4" class="has-text-centered has-text-grey py-6">
+        : `<tr><td colspan="4" class="text-center text-body-secondary py-5">
              Ainda não há eventos.</td></tr>`;
 
     document.getElementById("event-count").textContent =
@@ -64,49 +64,45 @@ function eventForm(event = null) {
     return `
     <form id="event-form" data-event-id="${event?.id ?? ""}">
       <div data-step="when">
-        <div class="field">
-          <label class="label is-small" for="ef-name">Nome</label>
-          <input class="input" id="ef-name" name="name" required
+        <div class="mb-3">
+          <label class="form-label fs-7" for="ef-name">Nome</label>
+          <input class="form-control" id="ef-name" name="name" required
                  value="${escapeHtml(event?.name ?? "")}"
                  placeholder="Feira de Artesanato da Romaria d'Agonia">
         </div>
 
-        <div class="columns is-mobile">
-          <div class="column">
-            <div class="field">
-              <label class="label is-small" for="ef-starts">Início</label>
-              <input class="input" id="ef-starts" name="starts_on" type="date" required
-                     value="${escapeHtml(event?.starts_on ?? "")}">
-            </div>
+        <div class="row g-3">
+          <div class="col">
+            <label class="form-label fs-7" for="ef-starts">Início</label>
+            <input class="form-control" id="ef-starts" name="starts_on" type="date" required
+                   value="${escapeHtml(event?.starts_on ?? "")}">
           </div>
-          <div class="column">
-            <div class="field">
-              <label class="label is-small" for="ef-ends">Fim</label>
-              <input class="input" id="ef-ends" name="ends_on" type="date"
-                     value="${escapeHtml(event?.ends_on ?? "")}">
-              <p class="help">Deixe vazio se for de um só dia.</p>
-            </div>
+          <div class="col">
+            <label class="form-label fs-7" for="ef-ends">Fim</label>
+            <input class="form-control" id="ef-ends" name="ends_on" type="date"
+                   value="${escapeHtml(event?.ends_on ?? "")}">
+            <p class="help mb-0">Deixe vazio se for de um só dia.</p>
           </div>
         </div>
       </div>
 
       <div data-step="details">
-        <div class="field">
-          <label class="label is-small" for="ef-location">Local</label>
-          <input class="input" id="ef-location" name="location"
+        <div class="mb-3">
+          <label class="form-label fs-7" for="ef-location">Local</label>
+          <input class="form-control" id="ef-location" name="location"
                  value="${escapeHtml(event?.location ?? "")}"
                  placeholder="Jardim Público, Viana do Castelo">
         </div>
 
-        <div class="field">
-          <label class="label is-small" for="ef-description">Descrição</label>
-          <textarea class="textarea" id="ef-description" name="description" rows="2"
+        <div class="mb-3">
+          <label class="form-label fs-7" for="ef-description">Descrição</label>
+          <textarea class="form-control" id="ef-description" name="description" rows="2"
                     >${escapeHtml(event?.description ?? "")}</textarea>
         </div>
 
-        <div class="field mb-0">
-          <label class="label is-small" for="ef-url">Ligação</label>
-          <input class="input" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
+        <div>
+          <label class="form-label fs-7" for="ef-url">Ligação</label>
+          <input class="form-control" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
                  placeholder="https://...">
         </div>
       </div>
@@ -188,7 +184,7 @@ async function openDelete(id) {
     confirmDialog({
         id: "deleteEventModal",
         body: `<p>Apagar <strong>${escapeHtml(event.name)}</strong>?</p>
-               <p class="has-text-grey is-size-7 mt-2">
+               <p class="text-body-secondary fs-7 mt-2">
                  Deixa de aparecer no percurso da página inicial.</p>`,
         onConfirm: () => request(API.events.delete(id),
                                 { method: "DELETE", fallback: "Não foi possível apagar." }),

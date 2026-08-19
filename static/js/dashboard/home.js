@@ -26,15 +26,15 @@ const dayLabel = (days) => {
  */
 function attentionCard({ tone, icon, headline, detail, href, action }) {
     return `
-      <a class="cell card p-4 mb-0 has-text-inherit is-flex is-gap-2 is-align-items-flex-start"
+      <a class="card p-3 flex-row gap-2 align-items-start text-body text-decoration-none"
          href="${href}">
         <span class="icon" style="color: var(--ccg-${tone})">
           <i class="fa-solid ${icon}"></i>
         </span>
-        <span class="is-flex is-flex-direction-column">
-          <span class="has-text-weight-semibold">${headline}</span>
-          <span class="is-size-7 has-text-grey">${detail}</span>
-          <span class="is-size-7 mt-2" style="color: var(--ccg-blue-600)">${action} →</span>
+        <span class="d-flex flex-column">
+          <span class="fw-semibold">${headline}</span>
+          <span class="fs-7 text-body-secondary">${detail}</span>
+          <span class="fs-7 mt-2" style="color: var(--ccg-blue-600)">${action} →</span>
         </span>
       </a>`;
 }
@@ -79,8 +79,8 @@ async function renderAttention(products, events) {
     // Auto-fit rather than a fixed two columns: with one thing waiting, a card
     // in half a row reads as a card with something missing beside it.
     document.getElementById("attention").innerHTML = cards.length
-        ? `<div class="grid is-col-min-16">${cards.join("")}</div>`
-        : `<div class="card dash-panel p-4 is-flex is-gap-2 is-align-items-center">
+        ? `<div class="dash-attention-grid">${cards.join("")}</div>`
+        : `<div class="card dash-panel p-3 flex-row gap-2 align-items-center">
              <span class="icon" style="color: var(--ccg-ready)">
                <i class="fa-solid fa-circle-check"></i>
              </span>
@@ -95,13 +95,12 @@ async function renderAttention(products, events) {
  */
 const statCard = ({ label, value, href }) => {
     const inner = `
-      <span class="title is-4 mb-1">${value}</span>
+      <span class="h4 mb-1">${value}</span>
       <span class="eyebrow mb-0">${escapeHtml(label)}</span>`;
 
     return href
-        ? `<a class="cell card p-4 mb-0 is-flex is-flex-direction-column has-text-inherit"
-              href="${href}">${inner}</a>`
-        : `<div class="cell card p-4 mb-0 is-flex is-flex-direction-column">${inner}</div>`;
+        ? `<a class="card p-3 text-body text-decoration-none" href="${href}">${inner}</a>`
+        : `<div class="card p-3">${inner}</div>`;
 };
 
 async function renderStats() {
@@ -124,36 +123,36 @@ function renderMissingPhotos(products) {
     const missing = products.filter((p) => photoCount(p) === 0);
 
     document.getElementById("missing-photos").innerHTML = missing.length
-        ? `<ul class="panel is-shadowless mb-0">${missing
+        ? `<ul class="list-group list-group-flush">${missing
               .map((p) => `
-                <li class="panel-block px-0 is-justify-content-space-between">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                   <a href="/dashboard/products">${escapeHtml(p.name)}</a>
-                  <span class="tag is-rounded chip is-quiet">
+                  <span class="badge rounded-pill chip is-quiet">
                     ${escapeHtml(p.type.name)}
                   </span>
                 </li>`)
               .join("")}</ul>`
-        : `<p class="has-text-grey is-size-7">Todas as peças têm fotografia.</p>`;
+        : `<p class="text-body-secondary fs-7">Todas as peças têm fotografia.</p>`;
 }
 
 function renderEvents(events) {
     const sorted = [...events].sort((a, b) => b.starts_on.localeCompare(a.starts_on));
 
     document.getElementById("upcoming-events").innerHTML = sorted.length
-        ? `<ul class="panel is-shadowless mb-0">${sorted
+        ? `<ul class="list-group list-group-flush">${sorted
               .slice(0, 5)
               .map((e) => {
                   return `
-                    <li class="panel-block px-0 is-justify-content-space-between">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                       <span>
                         ${escapeHtml(e.name)}
-                        ${stateChip(e, { extraClass: "ml-2" })}
+                        ${stateChip(e, { extraClass: "ms-2" })}
                       </span>
-                      <span class="data has-text-grey">${escapeHtml(shortDate(e.starts_on))}</span>
+                      <span class="data text-body-secondary">${escapeHtml(shortDate(e.starts_on))}</span>
                     </li>`;
               })
               .join("")}</ul>`
-        : `<p class="has-text-grey is-size-7">Sem eventos registados.</p>`;
+        : `<p class="text-body-secondary fs-7">Sem eventos registados.</p>`;
 }
 
 /** One request for each list, shared by the strip and the panels below it. */

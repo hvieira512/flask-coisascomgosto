@@ -15,14 +15,14 @@
 <section class="section">
 <div class="container">
 
-<nav class="breadcrumb is-small mb-5" aria-label="breadcrumbs">
-    <ul>
-        <li><a href="{{ url_for('web.store.products') }}">Catálogo</a></li>
-        <li class="is-active"><a href="#" aria-current="page" id="crumb-name">…</a></li>
-    </ul>
+<nav class="mb-4" aria-label="breadcrumbs">
+    <ol class="breadcrumb fs-7 mb-0">
+        <li class="breadcrumb-item"><a href="{{ url_for('web.store.products') }}">Catálogo</a></li>
+        <li class="breadcrumb-item active" aria-current="page" id="crumb-name">…</li>
+    </ol>
 </nav>
 
-<div id="product-detail" class="columns is-variable is-8" data-product-id="{{ product_id }}">
+<div id="product-detail" class="row g-5" data-product-id="{{ product_id }}">
 
     {# ---------------- Gallery: previewer + a strip of thumbnails ---------- #}
     {# Even halves: the stage is square and capped, so a wider column only put
@@ -31,9 +31,9 @@
        The thumbnails run underneath rather than in a column beside the stage: the
        rail took 72px off the photograph's width, and a row is the same shape on a
        phone as on a desktop, which a vertical rail is not. #}
-    <div class="column is-6">
+    <div class="col-lg-6">
         <div class="gallery">
-            <figure class="gallery-stage" id="gallery-stage">
+            <figure class="gallery-stage mb-0" id="gallery-stage">
                 <img id="stage-image" src="" alt="">
 
                 <button class="disc stage-arrow stage-arrow-left" data-prev type="button" aria-label="Imagem anterior">
@@ -52,38 +52,38 @@
             <div class="thumb-strip" id="thumb-strip"></div>
         </div>
 
-        <p id="gallery-empty" class="notification is-light has-text-centered mt-3" hidden>
+        <p id="gallery-empty" class="alert alert-light text-center mt-3" hidden>
             Este produto ainda não tem imagens.
         </p>
     </div>
 
     {# ---------------- Information panel ---------------------------------- #}
-    <div class="column is-6">
-        <h1 class="title is-3 is-spaced" id="product-name">…</h1>
-        <p class="subtitle is-6 has-text-grey" id="product-description"></p>
+    <div class="col-lg-6">
+        <h1 class="h2 mb-3" id="product-name">…</h1>
+        <p class="text-body-secondary" id="product-description"></p>
 
         <div class="product-panel">
-            <div class="mb-5" id="variants-block" hidden>
-                <p class="eyebrow mb-3">Cores</p>
+            <div class="mb-4" id="variants-block" hidden>
+                <p class="eyebrow mb-2">Cores</p>
                 <div class="variant-options" id="variant-options"></div>
             </div>
 
-            <div class="mb-5" id="sizes-block" hidden>
-                <p class="eyebrow mb-3">Tamanhos</p>
-                <div class="buttons" id="size-options"></div>
+            <div class="mb-4" id="sizes-block" hidden>
+                <p class="eyebrow mb-2">Tamanhos</p>
+                <div id="size-options"></div>
             </div>
 
             {# Specification list — the facts a buyer asks for. #}
             <dl class="spec-list" id="product-meta"></dl>
 
             {% if contact.whatsapp_url %}
-            <div class="mt-5">
-                <a class="button is-dark is-fullwidth" id="enquiry-link"
+            <div class="mt-4">
+                <a class="btn btn-dark w-100" id="enquiry-link"
                    href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
                     <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
                     <span>Pedir informações</span>
                 </a>
-                <p class="is-size-7 has-text-grey mt-3">
+                <p class="fs-7 text-body-secondary mt-3">
                     Cada peça é feita e pintada à mão, por isso não há duas
                     exactamente iguais. Fale connosco para encomendas ou
                     personalizações.
@@ -94,7 +94,7 @@
     </div>
 </div>
 
-<div id="detail-error" class="notification is-danger is-light" hidden>
+<div id="detail-error" class="alert alert-danger" hidden>
     Produto não encontrado.
 </div>
 

@@ -1,5 +1,5 @@
-/* Storefront — only what Bulma does not provide.
- * If something here could be a Bulma class, it is a bug. Delete it. */
+/* Storefront — only what Bootstrap does not provide.
+ * If something here could be a Bootstrap class, it is a bug. Delete it. */
 
 body {
     display: flex;
@@ -11,20 +11,16 @@ main {
     flex: 1 0 auto;
 }
 
-/* Bulma has is-uppercase and is-size-7 but no letter-spacing helper. */
-/* Bulma has no max-width helper, and unbounded body copy is unreadable. */
-.measure {
-    max-width: 34rem;
-}
-
+/* Unbounded body copy is unreadable, and Bootstrap has no max-width helper.
+   Narrower here than theme.css's shared value: these are display lines. */
 .measure-narrow {
     max-width: 30rem;
 }
 
-/* Section and page headings carry the display serif; card titles (.is-5, .is-6)
-   stay on the UI sans, where they sit beside prices, badges and buttons. */
-h1.title,
-h2.title {
+/* Section and page headings carry the display serif; the small headings inside
+   cards stay on the UI sans, where they sit beside badges and buttons. */
+h1,
+h2 {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -.01em;
@@ -32,30 +28,42 @@ h2.title {
     text-wrap: balance;
 }
 
-/* Bulma's .title tracking is fine at small sizes but loose on a display line. */
+/* Tracking that suits a heading is loose on a display line. */
 .store-display {
     letter-spacing: -.025em;
     line-height: 1.1;
 }
 
-/* Bulma caps navbar images at 1.75rem, which renders the logo as a speck —
-   but 2.4rem pushed the bar to 86px. 2rem keeps it legible at ~64px. */
+.store-navbar {
+    background: var(--ccg-surface);
+    padding: 0;
+    min-height: 3.25rem;
+}
+
 .store-brand img {
     max-height: 2rem;
     height: 2rem;
     width: auto;
+    margin-right: .5rem;
 }
 
-/* Bulma pins .navbar-start to the left. Auto margins only centre it between
-   the brand and the end block, which are different widths — that left the
-   links 106px off-centre. Absolute positioning centres them on the bar itself. */
-@media screen and (min-width: 1024px) {
+.store-brand-name {
+    font-weight: 600;
+    color: var(--ccg-blue-900);
+    font-size: 1rem;
+}
+
+/* Bootstrap lays the collapsed menu out in source order, so auto margins alone
+   would only centre the links between the brand and the button — two blocks of
+   different widths, which left them 106px off-centre. Absolute positioning
+   centres them on the bar itself. */
+@media screen and (min-width: 992px) {
     .store-navbar .container {
         position: relative;
     }
 
-    /* Anchored on both axes: setting only `left` left the 40px link block at
-       its static top, 6px above the centre of the 52px bar. */
+    /* Anchored on both axes: setting only `left` left the link block at its
+       static top, above the centre of the bar. */
     .store-nav-center {
         position: absolute;
         top: 50%;
@@ -63,32 +71,24 @@ h2.title {
         transform: translate(-50%, -50%);
         margin: 0;
     }
-
-    .store-navbar .navbar-menu {
-        justify-content: flex-end;
-    }
 }
 
 /* Nav links echo the Área Reservada button: brand blue text with a light blue
-   wash on hover, in place of Bulma's default grey-on-grey.
-
-   Scoped to .navbar-start so the brand and the button's own wrapper — both
-   also .navbar-item — do not pick up the hover wash. */
-.store-navbar .navbar-start .navbar-item {
+   wash on hover, in place of Bootstrap's default body grey. */
+.store-navbar .nav-link {
     color: var(--ccg-blue-800);
-    border-radius: var(--bulma-radius);
+    padding: .5rem .75rem;
+    border-radius: var(--radius);
     transition: background-color .15s ease, color .15s ease;
 }
 
-.store-navbar .navbar-start .navbar-item:hover,
-.store-navbar .navbar-start .navbar-item:focus-visible {
+.store-navbar .nav-link:hover,
+.store-navbar .nav-link:focus-visible {
     background-color: var(--ccg-blue-50);
     color: var(--ccg-blue-800);
 }
 
-/* The hero fills the first screen and pins the scroll cue just above the
-   fold. Bulma's .is-medium padding alone left the cue floating mid-page with
-   144px of dead space beneath it. */
+/* The hero fills the first screen and pins the scroll cue just above the fold. */
 .store-hero {
     position: relative;
     display: flex;
@@ -99,7 +99,7 @@ h2.title {
         var(--ccg-paper);
 }
 
-.store-hero .hero-body {
+.store-hero-body {
     width: 100%;
 }
 
@@ -120,7 +120,7 @@ h2.title {
 .hero-scroll-icon {
     width: 42px;
     height: 42px;
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
     background: var(--ccg-surface);
     color: var(--ccg-blue-600);
     /* A slow nudge downward, echoing the loader's breathing rhythm. */
@@ -144,17 +144,19 @@ h2.title {
     list-style: none;
 }
 
-/* Long handles like "coisascomgosto.vianadocastelo" overflow a 250px card,
-   so values wrap on any character rather than pushing the card wider. */
-#contacts .cell {
-    min-width: 0;
+/* Wider tracks than the labels alone need: a card carries a street address or a
+   long social handle. Bootstrap's 12-column row cannot say "as many as fit". */
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+    gap: .75rem;
 }
 
+/* Long handles like "coisascomgosto.vianadocastelo" overflow a 250px card,
+   so values wrap on any character rather than pushing the card wider. */
 #contacts .card {
+    min-width: 0;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
 }
 
 #contacts .card p {
@@ -163,19 +165,19 @@ h2.title {
 }
 
 
-/* Bulma has no aspect-ratio or object-fit helper. */
+/* Bootstrap has no aspect-ratio-plus-object-fit helper. */
 .media-photo {
     display: block;
     width: 100%;
     height: 24rem;
     object-fit: cover;
-    border-radius: var(--bulma-radius-large);
+    border-radius: var(--radius-lg);
 }
 
-/* Cards lift slightly on hover; not a Bulma behaviour. */
+/* Cards lift slightly on hover, which Bootstrap does not do on its own. */
 .card {
     transition: border-color .2s ease, transform .2s ease;
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
 }
 
 a.card:hover {
@@ -270,14 +272,14 @@ a.card:hover {
 .timeline:focus-visible {
     outline: 2px solid var(--ccg-blue-300);
     outline-offset: 4px;
-    border-radius: var(--bulma-radius);
+    border-radius: var(--radius);
 }
 
 .timeline-entry {
     position: relative;
     flex: 0 0 clamp(16rem, 24vw, 21rem);
     padding: 1.75rem 2rem 0 0;
-    border-top: 1px solid var(--bulma-border);
+    border-top: 1px solid var(--ccg-line);
     scroll-snap-align: start;
 }
 
@@ -336,7 +338,7 @@ a.card:hover {
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
     background: var(--ccg-surface);
     color: var(--ccg-blue-800);
     /* Sized for a Font Awesome chevron, not a text glyph. */
@@ -386,7 +388,7 @@ a.card:hover {
         bottom: .5rem;
         left: 50%;
         width: 1px;
-        background: var(--bulma-border);
+        background: var(--ccg-line);
         transform: translateX(-50%);
     }
 
@@ -431,21 +433,31 @@ a.card:hover {
     top: 1.5rem;
 }
 
-/* Bulma 1.x gives menu items a solid background, which turns the sidebar into
-   a stack of white pills. Transparent keeps the filter list quiet. */
-.filters-panel .menu-list a {
+.filter-group-label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ccg-ink-faint);
+    padding: 0 .35rem;
+    margin: 1.25rem 0 .5rem;
+}
+
+.filters-panel .nav-link {
     display: block;
+    padding: .4rem .35rem;
+    border-radius: var(--radius);
+    color: var(--ccg-ink);
     background: transparent;
 }
 
-.filters-panel .menu-list a:hover {
+.filters-panel .nav-link:hover {
     background: var(--ccg-blue-50);
 }
 
 /* Filters are cumulative, so a selected entry is marked by its ticked box, not
    by inverting the whole row: five inverted rows read as one giant selection and
    left no room for the colour badges to be legible. */
-.filters-panel .menu-list a.is-active {
+.filters-panel .nav-link.is-active {
     background: var(--ccg-blue-50);
     color: var(--ccg-blue-900);
 }
@@ -458,12 +470,12 @@ a.card:hover {
 
 /* Nothing behind it: still listed, because it is part of the vocabulary, but
    ticking it could only empty the grid. */
-.filters-panel .menu-list a.is-empty {
+.filters-panel .nav-link.is-empty {
     color: var(--ccg-ink-faint);
     cursor: default;
 }
 
-.filters-panel .menu-list a.is-empty:hover {
+.filters-panel .nav-link.is-empty:hover {
     background: transparent;
 }
 
@@ -472,7 +484,7 @@ a.card:hover {
     flex: none;
     width: 1.05rem;
     height: 1.05rem;
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
     border-radius: 4px;
     background: var(--ccg-surface);
     display: inline-flex;
@@ -507,11 +519,11 @@ a.card:hover {
     color: var(--ccg-blue-700);
 }
 
-/* A Bulma column is a flex item, and a flex item's min-width is auto — it refuses
-   to be narrower than its content. So the collection rail, which is meant to scroll
-   inside this column, grew the column to 1320px instead and the whole catalogue
-   scrolled sideways. Any wide scrolling child would do the same, which is why this
-   sits on the column rather than on the rail. */
+/* A grid column's min-width is auto — it refuses to be narrower than its content.
+   So the collection rail, which is meant to scroll inside this column, grew the
+   column to 1320px instead and the whole catalogue scrolled sideways. Any wide
+   scrolling child would do the same, which is why this sits on the column rather
+   than on the rail. */
 .catalogue-main {
     min-width: 0;
 }
@@ -626,22 +638,27 @@ a.card:hover {
     color: var(--ccg-ink-soft);
 }
 
+/* An applied filter, as a navy pill with its own dismiss button. */
 .filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .5rem .3rem .7rem;
+    background: var(--ccg-blue-800);
+    color: #fff;
+    font-size: .75rem;
+    border-radius: 999px;
     cursor: pointer;
 }
 
-/* Bulma's delete circle is black at 50% alpha, which assumes a light
-   background. On the navy badge it reads as a hole punched through the pill, so
-   it flips to white-alpha. The declaration has to sit on the button itself:
-   .delete sets --bulma-delete-background-l in its own rule, so setting it on the
-   badge is overridden rather than inherited. */
-.filter-badge .delete {
-    --bulma-delete-background-l: 100%;
-    --bulma-delete-background-alpha: .22;
-}
-
-.filter-badge .delete:hover {
-    --bulma-delete-background-alpha: .38;
+/* btn-close is a dark glyph, which on the navy pill reads as a hole punched
+   through it; btn-close-white is the inverted one, dimmed until hovered. */
+.filter-badge .btn-close {
+    --bs-btn-close-opacity: .65;
+    --bs-btn-close-hover-opacity: 1;
+    width: .6em;
+    height: .6em;
+    padding: .25em;
 }
 
 /* No-photo placeholder. --ph-color / --ph-wash / --ph-circle are set inline
@@ -682,10 +699,12 @@ a.card:hover {
     max-width: 160px;
 }
 
-/* Bulma's .grid uses auto-fit, which collapses empty tracks and stretches a
-   single result across the row. auto-fill keeps them. */
+/* auto-fill rather than auto-fit: auto-fit collapses the empty tracks and
+   stretches a single result across the whole row. */
 #product-grid {
+    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+    gap: .75rem;
 }
 
 /* Catalog tiles: uniform squares whatever the source image. */
@@ -698,7 +717,7 @@ a.card:hover {
 
 /* A square image took 73% of the card and dwarfed the name. 4:3 gives the
    text room to matter. */
-.product-card .card-image img {
+.product-card .card-img-top {
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
@@ -711,13 +730,13 @@ a.card:hover {
     aspect-ratio: 4 / 3;
 }
 
-.product-card .card-content {
+.product-card .card-body {
     flex: 1 0 auto;
 }
 
 /* A definition list of the piece's facts: label left, value right. */
 .spec-list {
-    border-top: 1px solid var(--bulma-border);
+    border-top: 1px solid var(--ccg-line);
 }
 
 .spec-row {
@@ -725,7 +744,7 @@ a.card:hover {
     justify-content: space-between;
     gap: 1rem;
     padding: .7rem 0;
-    border-bottom: 1px solid var(--bulma-border);
+    border-bottom: 1px solid var(--ccg-line);
     font-size: .9rem;
 }
 
@@ -809,8 +828,8 @@ a.card:hover {
     width: 72px;
     height: 72px;
     padding: 0;
-    border: 2px solid var(--bulma-border);
-    border-radius: var(--bulma-radius);
+    border: 2px solid var(--ccg-line);
+    border-radius: var(--radius);
     background: var(--ccg-paper-deep);
     cursor: pointer;
     overflow: hidden;
@@ -854,8 +873,8 @@ a.card:hover {
        and still keep the photograph worth looking at beside a very short panel. */
     min-height: 12rem;
     background: var(--ccg-paper-deep);
-    border: 1px solid var(--bulma-border);
-    border-radius: var(--bulma-radius-large);
+    border: 1px solid var(--ccg-line);
+    border-radius: var(--radius-lg);
     overflow: hidden;
 }
 
@@ -891,7 +910,7 @@ a.card:hover {
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
-    border: 1px solid var(--bulma-border);
+    border: 1px solid var(--ccg-line);
     background: rgba(255, 255, 255, .94);
     color: var(--ccg-blue-800);
     /* The chevrons are icons now, not ‹ and ›, which needed 1.4rem to read as
@@ -982,8 +1001,8 @@ a.card:hover {
     padding: .45rem .75rem;
     gap: .45rem;
     font-size: .875rem;
-    /* Bulma's .tag centres its content, which in a fixed-width cell put every
-       name at a different offset and made the swatches zigzag down the column. */
+    /* Centred content put every name at a different offset in a fixed-width cell
+       and made the swatches zigzag down the column. */
     justify-content: flex-start;
 }
 
@@ -1034,7 +1053,13 @@ a.card:hover {
 }
 
 /* Colour and size are one decision made twice, so the rows match. */
-#size-options .button {
+#size-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+#size-options .btn {
     min-width: 2.75rem;
     min-height: 2.75rem;
 }
@@ -1060,12 +1085,11 @@ a.card:hover {
         aspect-ratio: 1 / 1;
     }
 
-    /* is-variable is-8 gives the columns a 2rem gap, which Bulma implements as a 2rem
-       negative margin on each side — more than the container's padding can absorb, so
-       the product page scrolled 8px sideways on a phone. The columns are stacked at
-       this width, so the horizontal gap is buying nothing. */
-    #product-detail.is-variable {
-        --bulma-column-gap: .75rem;
+    /* A wide gutter is implemented as a negative margin on the row — more than the
+       container's padding can absorb, which scrolled the product page sideways. The
+       columns are stacked at this width, so the horizontal gap buys nothing. */
+    #product-detail {
+        --bs-gutter-x: 1.5rem;
     }
 
     /* No hover on touch, so the arrows stay visible. */
@@ -1081,5 +1105,29 @@ a.card:hover {
     .type-card-icon {
         animation: none;
         transition: none;
+    }
+}
+
+/* Bootstrap has no footer component. */
+.store-footer {
+    background: var(--ccg-paper-deep);
+    border-top: 1px solid var(--ccg-line);
+}
+
+/* One column on a phone, three from 769px up — the landing page's craft steps
+   and type cards. A .row of col-md-4 says the same thing in three times the
+   markup, and needs a wrapper per cell. */
+.three-up {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+@media screen and (min-width: 769px) {
+    .three-up {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }

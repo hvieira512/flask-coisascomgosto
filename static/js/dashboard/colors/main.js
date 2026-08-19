@@ -33,21 +33,21 @@ function setRow(set) {
     return `
       <tr data-set-id="${set.id}">
         <td>${ColorSet.badge(set)}</td>
-        <td class="is-size-7 has-text-grey">${escapeHtml(names || "Sem cores")}</td>
-        <td class="is-size-7 has-text-grey">${escapeHtml(set.collection?.name ?? "—")}</td>
+        <td class="fs-7 text-body-secondary">${escapeHtml(names || "Sem cores")}</td>
+        <td class="fs-7 text-body-secondary">${escapeHtml(set.collection?.name ?? "—")}</td>
         <td>
           ${pieces
-              ? `<span class="data has-text-grey">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
-              : `<span class="tag is-rounded chip is-quiet">Sem peças</span>`}
+              ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
+              : `<span class="badge rounded-pill chip is-quiet">Sem peças</span>`}
         </td>
         <td class="dash-col-actions">
-          <span class="dash-row-actions is-flex is-gap-1">
-            <button class="button is-small is-ghost" data-set-action="edit"
+          <span class="dash-row-actions d-flex gap-1">
+            <button class="btn btn-sm btn-ghost" data-set-action="edit"
                     data-set-id="${set.id}" title="Editar"
                     aria-label="Editar ${escapeHtml(set.name)}">
               <span class="icon"><i class="fa-solid fa-pencil"></i></span>
             </button>
-            <button class="button is-small is-ghost has-text-danger" data-set-action="delete"
+            <button class="btn btn-sm btn-ghost text-danger" data-set-action="delete"
                     data-set-id="${set.id}" title="Apagar"
                     aria-label="Apagar ${escapeHtml(set.name)}">
               <span class="icon"><i class="fa-solid fa-trash"></i></span>
@@ -64,7 +64,7 @@ async function loadSets() {
 
     document.getElementById("set-rows").innerHTML = all.length
         ? all.map(setRow).join("")
-        : `<tr><td colspan="5" class="has-text-centered has-text-grey py-6">
+        : `<tr><td colspan="5" class="text-center text-body-secondary py-5">
              Ainda não há conjuntos. Cada peça é oferecida num deles.</td></tr>`;
 
     document.getElementById("set-count").textContent =
@@ -79,34 +79,32 @@ function setForm(set = null) {
 
     return `
     <form id="set-form" data-set-id="${set?.id ?? ""}">
-      <div class="field">
-        <label class="label is-small" for="sf-name">Nome</label>
-        <input class="input" id="sf-name" name="name" required
+      <div class="mb-3">
+        <label class="form-label fs-7" for="sf-name">Nome</label>
+        <input class="form-control" id="sf-name" name="name" required
                value="${escapeHtml(set?.name ?? "")}" placeholder="Branco e Dourado">
       </div>
 
-      <div class="field">
-        <label class="label is-small">Cores</label>
-        <div class="tags" id="sf-colors">
+      <div class="mb-3">
+        <label class="form-label fs-7">Cores</label>
+        <div class="d-flex flex-wrap gap-1" id="sf-colors">
           ${colors.map(colorChip).join("") || `<p class="help">Adicione cores primeiro.</p>`}
         </div>
-        <p class="help">
+        <p class="help mb-0">
           Pela ordem em que as escolher — a primeira dá o tom ao conjunto.
         </p>
       </div>
 
-      <div class="field">
-        <label class="label is-small" for="sf-collection">Colecção</label>
-        <div class="select is-fullwidth">
-          <select id="sf-collection" name="collection_id">
-            <option value="">Sem colecção</option>
-            ${options}
-          </select>
-        </div>
+      <div class="mb-3">
+        <label class="form-label fs-7" for="sf-collection">Colecção</label>
+        <select class="form-select" id="sf-collection" name="collection_id">
+          <option value="">Sem colecção</option>
+          ${options}
+        </select>
       </div>
 
-      <div class="field mb-0">
-        <label class="label is-small">Como vai aparecer na loja</label>
+      <div>
+        <label class="form-label fs-7">Como vai aparecer na loja</label>
         <div id="sf-preview"></div>
       </div>
     </form>`;
@@ -114,7 +112,7 @@ function setForm(set = null) {
 
 function colorChip(color) {
     return `
-      <button type="button" class="tag is-rounded color-chip" data-color-id="${color.id}">
+      <button type="button" class="badge rounded-pill color-chip" data-color-id="${color.id}">
         <span class="swatch" style="background:${escapeHtml(color.hex || "#CCCCCC")}"></span>
         <span>${escapeHtml(color.name)}</span>
       </button>`;
@@ -212,7 +210,7 @@ function openDeleteSet(id) {
     // Deleting a set deletes every variant offered in it, and a variant's photos
     // go with it. Unlike a type, this is allowed — so the number is the warning.
     const warning = pieces
-        ? `<p class="has-text-grey is-size-7 mt-2">
+        ? `<p class="text-body-secondary fs-7 mt-2">
              ${pieces} ${pieces === 1 ? "peça é oferecida" : "peças são oferecidas"}
              neste conjunto. ${pieces === 1 ? "Essa oferta" : "Essas ofertas"}
              e as respectivas fotografias também desaparecem.
@@ -234,20 +232,20 @@ async function loadColors() {
     colors = await listColors();
 
     document.getElementById("color-rows").innerHTML = colors.length
-        ? `<ul class="panel is-shadowless mb-0">${colors
+        ? `<ul class="list-group list-group-flush">${colors
               .map((color) => `
-                <li class="panel-block px-0 is-justify-content-space-between">
-                  <span class="is-flex is-align-items-center is-gap-1">
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                  <span class="d-flex align-items-center gap-1">
                     <span class="swatch" style="background:${escapeHtml(color.hex || "#CCCCCC")}"></span>
                     <span data-color-name="${color.id}">${escapeHtml(color.name)}</span>
                   </span>
-                  <span class="dash-row-actions is-flex is-gap-1">
-                    <button class="button is-small is-ghost" data-color-action="edit"
+                  <span class="dash-row-actions d-flex gap-1">
+                    <button class="btn btn-sm btn-ghost" data-color-action="edit"
                             data-color-id="${color.id}" title="Editar"
                             aria-label="Editar ${escapeHtml(color.name)}">
                       <span class="icon"><i class="fa-solid fa-pencil"></i></span>
                     </button>
-                    <button class="button is-small is-ghost has-text-danger"
+                    <button class="btn btn-sm btn-ghost text-danger"
                             data-color-action="delete" data-color-id="${color.id}"
                             title="Apagar" aria-label="Apagar ${escapeHtml(color.name)}">
                       <span class="icon"><i class="fa-solid fa-xmark"></i></span>
@@ -255,7 +253,7 @@ async function loadColors() {
                   </span>
                 </li>`)
               .join("")}</ul>`
-        : `<p class="has-text-grey is-size-7">Ainda não há cores.</p>`;
+        : `<p class="text-body-secondary fs-7">Ainda não há cores.</p>`;
 
     document.getElementById("color-count").textContent = String(colors.length);
 }
@@ -265,13 +263,13 @@ function openColorForm(color) {
         id: "editColorModal",
         body: `
           <form id="color-edit-form">
-            <div class="field">
-              <label class="label is-small" for="cf-name">Nome</label>
-              <input class="input" id="cf-name" required value="${escapeHtml(color.name)}">
+            <div class="mb-3">
+              <label class="form-label fs-7" for="cf-name">Nome</label>
+              <input class="form-control" id="cf-name" required value="${escapeHtml(color.name)}">
             </div>
-            <div class="field mb-0">
-              <label class="label is-small" for="cf-hex">Cor</label>
-              <input class="input color-swatch-input" type="color" id="cf-hex"
+            <div>
+              <label class="form-label fs-7" for="cf-hex">Cor</label>
+              <input class="form-control color-swatch-input" type="color" id="cf-hex"
                      value="${escapeHtml(color.hex || "#CCCCCC")}">
             </div>
           </form>`,
@@ -298,7 +296,7 @@ function openDeleteColor(color) {
     const using = sets.filter((set) => set.colors.some((c) => c.id === color.id));
 
     const warning = using.length
-        ? `<p class="has-text-grey is-size-7 mt-2">
+        ? `<p class="text-body-secondary fs-7 mt-2">
              Sai ${using.length === 1 ? "do conjunto" : "dos conjuntos"}
              ${using.map((set) => `<strong>${escapeHtml(set.name)}</strong>`).join(", ")},
              que ${using.length === 1 ? "fica" : "ficam"} com menos uma cor.

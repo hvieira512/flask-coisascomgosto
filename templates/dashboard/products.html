@@ -8,16 +8,16 @@
 {{ page_head_action('Catálogo', 'Produtos', 'product-count',
                     'new-product', 'Novo produto') }}
 
-<div class="card dash-panel p-4 mb-4">
-    <div class="grid is-col-min-7 is-align-items-flex-end">
+<div class="card dash-panel p-3 mb-3">
+    <div class="dash-filter-grid">
         {{ filter_field('filter-q', 'Pesquisar', placeholder='Nome do produto…') }}
         {{ filter_field('filter-type', 'Tipo', [('', 'Todos')]) }}
         {{ filter_field('filter-collection', 'Colecção', [('', 'Todas')]) }}
         {{ filter_field('filter-photos', 'Fotografias', [
             ('', 'Todas'), ('none', 'Sem fotografia'), ('some', 'Com fotografia')]) }}
 
-        <div class="field mb-0 is-flex is-align-items-flex-end">
-            <button class="button is-small is-ghost" id="filter-clear" hidden>
+        <div class="d-flex align-items-end">
+            <button class="btn btn-sm btn-ghost" id="filter-clear" hidden>
                 <span class="icon"><i class="fa-solid fa-xmark"></i></span>
                 <span>Limpar</span>
             </button>
@@ -29,14 +29,14 @@
    header is markup so it is there before the first request answers. #}
 <div class="card dash-panel">
     <div class="dash-table-wrap">
-        <table class="table dash-table is-wide is-fullwidth is-hoverable mb-0">
+        <table class="table dash-table is-wide table-hover">
             <thead>
                 <tr>
-                    <th class="dash-col-thumb"><span class="is-sr-only">Fotografia</span></th>
+                    <th class="dash-col-thumb"><span class="visually-hidden">Fotografia</span></th>
                     <th class="dash-col-name">Peça</th>
                     <th>Cores</th>
                     <th class="dash-col-photos">Fotografias</th>
-                    <th class="dash-col-actions"><span class="is-sr-only">Acções</span></th>
+                    <th class="dash-col-actions"><span class="visually-hidden">Acções</span></th>
                 </tr>
             </thead>
             <tbody id="product-list"></tbody>
