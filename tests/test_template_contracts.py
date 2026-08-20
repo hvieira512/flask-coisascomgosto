@@ -381,9 +381,12 @@ class TestDashboardColors:
         source = pathlib.Path("static/js/dashboard/colors/main.js").read_text(
             encoding="utf-8"
         )
-        for call in ["createColorSet", "updateColorSet", "deleteColorSet",
-                     "createColor", "updateColor", "deleteColor"]:
-            assert call in source, call
+        # The endpoints and the methods, rather than the names of wrappers around
+        # them: what matters is that both halves of the page can be written to.
+        for endpoint in ["API.colorSets.create", "API.colorSets.update",
+                         "API.colorSets.delete", "API.colors.create",
+                         "API.colors.update", "API.colors.delete"]:
+            assert endpoint in source, endpoint
 
     def test_the_delete_dialog_says_what_goes_with_the_set(self, client, make_user):
         """Deleting a set deletes every variant offered in it, and their photos.
@@ -428,9 +431,11 @@ class TestDashboardCollections:
         source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
             encoding="utf-8"
         )
-        for call in ["createCollection", "updateCollection", "deleteCollection",
-                     "uploadCover", "removeCover"]:
-            assert call in source, call
+        for endpoint in ["API.collections.create", "API.collections.update",
+                         "API.collections.delete", "API.collections.cover"]:
+            assert endpoint in source, endpoint
+        # The cover is multipart, which is the one call that cannot be a plain body.
+        assert "new FormData()" in source
 
     def test_the_form_is_split_in_two(self):
         """What the collection is on the left, what it looks like on the right."""
@@ -705,9 +710,13 @@ def test_the_materials_panel_offers_the_full_set(client, make_user):
     for hook in ["material-form", "material-name", "material-rows", "material-count"]:
         assert f'id="{hook}"' in html, hook
 
+    # The endpoints, not the names of wrappers around them: this test used to
+    # assert createMaterial/updateMaterial/deleteMaterial and broke the day those
+    # one-line forwarders were deleted, though the panel does exactly what it did.
     source = pathlib.Path("static/js/dashboard/types/main.js").read_text(encoding="utf-8")
-    for call in ["createMaterial", "updateMaterial", "deleteMaterial", "listMaterials"]:
-        assert call in source, call
+    for endpoint in ["API.materials.list", "API.materials.create",
+                     "API.materials.update", "API.materials.delete"]:
+        assert endpoint in source, endpoint
 
 
 class TestStylesheetsParse:

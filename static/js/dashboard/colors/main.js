@@ -2,10 +2,8 @@ import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { confirmDialog, formDialog, modal, submitting } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import { ColorSet } from "../../store/color-set.js";
-import {
-    countByColorSet, createColor, createColorSet, deleteColor, deleteColorSet,
-    listCollections, listColorSets, listColors, updateColor, updateColorSet,
-} from "./api.js";
+import { API, list, request } from "../../core/api.js";
+import { byColorSet } from "../counts.js";
 
 /**
  * Cores e conjuntos.
@@ -58,7 +56,11 @@ function setRow(set) {
 }
 
 async function loadSets() {
-    const [all, counts] = await Promise.all([listColorSets(), countByColorSet()]);
+    const [all, counts] = await Promise.all([
+        list(API.colorSets.list, "color_sets",
+             { fallback: "Erro ao carregar os conjuntos." }),
+        byColorSet(),
+    ]);
     pieceCounts = counts;
     sets = all;
 
@@ -197,7 +199,8 @@ function openSetForm({ modalId, set = null }) {
         onSubmit: async () => {
             const { id, payload } = read();
             try {
-                return id ? await updateColorSet(id, payload) : await createColorSet(payload);
+                return await request(id ? API.colorSets.update(id) : API.colorSets.create,
+                                     { method: id ? "PUT" : "POST", body: payload });
             } catch (error) {
                 throw new Error(nameTaken(error, "um conjunto"));
             }
@@ -226,7 +229,7 @@ function openDeleteSet(id) {
     confirmDialog({
         id: "deleteSetModal",
         body: `<p>Apagar <strong>${escapeHtml(set.name)}</strong>?</p>${warning}`,
-        onConfirm: () => deleteColorSet(id),
+        onConfirm: () => request(API.colorSets.delete(id), { method: "DELETE" }),
         success: "Conjunto apagado.",
         after: loadSets,
     });
@@ -235,7 +238,8 @@ function openDeleteSet(id) {
 // ---- Colours ----
 
 async function loadColors() {
-    colors = await listColors();
+    colors = await list(API.colors.list, "colors",
+                        { fallback: "Erro ao carregar as cores." });
 
     document.getElementById("color-rows").innerHTML = colors.length
         ? `<ul class="list-group list-group-flush">${colors
@@ -287,9 +291,9 @@ function openColorForm(color) {
             const name = dialog.querySelector("#cf-name").value.trim();
             if (!name) throw new Error("O nome é obrigatório.");
             try {
-                return await updateColor(color.id, {
-                    name,
-                    hex: dialog.querySelector("#cf-hex").value,
+                return await request(API.colors.update(color.id), {
+                    method: "PUT",
+                    body: { name, hex: dialog.querySelector("#cf-hex").value },
                 });
             } catch (error) {
                 throw new Error(nameTaken(error, "uma cor"));
@@ -315,7 +319,7 @@ function openDeleteColor(color) {
     confirmDialog({
         id: "deleteColorModal",
         body: `<p>Apagar <strong>${escapeHtml(color.name)}</strong>?</p>${warning}`,
-        onConfirm: () => deleteColor(color.id),
+        onConfirm: () => request(API.colors.delete(color.id), { method: "DELETE" }),
         success: "Cor apagada.",
         after: async () => { await loadColors(); await loadSets(); },
     });
@@ -331,7 +335,10 @@ document.getElementById("color-form").addEventListener("submit", (event) => {
 
     return submitting(event.submitter ?? event.target.querySelector("button"), async () => {
         try {
-            await createColor({ name, hex: document.getElementById("color-hex").value });
+            await request(API.colors.create, {
+                method: "POST",
+                body: { name, hex: document.getElementById("color-hex").value },
+            });
         } catch (error) {
             throw new Error(nameTaken(error, "uma cor"));
         }
@@ -372,6 +379,8 @@ document.getElementById("new-set").addEventListener("click", () =>
 
 // Colours load first: the set form's picker is built from them.
 loadColors()
-    .then(async () => { collections = await listCollections(); })
+    .then(async () => {
+        collections = await list(API.collections.list, "collections", { orEmpty: true });
+    })
     .then(loadSets)
     .catch((error) => Notify.error(error.message));

@@ -3,10 +3,8 @@ import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import { ColorSet } from "../../store/color-set.js";
-import {
-    countByCollection, createCollection, deleteCollection, listCollections,
-    listColorSets, removeCover, setColorSets, updateCollection, uploadCover,
-} from "./api.js";
+import { API, list, request } from "../../core/api.js";
+import { byCollection } from "../counts.js";
 
 /**
  * Colecções.
@@ -61,7 +59,11 @@ async function loadCollections() {
     // The colour sets come along because the form offers all of them, and because
     // which collection each belongs to changes when one is saved.
     const [all, counts, sets] = await Promise.all([
-        listCollections(), countByCollection(), listColorSets(),
+        list(API.collections.list, "collections",
+             { fallback: "Erro ao carregar as colecções." }),
+        byCollection(),
+        list(API.colorSets.list, "color_sets",
+             { fallback: "Erro ao carregar os conjuntos de cores." }),
     ]);
     pieceCounts = counts;
     collections = all;
@@ -184,7 +186,10 @@ function wireCoverField(modalId, collection, after) {
             ? [{ id: collection.id, url: collection.image_url }]
             : [],
         onRemoveStored: async () => {
-            await removeCover(collection.id);
+            await request(API.collections.cover(collection.id), {
+                method: "DELETE",
+                fallback: "Não foi possível remover a capa.",
+            });
             Notify.success("Capa removida.");
             await after();
         },
@@ -220,19 +225,37 @@ function openForm({ modalId, collection = null }) {
 
             let saved;
             try {
-                saved = collection
-                    ? await updateCollection(collection.id, payload)
-                    : await createCollection(payload);
+                saved = await request(
+                    collection ? API.collections.update(collection.id)
+                               : API.collections.create,
+                    { method: collection ? "PUT" : "POST", body: payload }
+                );
             } catch (error) {
                 throw new Error(nameTaken(error));
             }
 
             // Both of these need an id, so they follow the save rather than riding
             // along with it.
-            await setColorSets(saved.id, chosenSets());
+            //
+            // A colour set belongs to one collection, so this moves them rather
+            // than linking them: a set listed here leaves whichever collection it
+            // was in.
+            await request(API.collections.colorSets(saved.id), {
+                method: "PUT",
+                body: { color_set_ids: chosenSets() },
+                fallback: "Não foi possível guardar os conjuntos de cores.",
+            });
 
             const [file] = cover.files();
-            if (file) await uploadCover(saved.id, file);
+            if (file) {
+                const form = new FormData();
+                form.append("file", file);
+                await request(API.collections.cover(saved.id), {
+                    method: "POST",
+                    body: form,
+                    fallback: "Não foi possível guardar a capa.",
+                });
+            }
 
             return saved;
         },
@@ -260,7 +283,7 @@ function openDelete(id) {
     confirmDialog({
         id: "deleteCollectionModal",
         body: `<p>Apagar <strong>${escapeHtml(collection.name)}</strong>?</p>${detail}`,
-        onConfirm: () => deleteCollection(id),
+        onConfirm: () => request(API.collections.delete(id), { method: "DELETE" }),
         success: "Colecção apagada.",
         after: loadCollections,
     });

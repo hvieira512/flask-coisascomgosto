@@ -1,10 +1,8 @@
+import { API, list, request } from "../../core/api.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { bodyOf, confirmDialog, footOf, formDialog, modal, open, submitting } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
-import {
-    countByType, createMaterial, createType, deleteMaterial, deleteType,
-    listMaterials, listTypes, updateMaterial, updateType,
-} from "./api.js";
+import { byType } from "../counts.js";
 
 /**
  * Tipos e materiais.
@@ -62,7 +60,11 @@ function typeRow(type) {
 }
 
 async function loadTypes() {
-    const [all, counts] = await Promise.all([listTypes(), countByType()]);
+    const [all, counts] = await Promise.all([
+        list(API.productTypes.list, "product_types",
+             { fallback: "Erro ao carregar os tipos." }),
+        byType(),
+    ]);
     pieceCounts = counts;
     types = all;
 
@@ -159,7 +161,8 @@ function openTypeForm({ modalId, type = null }) {
         afterRender: () => wireIconPreview(modalId),
         onSubmit: async () => {
             const { id, payload } = payloadFrom(modalId);
-            return id ? updateType(id, payload) : createType(payload);
+            return request(id ? API.productTypes.update(id) : API.productTypes.create,
+                           { method: id ? "PUT" : "POST", body: payload });
         },
         success: type ? "Tipo actualizado." : "Tipo criado.",
         after: loadTypes,
@@ -193,7 +196,7 @@ async function openDeleteType(id) {
     confirmDialog({
         id: "deleteTypeModal",
         body: `<p>Apagar <strong>${escapeHtml(type.name)}</strong>?</p>`,
-        onConfirm: () => deleteType(id),
+        onConfirm: () => request(API.productTypes.delete(id), { method: "DELETE" }),
         success: "Tipo apagado.",
         after: loadTypes,
     });
@@ -202,7 +205,8 @@ async function openDeleteType(id) {
 // ---- Materials ----
 
 async function loadMaterials() {
-    const materials = await listMaterials();
+    const materials = await list(API.materials.list, "materials",
+                                 { fallback: "Erro ao carregar os materiais." });
 
     document.getElementById("material-rows").innerHTML = materials.length
         ? `<ul class="list-group list-group-flush">${materials
@@ -242,7 +246,7 @@ document.getElementById("material-form").addEventListener("submit", (event) => {
 
     return submitting(event.submitter ?? event.target.querySelector("button"), async () => {
         try {
-            await createMaterial(name);
+            await request(API.materials.create, { method: "POST", body: { name } });
         } catch (error) {
             throw new Error(materialError(error));
         }
@@ -265,7 +269,8 @@ document.getElementById("material-rows").addEventListener("click", async (event)
         const name = await Notify.prompt("Novo nome do material", { value: current });
         if (!name || name.trim() === current) return;
         try {
-            await updateMaterial(id, name.trim());
+            await request(API.materials.update(id),
+                          { method: "PUT", body: { name: name.trim() } });
             Notify.success("Material actualizado.");
             await loadMaterials();
         } catch (error) {
@@ -282,7 +287,7 @@ document.getElementById("material-rows").addEventListener("click", async (event)
         });
         if (!ok) return;
         try {
-            await deleteMaterial(id);
+            await request(API.materials.delete(id), { method: "DELETE" });
             Notify.success("Material apagado.");
             await loadMaterials();
         } catch (error) {

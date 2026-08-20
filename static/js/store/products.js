@@ -6,9 +6,9 @@
  * same operation.
  */
 
+import { API, list, request } from "../core/api.js";
 import { ColorSet } from "./color-set.js";
 import { ProductPlaceholder } from "./placeholder.js";
-import { StoreApi } from "./api.js";
 import { StoreFilters } from "./filters.js";
 import { escapeHtml } from "../core/html.js";
 
@@ -38,7 +38,7 @@ import { escapeHtml } from "../core/html.js";
     /** Per-option product counts, so an entry can say what it holds. */
     async function loadFacets() {
         try {
-            const payload = await StoreApi.get("/api/products/facets");
+            const payload = await request("/api/products/facets");
             facets = Object.fromEntries(
                 Object.entries(payload).map(([key, rows]) => [
                     key,
@@ -54,12 +54,7 @@ import { escapeHtml } from "../core/html.js";
      *  Colecção group to borrow the payload from. Labels are registered here so a
      *  badge can say "Colecção: Filigrana" rather than "#1". */
     async function loadCollections() {
-        try {
-            const payload = await StoreApi.get("/api/collections/", { limit: 100 });
-            collections = payload.collections ?? [];
-        } catch (error) {
-            collections = [];
-        }
+        collections = await list(API.collections.list, "collections", { orEmpty: true });
         collections.forEach((collection) =>
             StoreFilters.registerLabel("collection_id", collection.id, collection.name)
         );
@@ -68,35 +63,30 @@ import { escapeHtml } from "../core/html.js";
     /** The colour sets behind each collection, which tint the rail's cover for a
      *  collection that has no photograph yet. */
     async function loadColorSets() {
-        try {
-            const { color_sets: sets } = await StoreApi.get("/api/color-sets/", {
-                limit: 100,
-            });
-            setsByCollection = sets.reduce((map, set) => {
-                if (!set.collection) return map;
-                const current = map.get(set.collection.id) ?? [];
-                return map.set(set.collection.id, [...current, set]);
-            }, new Map());
-        } catch (error) {
-            setsByCollection = new Map();
-        }
+        const sets = await list(API.colorSets.list, "color_sets", { orEmpty: true });
+
+        setsByCollection = sets.reduce((map, set) => {
+            if (!set.collection) return map;
+            const current = map.get(set.collection.id) ?? [];
+            return map.set(set.collection.id, [...current, set]);
+        }, new Map());
     }
 
     /** Fill one sidebar group from its API endpoint. */
-    async function loadGroup(list) {
-        const { filterGroup, endpoint, collectionKey, facet } = list.dataset;
+    async function loadGroup(group) {
+        const { filterGroup, endpoint, collectionKey, facet } = group.dataset;
 
-        let payload;
+        let items;
         try {
-            payload = await StoreApi.get(endpoint, { limit: 100 });
+            items = await list(endpoint, collectionKey);
         } catch (error) {
-            list.innerHTML = '<li><span class="text-body-secondary fs-7">Indisponível</span></li>';
+            group.innerHTML =
+                '<li><span class="text-body-secondary fs-7">Indisponível</span></li>';
             return;
         }
 
-        const items = payload[collectionKey] || [];
         const counts = facets[facet] ?? new Map();
-        list.innerHTML = items
+        group.innerHTML = items
             .map((item) => renderEntry(filterGroup, item, counts))
             .join("");
 
@@ -293,7 +283,7 @@ import { escapeHtml } from "../core/html.js";
 
         let payload;
         try {
-            payload = await StoreApi.products(params);
+            payload = await request(API.products.list, { params });
         } catch (error) {
             grid.innerHTML = "";
             emptyNotice.hidden = false;

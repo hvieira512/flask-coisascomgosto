@@ -6,8 +6,8 @@
  * there are none of it yet.
  */
 
+import { API, request } from "../core/api.js";
 import { ColorSet } from "./color-set.js";
-import { StoreApi } from "./api.js";
 import { StoreGallery } from "./gallery.js";
 import { escapeHtml } from "../core/html.js";
 
@@ -175,7 +175,7 @@ import { escapeHtml } from "../core/html.js";
     (async function init() {
         let product;
         try {
-            product = await StoreApi.product(productId);
+            product = await request(API.products.get(productId));
         } catch (error) {
             root.hidden = true;
             errorNotice.hidden = false;

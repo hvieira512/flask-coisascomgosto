@@ -1,10 +1,29 @@
 /**
- * Every endpoint the dashboard talks to, and the one function that talks to them.
+ * Every endpoint the front end talks to, and the one function that talks to them.
  *
  * Collection paths keep their trailing slash: flask-restx registers them that
  * way, so "/api/materials" answers 308 and every list and create paid for two
  * round trips instead of one.
  */
+
+/**
+ * A query string from a plain object.
+ *
+ * An array becomes repeated keys — ?type_id=1&type_id=5 — which is how the API
+ * takes several values for one filter. Empty and absent values are dropped, so a
+ * caller can pass its whole filter state without sifting it first.
+ */
+function query(path, params) {
+    const url = new URL(path, window.location.origin);
+
+    for (const [key, value] of Object.entries(params)) {
+        if (Array.isArray(value)) value.forEach((one) => url.searchParams.append(key, one));
+        else if (value !== null && value !== undefined && value !== "") {
+            url.searchParams.set(key, value);
+        }
+    }
+    return url;
+}
 
 /**
  * A request that either returns the parsed body or throws something a toast can
@@ -14,9 +33,16 @@
  * `fallback` is what to say when the API sends no message of its own. The API's
  * own message wins when there is one: "3 products still use this type" is worth
  * more than "could not delete".
+ *
+ * The storefront had a second wrapper of its own for a while. It knew how to
+ * build a query string and this one did not, so the dashboard concatenated
+ * "?limit=100" by hand at fifteen call sites; this one knew how to report a
+ * failure in Portuguese and that one did not, so a shopper got
+ * "Request failed: 500". Neither gap was worth two implementations.
  */
-export async function request(url, { method = "GET", body, fallback } = {}) {
+export async function request(url, { method = "GET", body, params, fallback } = {}) {
     const options = { method };
+    if (params) url = query(url, params);
 
     if (body instanceof FormData) {
         // No Content-Type: the browser has to set the multipart boundary itself.
@@ -49,6 +75,29 @@ export async function requestOr(url, fallbackValue) {
         return await request(url);
     } catch (error) {
         return fallbackValue;
+    }
+}
+
+/**
+ * One list endpoint's own array, unwrapped from its pagination envelope.
+ *
+ * `key` is what the envelope calls it: /api/color-sets/ answers
+ * `{ color_sets: [...], pagination: {...} }`. limit=100 because every list on
+ * these screens is a lookup the owners scroll, not a page they leaf through —
+ * it used to be spelled out at fifteen call sites.
+ *
+ * `orEmpty` is for a list that is context rather than content: a filter bar with
+ * no options is worth more than a page that refused to load.
+ */
+export async function list(url, key, { fallback, orEmpty = false, limit = 100 } = {}) {
+    const options = { params: { limit }, fallback };
+
+    if (!orEmpty) return (await request(url, options))[key] ?? [];
+
+    try {
+        return (await request(url, options))[key] ?? [];
+    } catch (error) {
+        return [];
     }
 }
 
