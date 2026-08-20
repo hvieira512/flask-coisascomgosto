@@ -59,6 +59,61 @@ class TestTheNavbar:
         assert state["burgerBottom"] <= state["barBottom"] + 1
         assert errors == []
 
+    def test_the_bar_says_who_is_signed_in(self, phone):
+        """It used to hide the username below 992px, on the stated grounds that the
+        name was "inside the menu" — the menu held only Sair, so on a phone the
+        dashboard never said whose it was. There is no shortage of room: the bar had
+        208 free pixels beside the brand."""
+        page, _ = phone
+        state = page.evaluate(
+            """() => {
+                const name = document.querySelector('.dash-user-name');
+                return {
+                    text: name.textContent.trim(),
+                    width: Math.round(name.getBoundingClientRect().width),
+                    display: getComputedStyle(name).display,
+                };
+            }"""
+        )
+        assert state["text"] == "phone"
+        assert state["width"] > 0, state
+        assert state["display"] != "none"
+
+    def test_the_menu_carries_the_name_in_full(self, phone):
+        """The bar truncates a long one, so the dropdown is where it is readable."""
+        page, _ = phone
+        page.click("[data-dropdown-trigger]")
+        page.wait_for_selector(".dropdown-menu.show")
+
+        header = page.locator(".dropdown-menu.show .dropdown-header")
+        assert header.inner_text().strip() == "phone"
+
+    def test_a_long_name_gives_way_instead_of_breaking_the_bar(self, phone):
+        """A .navbar wraps by default and this one has a fixed height, so anything
+        that does not fit dropped onto a second line the bar then clipped: at 320px
+        the burger ended up at x=183 of 320, under the brand."""
+        page, _ = phone
+        page.evaluate(
+            "() => { document.querySelector('.dash-user-name').textContent ="
+            " 'mariajoaodecarvalhoesilva'; }"
+        )
+        state = page.evaluate(
+            """() => {
+                const name = document.querySelector('.dash-user-name');
+                const burger = document.getElementById('sidebarToggle').getBoundingClientRect();
+                const brand = document.querySelector('.navbar-brand').getBoundingClientRect();
+                return {
+                    truncated: name.scrollWidth > name.clientWidth + 1,
+                    burgerRight: Math.round(burger.right),
+                    onTheBrandsLine: brand.right <= name.getBoundingClientRect().left,
+                    viewport: window.innerWidth,
+                };
+            }"""
+        )
+        assert state["truncated"], "the name should ellipsize, not push"
+        assert state["viewport"] - state["burgerRight"] < 24, state
+        assert state["onTheBrandsLine"], "the bar wrapped onto a second line"
+
     def test_the_burger_is_against_the_right_edge(self, phone):
         """It is the last thing in the bar, which is where a thumb expects it."""
         page, _ = phone

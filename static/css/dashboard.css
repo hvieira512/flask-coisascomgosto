@@ -36,6 +36,10 @@
     min-height: var(--dash-navbar-height);
     height: var(--dash-navbar-height);
     padding: 0 .75rem;
+    /* A .navbar wraps by default, and this one has a fixed height: at 320px the
+       user menu and the burger dropped onto a second line that the bar then
+       clipped. Nothing here may wrap — the brand truncates instead. */
+    flex-wrap: nowrap;
 }
 
 .dash-navbar .navbar-brand {
@@ -59,6 +63,11 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
+    /* The bar cannot grow, so a long username has to give way rather than push
+       the burger off the edge — .text-truncate in the markup does the giving way,
+       and needs this to be allowed to shrink at all. The dropdown carries the
+       name in full. */
+    min-width: 0;
 }
 
 .dash-navbar .dropdown-menu {
@@ -173,11 +182,12 @@
         padding: 1.25rem;
     }
 
-    /* The username is the widest thing in the bar and the least useful part of
-       it at this width: the icon says whose menu this is, and the name is
-       inside it. */
+    /* Enough for a first name, which is what these two owners use. It used to be
+       display: none here, on the grounds that the name was "inside the menu" —
+       it was not, the menu held only Sair, so on a phone the dashboard never
+       said who was signed in. */
     .dash-user-name {
-        display: none;
+        max-width: 7rem;
     }
 }
 
@@ -651,4 +661,12 @@
 .step-progress {
     height: .35rem;
     --bs-progress-bar-bg: var(--ccg-blue-500);
+}
+
+/* The signed-in name at the head of its own menu. Bootstrap's dropdown-header is
+   uppercase-grey small print, which reads as a section label; this is a value. */
+.dash-user-header {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ccg-blue-900);
 }
