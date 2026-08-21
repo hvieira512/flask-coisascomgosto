@@ -72,8 +72,31 @@ class TestTheRail:
         # the chosen one again is how you get back to it.
         assert "Ver tudo" not in names
         assert "Filigrana" in names and "Bordados" in names
-        assert "Vazia" not in names, "a collection with nothing behind it is a dead end"
+        # Every collection the workshop has, including one with nothing filed
+        # under it yet: three of the six real ones were empty, and those three
+        # were the only ones with cover photographs. It is shown and not
+        # offered — see the test below.
+        assert "Vazia" in names
         assert errors == []
+
+    def test_a_collection_with_no_pieces_is_shown_but_not_offered(self, catalogue):
+        """The same decision the sidebar makes for a material with no pieces: it
+        is part of the workshop's vocabulary, and choosing it could only ever
+        empty the grid."""
+        page, _, _ = catalogue
+        empty = card(page, "Vazia")
+
+        assert empty.get_attribute("aria-disabled") == "true"
+        assert empty.get_attribute("data-collection-id") is None
+        assert "ainda sem peças" in empty.inner_text().lower()
+
+        # force, because Playwright refuses to click an aria-disabled button —
+        # which is the contract working. The point here is that a click landing
+        # on it anyway changes nothing.
+        empty.click(force=True)
+        page.wait_for_timeout(300)
+        assert nothing_chosen(page), "an empty collection must not filter anything"
+        assert shown(page) == 4
 
     def test_the_grid_is_already_full_before_anything_is_chosen(self, catalogue):
         """The whole point of a rail rather than a gate."""
@@ -414,18 +437,18 @@ class TestACrowdedRail:
         )
         assert len(set(bottoms)) == 1, bottoms
 
-    def test_a_few_collections_still_fill_the_width(self, catalogue):
-        """The other end of the same rule: three collections must not become three
-        narrow cards with a gap where the rest of the row would be."""
+    def test_a_tile_is_the_same_size_whatever_the_count(self, catalogue):
+        """The other end of the same rule. Grow with a ceiling, not without one:
+        three collections sharing the whole row came out 367px wide each, half
+        again what the design asks for. A tile is 13-16rem, always."""
         page, _, _ = catalogue
         widths = page.eval_on_selector_all(
             ".collection-card",
             "els => els.map(el => Math.round(el.getBoundingClientRect().width))",
         )
-        strip = page.locator("#collection-strip").bounding_box()
 
         assert len(set(widths)) == 1, widths
-        assert sum(widths) > strip["width"] * 0.9, "the row left the column half empty"
+        assert 208 <= widths[0] <= 256, widths
 
 
 class TestWhenThereIsNothingToChoose:

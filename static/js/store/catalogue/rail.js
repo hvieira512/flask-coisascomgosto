@@ -45,7 +45,7 @@ export async function mountRail(facets) {
     // d-block on the ratio box as well as .ratio: Bootstrap's rule sets position
     // and width but not display, so as a span it stayed inline and the
     // photograph came out half the tile's width.
-    function tile({ id, name, detail, active, photo }) {
+    function tile({ id, name, detail, active, photo, empty }) {
         const art = photo
             ? `<img class="object-fit-cover" src="${escapeHtml(photo)}"
                     alt="${escapeHtml(name)}" loading="lazy">`
@@ -63,10 +63,18 @@ export async function mountRail(facets) {
                </span>`
             : "";
 
+        // A collection with nothing in it yet is shown and not offered — the same
+        // decision the sidebar already makes for a material with no pieces:
+        // it is part of the workshop's vocabulary, and choosing it could only
+        // ever empty the grid.
+        const state = empty
+            ? 'aria-disabled="true" title="Ainda sem peças"'
+            : `aria-pressed="${active}" data-collection-id="${id}"`;
+
         return `
       <li>
-        <button type="button" aria-pressed="${active}" data-collection-id="${id}"
-                class="collection-card d-block w-100 p-0 border-0 bg-transparent position-relative overflow-hidden">
+        <button type="button" ${state}
+                class="collection-card d-block w-100 p-0 border-0 bg-transparent position-relative overflow-hidden${empty ? " is-empty" : ""}">
           <span class="collection-cover ratio d-block" style="--bs-aspect-ratio: 66%">${art}</span>
           ${label}
         </button>
@@ -97,22 +105,24 @@ export async function mountRail(facets) {
             if (!rail || !strip) return;
 
             const counts = facets.collections ?? new Map();
-            // A collection with nothing behind it is a dead end. A single one still
-            // gets a rail, though: with no Colecção group in the sidebar this is the
-            // only way to filter by collection at all, and hiding it would remove
-            // the filter rather than tidy it away.
-            const offered = collections.filter((c) => (counts.get(c.id) ?? 0) > 0);
-            rail.hidden = offered.length === 0;
+            rail.hidden = collections.length === 0;
             if (rail.hidden) return;
 
-            strip.innerHTML = offered
+            // Every collection the workshop has, however few pieces are filed
+            // under it yet. The rail used to offer only those with pieces, which
+            // hid three of the six — and those three are the ones with cover
+            // photographs. An empty one is drawn and not offered; see tile().
+            strip.innerHTML = collections
                 .map((collection) => {
                     const pieces = counts.get(collection.id) ?? 0;
                     return tile({
                         id: collection.id,
                         name: collection.name,
                         photo: collection.image_url,
-                        detail: `${pieces} ${pieces === 1 ? "peça" : "peças"}`,
+                        detail: pieces
+                            ? `${pieces} ${pieces === 1 ? "peça" : "peças"}`
+                            : "ainda sem peças",
+                        empty: pieces === 0,
                         active: StoreFilters.isSelected("collection_id", collection.id),
                     });
                 })

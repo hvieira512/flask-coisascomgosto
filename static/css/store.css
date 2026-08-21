@@ -273,10 +273,26 @@ a.card:hover {
     scroll-snap-type: x proximity;
 }
 
+/* A ceiling as well as a floor. With flex-grow alone three collections shared the
+   whole 1136px row and came out 367px wide each — half again what the design
+   asks for. They grow to fill a row that is nearly full and no further; past
+   that the rail scrolls. */
 .collection-rail > li {
+    /* Grow, never shrink, and stop at 16rem. Shrink is what turned six tiles into
+       46px slivers on a phone instead of a rail that scrolls; grow alone let three
+       share the whole 1136px row at 367px each, half again what the design asks
+       for. Between the two, a tile is 13-16rem and the rail scrolls past five. */
     flex: 1 0 13rem;
+    max-width: 16rem;
     list-style: none;
     scroll-snap-align: start;
+}
+
+/* A collection with no pieces yet: shown, because it is part of the workshop's
+   vocabulary, and not offered, because choosing it could only empty the grid. */
+.collection-card.is-empty {
+    cursor: default;
+    opacity: .72;
 }
 
 /* Timeline. The connecting line is each entry's top border, so the entries
