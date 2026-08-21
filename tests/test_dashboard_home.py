@@ -289,6 +289,61 @@ class TestWithSomethingRecorded:
         ).inner_text()
 
 
+class TestWhatIsNewInTheCatalogue:
+    """products.created_at only became true when migration 0011 ran. Until a window
+    begins after it, the phrase is left out entirely rather than reporting the
+    migration's own backfill as this week's work."""
+
+    @pytest.fixture()
+    def migrated_days_ago(self):
+        from db import get_db_connection
+        from repositories.analytics import CREATED_AT_MIGRATION
+
+        with get_db_connection() as (_, cursor):
+            cursor.execute(
+                "SELECT applied_at FROM schema_migrations WHERE filename = %s",
+                (CREATED_AT_MIGRATION,),
+            )
+            row = cursor.fetchone()
+
+        assert row, f"{CREATED_AT_MIGRATION} is not recorded as applied"
+        original = row["applied_at"]
+
+        def move(days):
+            with get_db_connection() as (_, cursor):
+                cursor.execute(
+                    "UPDATE schema_migrations SET applied_at = NOW() - INTERVAL %s DAY "
+                    "WHERE filename = %s",
+                    (days, CREATED_AT_MIGRATION),
+                )
+
+        yield move
+
+        # conftest.py leaves schema_migrations alone between tests on purpose, so
+        # this has to be undone here or it follows the suite around.
+        with get_db_connection() as (_, cursor):
+            cursor.execute(
+                "UPDATE schema_migrations SET applied_at = %s WHERE filename = %s",
+                (original, CREATED_AT_MIGRATION),
+            )
+
+    def test_the_line_says_nothing_while_it_cannot_be_said(self, owner, piece):
+        open_home, page, _ = owner
+        open_home()
+
+        assert "nova" not in page.locator("#catalogue-line").inner_text()
+
+    def test_a_new_piece_is_counted_once_the_dates_are_real(
+        self, owner, piece, migrated_days_ago
+    ):
+        migrated_days_ago(60)
+        open_home, page, _ = owner
+
+        open_home(7)
+
+        assert "1 nova" in page.locator("#catalogue-line").inner_text()
+
+
 class TestTheWindowSelector:
     def test_it_opens_on_a_week(self, owner):
         open_home, page, _ = owner

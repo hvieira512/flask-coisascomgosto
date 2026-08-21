@@ -188,8 +188,14 @@ function renderTopFilters({ top_filters: filters, window: win }) {
 }
 
 function renderCatalogue({ catalogue, window: win }) {
+    // `added` is null when the window reaches back past the day pieces started
+    // being dated, and 0 is nothing to announce — so both leave the phrase out.
+    const added = catalogue.added
+        ? ` (${catalogue.added} ${catalogue.added === 1 ? "nova" : "novas"})`
+        : "";
+
     const parts = [
-        `${catalogue.products} ${catalogue.products === 1 ? "peça" : "peças"}`,
+        `${catalogue.products} ${catalogue.products === 1 ? "peça" : "peças"}${added}`,
         `${catalogue.color_sets} ${catalogue.color_sets === 1 ? "conjunto de cor" : "conjuntos de cor"}`,
         `${catalogue.collections} ${catalogue.collections === 1 ? "colecção" : "colecções"}`,
         `${catalogue.colors} ${catalogue.colors === 1 ? "cor" : "cores"}`,

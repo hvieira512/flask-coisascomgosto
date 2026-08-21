@@ -258,3 +258,9 @@ class TestTheCatalogueLine:
         assert catalogue["color_sets"] == 1
         assert catalogue["colors"] >= 1
         assert catalogue["collections"] == 0
+
+    def test_pieces_added_is_null_until_the_dates_mean_something(self, client, piece):
+        """A database built from schema.sql stamps 0011 as applied now, so every
+        window still reaches back before pieces were dated — and the answer is
+        "cannot say" rather than "one new piece"."""
+        assert client.get(URL).get_json()["catalogue"]["added"] is None

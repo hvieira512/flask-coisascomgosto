@@ -72,6 +72,12 @@ catalogue_model = Model(
         "color_sets": fields.Integer(description="Colour sets"),
         "collections": fields.Integer(description="Collections"),
         "colors": fields.Integer(description="Individual colours"),
+        "added": fields.Integer(
+            description="Pieces added during the window, or null when the window "
+            "begins before pieces were dated at all — every row that predates "
+            "migration 0011 carries the date that migration ran, so an earlier "
+            "window would report the whole back catalogue as new"
+        ),
     },
 )
 

@@ -26,6 +26,12 @@ KINDS = ("view", "enquiry", "search", "filter")
 # once here rather than at every read.
 TERM_MAX = 120
 
+# products.created_at arrived with this migration, and every row that already
+# existed took the date it ran. So the column can be counted over a window that
+# begins after that date, and over any earlier window it would report the whole
+# back catalogue as new — which is why `pieces_added` answers None instead.
+CREATED_AT_MIGRATION = "0011_created_at_on_the_catalogue.sql"
+
 
 class AnalyticsRepository:
 
@@ -92,6 +98,34 @@ class AnalyticsRepository:
         return started.isoformat() if started else None
 
 
+    def pieces_added(self, days: int) -> Optional[int]:
+        """How many pieces were added in the window, or None if it cannot be said.
+
+        None means "the window reaches back past the day the column existed", and
+        the page leaves the phrase out entirely. Answering 14 there would be
+        counting the migration's own backfill as a fortnight's work.
+        """
+        self._cursor.execute(
+            "SELECT applied_at FROM schema_migrations WHERE filename = %s",
+            (CREATED_AT_MIGRATION,),
+        )
+        row = self._cursor.fetchone()
+        if not row:
+            return None
+
+        self._cursor.execute(
+            "SELECT NOW() - INTERVAL %s DAY > %s AS honest", (days, row["applied_at"])
+        )
+        if not one_row(self._cursor)["honest"]:
+            return None
+
+        self._cursor.execute(
+            "SELECT COUNT(*) AS total FROM products "
+            "WHERE created_at >= NOW() - INTERVAL %s DAY",
+            (days,),
+        )
+        return one_row(self._cursor)["total"]
+
     # ----------------
     # Reading: one window's worth of everything the dashboard shows
     # ----------------
@@ -126,6 +160,11 @@ class AnalyticsRepository:
         `offset_days` shifts it back a whole window, which is how the previous
         period is asked for with the same SQL.
 
+        Qualified `e.created_at`, and every query below aliases the table `e` for
+        it. Unqualified was fine until 0011 gave products, variants and colour sets
+        a created_at of their own, at which point every joined query here died on
+        "column 'created_at' in where clause is ambiguous".
+
         The current window has no upper bound on purpose. `created_at < NOW()`
         looks equivalent and is not: DATETIME keeps whole seconds, so an event
         recorded in the same second as the query has a timestamp equal to NOW()
@@ -133,11 +172,11 @@ class AnalyticsRepository:
         happened, and only sometimes, depending on where the second boundary fell.
         """
         if offset_days == 0:
-            return "created_at >= NOW() - INTERVAL %s DAY", [days]
+            return "e.created_at >= NOW() - INTERVAL %s DAY", [days]
 
         return (
-            "created_at >= NOW() - INTERVAL %s DAY "
-            "AND created_at < NOW() - INTERVAL %s DAY",
+            "e.created_at >= NOW() - INTERVAL %s DAY "
+            "AND e.created_at < NOW() - INTERVAL %s DAY",
             [days + offset_days, offset_days],
         )
 
@@ -149,7 +188,7 @@ class AnalyticsRepository:
             "  SUM(kind = 'enquiry') AS enquiries, "
             "  SUM(kind = 'search') AS searches, "
             "  COUNT(DISTINCT CASE WHEN kind = 'view' THEN product_id END) AS pieces "
-            f"FROM storefront_events WHERE {where}",
+            f"FROM storefront_events e WHERE {where}",
             params,
         )
         row = one_row(self._cursor)
@@ -210,7 +249,7 @@ class AnalyticsRepository:
         making, in their own words."""
         where, params = self._since(days, 0)
         self._cursor.execute(
-            "SELECT term, COUNT(*) AS count FROM storefront_events "
+            "SELECT term, COUNT(*) AS count FROM storefront_events e "
             f"WHERE {where} AND kind = 'search' AND results = 0 AND term IS NOT NULL "
             "GROUP BY term ORDER BY count DESC, term LIMIT %s",
             params + [top],
@@ -224,7 +263,7 @@ class AnalyticsRepository:
         where, params = self._since(days, 0)
         self._cursor.execute(
             "SELECT facet, facet_label AS label, COUNT(*) AS count "
-            "FROM storefront_events "
+            "FROM storefront_events e "
             f"WHERE {where} AND kind = 'filter' AND facet_label IS NOT NULL "
             "GROUP BY facet, facet_label ORDER BY count DESC, facet, facet_label "
             "LIMIT %s",

@@ -52,7 +52,8 @@ class AnalyticsOverview(Resource):
         days = max(1, min(days, MAX_DAYS))
 
         with get_db_connection() as (_, cursor):
-            overview = AnalyticsRepository(cursor).overview(days=days)
+            analytics = AnalyticsRepository(cursor)
+            overview = analytics.overview(days=days)
 
             # Composed here rather than in the analytics repository: these are
             # four ordinary counts of the catalogue's own tables, and the reason
@@ -63,6 +64,9 @@ class AnalyticsOverview(Resource):
                 "color_sets": ColorSetRepository(cursor).count(),
                 "collections": CollectionRepository(cursor).count(),
                 "colors": ColorRepository(cursor).count(),
+                # None when the window reaches back before pieces had a date at
+                # all, which the page reads as "leave the phrase out".
+                "added": analytics.pieces_added(days),
             }
 
             return overview

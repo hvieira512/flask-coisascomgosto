@@ -193,3 +193,63 @@ class TestWhenCountingStarted:
         assert analytics.count() == 2
         assert analytics.count("view") == 1
         assert analytics.count("enquiry") == 0
+
+
+class TestPiecesAdded:
+    """products.created_at only became true when 0011 ran, and every row that
+    already existed took that date. So the count is answerable over a window that
+    begins after the migration and a lie over one that begins before it — where the
+    whole back catalogue would read as this week's work."""
+
+    @pytest.fixture()
+    def dated(self, cursor):
+        """Move the migration's own timestamp, and put it back.
+
+        The restore matters: tests/conftest.py deliberately leaves
+        schema_migrations alone between tests, so a change here would follow the
+        suite around.
+        """
+        from repositories.analytics import CREATED_AT_MIGRATION
+
+        cursor.execute(
+            "SELECT applied_at FROM schema_migrations WHERE filename = %s",
+            (CREATED_AT_MIGRATION,),
+        )
+        original = cursor.fetchone()["applied_at"]
+
+        def move(days_ago):
+            cursor.execute(
+                "UPDATE schema_migrations SET applied_at = NOW() - INTERVAL %s DAY "
+                "WHERE filename = %s",
+                (days_ago, CREATED_AT_MIGRATION),
+            )
+
+        yield move
+
+        cursor.execute(
+            "UPDATE schema_migrations SET applied_at = %s WHERE filename = %s",
+            (original, CREATED_AT_MIGRATION),
+        )
+
+    def test_it_says_nothing_while_the_window_predates_the_column(
+        self, analytics, piece, dated
+    ):
+        dated(3)
+
+        assert analytics.pieces_added(7) is None
+
+    def test_it_counts_once_the_window_starts_after_the_migration(
+        self, analytics, piece, dated
+    ):
+        dated(60)
+
+        assert analytics.pieces_added(7) == 1
+
+    def test_a_piece_older_than_the_window_is_not_new(
+        self, analytics, cursor, piece, dated
+    ):
+        dated(60)
+        cursor.execute("UPDATE products SET created_at = NOW() - INTERVAL 30 DAY")
+
+        assert analytics.pieces_added(7) == 0
+        assert analytics.pieces_added(40) == 1

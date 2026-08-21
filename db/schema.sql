@@ -82,7 +82,8 @@ CREATE TABLE collections (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     description TEXT,
-    image_url VARCHAR(500)
+    image_url VARCHAR(500),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- A single colour. `hex` is optional and drives swatches in the dashboard.
@@ -119,6 +120,7 @@ CREATE TABLE product_types (
 CREATE TABLE color_sets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_color_sets_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -160,6 +162,11 @@ CREATE TABLE products (
     default_size_id INT,
     name VARCHAR(180) NOT NULL,
     description TEXT,
+    -- Rows that predate 0011 carry the date that migration ran, not the date they
+    -- were added; see the migration, and analytics.py, which refuses to count a
+    -- window beginning before it.
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_products_created (created_at),
     KEY idx_products_material (material_id),
     KEY idx_products_type (type_id),
     KEY idx_products_collection (collection_id),
@@ -184,6 +191,7 @@ CREATE TABLE product_variants (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
     color_set_id INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_product_variants_product_color_set (product_id, color_set_id),
     KEY idx_product_variants_product (product_id),
     KEY idx_product_variants_color_set (color_set_id),
@@ -211,6 +219,7 @@ CREATE TABLE product_images (
     -- uploaded, so a mis-tap has to be an UPDATE and not a lost file.
     -- uploads.sweep() is the only thing that deletes either.
     deleted_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_product_images_product (product_id),
     KEY idx_product_images_variant (variant_id),
     KEY idx_product_images_deleted (deleted_at),
