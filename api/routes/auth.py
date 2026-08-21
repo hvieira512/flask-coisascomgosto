@@ -28,6 +28,7 @@ from flask_restx import Namespace, Resource
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import get_db_connection
+from api import rate_limit
 from api.models.auth import login_model, refresh_model, register_model, token_model
 from api.models.users import user_model
 from api.routes.crud import bail
@@ -103,20 +104,52 @@ class Login(Resource):
     @ns.expect(login_model, validate=True)
     @ns.marshal_with(token_model)
     @ns.response(200, "Access and refresh tokens")
-    @ns.response(401, "Invalid password")
+    @ns.response(401, "Invalid password, or no password sent")
     @ns.response(404, "Unknown username")
+    @ns.response(429, "Too many failed attempts for this username")
     def post(self):
-        """Exchange a username and password for a token pair."""
+        """Exchange a username and password for a token pair.
+
+        **404 and 401 mean different things here, on purpose.** The login page
+        asks for the username first and the password on a second screen, and it
+        decides which screen to show from this status: 404 offers to create the
+        account, 401 asks for the password. That makes the endpoint an
+        enumeration oracle by design — acceptable for a two-person dashboard that
+        also *offers* registration, so who has an account here is not a secret.
+
+        A username with no password is that first step: it answers 404 or 401
+        without touching the stored hash, and does not count as a failed attempt.
+        Guessing costs an attempt; asking which form to draw does not.
+        """
         data = ns.payload
+        username = data["username"]
+        password = data.get("password")
+
+        if rate_limit.is_locked(username):
+            bail(
+                ns,
+                429,
+                "Too many failed attempts for this username. Wait a few minutes "
+                "and try again.",
+            )
 
         with get_db_connection() as (_, cursor):
-            credentials = UserRepository(cursor).get_credentials(data["username"])
+            credentials = UserRepository(cursor).get_credentials(username)
             if not credentials:
+                # A guess at a username is still a guess. Only the ones carrying
+                # a password count, so the login page's own question is free.
+                if password:
+                    rate_limit.note_failure(username)
                 bail(ns, 404, "User invalid.")
 
-            if not check_password_hash(credentials["password"], data["password"]):
+            if not password:
+                bail(ns, 401, "This account exists. Send the password.")
+
+            if not check_password_hash(credentials["password"], password):
+                rate_limit.note_failure(username)
                 ns.abort(401, "Invalid login.")
 
+            rate_limit.forget(username)
             user = {k: v for k, v in credentials.items() if k != "password"}
 
             # The rendered dashboard authenticates by session, so keep

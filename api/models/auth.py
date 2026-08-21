@@ -6,7 +6,14 @@ login_model = Model(
     "Login",
     {
         "username": fields.String(required=True, description="Username"),
-        "password": fields.String(required=True, description="User Password"),
+        # Optional so the login page's first step can ask whether an account
+        # exists without sending a guess. See Login.post.
+        "password": fields.String(
+            required=False,
+            description="Omit to ask whether the username exists: 404 if not, "
+            "401 if it does. No hash is checked and nothing is counted against "
+            "the account.",
+        ),
     },
 )
 

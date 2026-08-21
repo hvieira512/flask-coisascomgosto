@@ -67,6 +67,17 @@ def clean_database(database):
             cursor.execute(statement)
 
 
+@pytest.fixture(autouse=True)
+def forget_failed_logins():
+    """The failed-login counter lives in process memory, so it outlives the
+    database truncation and would carry a lockout into the next test."""
+    from api import rate_limit
+
+    rate_limit._failures.clear()
+    yield
+    rate_limit._failures.clear()
+
+
 @pytest.fixture()
 def app(clean_database):
     """A Flask app bound to the freshly emptied test database."""

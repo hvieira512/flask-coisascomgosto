@@ -309,6 +309,28 @@ rather than a redesign. Password hashes are never returned.
 > JWTs are stateless, so `/auth/logout` clears the session but cannot revoke an
 > issued token — the client discards it.
 >
+> **Why login answers 404 and 401 differently.** The login page asks for the
+> username first and the password on a second screen, and decides which screen to
+> draw from the status: 404 offers to create the account, 401 asks for the
+> password. So the endpoint tells you who has an account — which is acceptable
+> here, since the same page openly offers registration, and the accounts belong to
+> the two people who run the business.
+>
+> That first step sends the username with **no password**, and the endpoint
+> answers without touching the stored hash. It used to send the password `"fake"`,
+> which made every visit to /auth a failed login: a wasted scrypt on the server,
+> and once wrong guesses started being counted, five page loads from locking the
+> owners out of their own dashboard.
+>
+> **Wrong guesses are counted.** Five failures against one username inside
+> fifteen minutes and the next attempt answers `429`, right password included —
+> the point of a lockout is that the next guess is not tried. A successful sign-in
+> clears the record, the window drains on its own, and refusals are not counted,
+> so someone who keeps knocking cannot hold the lockout open. `api/rate_limit.py`
+> keeps this in process memory: the count is per gunicorn worker and resets with
+> the app, which is honest for one or two workers and is the seam a Redis counter
+> would slot into.
+>
 > **The signing keys are not optional.** `config.py` raises at import if either
 > `SECRET_KEY` or `JWT_SECRET_KEY` still holds the placeholder `.env.example`
 > ships for it and `FLASK_DEBUG` is not `1`, because the failure it prevents is
@@ -376,11 +398,12 @@ name.
 |---|---|
 | `200` / `201` | Success |
 | `400` | Missing/invalid body fields, bad pagination, or illegal type nesting |
-| `401` | Wrong password, or a missing/expired access token and no session |
+| `401` | Wrong password, a username sent without one, or a missing/expired access token and no session |
 | `403` | A session-authenticated write with no `X-Requested-With` header |
 | `422` | Malformed token, or the wrong token type for the endpoint |
 | `404` | The resource, or something it references, does not exist |
 | `409` | Name (or variant) already taken |
+| `429` | Five failed logins for this username inside fifteen minutes |
 
 ### Behaviour the schema does not show
 
