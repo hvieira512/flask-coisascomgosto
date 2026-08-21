@@ -47,11 +47,12 @@ EMAIL = re.compile(r"([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2
 def _tokens_for(user: dict) -> dict:
     """The token pair for a user.
 
-    The identity is the user id as a string, because a JWT `sub` must be one.
-    is_admin rides along as a claim so a guard needs no database round trip.
+    The identity is the user id as a string, because a JWT `sub` must be one. The
+    username rides along as a claim so a log line or an audit does not need a
+    database round trip to say who acted.
     """
     identity = str(user["id"])
-    claims = {"username": user["username"], "is_admin": user["is_admin"]}
+    claims = {"username": user["username"]}
 
     return {
         "access_token": create_access_token(identity=identity, additional_claims=claims),
@@ -89,13 +90,10 @@ class Register(Resource):
             if users.email_exists(email):
                 ns.abort(409, "This email is already taken")
 
-            # is_admin is deliberately not taken from the payload: it would let
-            # anyone self-register as an administrator.
             user_id = users.create(
                 username=username,
                 email=email,
                 password_hash=generate_password_hash(password),
-                is_admin=False,
             )
             return users.get(user_id), 201
 
@@ -151,7 +149,7 @@ class Refresh(Resource):
             if not user:
                 bail(ns, 401, "The account for this token no longer exists.")
 
-            claims = {"username": user["username"], "is_admin": user["is_admin"]}
+            claims = {"username": user["username"]}
             return {
                 "access_token": create_access_token(
                     identity=str(user["id"]), additional_claims=claims

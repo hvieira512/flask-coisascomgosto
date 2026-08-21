@@ -10,8 +10,6 @@ login_model = Model(
     },
 )
 
-# Note: is_admin is intentionally absent. Accepting it here would let any
-# caller register themselves as an administrator.
 register_model = Model(
     "Register",
     {

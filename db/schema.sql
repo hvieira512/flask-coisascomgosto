@@ -173,7 +173,6 @@ CREATE TABLE users (
     -- Werkzeug scrypt hashes run to ~162 chars; 255 leaves room for a change
     -- of hashing method without a migration.
     password VARCHAR(255) NOT NULL,
-    is_admin TINYINT(1) NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

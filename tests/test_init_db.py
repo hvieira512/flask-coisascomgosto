@@ -79,17 +79,17 @@ class TestInitDbKeepsAccounts:
                 (second, "maria"),
             ]
 
-    def test_admin_stays_admin(self):
-        _create_user(
-            username="hugo",
-            email="hugo@example.com",
-            password_hash="h",
-            is_admin=True,
-        )
+    def test_the_email_survives_too(self):
+        """Every column the restored table still has comes back, not just the two
+        the other tests look at — _restore_users copies whatever both schemas have
+        in common, so that a schema change is never what loses an account."""
+        _create_user(username="hugo", email="hugo@example.com", password_hash="h")
 
         init_db()
 
-        assert _one("SELECT is_admin FROM users WHERE username = 'hugo'")["is_admin"] == 1
+        assert _one("SELECT email FROM users WHERE username = 'hugo'")["email"] == (
+            "hugo@example.com"
+        )
 
     def test_the_catalog_is_still_rebuilt(self):
         """Preserving accounts must not turn init-db into a no-op: everything

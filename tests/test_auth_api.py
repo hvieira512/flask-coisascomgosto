@@ -18,11 +18,15 @@ class TestRegister:
     def test_password_is_never_returned(self, client, make_user):
         assert "password" not in make_user("alice")
 
-    def test_new_users_are_not_admins(self, client, make_user):
-        assert make_user("alice")["is_admin"] is False
+    def test_registration_ignores_anything_it_did_not_ask_for(self, client):
+        """A payload field the model does not declare must not reach the insert.
 
-    def test_is_admin_cannot_be_set_from_the_payload(self, client):
-        """Regression: is_admin was read straight from the request body."""
+        This was the is_admin regression: the flag was read straight from the
+        request body, so anyone could register themselves an administrator. There
+        are no roles at all now, and the guarantee that matters outlives the flag —
+        an account is created from username, e-mail and password, and nothing else
+        a caller sends.
+        """
         response = client.post(
             "/api/auth/register",
             json={
@@ -30,10 +34,14 @@ class TestRegister:
                 "email": "eve@example.com",
                 "password": "pw",
                 "is_admin": True,
+                "id": 999,
             },
         )
         assert response.status_code == 201
-        assert response.get_json()["is_admin"] is False
+
+        body = response.get_json()
+        assert set(body) == {"id", "username", "email", "created_at"}
+        assert body["id"] != 999
 
     def test_duplicate_username_returns_409(self, client, make_user):
         make_user("alice", email="alice@example.com")

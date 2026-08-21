@@ -250,17 +250,14 @@ class TestUserRepository:
     def test_get_credentials_returns_none_when_missing(self, users):
         assert users.get_credentials("nobody") is None
 
-    def test_is_admin_is_returned_as_a_bool(self, users):
-        user_id = users.create(
-            username="root", email="r@example.com", password_hash="h", is_admin=True
-        )
-        assert users.get(user_id)["is_admin"] is True
-
-    def test_defaults_to_non_admin(self, users):
+    def test_an_account_has_no_role(self, users):
+        """One kind of account: everyone who can sign in can do everything the
+        dashboard offers. The two tests here before this asserted an is_admin flag
+        that nothing in the application ever read."""
         user_id = users.create(
             username="alice", email="a@example.com", password_hash="h"
         )
-        assert users.get(user_id)["is_admin"] is False
+        assert set(users.get(user_id)) == {"id", "username", "email", "created_at"}
 
     def test_uniqueness_checks(self, users):
         users.create(username="alice", email="a@example.com", password_hash="h")

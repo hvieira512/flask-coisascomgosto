@@ -1,0 +1,13 @@
+-- There is one kind of account. Two people run this workshop, both of them sign
+-- in to the same dashboard, and everything the dashboard does is something they
+-- are both allowed to do — so a flag saying which of them is an administrator was
+-- a distinction the product never made.
+--
+-- Nothing read it. It rode along in every user payload and in the JWT claims
+-- "so a guard needs no database round trip", and no guard was ever written; the
+-- register endpoint's only interest in it was refusing to let a caller set it.
+-- Removing the column is what stops the next reader assuming there is a role
+-- system to extend.
+--
+-- Should roles ever be wanted, this is a column with a default, not a redesign.
+ALTER TABLE users DROP COLUMN is_admin;

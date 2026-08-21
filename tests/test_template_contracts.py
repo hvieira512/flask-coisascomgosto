@@ -241,7 +241,7 @@ class TestColorScheme:
     def test_dashboard_pins_the_light_scheme(self, client):
         """The dashboard has its own base template, so it needs its own guard."""
         with client.session_transaction() as flask_session:
-            flask_session["user"] = {"id": 1, "username": "admin", "is_admin": True}
+            flask_session["user"] = {"id": 1, "username": "admin"}
 
         html = client.get("/dashboard/home").get_data(as_text=True)
         assert 'data-bs-theme="light"' in html

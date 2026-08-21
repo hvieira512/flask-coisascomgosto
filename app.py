@@ -66,12 +66,15 @@ def seed_command():
     seed()
 
 
-@app.cli.command("create-admin")
+@app.cli.command("create-user")
 @click.argument("username")
 @click.option("--email", prompt=True, help="Used for the account only; nothing is sent.")
 @click.password_option(help="Prompted for, so it stays out of your shell history.")
-def create_admin_command(username, email, password):
-    """Create an administrator account.
+def create_user_command(username, email, password):
+    """Create an account for the dashboard.
+
+    There is one kind of account: everyone who can sign in can do everything the
+    dashboard offers. This was `create-admin` while a role column existed.
 
     The password is prompted for and hashed here; it is never passed as an
     argument, so it does not end up in the shell history or the process list.
@@ -93,10 +96,9 @@ def create_admin_command(username, email, password):
             username=username,
             email=email,
             password_hash=generate_password_hash(password),
-            is_admin=True,
         )
 
-    click.echo(f"Administrator created: {username}")
+    click.echo(f"Account created: {username}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """Repository layer: every SQL statement in the application lives here.
 
 Top-level, not under api/: the REST API is one caller, and the storefront's page
-routes, the seed and the create-admin command are the others.
+routes, the seed and the create-user command are the others.
 
 One repository per table (or closely-bound group of tables). Each takes a
 MySQL cursor and exposes intention-revealing methods, so route handlers never

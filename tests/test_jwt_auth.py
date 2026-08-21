@@ -48,14 +48,15 @@ class TestTokenIssuing:
         assert "access_token" not in response.get_json()
 
     def test_token_carries_the_username_claim(self, app, tokens):
-        """is_admin rides along so a guard needs no database round trip."""
+        """So saying who acted needs no database round trip. There was an is_admin
+        claim beside it for a while, which no guard ever consulted."""
         from flask_jwt_extended import decode_token
 
         with app.app_context():
             claims = decode_token(tokens["access_token"])
 
         assert claims["username"] == "apiclient"
-        assert claims["is_admin"] is False
+        assert "is_admin" not in claims
 
 
 class TestGuards:

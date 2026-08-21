@@ -8,9 +8,7 @@ from pymysql.cursors import DictCursor
 
 from repositories.base import one_row
 
-# Never selected alongside the public columns, so a password hash cannot
-# leak into a marshalled response by accident.
-_PUBLIC_COLUMNS = "id, username, email, created_at, is_admin"
+_PUBLIC_COLUMNS = "id, username, email, created_at"
 
 
 class UserRepository:
@@ -71,18 +69,11 @@ class UserRepository:
         self._cursor.execute("SELECT 1 FROM users WHERE email = %s", (email,))
         return self._cursor.fetchone() is not None
 
-    def create(
-        self,
-        *,
-        username: str,
-        email: str,
-        password_hash: str,
-        is_admin: bool = False,
-    ) -> int:
+    def create(self, *, username: str, email: str, password_hash: str) -> int:
         """Insert a user and return the new ID. Expects an already-hashed password."""
         self._cursor.execute(
-            "INSERT INTO users (username, email, password, is_admin) VALUES (%s, %s, %s, %s)",
-            (username, email, password_hash, bool(is_admin)),
+            "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
+            (username, email, password_hash),
         )
         return self._cursor.lastrowid
 
@@ -107,6 +98,4 @@ class UserRepository:
             "username": row["username"],
             "email": row["email"],
             "created_at": created_at.isoformat() if created_at else None,
-            # MySQL stores the flag as TINYINT(1), so 0/1 comes back, not a bool.
-            "is_admin": bool(row["is_admin"]),
         }

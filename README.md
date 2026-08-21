@@ -283,8 +283,7 @@ endpoint can be exercised from the docs.
 **When the access token expires**, the client POSTs to `/auth/refresh` with the
 **refresh** token and retries — no password prompt. An *access* token sent to
 `/auth/refresh` is rejected with `422`; only a refresh token is accepted there.
-Tokens carry `username` and `is_admin` claims, so a guard needs no database round
-trip.
+Tokens carry a `username` claim, so saying who acted needs no database round trip.
 
 Catalog **reads are public** — the storefront depends on that. Every **write**,
 plus all of `/users` and `/contacts`, is guarded by `auth_required` in
@@ -292,8 +291,11 @@ plus all of `/users` and `/contacts`, is guarded by `auth_required` in
 callers are API clients and `fetch()` requests, either of which would otherwise
 be handed a login page to parse as a payload.
 
-`is_admin` is **not** accepted at registration, so nobody can self-promote.
-Password hashes are never returned.
+**There is one kind of account.** Two people run this workshop, both sign in to
+the same dashboard, and everything it does is something either of them may do — so
+there are no roles. The `users` table carried an `is_admin` flag for a while that
+nothing ever read; it is gone, and a role system would be a column with a default
+rather than a redesign. Password hashes are never returned.
 
 > **Why `auth_required` also accepts a session.** The dashboard's pages are
 > rendered server-side and gated by Flask's session cookie, because a page load
@@ -440,7 +442,7 @@ static/js/store/product.js    detail page wiring
 
 ```
 app.py                  Flask app entrypoint + the init-db, migrate, seed and
-                        create-admin commands
+                        create-user commands
 config.py               Config read from environment variables
 
 api/
