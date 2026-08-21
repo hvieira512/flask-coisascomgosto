@@ -23,6 +23,7 @@ from flask_restx import Api
 
 from api.security import AUTHORIZATIONS
 
+from .routes.analytics import ns as analytics_ns
 from .routes.auth import ns as auth_ns
 from .routes.collections import ns as collections_ns
 from .routes.color_sets import ns as color_sets_ns
@@ -67,3 +68,4 @@ api.add_namespace(events_ns, path="/events")
 api.add_namespace(users_ns, path="/users")
 api.add_namespace(auth_ns, path="/auth")
 api.add_namespace(storefront_events_ns, path="/storefront-events")
+api.add_namespace(analytics_ns, path="/analytics")
