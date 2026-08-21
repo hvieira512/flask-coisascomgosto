@@ -76,14 +76,17 @@ def clean_database(database):
 
 
 @pytest.fixture(autouse=True)
-def forget_failed_logins():
-    """The failed-login counter lives in process memory, so it outlives the
-    database truncation and would carry a lockout into the next test."""
+def forget_rate_limits():
+    """The sliding windows live in process memory, so they outlive the database
+    truncation: a lockout or an events flood would be carried into the next test,
+    where nobody could read the failure."""
     from api import rate_limit
 
-    rate_limit._failures.clear()
+    for window in (rate_limit.logins, rate_limit.events):
+        window.clear()
     yield
-    rate_limit._failures.clear()
+    for window in (rate_limit.logins, rate_limit.events):
+        window.clear()
 
 
 @pytest.fixture()

@@ -33,6 +33,7 @@ from .routes.colors import ns as colors_ns
 from .routes.product_types import ns as product_types_ns
 from .routes.products import ns as products_ns
 from .routes.sizes import ns as sizes_ns
+from .routes.storefront_events import ns as storefront_events_ns
 from .routes.users import ns as users_ns
 
 api = Api(
@@ -65,3 +66,4 @@ api.add_namespace(contacts_ns, path="/contacts")
 api.add_namespace(events_ns, path="/events")
 api.add_namespace(users_ns, path="/users")
 api.add_namespace(auth_ns, path="/auth")
+api.add_namespace(storefront_events_ns, path="/storefront-events")

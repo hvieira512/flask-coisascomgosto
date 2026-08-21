@@ -250,7 +250,7 @@ class TestGuessingIsCounted:
             self._guess(anon_client)
         assert self._guess(anon_client).status_code == 429
 
-        monkeypatch.setattr(rate_limit, "WINDOW_SECONDS", 0)
+        monkeypatch.setattr(rate_limit.logins, "window_seconds", 0)
 
         assert self._guess(anon_client, "Passw0rd!").status_code == 200
 
@@ -264,7 +264,7 @@ class TestGuessingIsCounted:
         for _ in range(5):
             self._guess(anon_client)
 
-        assert len(rate_limit._failures["alice"]) == rate_limit.FAILURES_ALLOWED
+        assert len(rate_limit.logins._hits["alice"]) == rate_limit.FAILURES_ALLOWED
 
     def test_an_unknown_username_is_counted_too(self, anon_client):
         """Working through a list of guessed usernames is the other way to use

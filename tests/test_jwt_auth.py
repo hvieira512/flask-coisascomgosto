@@ -179,6 +179,16 @@ class TestSwaggerDocumentsAuth:
         schema = anon_client.get("/api/swagger.json").get_json()
         assert schema["paths"]["/users/"]["get"].get("security")
 
+    # Every write anyone may reach without an account, and why it is one:
+    #
+    #   /auth/               registering, signing in, signing out
+    #   /storefront-events/  a shopper recording that they opened a piece — they
+    #                        have no account and never will, so the defences are a
+    #                        rate limit and a header a crawler cannot set
+    #
+    # A third one has to be added here deliberately, which is the point.
+    PUBLIC_WRITES = ("/auth/", "/storefront-events/")
+
     def test_every_write_declares_security(self, anon_client):
         """A padlock missing from one write is how an endpoint quietly stops
         looking protected in the docs."""
@@ -190,9 +200,30 @@ class TestSwaggerDocumentsAuth:
             for verb, spec in methods.items()
             if verb in {"post", "put", "delete"}
             and not spec.get("security")
-            and not path.startswith("/auth/")
+            and not path.startswith(self.PUBLIC_WRITES)
         ]
         assert unprotected == []
+
+    def test_the_public_writes_are_the_ones_we_meant(self, anon_client):
+        """The list above is a claim about the API; this is the check on it. A new
+        unauthenticated write shows up here rather than passing silently."""
+        schema = anon_client.get("/api/swagger.json").get_json()
+
+        public = {
+            path
+            for path, methods in schema["paths"].items()
+            for verb, spec in methods.items()
+            if verb in {"post", "put", "delete"} and not spec.get("security")
+        }
+
+        # /auth/refresh is deliberately absent: it takes the refresh token in the
+        # Authorization header and says so, padlock included.
+        assert public == {
+            "/auth/register",
+            "/auth/login",
+            "/auth/logout",
+            "/storefront-events/",
+        }
 
     def test_public_endpoint_declares_no_security(self, anon_client):
         schema = anon_client.get("/api/swagger.json").get_json()
