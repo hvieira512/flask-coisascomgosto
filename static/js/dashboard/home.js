@@ -1,191 +1,251 @@
-import { API, list, requestOr } from "../core/api.js";
+import { API, request } from "../core/api.js";
 import { Notify } from "../core/notify.js";
-import { daysUntil, eventState, shortDate, stateChip } from "./events/dates.js";
 import { escapeHtml } from "../core/html.js";
 
-/** Every list endpoint answers with a pagination envelope. A card that cannot be
- *  counted shows nothing rather than taking the whole page down with it.
+/**
+ * The dashboard's first page: what visitors did, over a window the owners pick.
  *
- *  One record, because only the envelope is read — `partial` says so, since
- *  asking for one of fourteen is otherwise exactly the truncation `request`
- *  refuses. */
-const totalOf = async (url) =>
-    (await requestOr(url, { pagination: { total: 0 } },
-                     { params: { limit: 1 }, partial: true })).pagination.total;
+ * One request. This page used to make six — two of them for lists it also fetched
+ * for their totals — and worked out its numbers in the browser from the whole
+ * catalogue, which is why it inherited the API's hundred-row ceiling. The server
+ * aggregates now, so the page is a renderer.
+ *
+ * Every panel has an empty state, and there are two different ones: "nothing has
+ * been recorded yet" is not the same as "a quiet week", and a page of zeros that
+ * cannot tell you which is a page that looks broken.
+ */
 
-/** Photographs live on the product and on each variant. */
-const photoCount = (product) =>
-    (product.images ?? []).length
-    + product.variants.reduce((n, v) => n + (v.images ?? []).length, 0);
+const WINDOWS = [7, 30, 90];
+const DEFAULT_DAYS = 7;
 
-const dayLabel = (days) => {
-    if (days === 1) return "amanhã";
-    return `em ${days} dias`;
-};
+/** The window from the URL, so a reload and a shared link keep it. */
+function chosenDays() {
+    const asked = Number(new URLSearchParams(window.location.search).get("dias"));
+    return WINDOWS.includes(asked) ? asked : DEFAULT_DAYS;
+}
+
+const period = (days) =>
+    days === 7 ? "esta semana" : days === 30 ? "neste mês" : `nestes ${days} dias`;
 
 /**
- * The attention strip: one card per thing actually waiting on someone, and
- * nothing at all when there is nothing to do. Counting the pieces without a
- * photograph and the fair that is about to open is the whole reason to open
- * this page — a row of totals is not.
+ * A figure with how it compares to the window before it.
+ *
+ * The comparison is the point: 62 views means nothing on its own, and "62, up
+ * from 50" is a fact somebody can act on. No arrow when the previous window was
+ * empty — "up from nothing" is what a first week always looks like.
  */
-function attentionCard({ tone, icon, headline, detail, href, action }) {
+function figure(label, value, previous, { hasHistory }) {
+    const delta = value - previous;
+    const show = hasHistory && previous > 0 && delta !== 0;
+    const tone = delta > 0 ? "--ccg-ready" : "--ccg-attention";
+
     return `
       <div class="col">
-        <a class="card h-100 p-3 flex-row gap-2 align-items-start text-body" href="${href}">
-          <span class="icon" style="color: var(--ccg-${tone})">
-            <i class="fa-solid ${icon}"></i>
-          </span>
-          <span class="d-flex flex-column">
-            <span class="fw-semibold">${headline}</span>
-            <span class="fs-7 text-body-secondary">${detail}</span>
-            <span class="fs-7 mt-2" style="color: var(--ccg-blue-600)">${action} →</span>
-          </span>
-        </a>
+        <div class="card dash-panel p-3 h-100">
+          <span class="h4 mb-1 data">${value}</span>
+          <span class="eyebrow mb-0">${escapeHtml(label)}</span>
+          ${show
+              ? `<span class="fs-7 mt-1" style="color: var(${tone})">
+                   ${delta > 0 ? "▲" : "▼"} ${Math.abs(delta)} vs. período anterior
+                 </span>`
+              : `<span class="fs-7 mt-1 text-body-tertiary">&nbsp;</span>`}
+        </div>
       </div>`;
 }
 
-async function renderAttention(products, events) {
-    const cards = [];
+function renderTotals({ totals, previous, window: win }, days) {
+    const hasHistory = Boolean(win.counting_since);
+    const cards = [
+        ["Vistas", totals.views, previous.views],
+        ["Perguntas", totals.enquiries, previous.enquiries],
+        ["Procuras", totals.searches, previous.searches],
+        ["Peças vistas", totals.pieces, previous.pieces],
+    ]
+        .map(([label, value, before]) => figure(label, value, before, { hasHistory }))
+        .join("");
 
-    const missing = products.filter((p) => photoCount(p) === 0);
-    if (missing.length) {
-        cards.push(attentionCard({
-            tone: "attention",
-            icon: "fa-camera",
-            headline: `${missing.length} ${missing.length === 1 ? "peça" : "peças"} sem fotografia`,
-            detail: "A loja mostra um marcador de cor no lugar da fotografia.",
-            href: "/dashboard/products?fotos=none",
-            action: "Ver as peças",
-        }));
-    }
-
-    // Only a fair that has not finished is worth flagging; the storefront
-    // timeline keeps the rest.
-    const live = events
-        .filter((e) => eventState(e) !== "past")
-        .sort((a, b) => a.starts_on.localeCompare(b.starts_on));
-
-    if (live.length) {
-        const next = live[0];
-        const running = eventState(next) === "running";
-
-        cards.push(attentionCard({
-            tone: running ? "ready" : "blue-600",
-            icon: "fa-calendar-day",
-            headline: running
-                ? "A decorrer agora"
-                : `Próximo evento ${dayLabel(daysUntil(next))}`,
-            detail: `${escapeHtml(next.name)}${next.location ? ` · ${escapeHtml(next.location)}` : ""}`,
-            href: "/dashboard/events",
-            action: "Ver eventos",
-        }));
-    }
-
-    // One per row until there is room for two side by side: with one thing
-    // waiting, a card in half a row reads as a card with something missing.
-    document.getElementById("attention").innerHTML = cards.length
-        ? `<div class="row row-cols-1 row-cols-xl-2 g-2">${cards.join("")}</div>`
-        : `<div class="card dash-panel p-3 flex-row gap-2 align-items-center">
-             <span class="icon" style="color: var(--ccg-ready)">
-               <i class="fa-solid fa-circle-check"></i>
-             </span>
-             <span>Nada à espera. O catálogo está completo e sem eventos por abrir.</span>
-           </div>`;
+    document.getElementById("totals").innerHTML = `
+      <p class="eyebrow mb-2">O que aconteceu ${escapeHtml(period(days))}</p>
+      <div class="row row-cols-2 row-cols-lg-4 g-2">${cards}</div>
+      ${hasHistory
+          ? ""
+          : `<p class="help mt-2 mb-0">
+               Ainda não há nada registado. A contagem começa quando alguém
+               visitar a loja.
+             </p>`}`;
 }
 
 /**
- * A counter is only a link when there is somewhere to go. Colour sets have no
- * page of their own — they are attached to a piece from its Cores tab — so that
- * card renders as plain text rather than promising a destination.
- */
-const statCard = ({ label, value, href }) => {
-    const inner = `
-      <span class="h4 mb-1">${value}</span>
-      <span class="eyebrow mb-0">${escapeHtml(label)}</span>`;
-
-    return href
-        ? `<div class="col">
-             <a class="card h-100 p-3 text-body" href="${href}">${inner}</a>
-           </div>`
-        : `<div class="col"><div class="card h-100 p-3">${inner}</div></div>`;
-};
-
-async function renderStats() {
-    const [products, types, colorSets, events] = await Promise.all([
-        totalOf(API.products.list),
-        totalOf(API.productTypes.list),
-        totalOf(API.colorSets.list),
-        totalOf(API.events.list),
-    ]);
-
-    document.getElementById("stat-cards").innerHTML = [
-        { label: "Peças", value: products, href: "/dashboard/products" },
-        { label: "Tipos", value: types, href: "/dashboard/types" },
-        { label: "Conjuntos de cor", value: colorSets },
-        { label: "Eventos", value: events, href: "/dashboard/events" },
-    ].map(statCard).join("");
-}
-
-function renderMissingPhotos(products) {
-    const missing = products.filter((p) => photoCount(p) === 0);
-
-    document.getElementById("missing-photos").innerHTML = missing.length
-        ? `<ul class="list-group list-group-flush">${missing
-              .map((p) => `
-                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                  <a href="/dashboard/products">${escapeHtml(p.name)}</a>
-                  <span class="badge rounded-pill chip is-quiet">
-                    ${escapeHtml(p.type.name)}
-                  </span>
-                </li>`)
-              .join("")}</ul>`
-        : `<p class="text-body-secondary fs-7">Todas as peças têm fotografia.</p>`;
-}
-
-function renderEvents(events) {
-    const sorted = [...events].sort((a, b) => b.starts_on.localeCompare(a.starts_on));
-
-    document.getElementById("upcoming-events").innerHTML = sorted.length
-        ? `<ul class="list-group list-group-flush">${sorted
-              .slice(0, 5)
-              .map((e) => {
-                  return `
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                      <span>
-                        ${escapeHtml(e.name)}
-                        ${stateChip(e, { extraClass: "ms-2" })}
-                      </span>
-                      <span class="data text-body-secondary">${escapeHtml(shortDate(e.starts_on))}</span>
-                    </li>`;
-              })
-              .join("")}</ul>`
-        : `<p class="text-body-secondary fs-7">Sem eventos registados.</p>`;
-}
-
-/** One request for each list, shared by the strip and the panels below it.
+ * An empty panel.
  *
- *  Through `list` rather than fetch(): the strip counts the pieces with no
- *  photograph out of everything it was given, so a list that arrived short would
- *  put a wrong number on the page. `list` refuses one instead. */
-async function load() {
-    let products;
-    let events;
+ * Two kinds of empty, and they are not the same thing: nothing recorded yet, and
+ * a quiet period. The first is said once for the whole page — under the totals,
+ * where it belongs — because four panels repeating it is four times the sentence
+ * and none of the information. Here it is a dash, which is what "no rows" looks
+ * like everywhere else in the dashboard.
+ */
+function nothing(counting_since, quiet) {
+    if (!counting_since) return `<p class="help mb-0">—</p>`;
+    return `<p class="help mb-0">${escapeHtml(quiet)}</p>`;
+}
+
+function renderMostViewed({ top_products: pieces, window: win }) {
+    const target = document.getElementById("most-viewed");
+
+    if (!pieces.length) {
+        target.innerHTML = nothing(win.counting_since, "Nenhuma peça foi vista neste período.");
+        return;
+    }
+
+    // The name links to the piece in the catalogue: the products page reads `q`
+    // from the URL, so this needs no deep-linking of its own.
+    target.innerHTML = `
+      <ul class="list-group list-group-flush">
+        ${pieces
+            .map((piece) => `
+              <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
+                <a href="/dashboard/products?q=${encodeURIComponent(piece.name)}">
+                  ${escapeHtml(piece.name)}
+                </a>
+                <span class="d-flex align-items-center gap-2">
+                  <span class="data text-body-secondary">${piece.views}</span>
+                  ${piece.enquiries
+                      ? `<span class="badge rounded-pill chip is-ready">${piece.enquiries} ${piece.enquiries === 1 ? "pergunta" : "perguntas"}</span>`
+                      : `<span class="fs-7 text-body-tertiary">sem perguntas</span>`}
+                </span>
+              </li>`)
+            .join("")}
+      </ul>`;
+}
+
+function renderAskedColors({ top_color_sets: sets, window: win }) {
+    const target = document.getElementById("asked-colors");
+
+    if (!sets.length) {
+        target.innerHTML = nothing(
+            win.counting_since,
+            "Ninguém perguntou por uma cor neste período."
+        );
+        return;
+    }
+
+    target.innerHTML = `
+      <ul class="list-group list-group-flush">
+        ${sets
+            .map((set) => `
+              <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
+                <span>${escapeHtml(set.name)}</span>
+                <span class="data text-body-secondary">${set.enquiries}</span>
+              </li>`)
+            .join("")}
+      </ul>`;
+}
+
+function renderEmptySearches({ empty_searches: searches, window: win }) {
+    const target = document.getElementById("empty-searches");
+
+    if (!searches.length) {
+        target.innerHTML = nothing(
+            win.counting_since,
+            "Todas as procuras deram resultados."
+        );
+        return;
+    }
+
+    target.innerHTML = `
+      <ul class="list-group list-group-flush">
+        ${searches
+            .map((search) => `
+              <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
+                <span>“${escapeHtml(search.term)}”</span>
+                <span class="data text-body-secondary">${search.count}</span>
+              </li>`)
+            .join("")}
+      </ul>`;
+}
+
+function renderTopFilters({ top_filters: filters, window: win }) {
+    const target = document.getElementById("top-filters");
+
+    if (!filters.length) {
+        target.innerHTML = nothing(win.counting_since, "Ninguém filtrou neste período.");
+        return;
+    }
+
+    target.innerHTML = `
+      <ul class="list-group list-group-flush">
+        ${filters
+            .map((filter) => `
+              <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
+                <span>
+                  <span class="text-body-secondary fs-7">${escapeHtml(filter.facet)}:</span>
+                  ${escapeHtml(filter.label)}
+                </span>
+                <span class="data text-body-secondary">${filter.count}</span>
+              </li>`)
+            .join("")}
+      </ul>`;
+}
+
+function renderCatalogue({ catalogue, window: win }) {
+    const parts = [
+        `${catalogue.products} ${catalogue.products === 1 ? "peça" : "peças"}`,
+        `${catalogue.color_sets} ${catalogue.color_sets === 1 ? "conjunto de cor" : "conjuntos de cor"}`,
+        `${catalogue.collections} ${catalogue.collections === 1 ? "colecção" : "colecções"}`,
+        `${catalogue.colors} ${catalogue.colors === 1 ? "cor" : "cores"}`,
+    ];
+
+    // Said once, quietly, and only when there is history: on the first day it is
+    // the only true thing on the page.
+    if (win.counting_since) {
+        const since = new Date(win.counting_since).toLocaleDateString("pt-PT");
+        parts.push(`a contar desde ${since}`);
+    }
+
+    document.getElementById("catalogue-line").textContent = parts.join(" · ");
+}
+
+function markWindow(days) {
+    document.querySelectorAll("[data-days]").forEach((button) => {
+        const on = Number(button.dataset.days) === days;
+        button.classList.toggle("btn-dark", on);
+        button.classList.toggle("btn-outline-secondary", !on);
+        button.setAttribute("aria-pressed", String(on));
+    });
+}
+
+async function load(days) {
+    markWindow(days);
+
+    let overview;
     try {
-        [products, events] = await Promise.all([
-            list(API.products.list, "products"),
-            list(API.events.list, "events"),
-        ]);
+        overview = await request(API.analytics.overview, { params: { days } });
     } catch (error) {
-        Notify.error("Erro ao carregar o painel.");
+        Notify.error("Não foi possível carregar o painel.");
         console.error(error);
         return;
     }
 
-    renderAttention(products, events);
-    renderMissingPhotos(products);
-    renderEvents(events);
+    renderCatalogue(overview);
+    renderTotals(overview, days);
+    renderMostViewed(overview);
+    renderAskedColors(overview);
+    renderEmptySearches(overview);
+    renderTopFilters(overview);
 }
 
-renderStats();
-load();
+document.querySelector("[data-days]")?.parentElement?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-days]");
+    if (!button) return;
+
+    const days = Number(button.dataset.days);
+    // Replace rather than push: the window is which view of this page you are on,
+    // not somewhere you navigated to, so Back should leave the dashboard.
+    const url = new URL(window.location.href);
+    url.searchParams.set("dias", String(days));
+    window.history.replaceState({}, "", url);
+
+    load(days);
+});
+
+load(chosenDays());

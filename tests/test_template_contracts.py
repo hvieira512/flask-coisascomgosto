@@ -309,9 +309,11 @@ class TestDashboardHome:
         client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
         html = client.get("/dashboard/home").get_data(as_text=True)
 
-        for element_id in ["stat-cards", "missing-photos", "upcoming-events"]:
+        for element_id in ["catalogue-line", "totals", "most-viewed",
+                           "asked-colors", "empty-searches", "top-filters"]:
             assert f'id="{element_id}"' in html, element_id
         assert "js/dashboard/home.js" in html
+        assert 'data-days="7"' in html
 
 
 class TestDashboardTypes:

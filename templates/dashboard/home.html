@@ -5,40 +5,76 @@
 {% from 'dashboard/components/page.html' import page_head %}
 
 {% block content %}
-{{ page_head('Painel',
-             'Olá' ~ (', ' ~ session.user.username if session.user else ''),
-             'O que precisa de atenção, e o estado do catálogo.') }}
+{# What this page used to be: four counters, a list of pieces without a
+   photograph, and the next event. Every one of those was a second copy of what
+   the page it linked to already showed — the products page carries the
+   photograph count in its own subtitle and filters on it, the events page lists
+   every event with its dates. And the owners know their own fairs by heart.
 
-{# Attention first, counters second: the owner opens this page to find out what
-   is waiting for her, not to read four totals. js/dashboard/home.js fills both
-   from the API, so the numbers cannot drift from what the storefront shows. #}
-<section id="attention" class="mb-4"></section>
+   What it could not say was whether anybody looks at any of it, because nothing
+   was ever recorded. That is what it says now. #}
+<header class="d-flex justify-content-between align-items-start gap-3 mb-4 flex-wrap">
+    <div>
+        <p class="eyebrow mb-2">Painel</p>
+        <h1 class="h4 mb-1">Olá{% if session.user %}, {{ session.user.username }}{% endif %}</h1>
+        <p class="text-body-secondary mb-0">O que os visitantes andam a ver.</p>
+    </div>
+
+    {# The window. In the URL so a reload keeps it, and so a link can carry it —
+       the same reason the products page reads its filters from there. #}
+    <div class="btn-group btn-group-sm" role="group" aria-label="Período">
+        <button class="btn btn-outline-secondary" data-days="7" aria-pressed="false">7 dias</button>
+        <button class="btn btn-outline-secondary" data-days="30" aria-pressed="false">30 dias</button>
+        <button class="btn btn-outline-secondary" data-days="90" aria-pressed="false">90 dias</button>
+    </div>
+</header>
+
+{# One quiet line rather than four cards: how big the catalogue is orients you,
+   and each figure is its own page's subtitle if you want it. #}
+<p class="text-body-secondary fs-7 mb-4" id="catalogue-line">—</p>
+
+<section id="totals" class="mb-4"></section>
 
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="card dash-panel p-4">
             <header class="d-flex justify-content-between align-items-baseline mb-3">
-                <h2 class="h6 mb-0">Peças sem fotografia</h2>
-                <a class="fs-7" href="{{ url_for('web.dashboard.products') }}?fotos=none">
-                    Ver no catálogo
-                </a>
+                <h2 class="h6 mb-0">Mais vistas</h2>
+                <span class="fs-7 text-body-secondary">vistas · perguntas</span>
             </header>
-            <div id="missing-photos"></div>
+            <div id="most-viewed"></div>
         </div>
     </div>
+
     <div class="col-lg-5">
         <div class="card dash-panel p-4">
-            <header class="d-flex justify-content-between align-items-baseline mb-3">
-                <h2 class="h6 mb-0">Próximos eventos</h2>
-                <a class="fs-7" href="{{ url_for('web.dashboard.events') }}">Ver todos</a>
+            <header class="mb-3">
+                <h2 class="h6 mb-0">O que perguntam</h2>
+                <p class="help mb-0">As cores em que pedem as peças.</p>
             </header>
-            <div id="upcoming-events"></div>
+            <div id="asked-colors"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card dash-panel p-4">
+            <header class="mb-3">
+                <h2 class="h6 mb-0">Procuraram e não encontraram</h2>
+                <p class="help mb-0">Palavras que não deram resultados na loja.</p>
+            </header>
+            <div id="empty-searches"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card dash-panel p-4">
+            <header class="mb-3">
+                <h2 class="h6 mb-0">Filtros mais usados</h2>
+            </header>
+            <div id="top-filters"></div>
         </div>
     </div>
 </div>
-
-<h2 class="eyebrow mt-5 mb-3">No catálogo</h2>
-<div class="row row-cols-2 row-cols-md-4 g-2" id="stat-cards"></div>
 {% endblock %}
 
 {% block page_scripts %}

@@ -210,6 +210,9 @@ export const API = {
         login: "/api/auth/login",
         register: "/api/auth/register",
     },
+    analytics: {
+        overview: "/api/analytics/overview",
+    },
     contacts: {
         get: "/api/contacts/",
         update: "/api/contacts/",

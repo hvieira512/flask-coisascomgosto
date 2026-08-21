@@ -138,6 +138,13 @@ def _difference(actual, baseline):
     return differing / (actual.width * actual.height)
 
 
+def _forget_storefront_events():
+    from db import get_db_connection
+
+    with get_db_connection() as (_, cursor):
+        cursor.execute("DELETE FROM storefront_events")
+
+
 @pytest.fixture(scope="module")
 def shots(browser, live_server, catalogue, owner, tmp_path_factory):
     """Capture every page at every width once, and hand back where they are."""
@@ -145,33 +152,53 @@ def shots(browser, live_server, catalogue, owner, tmp_path_factory):
     out = tmp_path_factory.mktemp("screenshots")
 
     for label, width in WIDTHS.items():
-        context = browser.new_context(
-            viewport={"width": width, "height": 900},
-            # A fixed ratio, or a retina machine and a normal one disagree on
-            # every pixel.
-            device_scale_factor=1,
-            # Animations settle differently run to run; this is the one knob
-            # Playwright gives for it.
-            reduced_motion="reduce",
-        )
-        context.request.post(
+        def fresh_context():
+            return browser.new_context(
+                viewport={"width": width, "height": 900},
+                # A fixed ratio, or a retina machine and a normal one disagree on
+                # every pixel.
+                device_scale_factor=1,
+                # Animations settle differently run to run; this is the one knob
+                # Playwright gives for it.
+                reduced_motion="reduce",
+            )
+
+        signed_in = fresh_context()
+        signed_in.request.post(
             f"{live_server}/api/auth/login",
             data=json.dumps(owner),
             headers={"Content-Type": "application/json"},
         )
-        page = context.new_page()
-        page.set_default_timeout(10_000)
+        # A second context with no cookie, because /auth redirects a signed-in
+        # visitor to the dashboard: captured from the signed-in context, the login
+        # page was never the login page — it was a second copy of the home page,
+        # and it "broke" whenever the home page changed.
+        anonymous = fresh_context()
 
-        for name, path, _ in PAGES:
-            page.goto(f"{live_server}{path}", wait_until="networkidle")
-            # The pages render their content from the API, so networkidle is the
-            # earliest honest moment; the pause is for the fade transitions.
-            page.wait_for_timeout(400)
-            shot = out / f"{name}-{label}.png"
-            page.screenshot(path=shot, full_page=True)
-            captured[(name, label)] = shot
+        # The storefront half first, then the dashboard half — and the recorded
+        # events wiped in between. Opening a piece records a view, so capturing the
+        # storefront leaves the dashboard's home page with a "a contar desde
+        # <today>" in it, and a baseline with today's date in it fails tomorrow.
+        for context, half in ((anonymous, False), (signed_in, True)):
+            if half:
+                _forget_storefront_events()
 
-        context.close()
+            page = context.new_page()
+            page.set_default_timeout(10_000)
+
+            for name, path, needs_session in PAGES:
+                if needs_session is not half:
+                    continue
+                page.goto(f"{live_server}{path}", wait_until="networkidle")
+                # The pages render their content from the API, so networkidle is
+                # the earliest honest moment; the pause is for the fades.
+                page.wait_for_timeout(400)
+                shot = out / f"{name}-{label}.png"
+                page.screenshot(path=shot, full_page=True)
+                captured[(name, label)] = shot
+
+        signed_in.close()
+        anonymous.close()
 
     return captured
 
