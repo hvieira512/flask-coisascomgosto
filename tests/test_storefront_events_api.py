@@ -144,10 +144,10 @@ class TestWhatEachKindStores:
         assert row["results"] == 0
 
     def test_a_filter_carries_the_facet_and_label(self, anon_client, cursor):
-        send(anon_client, {"kind": "filter", "facet": "tipo", "facet_label": "Caixa"})
+        send(anon_client, {"kind": "filter", "facet": "Tipo", "facet_label": "Caixa"})
 
         (row,) = rows(cursor)
-        assert (row["facet"], row["facet_label"]) == ("tipo", "caixa")
+        assert (row["facet"], row["facet_label"]) == ("Tipo", "Caixa")
 
 
 class TestTheFlood:

@@ -1,6 +1,7 @@
 import { API, list } from "../../core/api.js";
 import { ProductPlaceholder } from "../placeholder.js";
 import { StoreFilters } from "../filters.js";
+import { Track } from "../track.js";
 import { escapeHtml } from "../../core/html.js";
 
 /**
@@ -72,6 +73,10 @@ export async function mountRail(facets) {
         const already = StoreFilters.isSelected("collection_id", id);
         const name = collections.find((c) => String(c.id) === id)?.name;
         StoreFilters.set("collection_id", already ? null : id, name);
+
+        // The rail is the only way to filter by collection, so this is the most
+        // used filter on the page. Only on the way on, like the sidebar's.
+        if (!already && name) Track.filter("Colecção", name);
     });
 
     return {

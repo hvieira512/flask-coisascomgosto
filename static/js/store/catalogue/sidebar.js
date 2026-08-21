@@ -1,6 +1,7 @@
 import { StoreFilters } from "../filters.js";
 import { escapeHtml } from "../../core/html.js";
 import { list } from "../../core/api.js";
+import { Track } from "../track.js";
 
 /**
  * The filter sidebar: one group per facet, each entry a checkbox with a count.
@@ -9,6 +10,14 @@ import { list } from "../../core/api.js";
  * collection is chosen, and a checkbox list beside it was the same question asked
  * twice.
  */
+
+// What the dashboard calls each group. The filter state uses the API's own names
+// (type_id, material_id); the owners read "Tipo" and "Material". Collection is
+// not here — it is chosen from the rail of covers, which reports its own.
+const FACET_NAMES = {
+    type_id: "Tipo",
+    material_id: "Material",
+};
 
 /**
  * One entry: a checkbox, the name, and how many pieces are behind it. The box
@@ -78,11 +87,17 @@ export async function mountSidebar(facets) {
 
     function toggle(entry) {
         if (entry.classList.contains("is-empty")) return;
-        StoreFilters.toggle(
-            entry.dataset.filterGroup,
-            entry.dataset.filterValue,
-            entry.dataset.filterLabel
-        );
+
+        const { filterGroup, filterValue, filterLabel } = entry.dataset;
+        // Read before the toggle, so "was it off" means "is it being switched on".
+        const turningOn = !StoreFilters.isSelected(filterGroup, filterValue);
+
+        StoreFilters.toggle(filterGroup, filterValue, filterLabel);
+
+        // Only on the way on: unticking a filter is not a preference for
+        // anything, and counting it would double every visitor who changes
+        // their mind.
+        if (turningOn) Track.filter(FACET_NAMES[filterGroup] ?? filterGroup, filterLabel);
     }
 
     root.addEventListener("click", (event) => {

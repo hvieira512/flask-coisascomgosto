@@ -9,6 +9,7 @@
 import { API, request } from "../core/api.js";
 import { ColorSet } from "./color-set.js";
 import { StoreGallery } from "./gallery.js";
+import { Track } from "./track.js";
 import { escapeHtml } from "../core/html.js";
 
 (function () {
@@ -58,7 +59,11 @@ import { escapeHtml } from "../core/html.js";
     // What the visitor has picked, folded into the enquiry they send. There is no
     // basket, so a chosen colour and size have nowhere else to go — and a control
     // that looks pressable has to do something.
-    let chosen = { colorSet: null, size: null };
+    //
+    // The variant and the size themselves rather than their names: the message
+    // needs the names, and the enquiry we record needs the ids — which is the
+    // field that tells the owners which colourway to make next.
+    let chosen = { variant: null, size: null };
 
     /** Pre-fill the WhatsApp message with the piece, colour and size on screen. */
     function renderEnquiry(product) {
@@ -66,11 +71,29 @@ import { escapeHtml } from "../core/html.js";
         if (!link) return;
 
         const parts = [`Olá! Gostaria de saber mais sobre "${product.name}"`];
-        if (chosen.colorSet) parts.push(`em ${chosen.colorSet}`);
-        if (chosen.size) parts.push(`tamanho ${chosen.size}`);
+        if (chosen.variant) parts.push(`em ${chosen.variant.color_set.name}`);
+        if (chosen.size) parts.push(`tamanho ${chosen.size.name}`);
 
         const base = link.getAttribute("href").split("?")[0];
         link.href = `${base}?text=${encodeURIComponent(`${parts.join(", ")}.`)}`;
+    }
+
+    /** The enquiry click, with whatever was chosen when it happened.
+     *
+     *  On the link itself rather than inside renderEnquiry: that runs on every
+     *  colour and size change, and what is worth counting is the visitor
+     *  actually leaving to ask. */
+    function wireEnquiryTracking(product) {
+        const link = document.getElementById("enquiry-link");
+        if (!link) return;
+
+        link.addEventListener("click", () => {
+            Track.enquiry({
+                productId: product.id,
+                variantId: chosen.variant?.id ?? null,
+                sizeId: chosen.size?.id ?? null,
+            });
+        });
     }
 
     function renderSizes(product) {
@@ -108,7 +131,9 @@ import { escapeHtml } from "../core/html.js";
                 button.setAttribute("aria-pressed", "true");
             }
 
-            chosen.size = already ? null : button.dataset.size;
+            chosen.size = already
+                ? null
+                : product.sizes.find((s) => s.name === button.dataset.size) ?? null;
             renderEnquiry(product);
         });
     }
@@ -156,7 +181,7 @@ import { escapeHtml } from "../core/html.js";
             option.setAttribute("aria-pressed", String(isChosen));
         });
 
-        chosen.colorSet = variant.color_set.name;
+        chosen.variant = variant;
         renderEnquiry(product);
         gallery.render(imagesFor(product, variant), variant);
     }
@@ -186,7 +211,12 @@ import { escapeHtml } from "../core/html.js";
         const photographed = variants.findIndex((v) => v.images?.length);
         const activeIndex = photographed === -1 ? 0 : photographed;
 
-        chosen.colorSet = variants[activeIndex]?.color_set?.name ?? null;
+        chosen.variant = variants[activeIndex] ?? null;
+
+        // Once per piece per tab: a reload is the same visit looking at the same
+        // thing. Recorded after the product loads, so a 404 counts as nothing.
+        Track.view(product.id);
+        wireEnquiryTracking(product);
 
         renderMeta(product);
         renderVariants(product, activeIndex);

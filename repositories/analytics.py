@@ -62,7 +62,7 @@ class AnalyticsRepository:
                 variant_id,
                 size_id,
                 facet,
-                normalise_term(facet_label) if facet_label else None,
+                tidy(facet_label) if facet_label else None,
                 normalise_term(term) if term else None,
                 results,
             ),
@@ -92,10 +92,18 @@ class AnalyticsRepository:
         return started.isoformat() if started else None
 
 
+def tidy(text: str) -> str:
+    """Collapse whitespace and cut to what the column holds."""
+    return " ".join(text.split())[:TERM_MAX]
+
+
 def normalise_term(text: str) -> str:
-    """Collapse whitespace, lowercase, and cut to what the column holds.
+    """The same, lowercased, for a search term.
 
     Lowercased because "Caixa" and "caixa" are the same search as far as anyone
-    reading the list is concerned, and two rows would split the count.
+    reading the list is concerned, and two rows would split the count. A filter
+    label is *not* lowercased: it is a name the owners gave something — Filigrana,
+    Caixa — and it comes from the database already spelled one way, so there is
+    nothing to collapse and "filigrana" in the dashboard would just look wrong.
     """
-    return " ".join(text.split()).lower()[:TERM_MAX]
+    return tidy(text).lower()

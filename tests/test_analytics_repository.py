@@ -106,10 +106,12 @@ class TestRecordingEachKind:
         assert row["results"] == 0, "zero results is the interesting case, not a null"
 
     def test_a_filter_stores_the_facet_and_its_label(self, cursor, analytics):
-        analytics.record("filter", facet="tipo", facet_label="Caixa")
+        """The label keeps its case: it is a name the owners gave something, and
+        "filigrana" on the dashboard would read as a typo."""
+        analytics.record("filter", facet="Tipo", facet_label="  Caixa  ")
 
         (row,) = rows(cursor)
-        assert (row["facet"], row["facet_label"]) == ("tipo", "caixa")
+        assert (row["facet"], row["facet_label"]) == ("Tipo", "Caixa")
 
     def test_an_unknown_kind_is_refused(self, analytics):
         """Not a new kind to tolerate: the dashboard reads four names, so a fifth

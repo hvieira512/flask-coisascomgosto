@@ -17,6 +17,7 @@ import { mountPagination } from "./catalogue/pagination.js";
 import { mountRail } from "./catalogue/rail.js";
 import { mountSidebar } from "./catalogue/sidebar.js";
 import { productCard } from "./catalogue/cards.js";
+import { Track } from "./track.js";
 
 (function () {
     const grid = document.getElementById("product-grid");
@@ -25,6 +26,9 @@ import { productCard } from "./catalogue/cards.js";
     const searchInput = document.getElementById("filter-search");
 
     let page = 1;
+    // The last search term reported, so paging through its results does not
+    // record the same search again.
+    let reported = null;
 
     /** Per-option product counts, so a sidebar entry and a rail card can each say
      *  what they hold. One request, read by both. */
@@ -85,6 +89,16 @@ import { productCard } from "./catalogue/cards.js";
         const { total, pages } = payload.pagination;
         resultCount.textContent = total === 1 ? "1 produto" : `${total} produtos`;
         pagination.render(page, pages || 1);
+
+        // Here rather than on the keystroke: what is worth knowing is the term
+        // *and* what it found, and nothing knows the count until now. Zero is the
+        // interesting value — it is a list of things people want and the
+        // catalogue does not offer.
+        const term = StoreFilters.get("q");
+        if (term && term !== reported) {
+            reported = term;
+            Track.search(term, total);
+        }
     }
 
     (async function init() {
