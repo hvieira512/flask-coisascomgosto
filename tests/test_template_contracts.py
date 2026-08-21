@@ -137,7 +137,8 @@ class TestStorefrontHooks:
         product = make_product("Caixa")
         html = client.get(f"/products/{product['id']}").get_data(as_text=True)
         for element_id in ["gallery-stage", "stage-image", "thumb-strip",
-                           "stage-counter", "variant-options", "size-options"]:
+                           "stage-counter", "stage-zoom", "variant-options",
+                           "size-options"]:
             assert f'id="{element_id}"' in html, element_id
 
 

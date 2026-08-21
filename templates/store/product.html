@@ -43,6 +43,14 @@
                     <i class="fa-solid fa-chevron-right"></i>
                 </button>
 
+                {# Says the photograph opens full screen. Nothing else on the
+                   stage suggests it: the arrows step, and a tap did nothing
+                   visible until it had already happened. #}
+                <span class="stage-zoom" id="stage-zoom" hidden>
+                    <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
+                    <span>Ampliar</span>
+                </span>
+
                 <span class="stage-counter" id="stage-counter"></span>
             </figure>
 

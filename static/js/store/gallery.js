@@ -21,6 +21,7 @@ export const StoreGallery = (function () {
         const stage = root.querySelector("#gallery-stage");
         const stageImage = root.querySelector("#stage-image");
         const counter = root.querySelector("#stage-counter");
+        const zoom = root.querySelector("#stage-zoom");
         const strip = root.querySelector("#thumb-strip");
         const emptyNotice = root.querySelector("#gallery-empty");
         const prevButton = root.querySelector("[data-prev]");
@@ -87,6 +88,8 @@ export const StoreGallery = (function () {
                 prevButton.disabled = true;
                 nextButton.disabled = true;
                 counter.hidden = true;
+                // Nothing to enlarge: the stage is showing the placeholder.
+                zoom.hidden = true;
                 strip.hidden = true;
                 strip.innerHTML = "";
 
@@ -106,6 +109,9 @@ export const StoreGallery = (function () {
             prevButton.disabled = !navigable;
             nextButton.disabled = !navigable;
             counter.hidden = !navigable;
+            // Unlike the counter and the strip, this is worth saying for a single
+            // photograph too — one photograph is still worth opening.
+            zoom.hidden = false;
             strip.hidden = !navigable;
 
             strip.innerHTML = navigable ? renderStrip(images) : "";

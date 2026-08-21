@@ -131,6 +131,59 @@ class TestTheStrip:
         )
 
 
+class TestTheStageSaysItOpens:
+    """A tap or a click on the photograph opens it full screen, and nothing said
+    so: the arrows step between photographs, and a touch screen has no pointer to
+    change shape. The cue is furniture rather than a control — the whole stage is
+    the target — so it is pointer-events: none and the click still lands."""
+
+    def test_the_cue_is_on_the_photograph(self, page):
+        view, _ = page
+
+        assert view.locator("#stage-zoom").is_visible()
+        assert "Ampliar" in view.locator("#stage-zoom").inner_text()
+
+    def test_it_sits_on_the_stage_opposite_the_counter(self, page):
+        view, _ = page
+        boxes = view.evaluate(
+            """() => {
+                const of = (id) => document.getElementById(id).getBoundingClientRect();
+                const stage = document.getElementById('gallery-stage')
+                    .getBoundingClientRect();
+                return { zoom: of('stage-zoom'), counter: of('stage-counter'), stage };
+            }"""
+        )
+
+        assert boxes["zoom"]["left"] < boxes["counter"]["left"]
+        # On the photograph, not above or below it.
+        assert boxes["zoom"]["top"] > boxes["stage"]["top"]
+        assert boxes["zoom"]["bottom"] <= boxes["stage"]["bottom"] + 1
+
+    def test_it_does_not_swallow_the_click(self, page):
+        view, _ = page
+
+        assert view.locator("#stage-zoom").evaluate(
+            "el => getComputedStyle(el).pointerEvents"
+        ) == "none"
+
+    def test_it_is_hidden_when_there_is_nothing_to_enlarge(self, page):
+        """A colour with no photographs draws the placeholder, which does not
+        open."""
+        view, _ = page
+        view.locator(".variant-option", has_text="Preto e Branco").click()
+        view.wait_for_selector("#gallery-stage .product-placeholder")
+
+        assert view.locator("#stage-zoom").is_hidden()
+
+    def test_one_photograph_still_gets_the_cue(self, page, piece, client):
+        """Unlike the counter and the strip, which need something to count."""
+        view, _ = page
+        view.locator(".variant-option", has_text="Branco e Dourado").click()
+        view.wait_for_selector("#stage-zoom:not([hidden])")
+
+        assert view.locator("#stage-zoom").is_visible()
+
+
 class TestAColourWithNoPhotographsOfItsOwn:
     """Half the catalogue.
 

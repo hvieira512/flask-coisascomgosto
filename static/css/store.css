@@ -912,7 +912,8 @@ a.card:hover {
     right: .75rem;
 }
 
-.stage-counter {
+.stage-counter,
+.stage-zoom {
     position: absolute;
     bottom: .75rem;
     background: rgba(255, 255, 255, .92);
@@ -920,6 +921,27 @@ a.card:hover {
     padding: .1rem .6rem;
     font-size: .7rem;
     color: var(--ccg-ink-soft);
+}
+
+.stage-counter {
+    right: .75rem;
+}
+
+/* Opposite the counter. The stage opens the photograph full screen on a tap or a
+   click, which nothing said: the arrows step between photographs and there is no
+   pointer cue on a touch screen at all. */
+.stage-zoom {
+    left: .75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    /* Part of the photograph's furniture, not a control of its own — the whole
+       stage is the target. */
+    pointer-events: none;
+}
+
+.stage-zoom[hidden] {
+    display: none;
 }
 
 
