@@ -88,6 +88,8 @@ class ProductVariant(Resource):
                 )
 
             variant = variants.get(variant_id)
-            # The photographs of this colour go with it.
-            uploads.delete_many(variants.delete(variant_id))
+            # The rows of this colour's photographs go with it — a soft-deleted
+            # child of a deleted parent is a state nothing could present. The
+            # files stay until the sweep.
+            variants.delete(variant_id)
             return variant, 200

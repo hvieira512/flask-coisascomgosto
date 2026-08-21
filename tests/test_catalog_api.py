@@ -261,21 +261,25 @@ class TestCollectionCover:
     def test_a_cover_is_not_stored_with_the_pieces(
         self, client, make_collection, cover_dir
     ):
-        """Its own folder is what makes replacing one safe to delete."""
+        """Its own folder is what lets the sweep tell a cover nobody uses any more
+        from a photograph a product row still points at."""
         collection = make_collection("Filigrana")
         self._upload(client, collection["id"])
 
         assert not (cover_dir / "products").exists()
 
-    def test_replacing_a_cover_removes_the_file_it_replaced(
+    def test_replacing_a_cover_keeps_the_file_it_replaced(
         self, client, make_collection, cover_dir
     ):
+        """It used to be unlinked here. Nothing in the application deletes a file
+        now — `flask sweep-uploads` collects it once nothing points at it, so
+        changing your mind twice costs nothing."""
         collection = make_collection("Filigrana")
         first = self._upload(client, collection["id"]).get_json()["image_url"]
         second = self._upload(client, collection["id"], "outra.jpg").get_json()["image_url"]
 
         assert first != second
-        assert not (cover_dir / "collections" / pathlib.Path(first).name).exists()
+        assert (cover_dir / "collections" / pathlib.Path(first).name).is_file()
         assert (cover_dir / "collections" / pathlib.Path(second).name).is_file()
 
     def test_replacing_a_cover_that_points_at_a_product_photo_keeps_the_photo(
@@ -296,25 +300,28 @@ class TestCollectionCover:
 
         assert piece_photo.is_file(), "a collection cover deleted a piece's photograph"
 
-    def test_removing_the_cover_clears_the_column_and_the_file(
+    def test_removing_the_cover_clears_the_column_and_keeps_the_file(
         self, client, make_collection, cover_dir
     ):
         collection = make_collection("Filigrana")
         url = self._upload(client, collection["id"]).get_json()["image_url"]
 
         response = client.delete(f"/api/collections/{collection['id']}/cover")
+
         assert response.status_code == 200
         assert response.get_json()["image_url"] is None
-        assert not (cover_dir / "collections" / pathlib.Path(url).name).exists()
+        assert (cover_dir / "collections" / pathlib.Path(url).name).is_file()
 
-    def test_deleting_the_collection_takes_its_cover_with_it(
+    def test_deleting_the_collection_keeps_its_cover_on_disk(
         self, client, make_collection, cover_dir
     ):
+        """The row goes; the photograph waits for the sweep."""
         collection = make_collection("Filigrana")
         url = self._upload(client, collection["id"]).get_json()["image_url"]
 
         client.delete(f"/api/collections/{collection['id']}")
-        assert not (cover_dir / "collections" / pathlib.Path(url).name).exists()
+
+        assert (cover_dir / "collections" / pathlib.Path(url).name).is_file()
 
     def test_a_file_that_is_not_an_image_is_refused(self, client, make_collection):
         collection = make_collection("Filigrana")

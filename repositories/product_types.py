@@ -67,7 +67,7 @@ class ProductTypeRepository(NameTableRepository):
             "           ORDER BY i.product_id, i.position, i.id) AS rank_in_type"
             "  FROM product_images i"
             "  JOIN products p ON p.id = i.product_id"
-            f"  WHERE p.type_id IN ({placeholders})"
+            f"  WHERE p.type_id IN ({placeholders}) AND i.deleted_at IS NULL"
             ") ranked WHERE rank_in_type = 1",
             type_ids,
         )

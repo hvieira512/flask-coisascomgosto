@@ -3,9 +3,15 @@
 Files land in static/img/products/ and are served as ordinary static assets, so
 `url` on a product image is the same whether the file arrived through an upload
 or was placed there by hand.
+
+Nothing here deletes a file except `sweep`, which is reached only from
+`flask sweep-uploads`. Removing a photograph in the dashboard marks its row;
+deleting a piece removes rows. The photographs themselves outlive both, because
+the only copy of one may be the one the owners uploaded.
 """
 
 import secrets
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -17,10 +23,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 UPLOAD_DIR = PROJECT_ROOT / "static" / "img" / "products"
 URL_PREFIX = "/static/img/products"
 
-# Collection covers live apart from the pieces on purpose. Replacing a cover
-# should delete the file it replaced, and that is only safe while the folder says
-# who owns it — a cover pointed at a product photograph must never take that
-# photograph with it when the owners change their minds.
+# Collection covers live apart from the pieces on purpose: a cover may be pointed
+# at any URL, including one of the pieces' own photographs, and keeping the two
+# folders separate is what lets the sweep tell a cover nobody uses any more from a
+# photograph a product row still points at.
 COLLECTION_DIR = PROJECT_ROOT / "static" / "img" / "collections"
 COLLECTION_PREFIX = "/static/img/collections"
 
@@ -116,49 +122,45 @@ def save(file_storage, *, folder=None, url_prefix=None) -> str:
     return f"{url_prefix}/{name}"
 
 
-def delete_many(urls) -> None:
-    """Remove the files behind rows that have just been deleted.
+def sweep(
+    referenced: set[str], *, older_than_days: int = 30, dry_run: bool = False
+) -> list[str]:
+    """Delete the files no row points at any more. The only unlink in the project.
 
-    The repositories hand back the URLs whose rows they removed; a URL that was
-    never an upload of ours is ignored by `delete`, so seeded assets and
-    hand-written paths survive a cascade the same way they survive a single delete.
+    Nothing else removes a file. Deleting a photograph marks its row and leaves
+    the file; deleting a piece or a colour takes the rows with it and leaves the
+    files; replacing a collection cover leaves the one it replaced. All of it
+    ends up here, which means a mis-tap costs nothing until somebody runs
+    `flask sweep-uploads`, and even then only after a grace period.
+
+    `referenced` is every URL the database still holds, removed photographs
+    included — a removed one is restorable, so its file is still in use.
+
+    The age check is on the file's own mtime, not on any row: an upload whose
+    request failed after the file was written has no row at all, and deleting it
+    the moment it appears would race a request that is still running.
+
+    `dry_run` reports what would go without touching anything. It is a flag here
+    rather than a second pass in the caller, so there is one rule about what is
+    collectable instead of two that can drift.
     """
-    for url in urls or ():
-        delete(url)
-
-
-def delete_cover(url: Optional[str]) -> None:
-    """Remove a collection cover, and only ever one stored *as* a cover.
-
-    A collection with no cover passes None, which is why the body tests the URL
-    before looking at it — the annotation said `str` and the callers were passing
-    exactly that None.
-
-    A cover may be pointed at any URL, including one of the pieces' own
-    photographs. Replacing it then reaches `delete`, which knows how to remove
-    files from the product folder too — so without this narrowing, changing a
-    collection's cover would delete a photograph a product row still points at.
-    """
-    if url and url.startswith(f"{COLLECTION_PREFIX}/"):
-        delete(url)
-
-
-def delete(url: Optional[str]) -> None:
-    """Remove a previously uploaded file, ignoring anything outside our folders.
-
-    Rows may point at files that were never uploaded — seeded assets, or a
-    hand-written path — so a miss is not an error. A URL under neither prefix is
-    left alone entirely, which is what stops a collection cover set to some other
-    page's image from deleting it.
-    """
-    if not url:
-        return
+    cutoff = time.time() - older_than_days * 86_400
+    removed = []
 
     for folder, prefix in ((UPLOAD_DIR, URL_PREFIX), (COLLECTION_DIR, COLLECTION_PREFIX)):
-        if not url.startswith(f"{prefix}/"):
+        if not folder.is_dir():
             continue
 
-        path = (folder / Path(url).name).resolve()
-        if path.parent == folder.resolve() and path.is_file():
-            path.unlink()
-        return
+        for path in sorted(folder.iterdir()):
+            if not path.is_file():
+                continue
+            if f"{prefix}/{path.name}" in referenced:
+                continue
+            if path.stat().st_mtime > cutoff:
+                continue
+
+            if not dry_run:
+                path.unlink()
+            removed.append(f"{prefix}/{path.name}")
+
+    return removed

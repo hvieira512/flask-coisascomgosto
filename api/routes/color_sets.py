@@ -162,7 +162,7 @@ class ColorSet(Resource):
             if not color_set:
                 ns.abort(404, f"Colour set #{color_set_id} not found")
 
-            # Deleting a set removes every variant offered in it, so the
-            # photographs of those colours go too.
-            uploads.delete_many(color_sets.delete(color_set_id))
+            # Deleting a set removes every variant offered in it, and their
+            # photographs' rows with them. The files stay until the sweep.
+            color_sets.delete(color_set_id)
             return color_set, 200

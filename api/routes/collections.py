@@ -47,22 +47,19 @@ cover_parser.add_argument(
 
 
 def _replace_cover(collections, collection, image_url):
-    """Point a collection at a new cover, removing the file it replaces.
+    """Point a collection at a new cover.
 
-    delete_cover rather than delete: a cover may be pointed at any URL, including
-    one of the pieces' own photographs, and changing it must not take that
-    photograph with it.
+    The file it replaces is left alone. It stops being referenced, so the sweep
+    removes it later — which also means a cover pointed at one of the pieces' own
+    photographs cannot take that photograph with it, since the product row still
+    references the file.
     """
-    previous = collection.get("image_url")
-
     collections.update(
         collection["id"],
         name=collection["name"],
         description=collection.get("description"),
         image_url=image_url,
     )
-    if previous and previous != image_url:
-        uploads.delete_cover(previous)
 
 
 @ns.route("/")
@@ -156,9 +153,9 @@ class Collection(Resource):
             collection = get_or_404(ns, collections, collection_id, "Collection")
 
             collections.delete(collection_id)
-            # Its own uploaded cover goes with it; anything else it pointed at does
-            # not, which is what the separate folder is for.
-            uploads.delete_cover(collection.get("image_url"))
+            # The cover file stays. Nothing references it once the row is gone, so
+            # the sweep collects it later — and a cover pointed at one of the
+            # pieces' own photographs cannot take that photograph with it.
             return collection, 200
 
 

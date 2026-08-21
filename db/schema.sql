@@ -187,8 +187,14 @@ CREATE TABLE product_images (
     url VARCHAR(500) NOT NULL,
     alt VARCHAR(255),
     position INT NOT NULL DEFAULT 0,
+    -- Removing a photograph marks it and leaves the file alone; every read
+    -- filters on this. The owners' only copy of a photograph may be the one they
+    -- uploaded, so a mis-tap has to be an UPDATE and not a lost file.
+    -- uploads.sweep() is the only thing that deletes either.
+    deleted_at DATETIME NULL,
     KEY idx_product_images_product (product_id),
     KEY idx_product_images_variant (variant_id),
+    KEY idx_product_images_deleted (deleted_at),
     CONSTRAINT fk_product_images_product
         FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
     CONSTRAINT fk_product_images_variant

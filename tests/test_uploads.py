@@ -4,7 +4,9 @@
 """
 
 import io
+import os
 import pathlib
+import time
 
 import pytest
 
@@ -145,21 +147,27 @@ class TestUploadEndpoint:
                           variant_id=str(variant["id"]))
         assert response.status_code == 404
 
-    def test_deleting_the_image_removes_the_file(self, client, product, photo):
+    def test_deleting_the_image_leaves_the_file(self, client, product, photo):
+        """It used to unlink it here. See TestNoDeletionTouchesAFile."""
         created = upload(client, product, photo()).get_json()
         path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
         assert path.is_file()
 
         client.delete(f"/api/products/{product['id']}/images/{created['id']}")
-        assert not path.exists()
+        assert path.is_file()
 
 
-class TestACascadeTakesTheFilesWithIt:
-    """Every path that deletes an image row has to delete the file behind it.
+class TestNoDeletionTouchesAFile:
+    """The photographs outlive every delete.
 
-    Only the images endpoint did. Deleting a piece, dropping one of its colours, or
-    deleting a colour set removed the rows and left the photographs on disk — which
-    is where orphaned uploads come from, and 120 of them were deleted in 86d6b0b.
+    They used to be unlinked in the same request: removing one photograph,
+    dropping a colour, deleting a piece or replacing a collection cover all took
+    the file with them. For people whose only copy of a photograph may be the one
+    they uploaded from a phone, a mis-tap was unrecoverable — and a confirmation
+    naming the count is not a backup.
+
+    Now nothing deletes a file except uploads.sweep(), reached only from
+    `flask sweep-uploads`, and only after a grace period.
     """
 
     @pytest.fixture()
@@ -176,65 +184,204 @@ class TestACascadeTakesTheFilesWithIt:
         created = upload(client, product, photo(), **form).get_json()
         path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
         assert path.is_file()
-        return path
+        return created, path
 
-    def test_deleting_the_piece_removes_its_photographs(self, client, product, photo):
-        product_photo = self._photo_of(client, product, photo)
+    def test_removing_a_photograph_keeps_the_file(self, client, product, photo):
+        created, path = self._photo_of(client, product, photo)
+
+        response = client.delete(
+            f"/api/products/{product['id']}/images/{created['id']}"
+        )
+
+        assert response.status_code == 200
+        assert path.is_file(), "the photograph was deleted from disk"
+
+    def test_removing_a_photograph_takes_it_out_of_the_catalogue(
+        self, client, product, photo
+    ):
+        """Kept on disk, and kept out of sight: it must not come back on the
+        product page because the row survived."""
+        created, _ = self._photo_of(client, product, photo)
+
+        client.delete(f"/api/products/{product['id']}/images/{created['id']}")
+
+        listed = client.get(f"/api/products/{product['id']}/images").get_json()
+        body = client.get(f"/api/products/{product['id']}").get_json()
+        assert listed == []
+        assert body["primary_image"] is None
+        assert body["variants"][0]["images"] == []
+
+    def test_a_removed_photograph_cannot_be_removed_twice(self, client, product, photo):
+        created, _ = self._photo_of(client, product, photo)
+        client.delete(f"/api/products/{product['id']}/images/{created['id']}")
+
+        again = client.delete(f"/api/products/{product['id']}/images/{created['id']}")
+
+        assert again.status_code == 404
+
+    def test_it_can_be_put_back(self, client, product, photo):
+        """Which is the point of keeping the row. There is no button for it yet —
+        one UPDATE is the whole recovery.
+
+        Its own connection rather than the `cursor` fixture: that one holds a
+        transaction open for the whole test, and MySQL's REPEATABLE READ keeps the
+        snapshot it started with, so it cannot see what the client committed."""
+        from db import get_db_connection
+        from repositories import ProductImageRepository
+
+        created, _ = self._photo_of(client, product, photo)
+        client.delete(f"/api/products/{product['id']}/images/{created['id']}")
+
+        with get_db_connection() as (_, cursor):
+            ProductImageRepository(cursor).restore(created["id"])
+
+        listed = client.get(f"/api/products/{product['id']}/images").get_json()
+        assert [image["id"] for image in listed] == [created["id"]]
+
+    def test_deleting_the_piece_keeps_its_photographs(self, client, product, photo):
+        _, path = self._photo_of(client, product, photo)
 
         client.delete(f"/api/products/{product['id']}")
-        assert not product_photo.exists()
 
-    def test_deleting_the_piece_removes_its_colours_photographs(
+        assert path.is_file()
+
+    def test_dropping_a_colour_keeps_its_photographs(
         self, client, product, photo, variant
     ):
         created, _ = variant
-        pinned = self._photo_of(
+        _, path = self._photo_of(
             client, product, photo, variant_id=str(created["id"])
         )
-
-        client.delete(f"/api/products/{product['id']}")
-        assert not pinned.exists()
-
-    def test_dropping_a_colour_removes_that_colours_photographs(
-        self, client, product, photo, variant
-    ):
-        created, _ = variant
-        pinned = self._photo_of(
-            client, product, photo, variant_id=str(created["id"])
-        )
-        kept = self._photo_of(client, product, photo)
 
         client.delete(f"/api/products/{product['id']}/variants/{created['id']}")
 
-        assert not pinned.exists()
-        assert kept.is_file(), "another colour's photograph is not this colour's"
+        assert path.is_file()
 
-    def test_deleting_a_colour_set_removes_the_photographs_of_its_variants(
+    def test_deleting_a_colour_set_keeps_the_photographs(
         self, client, product, photo, variant
     ):
-        """The colour set cascades to every variant offered in it, wherever they are."""
         created, color_set = variant
-        pinned = self._photo_of(
+        _, path = self._photo_of(
             client, product, photo, variant_id=str(created["id"])
         )
 
         client.delete(f"/api/color-sets/{color_set['id']}")
-        assert not pinned.exists()
 
-    def test_a_photograph_it_did_not_upload_is_left_alone(self, client, product):
-        """A row may point at a seeded asset or a path written by hand."""
-        attached = client.post(
-            f"/api/products/{product['id']}/images",
-            json={
-                "url": "/static/img/logo.png",
-                "variant_id": product["variant_id"],
-            },
+        assert path.is_file()
+
+    def test_the_rows_still_go_when_the_colour_does(
+        self, client, product, photo, variant
+    ):
+        """A soft-deleted photograph of a colour that no longer exists is a state
+        nothing could present, so those rows are removed outright. Only the file
+        survives."""
+        created, _ = variant
+        image, _ = self._photo_of(
+            client, product, photo, variant_id=str(created["id"])
         )
-        # Without this the row is never created and the assertion below passes
-        # for the wrong reason — nothing referenced the file to begin with.
-        assert attached.status_code == 201, attached.get_json()
 
-        client.delete(f"/api/products/{product['id']}")
+        client.delete(f"/api/products/{product['id']}/variants/{created['id']}")
+
+        assert client.get(
+            f"/api/products/{product['id']}/images"
+        ).get_json() == []
+        assert image["id"]
+
+
+class TestTheSweepIsTheOnlyThingThatDeletes:
+    """`flask sweep-uploads` removes files nothing points at, once they are old
+    enough. Age is read off the file rather than off a row, because an upload
+    whose request failed after the file was written has no row at all — and
+    collecting it the instant it appears would race a request still running."""
+
+    def _file(self, name="orfa.jpg", age_days=0):
+        path = uploads.UPLOAD_DIR / name
+        path.write_bytes(JPEG_BYTES)
+        if age_days:
+            old = time.time() - age_days * 86_400
+            os.utime(path, (old, old))
+        return path
+
+    def test_it_removes_a_file_no_row_points_at(self):
+        path = self._file(age_days=40)
+
+        removed = uploads.sweep(set(), older_than_days=30)
+
+        assert not path.exists()
+        assert removed == [f"{uploads.URL_PREFIX}/{path.name}"]
+
+    def test_it_leaves_a_referenced_file_however_old(self):
+        path = self._file(age_days=400)
+
+        uploads.sweep({f"{uploads.URL_PREFIX}/{path.name}"}, older_than_days=30)
+
+        assert path.is_file()
+
+    def test_it_leaves_a_file_inside_the_grace_period(self):
+        """A photograph uploaded a moment ago has no row yet for the length of the
+        request that is storing it."""
+        path = self._file(age_days=1)
+
+        uploads.sweep(set(), older_than_days=30)
+
+        assert path.is_file()
+
+    def test_a_dry_run_changes_nothing(self):
+        path = self._file(age_days=40)
+
+        reported = uploads.sweep(set(), older_than_days=30, dry_run=True)
+
+        assert reported == [f"{uploads.URL_PREFIX}/{path.name}"]
+        assert path.is_file(), "a dry run deleted the file"
+
+    def test_a_removed_photograph_is_referenced_until_its_row_is_purged(
+        self, client, product, photo
+    ):
+        """This is what makes removal reversible: the row keeps the file alive."""
+        from db import get_db_connection
+        from repositories import ProductImageRepository
+
+        created = upload(client, product, photo()).get_json()
+        path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
+        client.delete(f"/api/products/{product['id']}/images/{created['id']}")
+        old = time.time() - 400 * 86_400
+        os.utime(path, (old, old))
+
+        with get_db_connection() as (_, cursor):
+            referenced = ProductImageRepository(cursor).referenced_urls()
+        uploads.sweep(referenced, older_than_days=30)
+
+        assert path.is_file()
+
+    def test_purging_the_row_first_is_what_frees_the_file(
+        self, client, product, photo
+    ):
+        from db import get_db_connection
+        from repositories import ProductImageRepository
+
+        created = upload(client, product, photo()).get_json()
+        path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
+        client.delete(f"/api/products/{product['id']}/images/{created['id']}")
+        old = time.time() - 400 * 86_400
+        os.utime(path, (old, old))
+
+        with get_db_connection() as (_, cursor):
+            images = ProductImageRepository(cursor)
+            # Marked a moment ago, so nothing to purge yet at thirty days.
+            assert images.purge_deleted(older_than_days=30) == 0
+            # Everything marked, however recently.
+            assert images.purge_deleted(older_than_days=0) == 1
+            referenced = images.referenced_urls()
+
+        uploads.sweep(referenced, older_than_days=30)
+
+        assert not path.exists()
+
+    def test_a_seeded_asset_is_not_in_the_upload_folder_at_all(self):
+        """Rows may point at files placed by hand. The sweep only ever looks inside
+        the two upload folders, so those cannot be collected."""
+        uploads.sweep(set(), older_than_days=0)
+
         assert (uploads.PROJECT_ROOT / "static" / "img" / "logo.png").is_file()
 
 
@@ -350,13 +497,3 @@ class TestDecompressionLimit:
 
         assert response.status_code == 400
         assert list(uploads.UPLOAD_DIR.iterdir()) == []
-
-
-class TestDeleteHelper:
-    def test_ignores_paths_outside_the_upload_folder(self):
-        """Seeded assets and hand-written paths survive a row deletion."""
-        uploads.delete("/static/img/logo.png")
-        assert (uploads.PROJECT_ROOT / "static" / "img" / "logo.png").is_file()
-
-    def test_ignores_a_missing_file(self):
-        uploads.delete("/static/img/products/nao-existe.jpg")

@@ -78,26 +78,20 @@ class ProductVariantRepository:
         )
         return self._cursor.lastrowid
 
-    def delete(self, variant_id: int) -> list[str]:
-        """Remove a variant and its photos. The colour set itself is untouched.
+    def delete(self, variant_id: int) -> None:
+        """Remove a variant and its photographs' rows. The colour set is untouched.
 
-        Returns the URLs of the photographs whose rows have gone, so the caller can
-        remove the files. The repository does not touch the disk itself — it only
-        knows which rows it removed — and without this the files stayed behind on
-        every deletion but the one that goes through the images endpoint.
+        The rows go rather than being marked: a soft-deleted photograph of a colour
+        that no longer exists is a state nothing could present. The files stay on
+        disk until uploads.sweep() collects them, which is what makes this
+        recoverable at all — it used to unlink them here.
         """
-        self._cursor.execute(
-            "SELECT url FROM product_images WHERE variant_id = %s", (variant_id,)
-        )
-        urls = [row["url"] for row in self._cursor.fetchall()]
-
         self._cursor.execute(
             "DELETE FROM product_images WHERE variant_id = %s", (variant_id,)
         )
         self._cursor.execute(
             "DELETE FROM product_variants WHERE id = %s", (variant_id,)
         )
-        return urls
 
     def _attach_colors(self, variants: list[dict]) -> None:
         """Fill in each variant's colour-set colours in one query."""

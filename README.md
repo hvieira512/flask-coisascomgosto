@@ -58,6 +58,39 @@ date, `flask migrate --stamp` does the same thing. There is no `down`: a
 migration that turns out wrong is corrected by another one, which is the only
 undo that survives having already run somewhere.
 
+### Photographs are never deleted by the application
+
+Removing a photograph in the dashboard marks its row (`product_images.deleted_at`)
+and leaves the file where it is. Deleting a piece or a colour removes the rows —
+a marked photograph of a colour that no longer exists is a state nothing could
+present — and still leaves the files. Replacing a collection cover leaves the one
+it replaced.
+
+The reason is that the owners' only copy of a photograph may be the one they
+uploaded from a phone two years ago. Every one of those actions used to unlink the
+file in the same request, so a mis-tap was unrecoverable; the confirmations name
+the count, and a confirmation is not a backup.
+
+One command collects the leftovers, and it is the only thing in the project that
+deletes a file:
+
+```bash
+docker compose exec web flask sweep-uploads --dry-run   # list, change nothing
+docker compose exec web flask sweep-uploads             # after 30 days
+docker compose exec web flask sweep-uploads --days 7
+```
+
+It purges rows marked longer ago than the window, then removes files no row
+points at — including a marked one, because a marked photograph is restorable and
+its file is still in use. Age is read off the file's own mtime rather than any
+row, since an upload whose request failed after the file was written has no row at
+all and must not be collected while a request is still running. Nothing calls it
+automatically; run it by hand or from cron.
+
+Putting a photograph back is one `UPDATE` — `ProductImageRepository.restore()`.
+There is no button for it yet, and that is the honest state of it: the row is kept
+so that recovery is possible at all.
+
 ### Configuration
 
 `.env` is read by both docker compose and the application, so there is a single

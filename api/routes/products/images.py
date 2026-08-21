@@ -180,8 +180,7 @@ class ProductImage(Resource):
                 )
 
             image = get_or_404(ns, images, image_id, "Image")
+            # Marks the row; the file stays. `flask sweep-uploads` is what
+            # eventually removes both, so a mis-tap costs nothing today.
             images.delete(image_id)
-            # Only removes the file if it was one we stored, so seeded assets
-            # and hand-written paths survive.
-            uploads.delete(image["url"])
             return image, 200

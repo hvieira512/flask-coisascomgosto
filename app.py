@@ -66,6 +66,45 @@ def seed_command():
     seed()
 
 
+@app.cli.command("sweep-uploads")
+@click.option("--days", default=30, show_default=True,
+              help="How long a file must have been unreferenced to be removed.")
+@click.option("--dry-run", is_flag=True, help="List what would go, delete nothing.")
+def sweep_uploads_command(days, dry_run):
+    """Delete uploaded files no row points at any more.
+
+    The only thing in the project that deletes a photograph. Removing one in the
+    dashboard marks its row; deleting a piece or a colour removes rows and leaves
+    the files. That is deliberate — the owners' only copy of a photograph may be
+    the one they uploaded — and this is the other half of it.
+
+    Run it by hand, or from cron. Nothing calls it automatically.
+    """
+    import uploads
+    from db import get_db_connection
+    from repositories import ProductImageRepository
+
+    with get_db_connection() as (_, cursor):
+        images = ProductImageRepository(cursor)
+
+        purged = 0 if dry_run else images.purge_deleted(older_than_days=days)
+
+        cursor.execute("SELECT image_url FROM collections WHERE image_url IS NOT NULL")
+        referenced = images.referenced_urls() | {
+            row["image_url"] for row in cursor.fetchall()
+        }
+
+    removed = uploads.sweep(referenced, older_than_days=days, dry_run=dry_run)
+
+    for url in removed:
+        click.echo(f"{'would remove' if dry_run else 'removed'} {url}")
+
+    if dry_run:
+        click.echo(f"{len(removed)} file(s) would go; nothing was changed.")
+    else:
+        click.echo(f"Rows purged: {purged}. Files removed: {len(removed)}.")
+
+
 @app.cli.command("create-user")
 @click.argument("username")
 @click.option("--email", prompt=True, help="Used for the account only; nothing is sent.")

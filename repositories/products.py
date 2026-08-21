@@ -73,8 +73,8 @@ class ProductRepository:
         order = "p.id"
         if photographed_first:
             order = (
-                "EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id) "
-                "DESC, p.id"
+                "EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id "
+                "AND i.deleted_at IS NULL) DESC, p.id"
             )
         self._cursor.execute(
             f"{_SELECT} {where} ORDER BY {order} LIMIT %s OFFSET %s",
@@ -177,20 +177,15 @@ class ProductRepository:
             ),
         )
 
-    def delete(self, product_id: int) -> list[str]:
+    def delete(self, product_id: int) -> None:
         """Delete a product and everything hanging off it.
 
-        ON DELETE CASCADE would remove the child rows on its own. This method
-        stays because it returns the URLs of the photographs whose rows have gone,
-        product-level and per-colour alike, so the caller can remove the files —
-        a cascade deletes the row and leaves the JPEG on disk, which is how a
-        deleted piece used to leave every one of its photographs behind.
+        ON DELETE CASCADE would remove the child rows on its own; they are removed
+        here as well so the behaviour is stated where it is decided. The
+        photographs' files are not touched — uploads.sweep() collects them once
+        nothing points at them, which is what makes deleting a piece by mistake
+        survivable.
         """
-        self._cursor.execute(
-            "SELECT url FROM product_images WHERE product_id = %s", (product_id,)
-        )
-        urls = [row["url"] for row in self._cursor.fetchall()]
-
         self._cursor.execute(
             "DELETE FROM product_images WHERE product_id = %s", (product_id,)
         )
@@ -201,7 +196,6 @@ class ProductRepository:
             "DELETE FROM product_variants WHERE product_id = %s", (product_id,)
         )
         self._cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
-        return urls
 
     # ----------------
     # Sizes a product is available in

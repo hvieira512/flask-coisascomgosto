@@ -213,7 +213,6 @@ class Product(Resource):
             if not product:
                 ns.abort(404, f"Product #{product_id} not found")
 
-            # Its photographs' files go with their rows, product-level and
-            # per-colour alike; anything it merely pointed at is left alone.
-            uploads.delete_many(products.delete(product_id))
+            # The rows go; the photographs stay on disk until the sweep.
+            products.delete(product_id)
             return product, 200
