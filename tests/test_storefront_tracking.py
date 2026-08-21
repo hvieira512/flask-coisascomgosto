@@ -100,6 +100,54 @@ def visitor(browser, live_server, catalogue):
     context.close()
 
 
+class TestAVisit:
+    """The denominator. Hugo expected "Vistas" to mean arrivals at the site, and it
+    did not — nothing counted them at all, so there was no way to tell whether
+    eighteen openings came from eighteen people or from one."""
+
+    @pytest.mark.parametrize("path", ["/", "/products", "/products/1"])
+    def test_any_page_of_the_shop_counts_one(self, visitor, path):
+        page, errors, _, server = visitor
+
+        page.goto(f"{server}{path}")
+
+        assert len(events("visit")) == 1
+        assert errors == []
+
+    def test_walking_around_the_shop_is_still_one_visit(self, visitor):
+        page, _, catalogue, server = visitor
+        page.goto(f"{server}/")
+        events("visit")
+
+        page.goto(f"{server}/products")
+        page.goto(f"{server}/products/{catalogue['piece']['id']}")
+        page.reload()
+
+        no_more_than("visit", 1)
+
+    def test_a_new_tab_is_a_new_visit(self, visitor, browser, live_server):
+        page, _, _, server = visitor
+        page.goto(f"{server}/")
+        events("visit")
+
+        second = browser.new_context(viewport={"width": 1280, "height": 900})
+        try:
+            second.new_page().goto(f"{server}/")
+            assert len(events("visit", expected=2)) == 2
+        finally:
+            second.close()
+
+    def test_it_says_nothing_but_that_somebody_arrived(self, visitor):
+        page, _, _, server = visitor
+
+        page.goto(f"{server}/")
+
+        (row,) = events("visit")
+        assert row["product_id"] is None
+        assert row["term"] is None
+        assert row["facet"] is None
+
+
 class TestAView:
     def test_opening_a_piece_records_one(self, visitor):
         page, errors, catalogue, server = visitor

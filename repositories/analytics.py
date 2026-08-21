@@ -1,8 +1,8 @@
 """Data access for what visitors do on the storefront.
 
-One table, `storefront_events`, holding four kinds of event: a piece opened, a
-piece asked about (with the colour and size chosen), a search (with how many
-pieces it found), and a filter ticked.
+One table, `storefront_events`, holding five kinds of event: the shop opened at
+all, a piece opened, a piece asked about (with the colour and size chosen), a
+search (with how many pieces it found), and a filter ticked.
 
 Counters only. Nothing here records anything about the person — the table has no
 column that could hold an identifier, which `tests/test_storefront_events_api.py`
@@ -11,6 +11,7 @@ asserts rather than trusting this docstring.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Optional
 
 from pymysql.cursors import DictCursor
@@ -18,9 +19,19 @@ from pymysql.cursors import DictCursor
 from repositories.base import one_row
 
 # What a caller may record. Anything else is a bug in a caller, not a new kind of
-# event to be tolerated: the dashboard reads these four names and nothing else,
+# event to be tolerated: the dashboard reads these five names and nothing else,
 # so an unrecognised one would accumulate rows nobody ever looks at.
-KINDS = ("view", "enquiry", "search", "filter")
+#
+# `visit` carries nothing at all — it is one row saying somebody arrived, counted
+# once per tab. It exists because "18 aberturas de peças" cannot say whether
+# eighteen people each opened one piece or one person opened eighteen, and the
+# ratio between arriving and opening anything is the number that tells the owners
+# whether the shop is working.
+KINDS = ("visit", "view", "enquiry", "search", "filter")
+
+# The figures the page shows, in the order it shows them. Shared by the window
+# totals and the daily series behind each one, so a new figure is added once.
+TOTALS = ("visits", "views", "pieces", "enquiries", "searches")
 
 # A search term is stored to compare with other search terms, so it is normalised
 # once here rather than at every read.
@@ -144,6 +155,7 @@ class AnalyticsRepository:
                 "counting_since": self.counting_since(),
             },
             "totals": self._totals(days, 0),
+            "daily": self._daily(days),
             # The same window, one window earlier, so each figure can say which
             # way it is going. A number with nothing to compare it to is a number
             # nobody can act on.
@@ -183,6 +195,7 @@ class AnalyticsRepository:
         where, params = self._since(days, offset_days)
         self._cursor.execute(
             "SELECT "
+            "  SUM(kind = 'visit') AS visits, "
             "  SUM(kind = 'view') AS views, "
             "  SUM(kind = 'enquiry') AS enquiries, "
             "  SUM(kind = 'search') AS searches, "
@@ -192,7 +205,48 @@ class AnalyticsRepository:
         )
         row = one_row(self._cursor)
         # SUM() over no rows is NULL, and the page wants a number.
-        return {key: int(row[key] or 0) for key in ("views", "enquiries", "searches", "pieces")}
+        return {key: int(row[key] or 0) for key in TOTALS}
+
+    def _daily(self, days: int) -> dict[str, list[int]]:
+        """Each figure's shape over the window, one value per day.
+
+        Returned as a list per figure rather than a row per day, because that is
+        what a sparkline draws and it saves the page pivoting it. Days with nothing
+        on them are zeros: SQL only returns the days that have rows, and a line
+        drawn straight from Monday to Friday over a silent week is a line that
+        claims the week was busy.
+        """
+        where, params = self._since(days, 0)
+        self._cursor.execute(
+            "SELECT DATE(e.created_at) AS day, "
+            "  SUM(kind = 'visit') AS visits, "
+            "  SUM(kind = 'view') AS views, "
+            "  SUM(kind = 'enquiry') AS enquiries, "
+            "  SUM(kind = 'search') AS searches, "
+            "  COUNT(DISTINCT CASE WHEN kind = 'view' THEN product_id END) AS pieces "
+            f"FROM storefront_events e WHERE {where} "
+            "GROUP BY day ORDER BY day",
+            params,
+        )
+        by_day = {row["day"]: row for row in self._cursor.fetchall()}
+
+        # The window as MySQL itself counts it, so the series lines up with the
+        # totals rather than with the web server's idea of today.
+        self._cursor.execute(
+            "SELECT DATE(NOW() - INTERVAL %s DAY) AS first, DATE(NOW()) AS last",
+            (days - 1,),
+        )
+        span = one_row(self._cursor)
+        day = span["first"]
+
+        series: dict[str, list[int]] = {key: [] for key in TOTALS}
+        while day <= span["last"]:
+            row = by_day.get(day)
+            for key in TOTALS:
+                series[key].append(int(row[key] or 0) if row else 0)
+            day += timedelta(days=1)
+
+        return series
 
     def _top_products(self, days: int, top: int) -> list[dict]:
         """The pieces people looked at, with how often they then asked.

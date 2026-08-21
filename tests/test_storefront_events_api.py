@@ -120,6 +120,20 @@ class TestWhatItQuietlyIgnores:
 
 
 class TestWhatEachKindStores:
+    def test_a_visit_carries_nothing_at_all(self, anon_client, cursor):
+        """One row saying somebody arrived. Not which page, not where from — the
+        figure it feeds is a count, and anything else would be a detail about a
+        person."""
+        send(anon_client, {"kind": "visit"})
+
+        (row,) = rows(cursor)
+        assert row["kind"] == "visit"
+        assert not any(
+            row[column]
+            for column in ("product_id", "variant_id", "size_id", "facet",
+                           "facet_label", "term", "results")
+        )
+
     def test_an_enquiry_carries_the_colour_and_size(
         self, anon_client, cursor, piece, client
     ):

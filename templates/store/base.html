@@ -22,5 +22,6 @@
 {# Only what has to run on every page. The components the page scripts use —
    placeholder, api, color-set — are imported by whoever needs them. #}
 <script type="module" src="{{ url_for('static', filename='js/store/timeline.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/store/visit.js') }}"></script>
 {% block page_scripts %}{% endblock %}
 {% endblock %}

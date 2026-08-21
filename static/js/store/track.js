@@ -20,6 +20,9 @@ const ENDPOINT = "/api/storefront-events/";
 /** Views already sent in this tab, so a reload does not count twice. */
 const SEEN = "ccg-seen";
 
+/** Whether this tab has already been counted as one arrival. */
+const ARRIVED = "ccg-arrived";
+
 /**
  * `keepalive` only where the page is about to go away.
  *
@@ -72,6 +75,26 @@ function remember(productId, ids) {
 
 export const Track = {
     /**
+     * Somebody opened the shop. Once per tab, whichever page they landed on, and
+     * carrying nothing — not which page, not where they came from.
+     *
+     * It is the denominator: eighteen pieces opened reads very differently
+     * against twenty arrivals than against two hundred.
+     */
+    visit() {
+        try {
+            if (sessionStorage.getItem(ARRIVED)) return;
+            sessionStorage.setItem(ARRIVED, "1");
+        } catch (error) {
+            // Without storage every page load is an arrival. A high number beats
+            // no number, and this is the one figure where that is true: the flag
+            // is the only thing stopping it, and there is nothing else to use.
+        }
+
+        send({ kind: "visit" });
+    },
+
+    /**
      * A piece was opened. Once per piece per tab: a reload, or stepping back to
      * it, is the same visit looking at the same thing.
      */
@@ -108,9 +131,9 @@ export const Track = {
     },
 
     /**
-     * Something was searched for, and how many pieces it found. Zero is the
-     * interesting value: a list of things people want and the catalogue does not
-     * offer.
+     * Something was searched for, and how many pieces it found. Only the count of
+     * searches is read — the words are stored and nothing shows them, which is
+     * how Hugo asked for it.
      */
     search(term, results) {
         const text = String(term || "").trim();

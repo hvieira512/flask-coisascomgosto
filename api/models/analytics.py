@@ -15,13 +15,30 @@ window_model = Model(
 totals_model = Model(
     "AnalyticsTotals",
     {
+        "visits": fields.Integer(
+            description="Times the shop was opened at all, counted once per tab. "
+            "Against the openings below it says whether people who arrive go on to "
+            "look at anything."
+        ),
         "views": fields.Integer(description="Pieces opened"),
-        "enquiries": fields.Integer(description="Times somebody asked about one"),
-        "searches": fields.Integer(description="Searches made"),
         "pieces": fields.Integer(
             description="How many different pieces were opened — how much of the "
             "catalogue got any attention at all"
         ),
+        "enquiries": fields.Integer(description="Times somebody asked about one"),
+        "searches": fields.Integer(description="Searches made"),
+    },
+)
+
+daily_model = Model(
+    "AnalyticsDaily",
+    {
+        key: fields.List(
+            fields.Integer,
+            description=f"{key} per day, oldest first, one value for every day in "
+            "the window including the silent ones",
+        )
+        for key in ("visits", "views", "pieces", "enquiries", "searches")
     },
 )
 
@@ -78,6 +95,10 @@ overview_model = Model(
     {
         "window": fields.Nested(window_model),
         "totals": fields.Nested(totals_model, description="This window"),
+        "daily": fields.Nested(
+            daily_model,
+            description="The same figures day by day, for the sparkline beside each",
+        ),
         "previous": fields.Nested(
             totals_model,
             description="The window before this one, so each figure can say which "
@@ -97,6 +118,7 @@ overview_model = Model(
 ANALYTICS_MODELS = [
     window_model,
     totals_model,
+    daily_model,
     viewed_product_model,
     asked_color_set_model,
     used_filter_model,

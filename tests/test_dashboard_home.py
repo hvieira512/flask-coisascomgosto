@@ -167,7 +167,7 @@ class TestWithSomethingRecorded:
 
         open_home(7)
 
-        assert page.locator("#totals .data").first.inner_text() == "1"
+        assert page.locator("[data-figure=views] .data").inner_text() == "1"
         assert errors == []
 
     def test_a_wider_window_takes_in_more(self, owner, piece, record):
@@ -177,7 +177,7 @@ class TestWithSomethingRecorded:
 
         open_home(90)
 
-        assert page.locator("#totals .data").first.inner_text() == "2"
+        assert page.locator("[data-figure=views] .data").inner_text() == "2"
 
     def test_a_change_against_the_previous_window_is_shown(
         self, owner, piece, record
@@ -287,6 +287,94 @@ class TestWithSomethingRecorded:
         assert "Ninguém perguntou por uma cor" in page.locator(
             "#asked-colors"
         ).inner_text()
+
+
+class TestTheFiguresSayWhatTheyCount:
+    """Hugo read the page and could not tell what it was telling him: "O que são as
+    perguntas? O que são Vistas? Acessos ao website?" The labels are the answer,
+    and so is the sentence under them."""
+
+    def test_every_figure_is_there_and_named(self, owner, piece, record):
+        record("visit")
+        record("view", product_id=piece["product"]["id"])
+        open_home, page, _ = owner
+
+        open_home()
+
+        labels = page.locator("#totals .card").all_inner_texts()
+        assert len(labels) == 5
+        joined = " ".join(labels).lower()
+        for word in ("visitas", "aberturas de peças", "peças diferentes",
+                     "pedidos de informação", "procuras"):
+            assert word in joined, word
+
+    def test_it_explains_an_opening_and_a_request(self, owner, piece, record):
+        record("view", product_id=piece["product"]["id"])
+        open_home, page, _ = owner
+
+        open_home()
+
+        explanation = page.locator("#totals > .help").inner_text()
+        assert "abrir a loja" in explanation
+        assert "Pedir informações" in explanation
+
+    def test_a_visit_is_not_the_same_as_an_opening(self, owner, piece, record):
+        """Three arrivals, one of whom opened a piece — the pair of numbers is the
+        whole point of counting visits."""
+        for _ in range(3):
+            record("visit")
+        record("view", product_id=piece["product"]["id"])
+        open_home, page, _ = owner
+
+        open_home()
+
+        assert page.locator("[data-figure=visits] .data").inner_text() == "3"
+        assert page.locator("[data-figure=views] .data").inner_text() == "1"
+
+
+class TestTheSparklines:
+    """One line per figure, drawn by hand in SVG. A line is only worth drawing when
+    there is a shape to see — a flat rule along the bottom of five cards is
+    decoration, and it would read as "we measured this and it was nothing" on a
+    page that has nothing yet."""
+
+    def test_a_figure_with_data_gets_a_line(self, owner, piece, record):
+        record("view", product_id=piece["product"]["id"], days_ago=2)
+        record("view", product_id=piece["product"]["id"])
+        open_home, page, errors = owner
+
+        open_home()
+
+        assert page.locator("#totals svg polyline").count() >= 1
+        assert errors == []
+
+    def test_nothing_recorded_draws_nothing(self, owner):
+        open_home, page, _ = owner
+        open_home()
+
+        assert page.locator("#totals svg").count() == 0
+
+    def test_a_figure_that_stayed_at_zero_draws_nothing(self, owner, piece, record):
+        """Openings happened; nobody searched. The searches card keeps its zero and
+        does not pretend to a trend."""
+        record("view", product_id=piece["product"]["id"])
+        open_home, page, _ = owner
+
+        open_home()
+
+        assert page.locator("[data-figure=searches] svg").count() == 0
+        assert page.locator("[data-figure=views] svg").count() == 1
+
+    def test_the_line_has_one_point_per_day_of_the_window(
+        self, owner, piece, record
+    ):
+        record("view", product_id=piece["product"]["id"])
+        open_home, page, _ = owner
+
+        open_home(30)
+
+        points = page.locator("#totals svg polyline").first.get_attribute("points")
+        assert len(points.split()) == 30
 
 
 class TestWhatIsNewInTheCatalogue:

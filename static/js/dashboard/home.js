@@ -28,20 +28,59 @@ const period = (days) =>
     days === 7 ? "esta semana" : days === 30 ? "neste mês" : `nestes ${days} dias`;
 
 /**
- * A figure with how it compares to the window before it.
+ * The figure's shape over the window, as a line.
+ *
+ * Hand-rolled SVG rather than a charting library: it is a polyline of at most
+ * ninety points with no axes, no labels and no interaction, and the smallest
+ * library that draws it is larger than the whole of this file.
+ *
+ * `viewBox` with `preserveAspectRatio="none"` is what makes it resize with the
+ * card: the coordinates below are 0–100 by 0–20 whatever the card's real width
+ * turns out to be. Nothing is drawn when there is no shape to show — a flat line
+ * along the bottom of every card is decoration, not information.
+ */
+function sparkline(series) {
+    if (!series || series.length < 2) return "";
+
+    const peak = Math.max(...series);
+    if (peak === 0) return "";
+
+    const step = 100 / (series.length - 1);
+    const points = series
+        // SVG's y grows downwards, hence the subtraction; 1 and 19 rather than 0
+        // and 20 so the stroke is not clipped at either edge.
+        .map((value, index) => `${(index * step).toFixed(1)},${(19 - (value / peak) * 18).toFixed(1)}`)
+        .join(" ");
+
+    // mt-auto because the cards are equal height and two of the labels wrap onto a
+    // second line: without it their lines sit higher than the rest and the row
+    // reads as five unrelated charts.
+    return `
+      <svg class="mt-auto pt-2" viewBox="0 0 100 20" preserveAspectRatio="none"
+           width="100%" height="20" aria-hidden="true" focusable="false">
+        <polyline points="${points}" fill="none" stroke="currentColor"
+                  stroke-width="1" stroke-linejoin="round" vector-effect="non-scaling-stroke"
+                  opacity=".45" />
+      </svg>`;
+}
+
+/**
+ * A figure, how it compares to the window before it, and its shape day by day.
  *
  * The comparison is the point: 62 views means nothing on its own, and "62, up
  * from 50" is a fact somebody can act on. No arrow when the previous window was
- * empty — "up from nothing" is what a first week always looks like.
+ * empty — "up from nothing" is what a first week always looks like. The line
+ * underneath says the same thing at a glance, and says where in the window it
+ * happened, which no single number can.
  */
-function figure(label, value, previous, { hasHistory }) {
+function figure(key, label, value, previous, { hasHistory, series }) {
     const delta = value - previous;
     const show = hasHistory && previous > 0 && delta !== 0;
     const tone = delta > 0 ? "--ccg-ready" : "--ccg-attention";
 
     return `
       <div class="col">
-        <div class="card dash-panel p-3 h-100">
+        <div class="card dash-panel p-3 h-100" data-figure="${key}">
           <span class="h4 mb-1 data">${value}</span>
           <span class="eyebrow mb-0">${escapeHtml(label)}</span>
           ${show
@@ -49,31 +88,39 @@ function figure(label, value, previous, { hasHistory }) {
                    ${delta > 0 ? "▲" : "▼"} ${Math.abs(delta)} vs. período anterior
                  </span>`
               : `<span class="fs-7 mt-1 text-body-tertiary">&nbsp;</span>`}
+          ${sparkline(series)}
         </div>
       </div>`;
 }
 
-function renderTotals({ totals, previous, window: win }, days) {
+// The labels say what is actually counted. "Vistas" and "Peças vistas" side by
+// side read as the same thing twice, and neither said that what is counted is a
+// piece's own page being opened rather than a visit to the site.
+const FIGURES = [
+    ["visits", "Visitas"],
+    ["views", "Aberturas de peças"],
+    ["pieces", "Peças diferentes"],
+    ["enquiries", "Pedidos de informação"],
+    ["searches", "Procuras"],
+];
+
+function renderTotals({ totals, previous, daily, window: win }, days) {
     const hasHistory = Boolean(win.counting_since);
-    // The labels say what is actually counted. "Vistas" and "Peças vistas" side by
-    // side read as the same thing twice, and neither says that what is counted is
-    // a piece's own page being opened rather than a visit to the site.
-    const cards = [
-        ["Aberturas de peças", totals.views, previous.views],
-        ["Peças diferentes", totals.pieces, previous.pieces],
-        ["Pedidos de informação", totals.enquiries, previous.enquiries],
-        ["Procuras", totals.searches, previous.searches],
-    ]
-        .map(([label, value, before]) => figure(label, value, before, { hasHistory }))
-        .join("");
+    const cards = FIGURES.map(([key, label]) =>
+        figure(key, label, totals[key], previous[key], {
+            hasHistory,
+            series: daily[key],
+        })
+    ).join("");
 
     document.getElementById("totals").innerHTML = `
       <p class="eyebrow mb-2">O que aconteceu ${escapeHtml(period(days))}</p>
-      <div class="row row-cols-2 row-cols-lg-4 g-2">${cards}</div>
+      <div class="row row-cols-2 row-cols-lg-5 g-2">${cards}</div>
       ${hasHistory
           ? `<p class="help mt-2 mb-0">
-               Uma abertura é alguém a abrir a página de uma peça, contada uma vez
-               por visita. Um pedido é um clique em “Pedir informações”.
+               Uma visita é alguém a abrir a loja, contada uma vez por visita; uma
+               abertura é a página de uma peça, também uma vez por visita. Um
+               pedido é um clique em “Pedir informações”.
              </p>`
           : `<p class="help mt-2 mb-0">
                Ainda não há nada registado. A contagem começa quando alguém

@@ -127,6 +127,7 @@ class TestTheWindow:
 
 class TestTheTotals:
     def test_each_kind_is_counted_separately(self, client, piece, record):
+        record("visit")
         record("view", product_id=piece["product"]["id"])
         record("view", product_id=piece["product"]["id"])
         record("enquiry", product_id=piece["product"]["id"])
@@ -135,9 +136,24 @@ class TestTheTotals:
 
         totals = client.get(URL).get_json()["totals"]
 
+        assert totals["visits"] == 1
         assert totals["views"] == 2
         assert totals["enquiries"] == 1
         assert totals["searches"] == 1
+
+    def test_visits_are_the_denominator_for_everything_else(
+        self, client, piece, record
+    ):
+        """Eighteen openings reads one way against twenty arrivals and another
+        against two hundred, which is the whole reason `visit` exists."""
+        for _ in range(5):
+            record("visit")
+        record("view", product_id=piece["product"]["id"])
+
+        totals = client.get(URL).get_json()["totals"]
+
+        assert totals["visits"] == 5
+        assert totals["views"] == 1
 
     def test_pieces_counts_distinct_pieces_not_views(
         self, client, piece, record, make_product
@@ -157,7 +173,58 @@ class TestTheTotals:
         """SUM() over no rows is NULL, and the page has to print a number."""
         totals = client.get(URL).get_json()["totals"]
 
-        assert totals == {"views": 0, "enquiries": 0, "searches": 0, "pieces": 0}
+        assert totals == {
+            "visits": 0,
+            "views": 0,
+            "pieces": 0,
+            "enquiries": 0,
+            "searches": 0,
+        }
+
+
+class TestTheDailySeries:
+    """One value per day behind each figure, which is what the sparkline in each
+    card draws."""
+
+    def test_there_is_one_value_per_day_in_the_window(self, client, piece, record):
+        record("view", product_id=piece["product"]["id"])
+
+        daily = client.get(f"{URL}?days=30").get_json()["daily"]
+
+        for key in ("visits", "views", "pieces", "enquiries", "searches"):
+            assert len(daily[key]) == 30, key
+
+    def test_the_silent_days_are_zeros_and_today_is_last(
+        self, client, piece, record
+    ):
+        """SQL only returns the days that have rows. A line drawn straight from one
+        busy day to the next over a silent week claims the week was busy."""
+        record("view", product_id=piece["product"]["id"])
+        record("view", product_id=piece["product"]["id"])
+
+        views = client.get(f"{URL}?days=7").get_json()["daily"]["views"]
+
+        assert views == [0, 0, 0, 0, 0, 0, 2]
+
+    def test_an_older_day_lands_in_its_own_place(self, client, piece, record):
+        record("view", product_id=piece["product"]["id"], days_ago=3)
+
+        views = client.get(f"{URL}?days=7").get_json()["daily"]["views"]
+
+        assert views == [0, 0, 0, 1, 0, 0, 0]
+
+    def test_the_series_adds_up_to_the_total(self, client, piece, record):
+        for days_ago in (0, 1, 1, 5):
+            record("view", product_id=piece["product"]["id"], days_ago=days_ago)
+
+        body = client.get(f"{URL}?days=7").get_json()
+
+        assert sum(body["daily"]["views"]) == body["totals"]["views"] == 4
+
+    def test_nothing_recorded_is_a_row_of_zeros(self, client):
+        daily = client.get(f"{URL}?days=7").get_json()["daily"]
+
+        assert daily["views"] == [0] * 7
 
 
 class TestMostViewed:
