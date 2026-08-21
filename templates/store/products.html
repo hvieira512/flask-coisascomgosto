@@ -2,93 +2,96 @@
 
 {% block page_title %}Catálogo{% endblock %}
 
-{% from 'components/forms.html' import field_icon %}
-
 {% block content %}
 {# base.html renders <main> bare so the landing page can supply full-bleed
    sections; inner pages provide their own section/container. #}
 <section class="section">
 <div class="container">
-<div class="row g-4">
 
-    {# ---------------- Filter sidebar ---------------- #}
-    <aside class="col-lg-3">
-        <div class="filters-panel">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Filtros</h2>
-                <button id="clear-filters" class="btn btn-sm btn-ghost" type="button" hidden>
-                    Limpar tudo
-                </button>
-            </div>
+{# The page's own head, above both columns. #}
+<header class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-4">
+    <div>
+        <p class="eyebrow rule-above text-gold">Catálogo</p>
+        <h1 class="display-6 mb-2">Tudo o que fazemos</h1>
+        {# There are no prices anywhere in the shop: everything is made to order
+           and quoted by message. Saying so once, here, answers the question the
+           tiles otherwise leave open — on one line, because it is one sentence
+           and the reading measure is for paragraphs. #}
+        <p class="text-body-secondary mb-0">
+            Peças feitas à mão por encomenda. Preços sob consulta — fale connosco e dizemos-lhe tudo.
+        </p>
+    </div>
 
-            <div class="mb-4">
-                <label class="form-label fs-7" for="filter-search">Pesquisar</label>
-                <div class="input-group">
-                    <input id="filter-search" class="form-control form-control-sm" type="search"
-                           placeholder="Nome do produto…" autocomplete="off">
-                    {{ field_icon('fa-solid fa-magnifying-glass') }}
-                </div>
-            </div>
+    <div class="d-flex flex-wrap align-items-center gap-1">
+        <div id="active-filters" class="d-flex flex-wrap gap-1" hidden></div>
+        <span id="result-count" class="fs-7 font-monospace text-body-tertiary"></span>
+    </div>
+</header>
 
-            {# Each group is populated from its API endpoint by products.js.
-               data-facet names the key under /api/products/facets that carries
-               this group's per-option counts.
+{# The collections, offered first and all of them: the owners say people ask for
+   their work by collection rather than by the kind of object. Across the full
+   width, above both columns. A rail and not a gate — the grid underneath is
+   already everything, so choosing is an invitation rather than a toll, and
+   choosing the same one again clears it. #}
+<nav id="collection-rail" class="rail-shell mb-5" aria-label="Colecções" hidden>
+    <button class="disc rail-arrow rail-arrow-start" data-rail-prev type="button"
+            aria-label="Colecções anteriores" hidden>
+        <span class="icon"><i class="fa-solid fa-chevron-left"></i></span>
+    </button>
 
-               There is no Colecção group: the cards above the grid are the way to
-               choose one, and a checkbox list beside them was the same question
-               asked twice. It also means the rail is the only way to filter by
-               collection, so it no longer hides itself when there is just one. #}
-            <nav id="filter-groups">
-                <p class="filter-group-label">Tipo</p>
-                <ul class="nav flex-column" data-filter-group="type_id" data-endpoint="/api/product-types/"
-                    data-collection-key="product_types" data-facet="types"></ul>
+    <ul id="collection-strip" class="drag-rail collection-rail gap-2 mb-0 ps-0"
+        tabindex="0" aria-label="Colecções, arraste para o lado"></ul>
 
-                <p class="filter-group-label">Material</p>
-                <ul class="nav flex-column" data-filter-group="material_id" data-endpoint="/api/materials/"
-                    data-collection-key="materials" data-facet="materials"></ul>
-            </nav>
+    <button class="disc rail-arrow rail-arrow-end" data-rail-next type="button"
+            aria-label="Colecções seguintes" hidden>
+        <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
+    </button>
+</nav>
+
+<div class="row g-4 g-lg-5">
+
+    {# ---------------- Filter sidebar ----------------
+       Rules, not a panel: nothing here is a thing, they are switches on the grid
+       beside them. #}
+    <aside class="col-lg-3 filters">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+            <h2 class="fs-7 text-uppercase font-monospace text-body-tertiary mb-0">Filtros</h2>
+            <button id="clear-filters" class="btn btn-sm btn-link p-0 fs-7 text-decoration-none"
+                    type="button" hidden>
+                Limpar tudo
+            </button>
         </div>
+
+        <div class="mb-4">
+            <label class="visually-hidden" for="filter-search">Pesquisar</label>
+            <input id="filter-search"
+                   class="form-control form-control-sm border-0 border-bottom rounded-0 px-0 bg-transparent"
+                   type="search" placeholder="Procurar uma peça" autocomplete="off">
+        </div>
+
+        {# Each group is populated from its API endpoint by products.js.
+           data-facet names the key under /api/products/facets that carries this
+           group's per-option counts.
+
+           There is no Colecção group: the rail above the grid is the way to
+           choose one, and a checkbox list beside it was the same question asked
+           twice. #}
+        <nav id="filter-groups">
+            <p class="filter-group-label">Tipo</p>
+            <ul class="nav flex-column" data-filter-group="type_id" data-endpoint="/api/product-types/"
+                data-collection-key="product_types" data-facet="types"></ul>
+
+            <p class="filter-group-label">Material</p>
+            <ul class="nav flex-column" data-filter-group="material_id" data-endpoint="/api/materials/"
+                data-collection-key="materials" data-facet="materials"></ul>
+        </nav>
     </aside>
 
     {# ---------------- Product grid ---------------- #}
     <section class="col-lg-9 catalogue-main">
-        {# The applied filters sit on the heading line, beside the count they
-           explain: "Colecção: Filigrana · 9 produtos". They had a row of their own
-           between the collections and the grid, which pushed the pieces 48px down
-           the moment anything was filtered — on a line that was otherwise 1224px
-           of empty space.
-
-           The badges and the count travel as one group, so the badges sit against
-           the number rather than drifting into the middle, and the count still ends
-           up on the right when they are hidden. Wrapping, so that with several
-           filters chosen on a phone the badges get a line of their own rather than
-           squeezing the title. #}
-        <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
-            <h1 class="h4 mb-0">Catálogo</h1>
-            <div class="d-flex flex-wrap align-items-center gap-1 ms-auto">
-                <div id="active-filters" class="d-flex flex-wrap gap-1" hidden></div>
-                <span id="result-count" class="fs-7 text-body-secondary"></span>
-            </div>
-        </div>
-
-        {# There are no prices anywhere in the shop: everything is made to order
-           and quoted by message. Saying so once, here, answers the question the
-           cards otherwise leave open. #}
-        <p class="fs-7 text-body-secondary mb-3">
-            Peças feitas à mão por encomenda. Preços sob consulta — fale
-            connosco e dizemos-lhe tudo.
-        </p>
-
-        {# The collections, offered first: the owners say people ask for their work
-           by collection rather than by the kind of object. A rail and not a gate —
-           the grid underneath is already full, so choosing is an invitation rather
-           than a toll. Filled by js/store/products.js. #}
-        <nav id="collection-rail" class="mb-4" aria-label="Colecções" hidden>
-            <p class="eyebrow mb-2">Colecções</p>
-            <ul id="collection-strip" class="collection-strip"></ul>
-        </nav>
-
-        <div id="product-grid" class="row row-cols-1 row-cols-sm-2 row-cols-xxl-3 g-2"></div>
+        {# Three across from lg. The pieces are photographs and they were sharing
+           a 1224px column two at a time. #}
+        <div id="product-grid" class="row row-cols-2 row-cols-lg-3 g-4"></div>
 
         <div id="grid-empty" class="alert alert-light text-center" hidden>
             Nenhum produto corresponde aos filtros escolhidos.

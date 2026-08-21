@@ -37,6 +37,12 @@ def catalogue(browser, live_server, client, make_collection, make_product):
 
     page.goto(f"{live_server}/products")
     page.wait_for_selector("#collection-strip .collection-card")
+    # And the pieces. The rail and the grid are two fetches, and waiting only on
+    # the rail counted the grid before it had arrived — which passed alone and
+    # failed under the load of the whole suite.
+    page.wait_for_function(
+        "() => document.querySelectorAll('#product-grid > *').length === 4"
+    )
 
     yield page, errors, {"filigrana": filigrana, "bordados": bordados}
     context.close()
@@ -51,12 +57,20 @@ def shown(page):
     return page.locator("#product-grid > *").count()
 
 
+def nothing_chosen(page):
+    """No collection chosen, which is what the grid showing everything looks
+    like. There is no "Ver tudo" tile to carry the state any more."""
+    return page.locator('.collection-card[aria-pressed="true"]').count() == 0
+
+
 class TestTheRail:
     def test_it_offers_every_collection_that_has_pieces(self, catalogue):
         page, errors, _ = catalogue
         names = page.locator(".collection-card-name").all_text_contents()
 
-        assert names[0] == "Ver tudo", "getting back to everything comes first"
+        # No "Ver tudo" tile: the grid below is already everything, and choosing
+        # the chosen one again is how you get back to it.
+        assert "Ver tudo" not in names
         assert "Filigrana" in names and "Bordados" in names
         assert "Vazia" not in names, "a collection with nothing behind it is a dead end"
         assert errors == []
@@ -65,7 +79,7 @@ class TestTheRail:
         """The whole point of a rail rather than a gate."""
         page, _, _ = catalogue
 
-        assert card(page, "Ver tudo").get_attribute("aria-pressed") == "true"
+        assert nothing_chosen(page)
         assert shown(page) == 4
         assert page.locator("#product-grid").is_visible()
 
@@ -85,7 +99,7 @@ class TestTheRail:
 
         assert shown(page) == 2
         assert card(page, "Filigrana").get_attribute("aria-pressed") == "true"
-        assert card(page, "Ver tudo").get_attribute("aria-pressed") == "false"
+        assert not nothing_chosen(page)
 
     def test_the_sidebar_does_not_ask_the_same_question(self, catalogue):
         """The cards are the only way to choose a collection. A checkbox list beside
@@ -113,7 +127,7 @@ class TestTheRail:
         page.wait_for_function(
             "() => document.querySelectorAll('#product-grid > *').length === 4"
         )
-        assert card(page, "Ver tudo").get_attribute("aria-pressed") == "true"
+        assert nothing_chosen(page)
 
     def test_choosing_another_replaces_rather_than_accumulates(self, catalogue):
         """The sidebar's checkboxes add up. A wall of covers reads as "pick one",
@@ -139,7 +153,7 @@ class TestTheRail:
         )
 
         assert not page.url.endswith("collection_id=1")
-        assert card(page, "Ver tudo").get_attribute("aria-pressed") == "true"
+        assert nothing_chosen(page)
 
     def test_every_card_is_the_same_shape(self, catalogue):
         """A cover is either a photograph or the no-photograph tile, and that tile
@@ -160,91 +174,42 @@ class TestTheRail:
         assert len(set(tops)) == 1, tops
 
 
-class TestTheSelectedRing:
-    """The ring around the chosen collection, measured in painted pixels.
+class TestTheChosenTile:
+    """The chosen collection is marked on the tile, and marking it must not move
+    anything: the ring is an outline rather than a border, so it is painted over
+    the tile instead of adding to its box.
 
-    It was built from a 1px border plus a 2px inset box-shadow, copying the
-    variant buttons on the product page. An inset shadow paints beneath content,
-    and the cover fills the card absolutely — so the ring came out 1px thick over
-    the photograph and 3px over the name, with a step where the two met. Computed
-    styles all looked correct; only the pixels showed it.
-    """
+    It used to be a 2px navy border, drawn beneath the cover — which came out 1px
+    over the photograph and 3px over the name, with a step where they met."""
 
-    BLUE = (68, 114, 196)   # --ccg-blue-500
-
-    def _ring_thickness(self, image, x, y_range):
-        """How many of the pixels nearest an edge are ring-coloured.
-
-        Counted rather than walked from the very first pixel: the card's box lands
-        on a fraction of a device pixel, so an element screenshot carries a sliver
-        of the page behind it on one side and not the other.
-        """
-        ring = 0
-        for y in y_range:
-            pixel = image.getpixel((x, y))
-            distance = sum((a - b) ** 2 for a, b in zip(pixel, self.BLUE)) ** 0.5
-            if distance <= 70:      # room for antialiasing, not for another colour
-                ring += 1
-        return ring
-
-    def test_it_is_the_same_thickness_over_the_photo_as_over_the_name(
-        self, catalogue, tmp_path
-    ):
-        from PIL import Image
-
+    def test_the_chosen_tile_is_outlined(self, catalogue):
         page, _, _ = catalogue
         card(page, "Filigrana").click()
         page.wait_for_function(
             "() => document.querySelectorAll('#product-grid > *').length === 2"
         )
 
-        # The storefront's loading overlay fades out over .45s and is then removed.
-        # Until it is gone every pixel is composited through it, which washed the
-        # ring out to (201, 212, 231) and the card's white body to (251, 250, 247).
-        page.wait_for_selector("#page-loader", state="detached")
-
-        # The border colour is transitioned, so a screenshot taken as soon as the
-        # grid arrives catches it partway — the ring came out (150, 175, 219),
-        # halfway between the resting colour and the accent.
-        page.wait_for_function(
-            """() => getComputedStyle(document.querySelector('.collection-card.is-active'))
-                       .borderTopColor === 'rgb(68, 114, 196)'"""
+        outline = page.locator('.collection-card[aria-pressed="true"]').evaluate(
+            """el => {
+                const s = getComputedStyle(el);
+                return {width: s.outlineWidth, style: s.outlineStyle};
+            }"""
         )
-
-        shot = tmp_path / "card.png"
-        page.locator(".collection-card.is-active").screenshot(path=shot)
-        image = Image.open(shot).convert("RGB")
-        width, height = image.size
-
-        middle = width // 2
-        top = self._ring_thickness(image, middle, range(0, 6))
-        bottom = self._ring_thickness(image, middle, range(height - 1, height - 7, -1))
-
-        edges = {
-            "top": [image.getpixel((middle, y)) for y in range(0, 6)],
-            "bottom": [image.getpixel((middle, height - 1 - y)) for y in range(0, 6)],
-        }
-        assert top >= 1, f"the ring is missing along the top edge: {edges}"
-        assert bottom >= 1, f"the ring is missing along the bottom edge: {edges}"
-        assert abs(top - bottom) <= 1, (
-            f"the ring is {top}px over the cover and {bottom}px over the name"
-        )
+        assert outline["style"] == "solid"
+        assert outline["width"] == "2px"
 
     def test_choosing_a_collection_does_not_move_anything(self, catalogue):
-        """Whatever the ring is made of, it cannot change the card's size, or the
-        whole rail shifts under the cursor as you pick."""
         page, _, _ = catalogue
+        before = page.locator("#collection-strip").bounding_box()
 
-        before = page.locator(".collection-card").first.bounding_box()
         card(page, "Filigrana").click()
         page.wait_for_function(
             "() => document.querySelectorAll('#product-grid > *').length === 2"
         )
-        after = page.locator(".collection-card").first.bounding_box()
+        after = page.locator("#collection-strip").bounding_box()
 
-        assert (round(before["width"]), round(before["height"])) == (
-            round(after["width"]), round(after["height"])
-        )
+        assert abs(before["height"] - after["height"]) < 1
+        assert abs(before["y"] - after["y"]) < 1
 
 
 class TestWhereTheAppliedFiltersLive:
@@ -326,6 +291,11 @@ class TestOnAPhone:
         page.set_default_timeout(5000)
         page.goto(f"{live_server}/products")
         page.wait_for_selector("#collection-strip .collection-card")
+        # And the pieces: the rail and the grid are two fetches, and waiting only
+        # on the rail counted the grid before it had arrived.
+        page.wait_for_function(
+            "() => document.querySelectorAll('#product-grid > *').length === 3"
+        )
         yield page
         context.close()
 
@@ -367,7 +337,7 @@ class TestOnAPhone:
             "() => document.querySelectorAll('.filter-badge').length === 2"
         )
 
-        title = phone.locator("h1.h4").bounding_box()
+        title = phone.locator("h1").bounding_box()
         badges = phone.locator("#active-filters").bounding_box()
 
         assert badges["y"] >= title["y"] + title["height"] - 4, (
@@ -420,14 +390,14 @@ class TestACrowdedRail:
                 return {
                     railScrolls: strip.scrollWidth > strip.clientWidth,
                     stripFitsItsColumn:
-                        strip.clientWidth <= strip.closest('.catalogue-main').clientWidth,
+                        strip.clientWidth <= strip.closest('.container').clientWidth,
                     pageScrolls:
                         document.documentElement.scrollWidth > window.innerWidth,
                 };
             }"""
         )
         assert state["railScrolls"], "nine cards must scroll, not squeeze"
-        assert state["stripFitsItsColumn"], "the rail grew its own column"
+        assert state["stripFitsItsColumn"], "the rail grew past its container"
         assert not state["pageScrolls"], "the catalogue must not scroll sideways"
 
     def test_the_pieces_are_still_on_the_fold(self, crowded):
@@ -482,7 +452,7 @@ class TestWhenThereIsNothingToChoose:
         try:
             page.wait_for_selector("#collection-strip .collection-card")
             names = page.locator(".collection-card-name").all_text_contents()
-            assert names == ["Ver tudo", "Filigrana"]
+            assert names == ["Filigrana"]
         finally:
             context.close()
 

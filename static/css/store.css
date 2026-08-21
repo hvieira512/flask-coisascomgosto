@@ -183,6 +183,21 @@ h3 {
     line-height: 1.1;
 }
 
+/* The pitch button, made the way Bootstrap makes button variants: its own
+   custom properties, not a rule that overrides its colours. Only the one
+   call to action wears it. */
+.btn-pitch {
+    --bs-btn-color: #FBF8F3;
+    --bs-btn-bg: var(--ccg-pitch);
+    --bs-btn-border-color: var(--ccg-pitch);
+    --bs-btn-hover-color: var(--ccg-pitch);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: var(--ccg-pitch);
+    --bs-btn-active-color: #FBF8F3;
+    --bs-btn-active-bg: var(--ccg-ink);
+    --bs-btn-active-border-color: var(--ccg-ink);
+}
+
 /* Cards lift slightly on hover, which Bootstrap does not do on its own. */
 .card {
     transition: border-color .2s ease, transform .2s ease;
@@ -194,6 +209,76 @@ a.card:hover {
     transform: translateY(-3px);
 }
 
+/* ------------------------------------------------------------------
+   A rail: a row that scrolls sideways, dragged with the mouse or walked
+   with the arrows drag-rail.js shows when there is somewhere to go. Two
+   of them — the fairs and the collections — so the behaviour and the
+   look are shared rather than written twice.
+   ------------------------------------------------------------------ */
+
+.rail-shell {
+    position: relative;
+}
+
+.drag-rail {
+    display: flex;
+    overflow-x: auto;
+    cursor: grab;
+    /* The drag and the arrows are the affordances; the bar only adds noise. */
+    scrollbar-width: none;
+}
+
+.drag-rail::-webkit-scrollbar {
+    display: none;
+}
+
+/* Fades the edge that has content past it, so entering content dissolves and
+   the arrow never sits on legible text. */
+.drag-rail.has-fade-start {
+    mask-image: linear-gradient(to right, transparent 0, #000 3rem);
+}
+
+.drag-rail.has-fade-end {
+    mask-image: linear-gradient(to left, transparent 0, #000 3rem);
+}
+
+.drag-rail.has-fade-start.has-fade-end {
+    mask-image: linear-gradient(to right,
+        transparent 0, #000 3rem,
+        #000 calc(100% - 3rem), transparent 100%);
+}
+
+.drag-rail.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    user-select: none;
+}
+
+.drag-rail:focus-visible {
+    outline: 2px solid var(--ccg-gold);
+    outline-offset: 4px;
+}
+
+/* The chosen collection, marked on the tile itself. Keyed off the state the
+   button already carries, so the markup needs no class for it. */
+.collection-rail [aria-pressed="true"] {
+    outline: 2px solid var(--ccg-gold);
+    outline-offset: -2px;
+}
+
+/* Few collections grow to fill the row; many keep their width and the rail
+   scrolls. flex-shrink 0 is what turns "too many" into a scroll rather than a
+   squeeze. */
+.collection-rail {
+    scroll-snap-type: x proximity;
+}
+
+.collection-rail > li {
+    flex: 1 0 13rem;
+    list-style: none;
+    scroll-snap-align: start;
+}
+
 /* Timeline. The connecting line is each entry's top border, so the entries
    draw a continuous rule across the row. */
 
@@ -202,51 +287,14 @@ a.card:hover {
 }
 
 .timeline {
-    display: flex;
     list-style: none;
     margin: 0;
     /* overflow-x: auto forces overflow-y too, so the scrollport clips the
        markers above the rule. 12px = 7px of overhang + the 4px halo. */
     padding: 12px 0 0;
-    overflow-x: auto;
     /* Mandatory, not proximity: after a drag an entry always lands flush with
        the edge, so its marker is never left half-clipped. */
     scroll-snap-type: x mandatory;
-    cursor: grab;
-    /* The drag and the arrows are the affordances; the bar only adds noise. */
-    scrollbar-width: none;
-}
-
-.timeline::-webkit-scrollbar {
-    display: none;
-}
-
-/* Fades the edge that has content past it, so entering content dissolves and
-   the arrow never sits on legible text. */
-.timeline.has-fade-start {
-    mask-image: linear-gradient(to right, transparent 0, #000 3rem);
-}
-
-.timeline.has-fade-end {
-    mask-image: linear-gradient(to left, transparent 0, #000 3rem);
-}
-
-.timeline.has-fade-start.has-fade-end {
-    mask-image: linear-gradient(to right,
-        transparent 0, #000 3rem,
-        #000 calc(100% - 3rem), transparent 100%);
-}
-
-.timeline.is-dragging {
-    cursor: grabbing;
-    scroll-snap-type: none;
-    user-select: none;
-}
-
-.timeline:focus-visible {
-    outline: 2px solid var(--ccg-blue-300);
-    outline-offset: 4px;
-    border-radius: var(--radius);
 }
 
 .timeline-entry {
@@ -305,7 +353,7 @@ a.card:hover {
    treatment as the product gallery's arrows, but always visible: here they
    are a primary control, not a hover affordance. Hidden by the script when
    the rail cannot scroll, or at either end. */
-.timeline-arrow {
+.rail-arrow {
     position: absolute;
     top: 50%;
     z-index: 2;
@@ -314,29 +362,40 @@ a.card:hover {
     height: 40px;
     border: 1px solid var(--ccg-line);
     background: var(--ccg-surface);
-    color: var(--ccg-blue-800);
+    color: var(--ccg-ink);
     /* Sized for a Font Awesome chevron, not a text glyph. */
     font-size: .95rem;
     line-height: 1;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(31, 56, 100, .1);
     transition: background-color .15s ease, border-color .15s ease;
 }
 
-.timeline-arrow:hover {
-    background: var(--ccg-blue-50);
-    border-color: var(--ccg-blue-300);
+.rail-arrow:hover {
+    border-color: var(--ccg-gold);
+    color: var(--ccg-gold);
 }
 
-.timeline-arrow[hidden] {
+.rail-arrow[hidden] {
     display: none;
 }
 
-.timeline-arrow-left {
+/* Shown on hover, not always: a rail that fits needs no controls, and drag-rail.js
+   already hides them when there is nowhere to go. */
+.rail-arrow {
+    opacity: 0;
+}
+
+.rail-shell:hover .rail-arrow,
+.timeline-shell:hover .rail-arrow,
+.rail-arrow:focus-visible {
+    opacity: 1;
+}
+
+.rail-arrow-start {
     left: -1.25rem;
 }
 
-.timeline-arrow-right {
+.rail-arrow-end {
     right: -1.25rem;
 }
 
@@ -397,12 +456,13 @@ a.card:hover {
         padding: .25rem .75rem;
     }
 
-    .timeline-arrow {
+    .rail-arrow {
         display: none;
     }
 }
 
-.filters-panel {
+/* The filters follow the grid down. */
+.filters {
     position: sticky;
     top: 1.5rem;
 }
@@ -416,7 +476,7 @@ a.card:hover {
     margin: 1.25rem 0 .5rem;
 }
 
-.filters-panel .nav-link {
+.filters .nav-link {
     display: block;
     padding: .4rem .35rem;
     border-radius: var(--radius);
@@ -424,14 +484,14 @@ a.card:hover {
     background: transparent;
 }
 
-.filters-panel .nav-link:hover {
+.filters .nav-link:hover {
     background: var(--ccg-blue-50);
 }
 
 /* Filters are cumulative, so a selected entry is marked by its ticked box, not
    by inverting the whole row: five inverted rows read as one giant selection and
    left no room for the colour badges to be legible. */
-.filters-panel .nav-link.is-active {
+.filters .nav-link.is-active {
     background: var(--ccg-blue-50);
     color: var(--ccg-blue-900);
 }
@@ -444,7 +504,7 @@ a.card:hover {
 
 /* An <a> with no href gets no focus ring of its own, and these are reached by
    keyboard now. Bootstrap's own variables, so it matches every other control. */
-.filters-panel .nav-link.filter-entry:focus-visible {
+.filters .nav-link.filter-entry:focus-visible {
     outline: 0;
     border-radius: var(--bs-border-radius-sm);
     box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), .3);
@@ -452,12 +512,12 @@ a.card:hover {
 
 /* Nothing behind it: still listed, because it is part of the vocabulary, but
    ticking it could only empty the grid. */
-.filters-panel .nav-link.is-empty {
+.filters .nav-link.is-empty {
     color: var(--ccg-ink-faint);
     cursor: default;
 }
 
-.filters-panel .nav-link.is-empty:hover {
+.filters .nav-link.is-empty:hover {
     background: transparent;
 }
 
@@ -510,116 +570,12 @@ a.card:hover {
     min-width: 0;
 }
 
-/* One row, always, whatever the count. `flex: 1 1` lets a handful of collections
-   grow to fill the column, and the min-width stops a crowd from shrinking instead
-   of scrolling — so the rail behaves like every phone shop's category row at every
-   width, and the pieces below it never move.
-
-   It was a wrapping grid, which was tidy at the three collections the workshop has
-   and fell apart at eight: a second, ragged row, 341px of rail, and the grid pushed
-   off the fold. The point of a rail rather than a gate is that the pieces are
-   already there. */
-.collection-strip {
-    display: flex;
-    gap: .75rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    /* Room for the focus ring, which a clipping scrollport would cut off. The
-       left is zeroed because a <ul> carries a 2rem indent of its own, which put
-       32px of paper before the first card. */
-    padding: 0 0 .35rem;
-    list-style: none;
-    margin: 0;
-}
-
-.collection-strip > li {
-    flex: 1 1 8.5rem;
-    min-width: 8.5rem;
-    scroll-snap-align: start;
-}
-
-.collection-card {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    gap: .1rem;
-    padding: 0 0 .6rem;
-    background: var(--ccg-surface);
-    /* 2px in every state, so selecting one does not move anything. The width is
-       what the selected ring is made of — see .is-active. */
-    border: 2px solid var(--ccg-line);
-    border-radius: var(--radius);
-    cursor: pointer;
-    text-align: left;
-    overflow: hidden;
-    transition: border-color .15s, box-shadow .15s;
-}
-
-.collection-card:hover {
-    border-color: var(--ccg-blue-300);
-}
-
-/* The same inset outline the variant buttons use for "this one is chosen", so
-   the two selected states in the shop read as one idea. */
-/* The border, and nothing else. This was an inset box-shadow over a 1px border,
-   copying the variant buttons on the product page — but an inset shadow paints
-   beneath content, and the cover fills the card absolutely. The ring came out 1px
-   thick over the photograph and 3px over the name, with a step where the two met
-   and a pale gap at each corner where the two radii disagreed. A border cannot be
-   painted over, and at a constant width it cannot shift the layout either. */
-.collection-card.is-active {
-    border-color: var(--ccg-blue-500);
-}
-
-/* The frame decides the shape, not what is inside it. A cover is either a
-   photograph or the grid's no-photograph tile, and that tile carries its own
-   square aspect-ratio — so with the ratio on the wrapper alone the photographed
-   collections came out taller than the rest and every card's name sat at a
-   different height. Absolute children ignore their own sizing entirely. */
+/* The tile keeps its shape whatever is inside it — a photograph, or the name set
+   in the display serif when there is none — because Bootstrap's .ratio positions
+   both absolutely. All this adds is the ground behind a photograph that has not
+   arrived yet. */
 .collection-cover {
-    position: relative;
-    display: block;
-    width: 100%;
-    aspect-ratio: 3 / 2;
-    margin-bottom: .5rem;
-    overflow: hidden;
     background: var(--ccg-paper-deep);
-}
-
-.collection-cover > * {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.collection-cover-all {
-    border-radius: 0;
-    background: var(--ccg-blue-50);
-    color: var(--ccg-blue-600);
-    font-size: 1.25rem;
-}
-
-.collection-card-name {
-    padding: 0 .6rem;
-    font-weight: 600;
-    font-size: .9rem;
-    color: var(--ccg-blue-900);
-    line-height: 1.25;
-}
-
-/* Pinned to the bottom of the card rather than following the name, because the
-   names are not all one line: "Coração de Viana" wraps in a crowded rail where
-   "Natal" does not, and the counts then sat at two different heights. Reserving a
-   second line everywhere would have cost 23px on every card for the sake of a name
-   the workshop may never have. */
-.collection-card-detail {
-    margin-top: auto;
-    padding: 0 .6rem;
-    font-size: .72rem;
-    color: var(--ccg-ink-soft);
 }
 
 /* An applied filter, as a navy pill with its own dismiss button. */
@@ -729,7 +685,33 @@ a.card:hover {
     display: flex;
     flex-direction: column;
     gap: .75rem;
-    height: 100%;
+}
+
+/* From lg the other views run down the left of the stage instead of along the
+   bottom of it: a column costs width, which this layout has, and the strip cost
+   height, which is what forced the photograph to be cropped.
+   row-reverse rather than reordering the markup — the stage stays first in the
+   DOM, where the gallery script and the keyboard expect it. */
+@media screen and (min-width: 992px) {
+    .gallery {
+        flex-direction: row-reverse;
+        align-items: flex-start;
+        gap: .625rem;
+    }
+
+    .thumb-strip {
+        flex: none;
+        flex-direction: column;
+        align-items: flex-start;
+        overflow-x: visible;
+        overflow-y: auto;
+        gap: .75rem;
+        max-height: 34rem;
+    }
+
+    .strip-track {
+        flex-direction: column;
+    }
 }
 
 /* One row, scrolling sideways when there are more thumbnails than fit. The groups
@@ -818,10 +800,13 @@ a.card:hover {
 .gallery-stage {
     position: relative;
     flex: 1 1 auto;
-    /* A floor, not a size. At 18rem it refused to shrink below the panel and pushed
-       the gallery 26px past it on a shorter screen; 12rem is low enough to give way
-       and still keep the photograph worth looking at beside a very short panel. */
-    min-height: 12rem;
+    min-width: 0;
+    /* Its own shape, not the panel's. The stage used to take its height from the
+       column of facts beside it, and at this width that turned a 4:5 photograph
+       into a letterbox — the piece became a fragment of itself. The proportions
+       of the two columns are chosen so that a 4:5 stage and the facts come out
+       the same height on their own. */
+    aspect-ratio: 4 / 5;
     background: var(--ccg-paper-deep);
     border: 1px solid var(--ccg-line);
     border-radius: var(--radius-lg);
@@ -926,70 +911,15 @@ a.card:hover {
     display: none;
 }
 
-/* Colour and shape come from .color-set-badge; this adds only what makes it a
-   control rather than a label. Equal cells come from the row's own columns:
-   sized to their names, the five sets of one box came out 183, 190, 200, 212 and
-   216px wide and wrapped 3 + 2, so the group looked like a mistake rather than a
-   set of options. */
+/* The colourway swatch is a control, not a label: 18px is the circle, and a
+   44px hit area around it is what a fingertip needs. Bootstrap has no such
+   utility pair. */
 .variant-option {
-    /* Fills its column, which is what makes the cells equal. */
-    width: 100%;
-}
-
-/* The piece's main choice, so it is sized as a control rather than as a label:
-   26px tall chips two pixels apart were smaller than the spec text beneath them
-   and, on a phone, smaller than a fingertip. 44px is the comfortable target. */
-.variant-option {
+    width: 2.75rem;
+    height: 2.75rem;
+    background-clip: content-box;
+    padding: .8rem;
     cursor: pointer;
-    min-height: 2.75rem;
-    padding: .45rem .75rem;
-    gap: .45rem;
-    font-size: .875rem;
-    /* Centred content put every name at a different offset in a fixed-width cell
-       and made the swatches zigzag down the column. */
-    justify-content: flex-start;
-}
-
-.variant-option .swatch {
-    width: 16px;
-    height: 16px;
-}
-
-.variant-option .swatch + .swatch {
-    margin-left: -6px;
-}
-
-.variant-option:hover {
-    border-color: var(--cs-fg);
-}
-
-/* Selection is drawn as an outline and a tick, not as a repaint.
-
-   Filling the chip with the set's own colour sounded right and wasn't: a pale
-   set like "Branco e Dourado" has to be darkened before its name is readable,
-   so the chosen chip turned a muddy olive and read as disabled. The chip's job
-   is to show a colour pair — keeping its wash means the swatches stay legible
-   whichever one is chosen, and the state rides on shape instead of hue.
-
-   An inset shadow rather than a thicker border: 1px -> 2px would shift every
-   neighbouring chip by two pixels on each click. */
-/* No bolder text on the chosen chip: 500 -> 600 widened it and nudged every
-   chip after it along the row on each click. */
-.variant-option.is-active {
-    border-color: var(--ccg-blue-900);
-    box-shadow: inset 0 0 0 1px var(--ccg-blue-900);
-}
-
-/* Reserved in every chip, so revealing it does not re-flow the row, and pushed
-   to the trailing edge: the cell is wider than the name, and a tick floating
-   just after the text would look like part of it. */
-.variant-check {
-    opacity: 0;
-    margin-left: auto;
-    padding-left: .5rem;
-    font-size: .75em;
-    color: var(--ccg-blue-900);
-    transition: opacity .12s ease;
 }
 
 .variant-option.is-active .variant-check {

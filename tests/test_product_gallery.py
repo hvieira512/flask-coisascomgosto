@@ -75,27 +75,28 @@ class TestTheStrip:
         assert view.locator(".strip-thumb").count() == 2
         assert errors == []
 
-    def test_the_strip_is_below_the_stage(self, page):
+    def test_the_strip_runs_down_the_left_of_the_stage(self, page):
+        """From lg the other views are a column beside the photograph. The row
+        underneath cost height, and height is what forced the stage to crop."""
         view, _ = page
         stage = view.locator("#gallery-stage").bounding_box()
         strip = view.locator("#thumb-strip").bounding_box()
 
-        assert strip["y"] > stage["y"] + stage["height"] - 2
-        assert abs(strip["x"] - stage["x"]) < 2, "the strip is not aligned with it"
+        assert strip["x"] + strip["width"] <= stage["x"] + 2, "the strip is not beside it"
+        assert strip["height"] > strip["width"], "the strip is not a column"
 
-    def test_the_stage_gets_the_whole_column(self, page):
-        """The rail used to take 72px of it at every width."""
+    def test_the_stage_takes_what_the_strip_leaves(self, page):
+        """The strip is 72px of the column and the photograph is the rest of it."""
         view, _ = page
         fills = view.locator("#gallery-stage").evaluate(
             """el => {
-                // Against the column's content box: a grid column carries half the
-                // row's gutter as padding, which the stage sits inside rather than
-                // covering.
                 const column = el.closest('[class*="col-"]');
                 const style = getComputedStyle(column);
                 const inner = column.clientWidth
                     - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-                return el.getBoundingClientRect().width >= inner - 1;
+                const strip = document.getElementById('thumb-strip');
+                const taken = strip.hidden ? 0 : strip.getBoundingClientRect().width + 10;
+                return el.getBoundingClientRect().width >= inner - taken - 2;
             }"""
         )
         assert fills, "something other than the photograph is taking the column's width"
@@ -170,7 +171,7 @@ class TestTheStageSaysItOpens:
         """A colour with no photographs draws the placeholder, which does not
         open."""
         view, _ = page
-        view.locator(".variant-option", has_text="Preto e Branco").click()
+        view.locator('.variant-option[title="Preto e Branco"]').click()
         view.wait_for_selector("#gallery-stage .product-placeholder")
 
         assert view.locator("#stage-zoom").is_hidden()
@@ -178,7 +179,7 @@ class TestTheStageSaysItOpens:
     def test_one_photograph_still_gets_the_cue(self, page, piece, client):
         """Unlike the counter and the strip, which need something to count."""
         view, _ = page
-        view.locator(".variant-option", has_text="Branco e Dourado").click()
+        view.locator('.variant-option[title="Branco e Dourado"]').click()
         view.wait_for_selector("#stage-zoom:not([hidden])")
 
         assert view.locator("#stage-zoom").is_visible()
@@ -199,7 +200,7 @@ class TestAColourWithNoPhotographsOfItsOwn:
         view, errors = page
         photographed = view.locator("#stage-image").get_attribute("src")
 
-        view.locator(".variant-option", has_text="Preto e Branco").click()
+        view.locator('.variant-option[title="Preto e Branco"]').click()
         view.wait_for_function(
             "() => document.querySelectorAll('#gallery-stage .product-placeholder')"
             ".length === 1"
@@ -213,10 +214,10 @@ class TestAColourWithNoPhotographsOfItsOwn:
         """The placeholder is inserted into the stage rather than replacing it, so
         the photograph has to come back."""
         view, _ = page
-        view.locator(".variant-option", has_text="Preto e Branco").click()
+        view.locator('.variant-option[title="Preto e Branco"]').click()
         view.wait_for_selector("#gallery-stage .product-placeholder")
 
-        view.locator(".variant-option", has_text="Branco e Dourado").click()
+        view.locator('.variant-option[title="Branco e Dourado"]').click()
         view.wait_for_function(
             "() => document.querySelectorAll('#gallery-stage .product-placeholder')"
             ".length === 0"
@@ -278,7 +279,7 @@ class TestAPiecePhotographedOncePerColour:
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(f"{live_server}/products/{product['id']}")
         # Not the strip: a colour with one photograph has nothing to preview.
-        page.wait_for_selector(".variant-option.is-active")
+        page.wait_for_selector('.variant-option[aria-pressed="true"]')
         yield page, names, errors
         context.close()
 
@@ -287,7 +288,7 @@ class TestAPiecePhotographedOncePerColour:
         display: none, and an explicit display in a rule outranks it, so the previous
         colour's photograph stayed on the stage behind the placeholder."""
         page, _, _ = view
-        page.locator(".variant-option", has_text="Verde e Dourado").click()
+        page.locator('.variant-option[title="Verde e Dourado"]').click()
         page.wait_for_selector("#gallery-stage .product-placeholder")
 
         assert page.locator("#stage-image").is_hidden()
@@ -314,7 +315,7 @@ class TestAPiecePhotographedOncePerColour:
         page, names, _ = view
         before = page.locator("#stage-image").get_attribute("src")
 
-        page.locator(".variant-option", has_text=names[2]).click()
+        page.locator(f'.variant-option[title="{names[2]}"]').click()
         page.wait_for_function(
             """(previous) => document.getElementById('stage-image').src !== previous""",
             arg=before,
@@ -325,15 +326,27 @@ class TestAPiecePhotographedOncePerColour:
         )
 
 
-class TestTheTwoHalvesEndTogether:
-    """The gallery takes its height from the panel beside it rather than setting it.
+class TestTheStageKeepsItsOwnShape:
+    """The stage used to take its height from the panel beside it, which is what
+    turned a 4:5 photograph into a letterbox at this width — the piece became a
+    fragment of itself.
 
-    A square stage made the left side taller than the right by however much the
-    photograph exceeded the panel — 714px against 600 — leaving a column of dead space
-    under the enquiry button.
+    It carries 4:5 now, and the two columns are proportioned so that a fully
+    described piece comes out level. A piece with almost nothing written about it
+    leaves the photograph taller, which is the right way round: the photograph is
+    the reason for the page.
     """
 
-    def test_they_end_at_the_same_point(self, page):
+    def test_the_photograph_is_never_stretched(self, page):
+        view, _ = page
+        ratio = view.locator("#gallery-stage").evaluate(
+            "el => { const b = el.getBoundingClientRect(); return b.width / b.height; }"
+        )
+        assert abs(ratio - 0.8) < 0.01, f"the stage is {ratio:.3f} wide, not 4:5"
+
+    def test_a_described_piece_comes_out_level(self, page, client, make_product):
+        """Everything in this catalogue has a description, a material, a type and
+        its sizes; that is the case the proportions are chosen for."""
         view, _ = page
         ends = view.evaluate(
             """() => {
@@ -346,7 +359,9 @@ class TestTheTwoHalvesEndTogether:
                     Math.round(lastVisible(column).getBoundingClientRect().bottom));
             }"""
         )
-        assert abs(ends[0] - ends[1]) <= 2, f"the halves end {ends} apart"
+        # The gallery is allowed to be the taller of the two, never the shorter:
+        # dead space under the photograph is what the old arrangement produced.
+        assert ends[0] >= ends[1] - 2, f"the panel outran the photograph: {ends}"
 
     def test_no_paper_shows_around_the_photograph(self, page):
         """The stage is not quite square, since its height comes from the panel. Under

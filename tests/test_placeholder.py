@@ -139,9 +139,10 @@ class TestPlaceholderIsImported:
         return _p.Path(path).read_text(encoding="utf-8")
 
     def test_every_drawer_of_a_tile_imports_it(self):
+        """The collections rail is not on this list any more: a collection with no
+        cover shows its name in the display serif, not an icon."""
         for path in [
             "static/js/store/catalogue/cards.js",   # the catalogue grid
-            "static/js/store/catalogue/rail.js",    # a collection with no cover
             "static/js/store/gallery.js",      # the product page's stage
             "static/js/dashboard/products/fetch.js",   # the dashboard's rows
         ]:

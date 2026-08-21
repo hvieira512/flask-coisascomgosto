@@ -152,24 +152,27 @@ import { escapeHtml } from "../core/html.js";
 
         block.hidden = false;
         options.innerHTML = product.variants
-            .map((variant, position) => {
-                const chosen = position === activeIndex;
-                return `
-                  <div class="col">
-                    <button class="color-set-badge variant-option${chosen ? " is-active" : ""}"
-                            type="button" data-variant-index="${position}"
-                            aria-pressed="${chosen}"
-                            style="${ColorSet.style(variant.color_set)}">
-                      ${ColorSet.dots(variant.color_set)}<span class="color-set-name">${escapeHtml(variant.color_set.name)}</span><span class="variant-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
-                    </button>
-                  </div>`;
-            })
+            .map((variant, position) =>
+                ColorSet.dot(variant.color_set, {
+                    as: "button",
+                    pressed: position === activeIndex,
+                    extra: "variant-option",
+                }).replace("<button ", `<button data-variant-index="${position}" `)
+            )
             .join("");
+        nameChosen(product, activeIndex);
 
         options.addEventListener("click", (event) => {
             const button = event.target.closest("[data-variant-index]");
             if (button) selectVariant(product, Number(button.dataset.variantIndex));
         });
+    }
+
+    /** The chosen colourway, named. The swatches carry no text — a circle is
+     *  not a label — so the name is said once, here. */
+    function nameChosen(product, index) {
+        const target = document.getElementById("variant-chosen");
+        if (target) target.textContent = product.variants?.[index]?.color_set?.name ?? "";
     }
 
     /** Choose a colour: mark its swatch, tell the enquiry, and hand the gallery that
@@ -178,11 +181,11 @@ import { escapeHtml } from "../core/html.js";
         const variant = product.variants?.[index];
         if (!variant) return;
 
-        document.querySelectorAll("#variant-options .variant-option").forEach((option) => {
+        document.querySelectorAll("#variant-options [data-variant-index]").forEach((option) => {
             const isChosen = Number(option.dataset.variantIndex) === index;
-            option.classList.toggle("is-active", isChosen);
             option.setAttribute("aria-pressed", String(isChosen));
         });
+        nameChosen(product, index);
 
         chosen.variant = variant;
         renderEnquiry(product);

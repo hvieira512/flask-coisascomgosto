@@ -1,8 +1,8 @@
 import { API, list } from "../../core/api.js";
-import { ProductPlaceholder } from "../placeholder.js";
 import { StoreFilters } from "../filters.js";
 import { Track } from "../track.js";
 import { escapeHtml } from "../../core/html.js";
+import { mountDragRail } from "../drag-rail.js";
 
 /**
  * The collections as photographs, above the grid.
@@ -20,6 +20,14 @@ export async function mountRail(facets) {
     const rail = document.getElementById("collection-rail");
     const strip = document.getElementById("collection-strip");
 
+    // Dragged with the mouse, or walked with the arrows, which appear on hover
+    // and only when the rail has somewhere to go. Same behaviour as the fairs.
+    const arrows = mountDragRail(strip, {
+        prev: rail?.querySelector("[data-rail-prev]"),
+        next: rail?.querySelector("[data-rail-next]"),
+        item: "li",
+    });
+
     // Labels are registered here so a badge can say "Colecção: Filigrana" rather
     // than "#1" — this is the only request that carries the names.
     const collections = await list(API.collections.list, "collections", { orEmpty: true });
@@ -27,38 +35,43 @@ export async function mountRail(facets) {
         StoreFilters.registerLabel("collection_id", collection.id, collection.name)
     );
 
-    // The colour sets behind each collection, which tint a cover for a collection
-    // that has no photograph yet.
-    const sets = await list(API.colorSets.list, "color_sets", { orEmpty: true });
-    const setsByCollection = sets.reduce((map, set) => {
-        if (!set.collection) return map;
-        const current = map.get(set.collection.id) ?? [];
-        return map.set(set.collection.id, [...current, set]);
-    }, new Map());
+    /**
+     * Its cover, or its name set in the display serif.
+     *
+     * Not a grey box with a stack icon in a blue disc, which is what three of
+     * the four collections got: the first thing on the page that sells the range
+     * was selling an empty database column.
+     */
+    // d-block on the ratio box as well as .ratio: Bootstrap's rule sets position
+    // and width but not display, so as a span it stayed inline and the
+    // photograph came out half the tile's width.
+    function tile({ id, name, detail, active, photo }) {
+        const art = photo
+            ? `<img class="object-fit-cover" src="${escapeHtml(photo)}"
+                    alt="${escapeHtml(name)}" loading="lazy">`
+            : `<span class="d-flex flex-column align-items-center justify-content-center
+                           text-center bg-body-secondary border p-3">
+                 <span class="collection-card-name font-display fs-5 text-body-secondary">${escapeHtml(name)}</span>
+                 <span class="collection-card-detail fs-7 text-uppercase text-body-tertiary">${escapeHtml(detail)}</span>
+               </span>`;
 
-    /** Its cover, or the same no-photograph tile the grid uses, tinted in the
-     *  collection's own colours rather than a neutral grey. */
-    function cover(collection) {
-        if (collection.image_url) {
-            return `<img src="${escapeHtml(collection.image_url)}"
-                         alt="${escapeHtml(collection.name)}" loading="lazy">`;
-        }
-        return ProductPlaceholder.markup(
-            { name: collection.name, type: { icon: "fa-layer-group" } },
-            "",
-            (setsByCollection.get(collection.id) ?? [])[0] ?? null
-        );
-    }
+        const label = photo
+            ? `<span class="position-absolute top-0 start-0 w-100 h-100 tile-scrim"></span>
+               <span class="position-absolute bottom-0 start-0 p-3 text-white">
+                 <span class="collection-card-name d-block font-display fs-5 lh-sm">${escapeHtml(name)}</span>
+                 <span class="collection-card-detail fs-7 text-uppercase opacity-75">${escapeHtml(detail)}</span>
+               </span>`
+            : "";
 
-    const card = ({ id, name, detail, active, art }) => `
+        return `
       <li>
-        <button type="button" class="collection-card${active ? " is-active" : ""}"
-                data-collection-id="${id}" aria-pressed="${active}">
-          <span class="collection-cover">${art}</span>
-          <span class="collection-card-name">${escapeHtml(name)}</span>
-          <span class="collection-card-detail">${escapeHtml(detail)}</span>
+        <button type="button" aria-pressed="${active}" data-collection-id="${id}"
+                class="collection-card d-block w-100 p-0 border-0 bg-transparent position-relative overflow-hidden">
+          <span class="collection-cover ratio d-block" style="--bs-aspect-ratio: 66%">${art}</span>
+          ${label}
         </button>
       </li>`;
+    }
 
     strip?.addEventListener("click", (event) => {
         const chosen = event.target.closest("[data-collection-id]");
@@ -92,26 +105,20 @@ export async function mountRail(facets) {
             rail.hidden = offered.length === 0;
             if (rail.hidden) return;
 
-            const chosen = StoreFilters.get("collection_id");
-            strip.innerHTML = [
-                card({
-                    id: "",
-                    name: "Ver tudo",
-                    detail: "Todas as peças",
-                    active: !chosen || chosen.length === 0,
-                    art: `<span class="collection-cover-all disc"><i class="fa-solid fa-grip"></i></span>`,
-                }),
-                ...offered.map((collection) => {
+            strip.innerHTML = offered
+                .map((collection) => {
                     const pieces = counts.get(collection.id) ?? 0;
-                    return card({
+                    return tile({
                         id: collection.id,
                         name: collection.name,
+                        photo: collection.image_url,
                         detail: `${pieces} ${pieces === 1 ? "peça" : "peças"}`,
                         active: StoreFilters.isSelected("collection_id", collection.id),
-                        art: cover(collection),
                     });
-                }),
-            ].join("");
+                })
+                .join("");
+
+            arrows?.syncArrows();
         },
     };
 }

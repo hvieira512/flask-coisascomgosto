@@ -218,7 +218,7 @@ class TestAnEnquiry:
         page.goto(f"{server}/products/{catalogue['piece']['id']}")
         page.wait_for_selector(".variant-option")
 
-        page.locator(".variant-option", has_text="Branco e Dourado").click()
+        page.locator('.variant-option[title="Branco e Dourado"]').click()
         self._ask(page)
 
         (row,) = events("enquiry")
@@ -254,7 +254,7 @@ class TestAnEnquiry:
         page.goto(f"{server}/products/{catalogue['piece']['id']}")
         page.wait_for_selector(".variant-option")
 
-        page.locator(".variant-option", has_text="Branco e Dourado").click()
+        page.locator('.variant-option[title="Branco e Dourado"]').click()
         page.locator("#size-options button").first.click()
 
         message = unquote(page.locator("#enquiry-link").get_attribute("href"))

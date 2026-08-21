@@ -101,5 +101,33 @@ export const ColorSet = (function () {
                       style="${style(colorSet)}">${dots(colorSet)}<span class="color-set-name">${escapeHtml(colorSet.name)}</span></span>`;
     }
 
-    return { badge, dots, style };
+    /**
+     * The colourway as one circle divided between its colours.
+     *
+     * What the catalogue shows now, in place of the badge: the photograph above
+     * it already says what colour the piece is, so the row only has to say
+     * *there are others*. Four named badges under a photograph were four
+     * rounded rectangles of borrowed colour arguing with the piece.
+     *
+     * The name travels as the title, and is spelled out on the piece's own page.
+     */
+    function dot(colorSet, { as = "span", pressed = null, extra = "" } = {}) {
+        if (!colorSet) return "";
+
+        const colours = (colorSet.colors || []).map((c) => c.hex).filter(Boolean);
+        const shades = colours.length ? colours : [FALLBACK];
+        const share = 100 / shades.length;
+        const stops = shades
+            .map((hex, i) => `${escapeHtml(hex)} ${i * share}% ${(i + 1) * share}%`)
+            .join(", ");
+
+        const state = pressed === null ? "" : ` aria-pressed="${pressed}"`;
+        const type = as === "button" ? ' type="button"' : "";
+
+        return `<${as} class="swatch-dot ${extra}"${type}${state}
+                      title="${escapeHtml(colorSet.name)}"
+                      style="background-image:linear-gradient(135deg, ${stops})"></${as}>`;
+    }
+
+    return { badge, dot, dots, style };
 })();

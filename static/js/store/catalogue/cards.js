@@ -2,53 +2,53 @@ import { ColorSet } from "../color-set.js";
 import { ProductPlaceholder } from "../placeholder.js";
 import { escapeHtml } from "../../core/html.js";
 
-/** Two rows of two. A fifth colour set added a third row to one card and
- *  left it taller than its neighbours; the rest are on the product page. */
-const MAX_BADGES = 4;
+/** Three swatches and a count. Every colourway is on the piece's own page. */
+const MAX_DOTS = 3;
 
-function renderColorSets(product) {
+function renderColourways(product) {
     const sets = product.variants.map((variant) => variant.color_set).filter(Boolean);
     if (!sets.length) return "";
 
-    const overflows = sets.length > MAX_BADGES;
-    const visible = overflows ? MAX_BADGES - 1 : sets.length;
-    const cells = sets.slice(0, visible).map(ColorSet.badge);
+    const shown = sets.slice(0, MAX_DOTS).map((set) => ColorSet.dot(set)).join("");
+    const rest = sets.length - MAX_DOTS;
+    const more = rest > 0
+        ? `<span class="fs-7 font-monospace text-body-tertiary">+${rest}</span>`
+        : "";
 
-    if (overflows) {
-        const rest = sets.length - visible;
-        cells.push(
-            `<span class="color-set-more">+${rest} ${rest === 1 ? "cor" : "cores"}</span>`
-        );
-    }
-
-    return `<div class="swatch-row row row-cols-2 g-1">${
-        cells.map((cell) => `<div class="col">${cell}</div>`).join("")
-    }</div>`;
+    return `<span class="dots d-flex align-items-center gap-1">${shown}${more}</span>`;
 }
 
-/** One tile of the grid: the photograph or its stand-in, the name, and what
- *  colours the piece is made in. */
+/**
+ * One tile of the grid: the photograph, then the name and its family on a line,
+ * then which colours the piece is made in.
+ *
+ * align-content-start is not decoration. A grid item is stretched to its row's
+ * height and an item whose own rows are all implicit distributes that extra
+ * height into them — so a piece whose name takes two lines made every
+ * photograph in its row taller than the rest.
+ */
 export function productCard(product) {
     const image = product.primary_image;
     const media = image
-        ? `<img class="card-img-top" src="${escapeHtml(image.url)}"
+        ? `<img class="object-fit-cover" src="${escapeHtml(image.url)}"
                 alt="${escapeHtml(image.alt || product.name)}" loading="lazy">`
         : ProductPlaceholder.markup(product);
 
-    const subtitle = [product.type?.name, product.collection?.name]
-        .filter(Boolean)
-        .map(escapeHtml)
-        .join(" · ");
-
     return `
       <div class="col">
-        <a class="card product-card" href="/products/${product.id}">
-          ${media}
-          <div class="card-body">
-            <p class="h6 mb-1">${escapeHtml(product.name)}</p>
-            ${subtitle ? `<p class="fs-7 text-body-secondary">${subtitle}</p>` : ""}
-            ${renderColorSets(product)}
-          </div>
+        <a class="d-grid align-content-start gap-2 h-100 text-decoration-none text-body product-card"
+           href="/products/${product.id}">
+          <span class="ratio d-block" style="--bs-aspect-ratio: 125%">${media}</span>
+
+          <span class="d-flex align-items-baseline justify-content-between gap-2
+                       border-top pt-2 product-card-line">
+            <span class="h6 font-display mb-0">${escapeHtml(product.name)}</span>
+            ${product.type?.name
+                ? `<span class="fs-7 text-uppercase font-monospace text-body-tertiary text-nowrap">${escapeHtml(product.type.name)}</span>`
+                : ""}
+          </span>
+
+          ${renderColourways(product)}
         </a>
       </div>`;
 }

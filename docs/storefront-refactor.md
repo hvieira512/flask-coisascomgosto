@@ -43,21 +43,36 @@ Everything else in `store.css` that these pages use is deleted.
 `.measure`, `.icon`, `.disc`, `.fs-7`, the display-serif rule on `h1, h2`, the
 timeline, the gallery stage and its arrows, the lightbox.
 
-**Added — six rules, and the reason each cannot be a utility:**
+**Added — and this is what actually got written, which is one more than the spec
+first claimed and one different:**
 
 | Class | Why not Bootstrap |
 |---|---|
-| `.hero-wash` | a radial gradient. Bootstrap has `bg-gradient`, which is a fixed white overlay |
-| `.mark` | the 2px gold rule above a heading, as `::before`. A signature element, not a utility |
+| `.hero-wash` | a radial gradient, plus the first screen's height. Bootstrap has `bg-gradient`, a fixed white overlay, and its height utilities stop at `min-vh-100` |
+| `.rule-above` | the 2px gold rule above a heading, as `::before`. **Not** `.mark`, which is Bootstrap's highlighter — that collision put every eyebrow in a yellow band |
 | `.text-gold` | `text-*` is a closed set in Bootstrap and gold is not in it |
-| `.tile-scrim` | the gradient that makes a name legible over a photograph. `card-img-overlay` positions it; nothing tints it |
-| `.swatch-dot` | a two-tone circle built from two colours. Composed in JS today, and stays there |
-| `.photo-cover` | `object-fit: cover` on an `<img>`. Bootstrap has no object-fit utility |
+| `.tile-scrim` | the gradient that makes a name legible over a photograph. `card-img-overlay` positions it; nothing tints it. Its stops are variables so one rule serves a tile and a viewport-tall band |
+| `.swatch-dot` | a circle divided between a colourway's colours. Composed in JS, where the colours are |
+| `.font-display` | the serif on something that is not a heading: the wordmark, the address |
+| `.photo-band` | a full-bleed photographic band with text on it, and a height that answers the viewport without filling it |
+| `.btn-pitch` | a button variant, made the way Bootstrap makes them — its own `--bs-btn-*` properties, not a rule overriding its colours |
+| `.cue-disc` | the scroll cue's gold ring and its nudge |
 
-**Deleted:** `.type-card`, `.type-card-media`, `.type-card-icon`,
-`.collection-strip` and its card, `.filters-panel`, `.craft-step`,
-`.hero-scroll*` (replaced by `.mark`-styled markup + Bootstrap position
-utilities), `#contacts .card`, `.store-footer`, `.media-photo`.
+`.photo-cover` was on the list and is not here: **Bootstrap 5.3 ships
+`object-fit-cover`**, which is what the pages use.
+
+**Deleted:** `.store-navbar`, `.store-brand`, `.store-brand-name`,
+`.store-nav-center` and its centring media query, `.store-footer`,
+`.store-hero`, `.store-hero-body`, `.hero-scroll*`, `.craft-step`,
+`.craft-steps`, `.type-card*`, `.media-photo`, `#contacts .card`,
+`.collection-strip`, `.collection-card` and its selected ring,
+`.collection-cover-all`, `.collection-card-name`, `.collection-card-detail`,
+`.filters-panel`, and the sixty-five lines that made a colour badge behave like
+a control. `store.css` went from 1085 lines to 984 while gaining nine rules.
+
+**Generalised rather than duplicated:** the fairs rail's drag-and-arrows became
+`static/js/store/drag-rail.js` and `.drag-rail`, used by the collections rail
+too, and `.timeline-arrow*` became `.rail-arrow*`.
 
 ---
 
@@ -138,10 +153,12 @@ photograph never stretched.
   (`flex-column`), and along the bottom below `lg` (`flex-row`) — a column costs
   width, which the desktop has, and the strip cost height, which is what forced
   the crop.
-- The stage keeps its `ratio` at 4:5 and its own aspect. It is *not* stretched to
-  match the column: at that width a 4:5 crop becomes a letterbox and the piece
-  turns into a fragment of itself. The proportions are chosen so that the stage
-  and the facts come out the same height on their own.
+- The stage carries 4:5 and its own aspect. It is *not* stretched to match the
+  column: at that width a 4:5 crop becomes a letterbox and the piece turns into a
+  fragment of itself. The proportions are chosen so that the stage and the facts
+  come out the same height on their own — measured on the real page, 789px
+  against 789px. A piece with almost nothing written about it leaves the
+  photograph taller, which is the right way round.
 - The gallery keeps everything it already has — arrows, counter, zoom, lightbox,
   keyboard.
 - Colourways become `.swatch-dot`s with the chosen one named underneath, instead
@@ -184,6 +201,29 @@ looked at in the browser at 1280 and 390 before it is committed.
 5. The piece.
 6. Delete the CSS the four steps above orphaned, and recapture the appearance
    baselines.
+
+## What the build taught the spec
+
+Five things only showed up in a browser, and all five are the same kind of
+mistake — believing a rule does what its name suggests.
+
+- **`.mark` is Bootstrap's highlighter.** Every eyebrow came out in a yellow
+  band. The rule above a heading is `.rule-above`.
+- **`data-bs-theme` redefines variables and paints nothing.** The dark band
+  needed `bg-body` for the ground and `text-body` for prose, because ordinary
+  text inherits its colour from `<body>` — which is still the light one.
+- **Bootstrap's `.ratio` sets position and width but not `display`.** On a
+  `<span>` it stayed inline and the photograph came out half the tile's width.
+- **`preventDefault()` on every `pointermove` cancels the click that follows.**
+  Clicking a collection did nothing at all; the fairs rail never noticed because
+  nothing in it is a button.
+- **`pointer-events: none` while dragging, applied on `pointerdown`,** made the
+  whole rail click-through before anything had moved. Both now wait for the
+  gesture to exceed the drag threshold, which is what the class was always for.
+
+And one that a test caught: `align-content-start` on a grid card is load-bearing.
+A grid item is stretched to its row's height and distributes the extra into its
+implicit rows, so a two-line name made every photograph in its row taller.
 
 ## Verification
 

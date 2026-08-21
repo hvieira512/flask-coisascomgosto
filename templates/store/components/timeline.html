@@ -48,12 +48,12 @@
         </div>
         {% else %}
         <div class="timeline-shell">
-            <button class="disc timeline-arrow timeline-arrow-left" type="button"
+            <button class="disc rail-arrow rail-arrow-start" type="button"
                     data-timeline-prev aria-label="Eventos anteriores" hidden>
                 <span class="icon"><i class="fa-solid fa-chevron-left"></i></span>
             </button>
 
-            <ol class="timeline" id="timeline" tabindex="0"
+            <ol class="drag-rail timeline" id="timeline" tabindex="0"
                 aria-label="Cronologia de eventos, arraste para o lado">
                 {% for event in events %}
                 <li class="timeline-entry">
@@ -64,7 +64,7 @@
                 {% endfor %}
             </ol>
 
-            <button class="disc timeline-arrow timeline-arrow-right" type="button"
+            <button class="disc rail-arrow rail-arrow-end" type="button"
                     data-timeline-next aria-label="Eventos seguintes" hidden>
                 <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
             </button>

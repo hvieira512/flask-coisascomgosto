@@ -25,13 +25,13 @@
 <div id="product-detail" class="row g-5" data-product-id="{{ product_id }}">
 
     {# ---------------- Gallery: previewer + a strip of thumbnails ---------- #}
-    {# Even halves: the stage is square and capped, so a wider column only put
-       dead space between the photograph and the panel.
+    {# Seven columns to five. The stage carries its own 4:5 shape rather than
+       taking its height from the panel, and the split is chosen so the two come
+       out the same height on their own.
 
-       The thumbnails run underneath rather than in a column beside the stage: the
-       rail took 72px off the photograph's width, and a row is the same shape on a
-       phone as on a desktop, which a vertical rail is not. #}
-    <div class="col-lg-6">
+       From lg the thumbnails run down the left of the stage; below it they keep
+       the row, which is the right shape on a phone. #}
+    <div class="col-lg-7">
         <div class="gallery">
             <figure class="gallery-stage mb-0" id="gallery-stage">
                 <img id="stage-image" src="" alt="">
@@ -63,14 +63,18 @@
     </div>
 
     {# ---------------- Information panel ---------------------------------- #}
-    <div class="col-lg-6">
+    <div class="col-lg-5">
         <h1 class="h2 mb-3" id="product-name">…</h1>
 
         <div class="mb-4" id="variants-block" hidden>
             <p class="eyebrow mb-2">Cores</p>
-            {# Two per line, not three: "Vermelho e Branco" is the longest name the
-               workshop uses and a third of the column truncates it. #}
-            <div class="row row-cols-1 row-cols-sm-2 g-2" id="variant-options"></div>
+            {# Swatches, not named badges: the photograph above already says what
+               colour the piece is, so the row only has to say there are others.
+               The chosen one is named on the line below, once. #}
+            <div class="d-flex flex-wrap align-items-center gap-2" id="variant-options"></div>
+            <p class="fs-7 text-body-secondary mt-2 mb-0">
+                Escolhida: <span class="fw-semibold text-body" id="variant-chosen"></span>
+            </p>
         </div>
 
         <div class="mb-4" id="sizes-block" hidden>
@@ -88,7 +92,7 @@
 
         {% if contact.whatsapp_url %}
         <div class="mt-4">
-            <a class="btn btn-dark w-100" id="enquiry-link"
+            <a class="btn btn-pitch btn-lg w-100" id="enquiry-link"
                href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
                 <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
                 <span>Pedir informações</span>
