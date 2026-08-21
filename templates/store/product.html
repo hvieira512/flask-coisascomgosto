@@ -66,45 +66,43 @@
     <div class="col-lg-6">
         <h1 class="h2 mb-3" id="product-name">…</h1>
 
-        <div class="product-panel">
-            <div class="mb-4" id="variants-block" hidden>
-                <p class="eyebrow mb-2">Cores</p>
-                {# Two per line, not three: "Vermelho e Branco" is the longest name
-                   the workshop uses and a third of the panel truncates it. #}
-                <div class="row row-cols-1 row-cols-sm-2 g-2" id="variant-options"></div>
-            </div>
-
-            <div class="mb-4" id="sizes-block" hidden>
-                <p class="eyebrow mb-2">Tamanhos</p>
-                <div id="size-options"></div>
-            </div>
-
-            {# The description opens the specification block. Its rule is on top
-               and the list keeps its own, so a piece with no description leaves
-               no gap and no rule of its own behind — it is simply hidden. #}
-            <p class="text-body-secondary border-top py-3 mb-0" id="product-description" hidden></p>
-
-            {# Specification list — the facts a buyer asks for. #}
-            <dl class="spec-list" id="product-meta"></dl>
-
-            {% if contact.whatsapp_url %}
-            <div class="mt-4">
-                <a class="btn btn-dark w-100" id="enquiry-link"
-                   href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
-                    <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
-                    <span>Pedir informações</span>
-                </a>
-                {# mb-0 so the panel ends where its last line ends: Bootstrap gives
-                   every <p> a bottom margin, where Bulma spared the last one, and
-                   the gallery beside it takes its height from this column. #}
-                <p class="fs-7 text-body-secondary mt-3 mb-0">
-                    Cada peça é feita e pintada à mão, por isso não há duas
-                    exactamente iguais. Fale connosco para encomendas ou
-                    personalizações.
-                </p>
-            </div>
-            {% endif %}
+        <div class="mb-4" id="variants-block" hidden>
+            <p class="eyebrow mb-2">Cores</p>
+            {# Two per line, not three: "Vermelho e Branco" is the longest name the
+               workshop uses and a third of the column truncates it. #}
+            <div class="row row-cols-1 row-cols-sm-2 g-2" id="variant-options"></div>
         </div>
+
+        <div class="mb-4" id="sizes-block" hidden>
+            <p class="eyebrow mb-2">Tamanhos</p>
+            <div id="size-options"></div>
+        </div>
+
+        {# The description opens the specification block. Its rule is on top and
+           the list keeps its own, so a piece with no description leaves no gap and
+           no rule of its own behind — it is simply hidden. #}
+        <p class="text-body-secondary border-top py-3 mb-0" id="product-description" hidden></p>
+
+        {# Specification list — the facts a buyer asks for. #}
+        <dl class="spec-list" id="product-meta"></dl>
+
+        {% if contact.whatsapp_url %}
+        <div class="mt-4">
+            <a class="btn btn-dark w-100" id="enquiry-link"
+               href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
+                <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
+                <span>Pedir informações</span>
+            </a>
+            {# mb-0 so the column ends where its last line ends: Bootstrap gives
+               every <p> a bottom margin, where Bulma spared the last one, and the
+               gallery beside it takes its height from this column. #}
+            <p class="fs-7 text-body-secondary mt-3 mb-0">
+                Cada peça é feita e pintada à mão, por isso não há duas
+                exactamente iguais. Fale connosco para encomendas ou
+                personalizações.
+            </p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
