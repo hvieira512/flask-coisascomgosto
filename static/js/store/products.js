@@ -1,215 +1,55 @@
 /**
- * Catalog page: filter sidebar, applied-filter badges and the product grid.
+ * Catalog page.
  *
- * The sidebar and the badge row are two renderings of the same StoreFilters
- * state, so selecting an entry in the sidebar and removing its badge are the
- * same operation.
+ * Four pieces render the same StoreFilters state — the sidebar, the collection
+ * rail, the applied-filter badges and the grid — so choosing a filter anywhere
+ * updates all of them from one place: the onChange at the foot of this file.
+ *
+ * This file holds only what is shared: the page number, the per-option counts
+ * both the sidebar and the rail read, and the request for the products
+ * themselves. Each piece lives in catalogue/.
  */
 
-import { API, list, request } from "../core/api.js";
-import { ColorSet } from "./color-set.js";
-import { ProductPlaceholder } from "./placeholder.js";
+import { API, request } from "../core/api.js";
 import { StoreFilters } from "./filters.js";
-import { escapeHtml } from "../core/html.js";
+import { mountBadges } from "./catalogue/badges.js";
+import { mountPagination } from "./catalogue/pagination.js";
+import { mountRail } from "./catalogue/rail.js";
+import { mountSidebar } from "./catalogue/sidebar.js";
+import { productCard } from "./catalogue/cards.js";
 
 (function () {
     const grid = document.getElementById("product-grid");
     const emptyNotice = document.getElementById("grid-empty");
-    const badgeRow = document.getElementById("active-filters");
     const resultCount = document.getElementById("result-count");
-    const clearButton = document.getElementById("clear-filters");
     const searchInput = document.getElementById("filter-search");
-    const pagination = document.getElementById("pagination");
-    const pageList = document.getElementById("page-list");
 
     let page = 1;
-    let totalPages = 1;
-    /** option id -> how many products, per group. Filled once, before the lists. */
-    let facets = {};
-    /** collection id -> its colour sets, so a collection reads as its colours. */
-    let setsByCollection = new Map();
-    /** The collections themselves, for the rail above the grid. */
-    let collections = [];
 
-    // ----------------------------------------------------------------
-    // Sidebar
-    // ----------------------------------------------------------------
-
-    /** Per-option product counts, so an entry can say what it holds. */
+    /** Per-option product counts, so a sidebar entry and a rail card can each say
+     *  what they hold. One request, read by both. */
     async function loadFacets() {
         try {
             const payload = await request("/api/products/facets");
-            facets = Object.fromEntries(
+            return Object.fromEntries(
                 Object.entries(payload).map(([key, rows]) => [
                     key,
                     new Map(rows.map((row) => [row.id, row.count])),
                 ])
             );
         } catch (error) {
-            facets = {};
+            return {};
         }
     }
 
-    /** The collections, for the rail. Their own request now that the sidebar has no
-     *  Colecção group to borrow the payload from. Labels are registered here so a
-     *  badge can say "Colecção: Filigrana" rather than "#1". */
-    async function loadCollections() {
-        collections = await list(API.collections.list, "collections", { orEmpty: true });
-        collections.forEach((collection) =>
-            StoreFilters.registerLabel("collection_id", collection.id, collection.name)
-        );
-    }
-
-    /** The colour sets behind each collection, which tint the rail's cover for a
-     *  collection that has no photograph yet. */
-    async function loadColorSets() {
-        const sets = await list(API.colorSets.list, "color_sets", { orEmpty: true });
-
-        setsByCollection = sets.reduce((map, set) => {
-            if (!set.collection) return map;
-            const current = map.get(set.collection.id) ?? [];
-            return map.set(set.collection.id, [...current, set]);
-        }, new Map());
-    }
-
-    /** Fill one sidebar group from its API endpoint. */
-    async function loadGroup(group) {
-        const { filterGroup, endpoint, collectionKey, facet } = group.dataset;
-
-        let items;
-        try {
-            items = await list(endpoint, collectionKey);
-        } catch (error) {
-            group.innerHTML =
-                '<li><span class="text-body-secondary fs-7">Indisponível</span></li>';
-            return;
-        }
-
-        const counts = facets[facet] ?? new Map();
-        group.innerHTML = items
-            .map((item) => renderEntry(filterGroup, item, counts))
-            .join("");
-
-        // Cache names so badges can render before the sidebar is consulted.
-        items.forEach((item) =>
-            StoreFilters.registerLabel(filterGroup, item.id, item.name)
-        );
-    }
-
-    /**
-     * One entry: a checkbox, the name, and how many pieces are behind it. The box
-     * is what says these are cumulative — before it, a second click looked like
-     * it had undone the first.
-     */
-    function renderEntry(group, item, counts) {
-        const count = counts.get(item.id) ?? 0;
-        // Kept visible but not clickable: it is part of the workshop's
-        // vocabulary, and ticking it could only ever empty the grid.
-        const empty = count === 0;
-
-        return `
-          <li class="nav-item">
-            <a class="nav-link filter-entry${empty ? " is-empty" : ""}"
-               data-filter-group="${group}" data-filter-value="${item.id}"
-               data-filter-label="${escapeHtml(item.name)}"
-               ${empty ? 'aria-disabled="true" title="Sem peças"' : ""}>
-              <span class="filter-line">
-                <span class="filter-box" aria-hidden="true">
-                  <i class="fa-solid fa-check"></i>
-                </span>
-                <span class="filter-name">${escapeHtml(item.name)}</span>
-                <span class="filter-count">${count}</span>
-              </span>
-            </a>
-          </li>`;
-    }
-
-    /** Tick whichever sidebar entries are selected. */
-    function syncSidebar() {
-        document.querySelectorAll("#filter-groups a[data-filter-group]").forEach((link) => {
-            const { filterGroup, filterValue } = link.dataset;
-            const on = StoreFilters.isSelected(filterGroup, filterValue);
-            link.classList.toggle("is-active", on);
-            link.setAttribute("aria-pressed", String(on));
-        });
-    }
-
-    document.getElementById("filter-groups").addEventListener("click", (event) => {
-        const link = event.target.closest("a[data-filter-group]");
-        if (!link) return;
-
-        event.preventDefault();
-        if (link.classList.contains("is-empty")) return;
-        StoreFilters.toggle(
-            link.dataset.filterGroup,
-            link.dataset.filterValue,
-            link.dataset.filterLabel
-        );
+    const badges = mountBadges(searchInput);
+    const pagination = mountPagination((wanted) => {
+        page = wanted;
+        loadProducts();
+        // The grid starts above the fold on a filtered view; without this the
+        // second page loads with its first row already scrolled past.
+        grid.scrollIntoView({ block: "start" });
     });
-
-    // ----------------------------------------------------------------
-    // Applied-filter badges
-    // ----------------------------------------------------------------
-
-    /**
-     * One pill per selected value, shaped "Group: Value ×" — three ticked types
-     * are three pills, each removable on its own.
-     */
-    function renderBadges() {
-        const chosen = StoreFilters.selections();
-        badgeRow.hidden = chosen.length === 0;
-        clearButton.hidden = chosen.length === 0;
-
-        badgeRow.innerHTML = chosen
-            .map(({ group, value }) => {
-                const groupLabel = StoreFilters.GROUPS[group].label;
-                const valueLabel = StoreFilters.labelFor(group, value);
-                return `
-                  <!-- Deliberately small: the badges live on the heading line, and a
-                       32px pill in a 30px line box grew the row by 5px the moment a
-                       filter was chosen, nudging the whole grid down. -->
-                  <span class="filter-badge"
-                        data-remove-filter="${group}" data-remove-value="${escapeHtml(value)}"
-                        role="button" tabindex="0"
-                        title="Remover ${escapeHtml(valueLabel)}">
-                    ${escapeHtml(groupLabel)}: ${escapeHtml(valueLabel)}
-                    <button class="btn-close btn-close-white"
-                            aria-label="Remover ${escapeHtml(valueLabel)}"></button>
-                  </span>`;
-            })
-            .join("");
-    }
-
-    function removeBadge(badge) {
-        const { removeFilter: group, removeValue: value } = badge.dataset;
-        StoreFilters.clear(group, value ?? null);
-        if (group === "q") searchInput.value = "";
-    }
-
-    badgeRow.addEventListener("click", (event) => {
-        const badge = event.target.closest("[data-remove-filter]");
-        if (badge) removeBadge(badge);
-    });
-
-    // Keyboard parity: the badge is focusable, so Enter/Space must remove it too.
-    badgeRow.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-
-        const badge = event.target.closest("[data-remove-filter]");
-        if (!badge) return;
-
-        event.preventDefault();
-        removeBadge(badge);
-    });
-
-    clearButton.addEventListener("click", () => {
-        StoreFilters.clearAll();
-        searchInput.value = "";
-    });
-
-    // ----------------------------------------------------------------
-    // Search box
-    // ----------------------------------------------------------------
 
     let searchTimer;
     searchInput.addEventListener("input", (event) => {
@@ -217,61 +57,6 @@ import { escapeHtml } from "../core/html.js";
         const value = event.target.value.trim();
         searchTimer = setTimeout(() => StoreFilters.set("q", value || null), 250);
     });
-
-    // ----------------------------------------------------------------
-    // Grid
-    // ----------------------------------------------------------------
-
-    /** Two rows of two. A fifth colour set added a third row to one card and
-     *  left it taller than its neighbours; the rest are on the product page. */
-    const MAX_BADGES = 4;
-
-    function renderColorSets(product) {
-        const sets = product.variants.map((variant) => variant.color_set).filter(Boolean);
-        if (!sets.length) return "";
-
-        const overflows = sets.length > MAX_BADGES;
-        const visible = overflows ? MAX_BADGES - 1 : sets.length;
-        const cells = sets.slice(0, visible).map(ColorSet.badge);
-
-        if (overflows) {
-            const rest = sets.length - visible;
-            cells.push(
-                `<span class="color-set-more">+${rest} ${
-                    rest === 1 ? "cor" : "cores"
-                }</span>`
-            );
-        }
-
-        return `<div class="swatch-row row row-cols-2 g-1">${
-            cells.map((cell) => `<div class="col">${cell}</div>`).join("")
-        }</div>`;
-    }
-
-    function renderCard(product) {
-        const image = product.primary_image;
-        const media = image
-            ? `<img class="card-img-top" src="${escapeHtml(image.url)}"
-                    alt="${escapeHtml(image.alt || product.name)}" loading="lazy">`
-            : ProductPlaceholder.markup(product);
-
-        const subtitle = [product.type?.name, product.collection?.name]
-            .filter(Boolean)
-            .map(escapeHtml)
-            .join(" · ");
-
-        return `
-          <div class="col">
-            <a class="card product-card" href="/products/${product.id}">
-              ${media}
-              <div class="card-body">
-                <p class="h6 mb-1">${escapeHtml(product.name)}</p>
-                ${subtitle ? `<p class="fs-7 text-body-secondary">${subtitle}</p>` : ""}
-                ${renderColorSets(product)}
-              </div>
-            </a>
-          </div>`;
-    }
 
     async function loadProducts() {
         const params = {
@@ -292,212 +77,39 @@ import { escapeHtml } from "../core/html.js";
         }
 
         const products = payload.products || [];
-        grid.innerHTML = products.map(renderCard).join("");
+        grid.innerHTML = products.map(productCard).join("");
 
         emptyNotice.hidden = products.length > 0;
         emptyNotice.textContent = "Nenhum produto corresponde aos filtros escolhidos.";
 
         const { total, pages } = payload.pagination;
-        totalPages = pages || 1;
         resultCount.textContent = total === 1 ? "1 produto" : `${total} produtos`;
-
-        renderPagination();
+        pagination.render(page, pages || 1);
     }
-
-    // ----------------------------------------------------------------
-    // Pagination
-    // ----------------------------------------------------------------
-
-    /** Above this many pages the middle is elided rather than listed. */
-    const MAX_PAGE_BUTTONS = 7;
-
-    /**
-     * The page numbers to draw, with null standing for an ellipsis. Always keeps
-     * the first, the last and the current page's neighbours, so the row never
-     * changes width as you walk through it.
-     */
-    function pageWindow() {
-        if (totalPages <= MAX_PAGE_BUTTONS) {
-            return Array.from({ length: totalPages }, (_, i) => i + 1);
-        }
-
-        const around = [page - 1, page, page + 1].filter(
-            (n) => n > 1 && n < totalPages
-        );
-        const numbers = [1, ...around, totalPages];
-
-        return numbers.flatMap((n, i) =>
-            i > 0 && n - numbers[i - 1] > 1 ? [null, n] : [n]
-        );
-    }
-
-    const arrow = (icon, label, target, disabled) => `
-      <li class="page-item${disabled ? " disabled" : ""}">
-        <button class="page-link" type="button" data-page="${target}"
-                aria-label="${label}"${disabled ? " disabled" : ""}>
-          <span class="icon is-small"><i class="fa-solid ${icon}"></i></span>
-        </button>
-      </li>`;
-
-    function renderPagination() {
-        pagination.hidden = totalPages <= 1;
-        if (pagination.hidden) {
-            pageList.innerHTML = "";
-            return;
-        }
-
-        const numbers = pageWindow()
-            .map((number) =>
-                number === null
-                    ? `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`
-                    : `<li class="page-item${number === page ? " active" : ""}">
-                         <button class="page-link" type="button" data-page="${number}"
-                                 aria-label="Página ${number}"
-                                 ${number === page ? 'aria-current="page"' : ""}>
-                           ${number}
-                         </button>
-                       </li>`
-            )
-            .join("");
-
-        pageList.innerHTML =
-            arrow("fa-chevron-left", "Página anterior", page - 1, page <= 1) +
-            numbers +
-            arrow("fa-chevron-right", "Página seguinte", page + 1, page >= totalPages);
-    }
-
-    pageList.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-page]");
-        if (!button || button.disabled) return;
-
-        const wanted = Number(button.dataset.page);
-        if (wanted === page || wanted < 1 || wanted > totalPages) return;
-
-        page = wanted;
-        loadProducts();
-        // The grid starts above the fold on a filtered view; without this the
-        // second page loads with its first row already scrolled past.
-        document.getElementById("product-grid").scrollIntoView({ block: "start" });
-    });
-
-    // ----------------------------------------------------------------
-    // The collection rail
-    // ----------------------------------------------------------------
-
-    /**
-     * The collections as photographs, above the grid.
-     *
-     * It drives the same collection_id filter the sidebar checkbox drives, rather
-     * than a mode of its own: the badge, the sidebar and the URL then all follow
-     * from one piece of state, and Limpar clears the rail too.
-     *
-     * `set` rather than `toggle` because the rail asks a different question from
-     * the sidebar. The checkboxes accumulate; a wall of covers reads as "pick one",
-     * so picking one replaces whatever was chosen, and picking the chosen one again
-     * goes back to everything.
-     */
-    function renderRail() {
-        const rail = document.getElementById("collection-rail");
-        const strip = document.getElementById("collection-strip");
-        if (!rail || !strip) return;
-
-        const counts = facets.collections ?? new Map();
-        // A collection with nothing behind it is a dead end. A single one still gets
-        // a rail, though: with no Colecção group in the sidebar this is the only way
-        // to filter by collection at all, and hiding it would remove the filter
-        // rather than tidy it away.
-        const offered = collections.filter((c) => (counts.get(c.id) ?? 0) > 0);
-        rail.hidden = offered.length === 0;
-        if (rail.hidden) return;
-
-        const chosen = StoreFilters.get("collection_id");
-        strip.innerHTML = [
-            railCard({
-                id: "",
-                name: "Ver tudo",
-                detail: "Todas as peças",
-                active: !chosen || chosen.length === 0,
-                cover: `<span class="collection-cover-all disc"><i class="fa-solid fa-grip"></i></span>`,
-            }),
-            ...offered.map((collection) => {
-                const pieces = counts.get(collection.id) ?? 0;
-                return railCard({
-                    id: collection.id,
-                    name: collection.name,
-                    detail: `${pieces} ${pieces === 1 ? "peça" : "peças"}`,
-                    active: StoreFilters.isSelected("collection_id", collection.id),
-                    cover: railCover(collection),
-                });
-            }),
-        ].join("");
-    }
-
-    /** Its cover, or the same no-photograph tile the grid uses, tinted in the
-     *  collection's own colours rather than a neutral grey. */
-    function railCover(collection) {
-        if (collection.image_url) {
-            return `<img src="${escapeHtml(collection.image_url)}"
-                         alt="${escapeHtml(collection.name)}" loading="lazy">`;
-        }
-        return ProductPlaceholder.markup(
-            { name: collection.name, type: { icon: "fa-layer-group" } },
-            "",
-            (setsByCollection.get(collection.id) ?? [])[0] ?? null
-        );
-    }
-
-    function railCard({ id, name, detail, active, cover }) {
-        return `
-          <li>
-            <button type="button" class="collection-card${active ? " is-active" : ""}"
-                    data-collection-id="${id}" aria-pressed="${active}">
-              <span class="collection-cover">${cover}</span>
-              <span class="collection-card-name">${escapeHtml(name)}</span>
-              <span class="collection-card-detail">${escapeHtml(detail)}</span>
-            </button>
-          </li>`;
-    }
-
-    document.getElementById("collection-strip")?.addEventListener("click", (event) => {
-        const card = event.target.closest("[data-collection-id]");
-        if (!card) return;
-
-        const { collectionId: id } = card.dataset;
-        if (!id) {
-            StoreFilters.set("collection_id", null);
-            return;
-        }
-
-        const already = StoreFilters.isSelected("collection_id", id);
-        const name = collections.find((c) => String(c.id) === id)?.name;
-        StoreFilters.set("collection_id", already ? null : id, name);
-    });
-
-    // ----------------------------------------------------------------
-    // Wiring
-    // ----------------------------------------------------------------
-
-    StoreFilters.onChange(() => {
-        page = 1; // a changed filter invalidates the current page number
-        syncSidebar();
-        renderRail();
-        renderBadges();
-        loadProducts();
-    });
 
     (async function init() {
         searchInput.value = StoreFilters.get("q") || "";
 
-        // Counts and colour sets first: the entries are rendered with them, not
-        // patched afterwards.
-        await Promise.all([loadFacets(), loadColorSets(), loadCollections()]);
-        await Promise.all(
-            [...document.querySelectorAll("#filter-groups [data-filter-group]")].map(loadGroup)
-        );
+        // Counts first: the entries and the cards are rendered with their numbers
+        // rather than patched afterwards.
+        const facets = await loadFacets();
+        const [sidebar, rail] = await Promise.all([
+            mountSidebar(facets),
+            mountRail(facets),
+        ]);
 
-        syncSidebar();
-        renderRail();
-        renderBadges();
-        loadProducts();
+        const draw = () => {
+            sidebar.sync();
+            rail.render();
+            badges.render();
+            loadProducts();
+        };
+
+        StoreFilters.onChange(() => {
+            page = 1; // a changed filter invalidates the current page number
+            draw();
+        });
+
+        draw();
     })();
 })();

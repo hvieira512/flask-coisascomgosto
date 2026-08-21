@@ -15,6 +15,22 @@ import re
 import pytest
 
 
+def page_source(*paths):
+    """Every module a page is built from, concatenated.
+
+    A directory rather than one file on purpose. These tests kept failing on a
+    page that had not changed behaviour at all, only been split into modules —
+    which is the opposite of what a guard should do. What the page can do belongs
+    to the page, not to whichever file currently holds the call.
+    """
+    sources = []
+    for path in paths:
+        target = pathlib.Path(path)
+        files = sorted(target.rglob("*.js")) if target.is_dir() else [target]
+        sources += [f.read_text(encoding="utf-8") for f in files]
+    return "\n".join(sources)
+
+
 class TestLoginPageHooks:
     """static/js/auth/auth.js queries these by ID."""
 
@@ -378,9 +394,7 @@ class TestDashboardColors:
         the beginning, but a variant could only be pointed at a set that was
         already in the database, so the owners could not add a combination.
         """
-        source = pathlib.Path("static/js/dashboard/colors/main.js").read_text(
-            encoding="utf-8"
-        )
+        source = page_source("static/js/dashboard/colors")
         # The endpoints and the methods, rather than the names of wrappers around
         # them: what matters is that both halves of the page can be written to.
         for endpoint in ["API.colorSets.create", "API.colorSets.update",
@@ -394,9 +408,7 @@ class TestDashboardColors:
         Unlike a type, this is allowed — so the count has to be on the dialog
         rather than discovered afterwards.
         """
-        source = pathlib.Path("static/js/dashboard/colors/main.js").read_text(
-            encoding="utf-8"
-        )
+        source = page_source("static/js/dashboard/colors")
         assert "pieceCounts.get(set.id)" in source
         assert "fotografias" in source
 
@@ -428,9 +440,7 @@ class TestDashboardCollections:
         assert "Colecções" in html
 
     def test_the_page_can_set_and_clear_a_cover(self):
-        source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
-            encoding="utf-8"
-        )
+        source = page_source("static/js/dashboard/collections")
         for endpoint in ["API.collections.create", "API.collections.update",
                          "API.collections.delete", "API.collections.cover"]:
             assert endpoint in source, endpoint
@@ -439,18 +449,14 @@ class TestDashboardCollections:
 
     def test_the_form_is_split_in_two(self):
         """What the collection is on the left, what it looks like on the right."""
-        source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
-            encoding="utf-8"
-        )
+        source = page_source("static/js/dashboard/collections")
         assert '<div class="row g-3">' in source
         assert source.count('<div class="col-md">') == 2
 
     def test_editing_carries_the_existing_cover_through(self):
         """PUT replaces the row, so a form that does not send image_url would
         clear a cover the owner never touched."""
-        source = pathlib.Path("static/js/dashboard/collections/main.js").read_text(
-            encoding="utf-8"
-        )
+        source = page_source("static/js/dashboard/collections")
         assert "payload.image_url = collection.image_url" in source
 
 
@@ -713,7 +719,7 @@ def test_the_materials_panel_offers_the_full_set(client, make_user):
     # The endpoints, not the names of wrappers around them: this test used to
     # assert createMaterial/updateMaterial/deleteMaterial and broke the day those
     # one-line forwarders were deleted, though the panel does exactly what it did.
-    source = pathlib.Path("static/js/dashboard/types/main.js").read_text(encoding="utf-8")
+    source = page_source("static/js/dashboard/types")
     for endpoint in ["API.materials.list", "API.materials.create",
                      "API.materials.update", "API.materials.delete"]:
         assert endpoint in source, endpoint

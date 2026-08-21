@@ -131,7 +131,8 @@ class TestPlaceholderIsImported:
 
     def test_every_drawer_of_a_tile_imports_it(self):
         for path in [
-            "static/js/store/products.js",     # the catalogue grid
+            "static/js/store/catalogue/cards.js",   # the catalogue grid
+            "static/js/store/catalogue/rail.js",    # a collection with no cover
             "static/js/store/gallery.js",      # the product page's stage
             "static/js/dashboard/products/fetch.js",   # the dashboard's rows
         ]:
