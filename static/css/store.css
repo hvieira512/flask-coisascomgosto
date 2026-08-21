@@ -11,6 +11,106 @@ main {
     flex: 1 0 auto;
 }
 
+/* A trace of grain over the shop. #FAF8F4 is a warm off-white chosen well and it
+   still renders as a perfectly flat digital surface, which is the specific thing
+   that reads as lifeless on a craft site. An inline SVG, so it costs no request,
+   and 3.5%, so you never see it — you only stop seeing the flatness.
+
+   Storefront only: the dashboard is a tool, not paper. */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------------
+   The six rules the design needs and Bootstrap has no answer for.
+   Everything else on these pages is a Bootstrap class.
+   ------------------------------------------------------------------ */
+
+/* Gold. text-* is a closed set in Bootstrap and this colour is not in it. */
+.text-gold {
+    color: var(--ccg-gold);
+}
+
+[data-bs-theme="dark"] .text-gold {
+    color: var(--ccg-gold-lift);
+}
+
+/* The light in the hero: a radial wash of the gold the pieces are painted with.
+   Bootstrap's bg-gradient is a fixed white overlay and nothing else comes close. */
+.hero-wash {
+    background:
+        radial-gradient(58rem 32rem at 50% -6%,
+            rgba(201, 162, 78, .26) 0%, rgba(201, 162, 78, .05) 46%, transparent 72%),
+        var(--ccg-paper);
+}
+
+/* The section mark: a short gold rule above a heading. One device, used on every
+   section, which is what makes it read as a signature rather than as decoration
+   on one of them. */
+.mark::before {
+    content: "";
+    display: block;
+    width: 2.5rem;
+    height: 2px;
+    background: var(--ccg-gold);
+    margin-bottom: 1.25rem;
+}
+
+[data-bs-theme="dark"] .mark::before {
+    background: var(--ccg-gold-lift);
+}
+
+/* Makes a name legible over a photograph. card-img-overlay positions it and
+   nothing in Bootstrap tints it. Reaching .88 at the foot because half these
+   pieces are painted on white. */
+.tile-scrim {
+    background: linear-gradient(to top,
+        rgba(23, 22, 26, .88) 0%, rgba(23, 22, 26, .3) 44%, transparent 74%);
+    transition: opacity .35s ease;
+}
+
+a:hover > .tile-scrim {
+    opacity: .8;
+}
+
+/* A photograph filling its box. Bootstrap has no object-fit utility. */
+.photo-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* A colourway, as the two or three colours it is made of. Built in JS, where the
+   colours come from, so the gradient stops cannot be a class. */
+.swatch-dot {
+    display: inline-block;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    border: 1px solid rgba(38, 34, 29, .22);
+    flex: none;
+    padding: 0;
+    background-color: transparent;
+    transition: transform .18s ease;
+}
+
+a:hover > .dots > .swatch-dot,
+button.swatch-dot:hover {
+    transform: scale(1.1);
+}
+
+button.swatch-dot[aria-pressed="true"] {
+    outline: 1px solid var(--ccg-ink);
+    outline-offset: 2px;
+}
+
 /* Unbounded body copy is unreadable, and Bootstrap has no max-width helper.
    Narrower here than theme.css's shared value: these are display lines. */
 .measure-narrow {

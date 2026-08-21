@@ -20,11 +20,28 @@
     --ccg-blue-800: #1F3864;
     --ccg-blue-900: #162745;
 
-    --ccg-paper: #FAF8F5;
-    --ccg-paper-deep: #F3EFE8;
+    --ccg-paper: #FAF8F4;
+    --ccg-paper-deep: #F4EFE5;
     --ccg-surface: #FFFFFF;
-    --ccg-line: #E7E1D7;
-    --ccg-line-soft: #F0EBE3;
+    /* Warmer than it was. Hairlines are the most repeated element on either
+       half of the product, so a few degrees here is what makes the whole thing
+       read as gold-lit rather than grey-lit. */
+    --ccg-line: #E4DAC6;
+    --ccg-line-soft: #EFE8DA;
+
+    /* Sampled off the gold leaf the workshop paints with, desaturated so it
+       reads as leaf rather than as brass. It is not a second accent to spend
+       freely: it marks "this one", and the rule above a section heading. The
+       blue keeps navigation and links.
+
+       --ccg-gold-lift is the same colour on a dark ground, where the flat one
+       loses against black. */
+    --ccg-gold: #A67C2E;
+    --ccg-gold-lift: #C9A24E;
+
+    /* The black the boxes are painted. One band at the foot of the landing page
+       and one button, and that is the whole budget. */
+    --ccg-pitch: #17161A;
 
     --ccg-ink: #26221D;
     --ccg-ink-soft: #6E675E;
@@ -82,9 +99,9 @@
     --bs-tertiary-bg: var(--ccg-line-soft);
     /* The bg-* utilities compose their own alpha, so they read the triplet
        rather than the colour above it. */
-    --bs-secondary-bg-rgb: 243, 239, 232;
-    --bs-tertiary-bg-rgb: 240, 235, 227;
-    --bs-body-bg-rgb: 250, 248, 245;
+    --bs-secondary-bg-rgb: 244, 239, 229;
+    --bs-tertiary-bg-rgb: 239, 232, 218;
+    --bs-body-bg-rgb: 250, 248, 244;
 
     --bs-border-color: var(--ccg-line);
     --bs-border-color-translucent: var(--ccg-line);
@@ -109,11 +126,40 @@
     --bs-focus-ring-color: rgba(68, 114, 196, .13);
 }
 
+/* The pitch band, as Bootstrap's own inversion rather than as colours of ours.
+   `data-bs-theme="dark"` on a section reroutes every variable inside it, so the
+   contacts band and the footer are built from bg-body, text-body-secondary and
+   border-top with nothing to override — and a button or a link dropped in there
+   later is legible without anybody remembering to say so.
+
+   Scoped to [data-bs-theme] rather than to a media query on purpose: this is a
+   band the design chooses, not a preference the visitor expressed. The shop is
+   light. */
+[data-bs-theme="dark"] {
+    --bs-body-bg: var(--ccg-pitch);
+    --bs-body-bg-rgb: 23, 22, 26;
+    --bs-body-color: #FBF8F3;
+    --bs-body-color-rgb: 251, 248, 243;
+    --bs-emphasis-color: #FFFFFF;
+    --bs-secondary-color: rgba(251, 248, 243, .68);
+    --bs-tertiary-color: rgba(251, 248, 243, .45);
+    --bs-secondary-bg: #201E23;
+    --bs-tertiary-bg: #2A272E;
+    --bs-heading-color: #FBF8F3;
+    --bs-border-color: rgba(251, 248, 243, .16);
+    --bs-border-color-translucent: rgba(251, 248, 243, .16);
+    --bs-link-color: var(--ccg-gold-lift);
+    --bs-link-color-rgb: 201, 162, 78;
+    --bs-link-hover-color: #E4C179;
+    --bs-link-hover-color-rgb: 228, 193, 121;
+}
+
 body {
     background-color: var(--ccg-paper);
     color: var(--ccg-ink);
     -webkit-font-smoothing: antialiased;
 }
+
 
 /* Bootstrap's headings are 500 and inherit their colour; this project's are
    bold navy, which is the single biggest thing separating its pages from
