@@ -69,8 +69,8 @@ inside the network.
 | Variable | Default | Purpose |
 |---|---|---|
 | `FLASK_DEBUG` | `1` | `1` gives live reload and the debugger; anything else runs gunicorn |
-| `SECRET_KEY` | dev value | Signs the dashboard's session cookie. **Change in production** |
-| `JWT_SECRET_KEY` | falls back to `SECRET_KEY` | Signs the API's bearer tokens. **Change in production**, 32+ bytes |
+| `SECRET_KEY` | dev value | Signs the dashboard's session cookie. **The app refuses to start on the dev value unless `FLASK_DEBUG=1`** |
+| `JWT_SECRET_KEY` | falls back to `SECRET_KEY` | Signs the API's bearer tokens. Same refusal; 32+ bytes |
 | `JWT_ACCESS_MINUTES` | `15` | Access-token lifetime |
 | `JWT_REFRESH_DAYS` | `14` | Refresh-token lifetime |
 | `MYSQL_HOST` | `127.0.0.1` | Compose overrides this to `db` |
@@ -307,9 +307,20 @@ rather than a redesign. Password hashes are never returned.
 > following a link wants the login form, not a 401.
 >
 > JWTs are stateless, so `/auth/logout` clears the session but cannot revoke an
-> issued token — the client discards it. Set both `SECRET_KEY` and
-> `JWT_SECRET_KEY` in production; the defaults are placeholders, and
-> `JWT_SECRET_KEY` should be 32+ bytes.
+> issued token — the client discards it.
+>
+> **The signing keys are not optional.** `config.py` raises at import if either
+> `SECRET_KEY` or `JWT_SECRET_KEY` still holds the placeholder `.env.example`
+> ships for it and `FLASK_DEBUG` is not `1`, because the failure it prevents is
+> silent: a deployment signing its session cookies with a constant that is in
+> this repository boots and serves exactly like a safe one, while anyone can
+> forge a session and rewrite the catalogue. The two placeholders are different
+> strings, so both are listed in `config.py`. `JWT_SECRET_KEY` inherits
+> `SECRET_KEY` when unset and should be its own 32+ byte value.
+>
+> The session cookie is itself a credential — `api/security.py` accepts it in
+> place of a bearer token — so it is `HttpOnly`, `SameSite=Lax`, and `Secure`
+> outside debug.
 
 ### Conventions
 
