@@ -22,7 +22,10 @@ EXPECTED_RULES = {
     ("products", "material_id"): "SET NULL",
     ("products", "collection_id"): "SET NULL",
     ("products", "default_size_id"): "SET NULL",
-    ("color_sets", "collection_id"): "SET NULL",
+    # A colour set is shared, so where it appears is a join rather than a column;
+    # deleting a collection unlinks it and the set survives.
+    ("collection_color_sets", "collection_id"): "CASCADE",
+    ("collection_color_sets", "color_set_id"): "CASCADE",
     ("color_set_colors", "color_set_id"): "CASCADE",
     ("color_set_colors", "color_id"): "CASCADE",
     ("product_variants", "product_id"): "CASCADE",
@@ -63,10 +66,15 @@ class TestEveryRelationshipIsDeclared:
         from pathlib import Path
         import re
 
-        migration = (
-            Path(__file__).parent.parent / "db/migrations/0006_foreign_keys.sql"
-        ).read_text()
-        declared = set(re.findall(r"CONSTRAINT (fk_\w+)", migration))
+        migrations = Path(__file__).parent.parent / "db/migrations"
+        # Every migration that declares one, not only the first: 0009 moved the
+        # collection link onto a join table with two constraints of its own.
+        declared = set()
+        for path in sorted(migrations.glob("*.sql")):
+            declared |= set(re.findall(r"CONSTRAINT (fk_\w+)", path.read_text()))
+        declared -= set(re.findall(r"DROP FOREIGN KEY (fk_\w+)",
+                                  "\n".join(p.read_text()
+                                             for p in sorted(migrations.glob("*.sql")))))
 
         cursor.execute(
             "SELECT constraint_name AS name FROM information_schema.table_constraints "

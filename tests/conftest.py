@@ -313,13 +313,15 @@ def make_color(client):
 
 @pytest.fixture()
 def make_color_set(client, make_color):
-    def _make(name="White and Green", color_ids=None, collection_id=None):
+    def _make(name="White and Green", color_ids=None, collection_ids=None):
+        """`collection_ids` is a list: a set may appear in several collections, or
+        in none."""
         if color_ids is None:
             color_ids = [make_color(f"{name} filler")["id"]]
 
         payload = {"name": name, "color_ids": color_ids}
-        if collection_id is not None:
-            payload["collection_id"] = collection_id
+        if collection_ids:
+            payload["collection_ids"] = list(collection_ids)
 
         response = client.post("/api/color-sets/", json=payload)
         assert response.status_code == 201, response.get_json()

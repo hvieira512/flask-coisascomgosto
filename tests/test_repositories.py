@@ -200,7 +200,7 @@ class TestProductTypeCovers:
         variants = ProductVariantRepository(cursor)
 
         def _make(product_id, name):
-            color_set_id = sets.create(name=name, color_ids=[], collection_id=None)
+            color_set_id = sets.create(name=name, color_ids=[])
             return variants.create(product_id=product_id, color_set_id=color_set_id)
 
         return _make

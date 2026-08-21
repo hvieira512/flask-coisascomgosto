@@ -71,11 +71,13 @@ class TestCollections:
         assert body["collection"] is None
 
 
-class TestWhichColourSetsBelongToACollection:
-    """A collection owns colour sets, and the owners edit that from the collection.
+class TestWhichColourSetsACollectionGathers:
+    """A collection gathers colour sets, and the owners edit that from the
+    collection.
 
-    It is a move, not a link: color_sets.collection_id holds one collection, so
-    listing a set here takes it from wherever it was.
+    A link, not a move: a set may be gathered by several collections at once —
+    the same two colours are the same combination wherever they appear — so
+    listing one here does not take it from anywhere.
     """
 
     @pytest.fixture()
@@ -109,14 +111,14 @@ class TestWhichColourSetsBelongToACollection:
             "Branco e Dourado", "Preto e Branco"
         ]
 
-    def test_the_colour_set_now_names_its_collection(
+    def test_the_colour_set_now_names_the_collection(
         self, client, make_collection, sets
     ):
         collection = make_collection("Filigrana")
         self._put(client, collection["id"], [sets["gold"]["id"]])
 
         body = client.get(f"/api/color-sets/{sets['gold']['id']}").get_json()
-        assert body["collection"]["name"] == "Filigrana"
+        assert [c["name"] for c in body["collections"]] == ["Filigrana"]
 
     def test_leaving_one_out_takes_it_out(self, client, make_collection, sets):
         collection = make_collection("Filigrana")
@@ -128,9 +130,9 @@ class TestWhichColourSetsBelongToACollection:
         ).get_json()
         assert [s["name"] for s in remaining] == ["Branco e Dourado"]
 
-        # Left belonging to none rather than deleted.
-        orphan = client.get(f"/api/color-sets/{sets['black']['id']}").get_json()
-        assert orphan["collection"] is None
+        # Dropped from the collection rather than deleted.
+        dropped = client.get(f"/api/color-sets/{sets['black']['id']}").get_json()
+        assert dropped["collections"] == []
 
     def test_an_empty_list_empties_the_collection(self, client, make_collection, sets):
         collection = make_collection("Filigrana")
@@ -138,26 +140,29 @@ class TestWhichColourSetsBelongToACollection:
 
         assert self._put(client, collection["id"], []).get_json() == []
 
-    def test_taking_one_from_another_collection_moves_it(
+    def test_gathering_one_that_another_collection_has_keeps_both(
         self, client, make_collection, sets
     ):
-        """The consequence of a colour set having one collection: choosing it here
-        is choosing it away from there."""
+        """The whole point of the join: "Branco e Dourado" is Filigrana's *and*
+        Bordados', without being created twice."""
         bordados = make_collection("Bordados")
         filigrana = make_collection("Filigrana")
         self._put(client, bordados["id"], [sets["gold"]["id"]])
 
         self._put(client, filigrana["id"], [sets["gold"]["id"]])
 
-        assert client.get(
-            f"/api/collections/{bordados['id']}/color-sets"
-        ).get_json() == []
-        assert [
-            s["name"]
-            for s in client.get(
-                f"/api/collections/{filigrana['id']}/color-sets"
-            ).get_json()
-        ] == ["Branco e Dourado"]
+        for collection in (bordados, filigrana):
+            assert [
+                s["name"]
+                for s in client.get(
+                    f"/api/collections/{collection['id']}/color-sets"
+                ).get_json()
+            ] == ["Branco e Dourado"], collection["name"]
+
+        both = client.get(f"/api/color-sets/{sets['gold']['id']}").get_json()
+        assert sorted(c["name"] for c in both["collections"]) == [
+            "Bordados", "Filigrana"
+        ]
 
     def test_it_does_not_disturb_the_other_collections(
         self, client, make_collection, sets
@@ -389,15 +394,15 @@ class TestColorSets:
         assert response.status_code == 201
         assert [c["name"] for c in response.get_json()["colors"]] == ["White", "Green"]
 
-    def test_collection_is_optional(self, client, make_color):
+    def test_a_set_can_be_in_no_collection(self, client, make_color):
         white = make_color("White")
         response = client.post(
             "/api/color-sets/", json={"name": "Just White", "color_ids": [white["id"]]}
         )
         assert response.status_code == 201
-        assert response.get_json()["collection"] is None
+        assert response.get_json()["collections"] == []
 
-    def test_nests_its_collection(self, client, make_collection, make_color):
+    def test_nests_its_collections(self, client, make_collection, make_color):
         collection = make_collection("Barra da Saia")
         white = make_color("White")
 
@@ -406,10 +411,12 @@ class TestColorSets:
             json={
                 "name": "White",
                 "color_ids": [white["id"]],
-                "collection_id": collection["id"],
+                "collection_ids": [collection["id"]],
             },
         )
-        assert response.get_json()["collection"]["name"] == "Barra da Saia"
+        assert [
+            c["name"] for c in response.get_json()["collections"]
+        ] == ["Barra da Saia"]
 
     def test_unknown_colour_returns_404(self, client):
         response = client.post(
@@ -421,40 +428,48 @@ class TestColorSets:
         white = make_color("White")
         response = client.post(
             "/api/color-sets/",
-            json={"name": "X", "color_ids": [white["id"]], "collection_id": 9999},
+            json={"name": "X", "color_ids": [white["id"]], "collection_ids": [9999]},
         )
         assert response.status_code == 404
 
-    def test_same_name_allowed_in_different_collections(
+    def test_one_set_can_be_in_several_collections(
         self, client, make_collection, make_color
     ):
+        """Which is why the name is not scoped to a collection: it is one set."""
         first = make_collection("First")
         second = make_collection("Second")
         white = make_color("White")
 
-        payload = {"name": "White and Green", "color_ids": [white["id"]]}
-        a = client.post(
-            "/api/color-sets/", json={**payload, "collection_id": first["id"]}
+        response = client.post(
+            "/api/color-sets/",
+            json={
+                "name": "White and Green",
+                "color_ids": [white["id"]],
+                "collection_ids": [first["id"], second["id"]],
+            },
         )
-        b = client.post(
-            "/api/color-sets/", json={**payload, "collection_id": second["id"]}
-        )
-        assert a.status_code == 201
-        assert b.status_code == 201
 
-    def test_duplicate_name_in_same_collection_returns_409(
+        assert response.status_code == 201
+        assert sorted(
+            c["name"] for c in response.get_json()["collections"]
+        ) == ["First", "Second"]
+
+    def test_the_name_is_taken_across_the_catalogue(
         self, client, make_collection, make_color
     ):
-        collection = make_collection("Barra da Saia")
+        """Two collections each having their own "White and Green" was the old
+        shape, and it is what made the same combination exist twice."""
+        first = make_collection("First")
+        second = make_collection("Second")
         white = make_color("White")
-        payload = {
-            "name": "White and Green",
-            "color_ids": [white["id"]],
-            "collection_id": collection["id"],
-        }
+        payload = {"name": "White and Green", "color_ids": [white["id"]]}
 
-        assert client.post("/api/color-sets/", json=payload).status_code == 201
-        assert client.post("/api/color-sets/", json=payload).status_code == 409
+        assert client.post(
+            "/api/color-sets/", json={**payload, "collection_ids": [first["id"]]}
+        ).status_code == 201
+        assert client.post(
+            "/api/color-sets/", json={**payload, "collection_ids": [second["id"]]}
+        ).status_code == 409
 
     def test_update_replaces_colours_wholesale(self, client, make_color, make_color_set):
         white = make_color("White")
@@ -486,7 +501,7 @@ class TestColorSets:
             json={
                 "name": "Owned",
                 "color_ids": [white["id"]],
-                "collection_id": collection["id"],
+                "collection_ids": [collection["id"]],
             },
         )
         client.post(

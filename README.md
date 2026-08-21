@@ -169,10 +169,11 @@ when the MySQL volume is first created.
 
 #### The frontend
 
-Most frontend tests read a module and assert on its source, which catches a call
-that went missing but never a dialog that fails to open. The dialogs — the create
-wizard and the modal helpers under `static/js/core/` — are exercised for real
-instead, in a browser:
+The front end is tested in a browser rather than by reading its source. Tests
+that grepped a JavaScript file for the endpoints it calls or the markup it builds
+passed whether the page worked or not, and failed whenever a line moved; they are
+gone. The dialogs — the create wizard and the modal helpers under
+`static/js/core/` — are driven for real:
 
 ```bash
 playwright install chromium     # once; the browser is not a pip package
@@ -248,21 +249,20 @@ A product sits at the centre of several independent layers.
 
 ```
 product type ──┐                        (required: what the object IS)
-  └─ sub-type  │                          one level deep
 material ──────┤                        (optional: what it is made OF)
 collection ────┼──► product ──► variant ──► colour set ──► colours
                │        │                     ▲
-default size ──┘        └──► sizes            └── normally owned by a collection
+default size ──┘        └──► sizes            └── gathered by any number
+                                                  of collections
 ```
 
 | Layer | Meaning | Example |
 |---|---|---|
 | **Product type** | What the object *is*. Required. | `Caixa`, `Moldura`, `Coração`, `Presépio Minhoto` |
 | **Material** | What it is made *of*. Optional, and maintained by the owners. | `Madeira`, `Tecido` |
-| **Sub-type** | How that object is finished or used. Exactly one level deep. | A `Coração` **with string** to hang, or as a **base for mini figures** |
-| **Collection** | A themed grouping that owns colour sets. | `Barra da Saia` |
-| **Colour** | A single named swatch, optionally with a hex code. | `White`, `Green` |
-| **Colour set** | A named combination of colours, normally owned by a collection. | `White and Green` |
+| **Collection** | A themed grouping. It gathers colour sets rather than owning them. | `Barra da Saia` |
+| **Colour** | A single named swatch, optionally with a hex code. | `Branco`, `Dourado` |
+| **Colour set** | A named combination of **two or more** colours, shared: it may be gathered by several collections, or by none. | `Preto e Branco`, `Preto Floral` |
 | **Variant** | One product offered in one colour set. | A `Caixa Redonda` in `Red and White` |
 | **Size** | `Pequeno` / `Médio` / `Grande`, seeded by the schema. | — |
 
@@ -299,7 +299,7 @@ matches the method beside it.
 | Deleting… | …does this, in `repositories/` | and the constraint |
 |---|---|---|
 | material | clears `material_id` on the pieces made of it; they survive | `SET NULL` |
-| collection | clears `collection_id` on its colour sets and products | `SET NULL` |
+| collection | unlinks its colour sets (they survive, possibly in other collections) and clears `collection_id` on its products | `CASCADE` on the join, `SET NULL` on products |
 | colour | removes it from every colour set | `CASCADE` |
 | colour set | deletes variants using it, plus their images | `CASCADE` |
 | size | unlinks it from products, clears it as any default size | `CASCADE`, `SET NULL` |
@@ -318,12 +318,15 @@ the same thing happening behind the API's back.
   collection and default size are optional.
 - **Materials are a lookup the owners maintain** from the dashboard, so the list
   grows with the workshop rather than with a migration.
-- **Types nest exactly one level.** Parenting a sub-type to another sub-type
-  returns `400`. A type that already has sub-types cannot itself become one.
-- Filtering products by a **parent type** also returns products filed under its
-  sub-types, so `?type_id=<Coração>` returns both finishes.
-- **Colour set names are unique per collection**, not globally — two collections
-  may each have a `White and Green`.
+- **Types are flat.** They nested one level until migration `0001`; the shape of
+  a piece lives in its own name ("Caixa Redonda", "Caixa de Joias") rather than
+  in a level above it.
+- **A colour set name is unique across the catalogue.** One combination is named
+  once and shared: `Preto e Branco` is the same two colours whether Filigrana or
+  Bordados shows it, and both may gather it. Until migration `0009` a set had one
+  owning collection and the name was unique only within it, which is what produced
+  `Azul e Branco` and `Branco e Azul` for the same pair — the seed now has one set
+  that both collections gather.
 - A product with **no listed sizes** is sold only in its default size. Sizes are
   replaced wholesale via `PUT`, never appended.
 - Deleting a **collection** or **product type** does not delete its products;
@@ -504,10 +507,10 @@ name.
   body: `POST /products/<id>/variants`, `/images`, and `PUT /sizes`.
 - **`PUT /products/<id>/sizes` replaces the whole list**; `{"size_ids": []}` puts
   a product back to its default size only.
-- **An image with a `variant_id` belongs to that colour set**; without one it
-  belongs to the product and acts as the fallback. `primary_image` is the first
-  product-level photo, falling back to the first variant photo — so a product
-  photographed only per colour set still gets a grid tile.
+- **Every image belongs to a colour set**, through its `variant_id`, which is
+  required: a piece looks different in each colourway, so a photograph standing
+  for the piece as a whole was always one colour's photo doing double duty.
+  `primary_image` is the first photograph of the first colour that has one.
 - **`POST /products/<id>/images/upload`** takes `multipart/form-data` instead of
   JSON, and stores the file under `static/img/products/`. Everything else about
   an image row is identical either way.

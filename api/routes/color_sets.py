@@ -1,9 +1,13 @@
 """Colour sets: named colour combinations that products are offered in.
 
-A colour set such as "White and Green" normally belongs to a collection, and a
-product references it through a variant. One "caixa redonda" offered in
-white/green, red/white, blue/white and white/gray is one product with four
-variants pointing at four colour sets.
+A colour set such as "Preto e Branco" is two or more colours named once and
+shared, and a product references it through a variant. One "Caixa Redonda"
+offered in four combinations is one product with four variants pointing at four
+colour sets.
+
+A set may appear in several collections or in none — the same two colours are the
+same combination whichever collection shows them — so `collection_ids` is a list
+and the name is unique across the whole catalogue.
 """
 
 from flask import request
@@ -36,12 +40,12 @@ for model in [
     ns.models[model.name] = model
 
 
-def _validate_refs(cursor, *, collection_id, color_ids):
+def _validate_refs(cursor, *, collection_ids, color_ids):
     """Reject unknown collections or colours before writing."""
-    if collection_id is not None and not CollectionRepository(cursor).exists(
-        collection_id
-    ):
-        ns.abort(404, f"The collection #{collection_id} does not exist.")
+    collections = CollectionRepository(cursor)
+    for collection_id in collection_ids or []:
+        if not collections.exists(collection_id):
+            ns.abort(404, f"The collection #{collection_id} does not exist.")
 
     missing = ColorRepository(cursor).missing_ids(color_ids)
     if missing:
@@ -71,25 +75,25 @@ class ColorSetList(Resource):
     @ns.response(201, "Colour set created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Referenced collection or colour does not exist")
-    @ns.response(409, "That collection already has a set with this name")
+    @ns.response(409, "A colour set with this name already exists")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def post(self):
         """Create a colour set from a list of colours."""
         data = ns.payload
         name = data["name"]
-        collection_id = data.get("collection_id")
+        collection_ids = data.get("collection_ids") or []
         color_ids = data["color_ids"]
 
         with get_db_connection() as (_, cursor):
             color_sets = ColorSetRepository(cursor)
-            _validate_refs(cursor, collection_id=collection_id, color_ids=color_ids)
+            _validate_refs(cursor, collection_ids=collection_ids, color_ids=color_ids)
 
-            if color_sets.name_exists(name, collection_id=collection_id):
-                ns.abort(409, f"The colour set '{name}' already exists here.")
+            if color_sets.name_exists(name):
+                ns.abort(409, f"The colour set '{name}' already exists.")
 
             color_set_id = color_sets.create(
-                name=name, collection_id=collection_id, color_ids=color_ids
+                name=name, color_ids=color_ids, collection_ids=collection_ids
             )
             return color_sets.get(color_set_id), 201
 
@@ -114,14 +118,14 @@ class ColorSet(Resource):
     @ns.response(200, "Colour set updated")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Colour set, collection or colour not found")
-    @ns.response(409, "That collection already has a set with this name")
+    @ns.response(409, "A colour set with this name already exists")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def put(self, color_set_id):
-        """Update a colour set, replacing its colours wholesale."""
+        """Update a colour set, replacing its colours and collections wholesale."""
         data = ns.payload
         name = data["name"]
-        collection_id = data.get("collection_id")
+        collection_ids = data.get("collection_ids") or []
         color_ids = data["color_ids"]
 
         with get_db_connection() as (_, cursor):
@@ -130,18 +134,16 @@ class ColorSet(Resource):
             if not color_sets.exists(color_set_id):
                 ns.abort(404, f"Colour set #{color_set_id} not found")
 
-            _validate_refs(cursor, collection_id=collection_id, color_ids=color_ids)
+            _validate_refs(cursor, collection_ids=collection_ids, color_ids=color_ids)
 
-            if color_sets.name_exists(
-                name, collection_id=collection_id, exclude_id=color_set_id
-            ):
-                ns.abort(409, f"The colour set '{name}' already exists here.")
+            if color_sets.name_exists(name, exclude_id=color_set_id):
+                ns.abort(409, f"The colour set '{name}' already exists.")
 
             color_sets.update(
                 color_set_id,
                 name=name,
-                collection_id=collection_id,
                 color_ids=color_ids,
+                collection_ids=collection_ids,
             )
             return color_sets.get(color_set_id), 200
 

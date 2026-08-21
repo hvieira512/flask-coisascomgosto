@@ -797,10 +797,11 @@ class TestTheCollectionFormIsSplit:
 
 
 class TestChoosingACollectionsColourSets:
-    """The collections form says which colour sets are the collection's own.
+    """The collections form says which colour sets this collection gathers.
 
-    The relationship lived only at the other end before: a colour set could name a
-    collection, and a collection could not take one.
+    A set may be gathered by several collections at once, so choosing one here
+    takes it from nowhere — which is what the form has to make obvious, because it
+    used to move it.
     """
 
     @pytest.fixture()
@@ -844,17 +845,21 @@ class TestChoosingACollectionsColourSets:
         ]
         assert errors == []
 
-    def test_the_collections_own_are_already_chosen(self, form):
+    def test_the_ones_it_gathers_are_already_chosen(self, form):
         _, dialog, _, _ = form
         assert self._chip(dialog, "Branco e Dourado").get_attribute("aria-pressed") == "true"
         assert self._chip(dialog, "Preto e Branco").get_attribute("aria-pressed") == "false"
 
-    def test_one_that_belongs_elsewhere_says_where(self, form):
-        """Choosing it would take it from that collection, so the form says so."""
+    def test_one_that_another_collection_has_says_where_else(self, form):
+        """Information rather than a warning: choosing it here does not take it
+        from Bordados."""
         _, dialog, _, _ = form
-        assert self._chip(dialog, "Branco e Azul").get_attribute("title") == "Está em Bordados"
 
-    def test_the_collections_own_come_first(self, form):
+        assert self._chip(dialog, "Branco e Azul").get_attribute("title") == (
+            "Branco e Azul — também em Bordados"
+        )
+
+    def test_the_ones_it_gathers_come_first(self, form):
         _, dialog, _, _ = form
         names = [
             n.strip()
@@ -872,11 +877,11 @@ class TestChoosingACollectionsColourSets:
             """async () => {
                 const body = await fetch('/api/color-sets/?limit=100').then(r => r.json());
                 const set = body.color_sets.find(s => s.name === 'Preto e Branco');
-                return set.collection && set.collection.name === 'Filigrana';
+                return set.collections.some(c => c.name === 'Filigrana');
             }"""
         )
 
-    def test_unchoosing_one_leaves_it_belonging_to_none(self, form, live_server):
+    def test_unchoosing_one_drops_it_from_this_collection_only(self, form, live_server):
         page, dialog, _, _ = form
         self._chip(dialog, "Branco e Dourado").click()
         dialog.locator("[data-dialog-submit]").click()
@@ -886,7 +891,25 @@ class TestChoosingACollectionsColourSets:
             """async () => {
                 const body = await fetch('/api/color-sets/?limit=100').then(r => r.json());
                 const set = body.color_sets.find(s => s.name === 'Branco e Dourado');
-                return set.collection === null;
+                return set.collections.every(c => c.name !== 'Filigrana');
+            }"""
+        )
+
+    def test_choosing_one_another_collection_has_leaves_it_there_too(
+        self, form, live_server
+    ):
+        """The whole point: "Branco e Azul" ends up in both."""
+        page, dialog, _, _ = form
+        self._chip(dialog, "Branco e Azul").click()
+        dialog.locator("[data-dialog-submit]").click()
+        dialog.wait_for(state="hidden")
+
+        page.wait_for_function(
+            """async () => {
+                const body = await fetch('/api/color-sets/?limit=100').then(r => r.json());
+                const set = body.color_sets.find(s => s.name === 'Branco e Azul');
+                const names = set.collections.map(c => c.name).sort();
+                return names.join(',') === 'Bordados,Filigrana';
             }"""
         )
 

@@ -255,11 +255,9 @@ class ProductRepository:
         placeholders = ", ".join(["%s"] * len(ids))
         self._cursor.execute(
             "SELECT v.id AS variant_id, v.product_id, "
-            "       cs.id AS color_set_id, cs.name AS color_set_name, "
-            "       col.id AS collection_id, col.name AS collection_name "
+            "       cs.id AS color_set_id, cs.name AS color_set_name "
             "FROM product_variants v "
             "JOIN color_sets cs ON v.color_set_id = cs.id "
-            "LEFT JOIN collections col ON cs.collection_id = col.id "
             f"WHERE v.product_id IN ({placeholders}) "
             "ORDER BY v.product_id, v.id",
             ids,
@@ -274,11 +272,6 @@ class ProductRepository:
                 "color_set": {
                     "id": row["color_set_id"],
                     "name": row["color_set_name"],
-                    "collection": (
-                        {"id": row["collection_id"], "name": row["collection_name"]}
-                        if row["collection_id"] is not None
-                        else None
-                    ),
                     "colors": [],
                 },
             }

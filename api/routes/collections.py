@@ -1,7 +1,8 @@
 """Collections: themed groupings such as "Barra da Saia".
 
-A collection owns colour sets, and products may belong to one. Deleting a
-collection leaves its colour sets and products in place, simply unowned.
+A collection gathers colour sets rather than owning them — a set may be in
+several collections, or in none — and products may belong to one. Deleting a
+collection leaves its colour sets and its products in place.
 """
 
 from flask_restx import Namespace, Resource
@@ -17,6 +18,7 @@ from api.models.catalog import (
     collection_write_model,
     color_model,
     color_set_model,
+    color_set_nested_model,
 )
 from api.models.common import pagination_model
 from repositories import CollectionRepository, ColorSetRepository
@@ -36,6 +38,7 @@ for model in [
     collection_ref_model,
     color_model,
     color_set_model,
+    color_set_nested_model,
 ]:
     ns.models[model.name] = model
 
@@ -146,7 +149,7 @@ class Collection(Resource):
     def delete(self, collection_id):
         """Delete a collection by ID.
 
-        Its colour sets and products stay, detached from any collection.
+        Its colour sets and products stay; they simply stop being gathered here.
         """
         with get_db_connection() as (_, cursor):
             collections = CollectionRepository(cursor)
@@ -183,12 +186,11 @@ class CollectionColorSets(Resource):
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def put(self, collection_id):
-        """Replace the set of colour sets belonging to this collection.
+        """Replace which colour sets this collection gathers.
 
-        A colour set belongs to at most one collection, so this moves rather than
-        links: one listed here leaves the collection it was in, and one that was here
-        and is no longer listed ends up belonging to none. Send an empty list to
-        empty the collection.
+        Links rather than moves: a set listed here keeps whatever other
+        collections it is in, and one dropped from this collection keeps them
+        too. Send an empty list to empty the collection.
         """
         color_set_ids = ns.payload["color_set_ids"]
 
@@ -203,7 +205,7 @@ class CollectionColorSets(Resource):
             if missing:
                 ns.abort(404, f"Unknown colour set IDs: {sorted(missing)}")
 
-            color_sets.set_collection(collection_id, color_set_ids)
+            color_sets.set_for_collection(collection_id, color_set_ids)
             return color_sets.list(collection_id=collection_id, limit=100, offset=0)
 
 

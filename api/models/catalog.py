@@ -44,10 +44,10 @@ collection_color_sets_write_model = Model(
         "color_set_ids": fields.List(
             fields.Integer,
             required=True,
-            description="Full replacement set of colour set IDs. A colour set "
-            "belongs to at most one collection, so listing one here takes it from "
-            "whichever collection it was in; omitting one that was here leaves it "
-            "belonging to none. Empty means the collection owns no colour sets.",
+            description="Full replacement list of the colour sets this collection "
+            "gathers. Links rather than moves: a set listed here keeps whatever "
+            "other collections it is in, and one dropped from this collection "
+            "keeps them too. Empty means the collection gathers none.",
         ),
     },
 )
@@ -96,12 +96,13 @@ color_set_model = Model(
     {
         "id": fields.Integer(readOnly=True, description="Colour set ID"),
         "name": fields.String(
-            required=True, description="Colour set name, e.g. 'White and Green'"
+            required=True, description="Colour set name, e.g. 'Preto e Branco'"
         ),
-        "collection": fields.Nested(
-            collection_ref_model,
-            allow_null=True,
-            description="Owning collection, if any",
+        "collections": fields.List(
+            fields.Nested(collection_ref_model),
+            description="The collections this set appears in. It may appear in "
+            "several, or in none — the same combination is the same combination "
+            "whichever collection shows it.",
         ),
         "colors": fields.List(
             fields.Nested(color_model), description="Colours making up the set, ordered"
@@ -111,12 +112,34 @@ color_set_model = Model(
 
 color_set_list_model = list_model("ColorSetList", "color_sets", color_set_model)
 
+# Nested inside a variant, without the collections. A set may be gathered by
+# several, and nothing reading a variant has ever used them — the storefront
+# filters by the *product's* collection. Declaring the field and never filling it
+# would put `"collections": null` on every variant of every product, which reads
+# as "this set is in none".
+color_set_nested_model = Model(
+    "ColorSetNested",
+    {
+        "id": fields.Integer(description="Colour set ID"),
+        "name": fields.String(description="Colour set name"),
+        "colors": fields.List(
+            fields.Nested(color_model), description="Colours making up the set, ordered"
+        ),
+    },
+)
+
 color_set_write_model = Model(
     "ColorSetWrite",
     {
-        "name": fields.String(required=True, description="Colour set name"),
-        "collection_id": fields.Integer(
-            description="Owning collection ID. Omit or null for a standalone set."
+        "name": fields.String(
+            required=True,
+            description="Colour set name. Unique across the catalogue: one "
+            "combination is named once and shared.",
+        ),
+        "collection_ids": fields.List(
+            fields.Integer,
+            description="The collections this set appears in. Omit or send an "
+            "empty list for a set that is in none.",
         ),
         "color_ids": fields.List(
             fields.Integer,
@@ -248,7 +271,8 @@ variant_model = Model(
     {
         "id": fields.Integer(readOnly=True, description="Variant ID"),
         "color_set": fields.Nested(
-            color_set_model, description="The colour set this variant is offered in"
+            color_set_nested_model,
+            description="The colour set this variant is offered in",
         ),
         "images": fields.List(
             fields.Nested(image_model),

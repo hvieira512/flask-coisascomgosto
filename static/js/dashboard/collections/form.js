@@ -57,8 +57,8 @@ function markup(collection) {
         <label class="form-label fs-7">Conjuntos de cores</label>
         <div class="d-flex flex-wrap gap-1" id="cof-sets"></div>
         <p class="help mb-0">
-          As combinações em que esta colecção se faz. Cada conjunto pertence a uma só
-          colecção, por isso escolher um que esteja noutra passa-o para esta.
+          As combinações em que esta colecção se faz. Um conjunto pode estar em
+          várias colecções — escolher um aqui não o tira de nenhuma.
         </p>
       </div>
     </form>`;
@@ -69,27 +69,37 @@ function markup(collection) {
  * collection chosen. Same chip and same ring as the create wizard's colour step, so
  * "chosen" looks the same wherever it is asked.
  *
- * Sorted so the collection's own come first, then the unowned, then the ones that
- * would have to be taken from another collection — whose name is in the title, since
- * choosing one of those moves it.
+ * Sorted so this collection's own come first and the rest follow alphabetically.
+ * Where else a set appears is in its title, as information: it used to be a warning,
+ * because choosing it moved it, and now it does not.
  */
 function wireColorSets(modalId, collection, colorSets) {
     const container = modal(modalId).querySelector("#cof-sets");
 
-    const rank = (set) => {
-        if (set.collection?.id === collection?.id) return 0;
-        return set.collection ? 2 : 1;
-    };
+    const isMine = (set) =>
+        Boolean(collection) &&
+        (set.collections ?? []).some((c) => c.id === collection.id);
+
+    // This collection's first, then the rest alphabetically. There is no third
+    // rank any more: a set another collection gathers is not spoken for, because
+    // choosing it here does not take it from there.
+    const rank = (set) => (isMine(set) ? 0 : 1);
 
     container.innerHTML = [...colorSets]
         .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "pt"))
         .map((set) => {
-            const mine = collection && set.collection?.id === collection.id;
-            const elsewhere = set.collection && !mine ? set.collection.name : null;
+            const mine = isMine(set);
+            // Where else it appears, as information rather than a warning.
+            const others = (set.collections ?? [])
+                .filter((c) => c.id !== collection?.id)
+                .map((c) => c.name);
+            const title = others.length
+                ? `${set.name} — também em ${others.join(", ")}`
+                : set.name;
             return `
               <button type="button" class="variant-choice${mine ? " is-active" : ""}"
-                      data-color-set-id="${set.id}" aria-pressed="${Boolean(mine)}"
-                      title="${elsewhere ? `Está em ${escapeHtml(elsewhere)}` : escapeHtml(set.name)}">
+                      data-color-set-id="${set.id}" aria-pressed="${mine}"
+                      title="${escapeHtml(title)}">
                 ${ColorSet.badge(set)}
               </button>`;
         })

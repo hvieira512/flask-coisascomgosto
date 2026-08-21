@@ -40,12 +40,14 @@ class CollectionRepository(NameTableRepository):
         )
 
     def delete(self, collection_id: int) -> None:
-        """Delete a collection, detaching its colour sets and products.
+        """Delete a collection. Its colour sets and its products survive it.
 
-        Replaces the old ON DELETE SET NULL: both keep existing, unowned.
+        The sets are unlinked rather than emptied of anything: a set gathered here
+        may be gathered elsewhere too, and it exists in its own right regardless.
+        The products lose the collection they named.
         """
         self._cursor.execute(
-            "UPDATE color_sets SET collection_id = NULL WHERE collection_id = %s",
+            "DELETE FROM collection_color_sets WHERE collection_id = %s",
             (collection_id,),
         )
         self._cursor.execute(

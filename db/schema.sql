@@ -6,10 +6,12 @@
 --                       Flat — the shape lives in the product's own name.
 --   material            what it is made of ("Madeira", "Tecido"). Optional, and
 --                       a lookup the owners maintain themselves.
---   collection          a themed grouping (e.g. "Barra da Saia") that owns colour sets
+--   collection          a themed grouping (e.g. "Barra da Saia"). It gathers
+--                       colour sets rather than owning them
 --   colour              a single named colour, optionally with a hex swatch
---   colour set          a named combination of colours ("White and Green"), normally
---                       belonging to a collection
+--   colour set          a named combination of two or more colours ("Preto e
+--                       Branco", "Preto Floral"). Shared: it may appear in
+--                       several collections, or in none
 --   product variant     a product offered in one specific colour set
 --   size                Pequeno / Médio / Grande; a product may declare a default
 --                       size and/or a set of sizes it is available in
@@ -44,6 +46,7 @@ DROP TABLE IF EXISTS contacts;
 DROP TABLE IF EXISTS product_images;
 DROP TABLE IF EXISTS product_sizes;
 DROP TABLE IF EXISTS product_variants;
+DROP TABLE IF EXISTS collection_color_sets;
 DROP TABLE IF EXISTS color_set_colors;
 DROP TABLE IF EXISTS color_sets;
 DROP TABLE IF EXISTS colors;
@@ -105,17 +108,29 @@ CREATE TABLE product_types (
     icon VARCHAR(60)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- A named combination of colours, e.g. "White and Green".
--- collection_id is nullable: a set normally belongs to a collection, but a
--- standalone set is allowed.
+-- A named combination of two or more colours, e.g. "Preto e Branco", "Preto
+-- Floral". Named once and shared: the same two colours are the same combination
+-- whichever collection shows them, so the name is unique across the table and the
+-- collections it appears in are a join (below).
 CREATE TABLE color_sets (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    collection_id INT,
     name VARCHAR(120) NOT NULL,
-    UNIQUE KEY uq_color_sets_collection_name (collection_id, name),
-    KEY idx_color_sets_collection (collection_id),
-    CONSTRAINT fk_color_sets_collection
-        FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE SET NULL
+    UNIQUE KEY uq_color_sets_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Which collections a colour set appears in. A set may be in several or in none,
+-- and a collection may have as few as one — which is why this is not a column on
+-- either side. Until 0009 it was color_sets.collection_id, a single owner, and
+-- using one combination in two collections meant creating it twice.
+CREATE TABLE collection_color_sets (
+    collection_id INT NOT NULL,
+    color_set_id INT NOT NULL,
+    PRIMARY KEY (collection_id, color_set_id),
+    KEY idx_collection_color_sets_set (color_set_id),
+    CONSTRAINT fk_collection_color_sets_collection
+        FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE,
+    CONSTRAINT fk_collection_color_sets_set
+        FOREIGN KEY (color_set_id) REFERENCES color_sets (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Which colours make up a set, and in what order.

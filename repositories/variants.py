@@ -1,8 +1,9 @@
 """Data access for product variants.
 
-A variant is one product offered in one colour set. A "caixa redonda" sold in
-white/green, red/white, blue/white and white/gray is a single product with four
-variants, each pointing at a colour set owned by the product's collection.
+A variant is one product offered in one colour set. A "Caixa Redonda" sold in
+four combinations is a single product with four variants, each pointing at a
+colour set — which is shared, so the same set may be behind variants of several
+pieces and gathered by several collections.
 """
 
 from __future__ import annotations
@@ -11,17 +12,19 @@ from typing import Optional
 
 from pymysql.cursors import DictCursor
 
+# No collections here. A colour set may be gathered by several, and nothing that
+# reads a variant has ever used them: the storefront filters by the *product's*
+# collection, and the dashboard shows the set's own name. Carrying a list of
+# collections through every variant of every product would be a join per page for
+# a field nobody reads.
 _SELECT = """
     SELECT
         v.id AS id,
         v.product_id AS product_id,
         cs.id AS color_set_id,
-        cs.name AS color_set_name,
-        col.id AS collection_id,
-        col.name AS collection_name
+        cs.name AS color_set_name
     FROM product_variants v
     JOIN color_sets cs ON v.color_set_id = cs.id
-    LEFT JOIN collections col ON cs.collection_id = col.id
 """
 
 
@@ -138,11 +141,6 @@ class ProductVariantRepository:
             "color_set": {
                 "id": row["color_set_id"],
                 "name": row["color_set_name"],
-                "collection": (
-                    {"id": row["collection_id"], "name": row["collection_name"]}
-                    if row["collection_id"] is not None
-                    else None
-                ),
                 "colors": [],
             },
         }

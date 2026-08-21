@@ -272,7 +272,17 @@
     cursor: pointer;
 }
 
-.color-chip.is-active {
+/* The collections a set appears in are picked the same way, and read the same:
+   both are "click to include", several at a time. */
+.collection-chip {
+    border: 0;
+    padding: .35rem .6rem;
+    font-size: .75rem;
+    cursor: pointer;
+}
+
+.color-chip.is-active,
+.collection-chip.is-active {
     background-color: var(--ccg-blue-50);
     color: var(--ccg-blue-800);
     box-shadow: inset 0 0 0 2px var(--ccg-blue-400);

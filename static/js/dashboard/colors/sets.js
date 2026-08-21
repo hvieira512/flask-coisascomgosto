@@ -18,7 +18,9 @@ export function setRow(set, pieces) {
       <tr data-set-id="${set.id}">
         <td class="dash-col-name">${ColorSet.badge(set)}</td>
         <td class="fs-7 text-body-secondary">${escapeHtml(names || "Sem cores")}</td>
-        <td class="fs-7 text-body-secondary">${escapeHtml(set.collection?.name ?? "—")}</td>
+        <td class="fs-7 text-body-secondary">${
+            (set.collections ?? []).map((c) => escapeHtml(c.name)).join(", ") || "—"
+        }</td>
         <td class="dash-col-photos" data-label="Peças">
           ${pieces
               ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
@@ -47,11 +49,16 @@ const colorChip = (color) => `
     <span>${escapeHtml(color.name)}</span>
   </button>`;
 
+/** Chips rather than a select, because a set is in as many collections as it is
+ *  in — the same two colours are the same combination wherever they appear. */
+const collectionChip = (collection, chosen) => `
+  <button type="button" data-collection-id="${collection.id}" aria-pressed="${chosen}"
+          class="badge rounded-pill chip is-quiet collection-chip${chosen ? " is-active" : ""}">
+    ${escapeHtml(collection.name)}
+  </button>`;
+
 function setForm(set, colors, collections) {
-    const options = collections
-        .map((c) => `<option value="${c.id}"${set?.collection?.id === c.id ? " selected" : ""}>
-                       ${escapeHtml(c.name)}</option>`)
-        .join("");
+    const mine = new Set((set?.collections ?? []).map((c) => c.id));
 
     return `
     <form id="set-form" data-set-id="${set?.id ?? ""}">
@@ -75,14 +82,14 @@ function setForm(set, colors, collections) {
       </div>
 
       <div class="mb-3">
-        <label class="form-label fs-7" for="sf-collection">Colecção</label>
-        <div class="input-group">
-          <select class="form-select" id="sf-collection" name="collection_id">
-            <option value="">Sem colecção</option>
-            ${options}
-          </select>
-          ${fieldIcon("fa-solid fa-layer-group")}
+        <label class="form-label fs-7">Colecções</label>
+        <div class="d-flex flex-wrap gap-1" id="sf-collections">
+          ${collections.map((c) => collectionChip(c, mine.has(c.id))).join("")
+            || `<p class="help mb-0">Ainda não há colecções.</p>`}
         </div>
+        <p class="help mb-0">
+          Onde este conjunto aparece. Pode estar em várias, ou em nenhuma.
+        </p>
       </div>
 
       <div>
@@ -102,6 +109,7 @@ function setForm(set, colors, collections) {
 function wireSetForm(modalId, set, colors) {
     const form = modal(modalId).querySelector("#set-form");
     const chosen = (set?.colors ?? []).map((c) => c.id);
+    const inCollections = new Set((set?.collections ?? []).map((c) => c.id));
     const findColor = (id) => colors.find((c) => c.id === Number(id)) ?? null;
 
     const draw = () => {
@@ -128,6 +136,18 @@ function wireSetForm(modalId, set, colors) {
         draw();
     });
 
+    form.querySelector("#sf-collections").addEventListener("click", (event) => {
+        const chip = event.target.closest(".collection-chip");
+        if (!chip) return;
+
+        const id = Number(chip.dataset.collectionId);
+        if (inCollections.has(id)) inCollections.delete(id);
+        else inCollections.add(id);
+
+        chip.classList.toggle("is-active", inCollections.has(id));
+        chip.setAttribute("aria-pressed", String(inCollections.has(id)));
+    });
+
     form.querySelector("#sf-name").addEventListener("input", draw);
     draw();
 
@@ -140,12 +160,11 @@ function wireSetForm(modalId, set, colors) {
             id: form.dataset.setId,
             payload: {
                 name: value("name"),
-                // The API rejects an explicit null, so a set with no collection
-                // omits the field.
-                ...(value("collection_id")
-                    ? { collection_id: Number(value("collection_id")) }
-                    : {}),
                 color_ids: chosen,
+                // Always sent, empty included: this is the full list of where the
+                // set appears, so leaving it out on an edit would be indistinguishable
+                // from "in no collection at all".
+                collection_ids: [...inCollections],
             },
         };
     };

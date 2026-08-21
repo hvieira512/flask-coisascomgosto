@@ -33,6 +33,7 @@ CATALOG_TABLES = [
     "product_sizes",
     "product_variants",
     "products",
+    "collection_color_sets",
     "color_set_colors",
     "color_sets",
     "colors",
@@ -66,23 +67,28 @@ COLLECTIONS = [
     ("Lenços", "As flores e as cores dos Lenços dos Namorados."),
 ]
 
-# (collection, set name, colours in order)
+# (set name, colours in order, the collections it appears in)
+#
+# A set is named once and shared, so the collections are a list: "Preto e Branco"
+# is the same combination in Filigrana and in Bordados, and the old shape — one
+# owning collection per set — is what produced both "Azul e Branco" (Filigrana)
+# and "Branco e Azul" (Bordados) for the same pair of colours. Those two are
+# merged here into one set that both collections gather.
 COLOR_SETS = [
-    ("Filigrana", "Branco e Dourado", ["Branco", "Dourado"]),
-    ("Filigrana", "Preto e Dourado", ["Preto", "Dourado"]),
-    ("Filigrana", "Preto e Branco", ["Preto", "Branco"]),
-    ("Filigrana", "Vermelho e Branco", ["Vermelho", "Branco"]),
-    ("Filigrana", "Azul e Branco", ["Azul", "Branco"]),
-    ("Bordados", "Branco e Azul", ["Branco", "Azul"]),
-    ("Bordados", "Verde e Dourado", ["Verde", "Dourado"]),
-    ("Lenços", "Preto Floral", ["Preto", "Vermelho", "Verde"]),
-    ("Lenços", "Vermelho Floral", ["Vermelho", "Branco", "Verde"]),
-    ("Filigrana", "Azul-marinho e Dourado", ["Azul-marinho", "Dourado"]),
-    ("Filigrana", "Branco e Prateado", ["Branco", "Prateado"]),
-    ("Filigrana", "Branco e Rosa", ["Branco", "Rosa"]),
-    ("Filigrana", "Dourado e Vermelho", ["Dourado", "Vermelho"]),
-    ("Bordados", "Rosa e Castanho", ["Rosa", "Castanho"]),
-    ("Lenços", "Branco Floral", ["Branco", "Vermelho", "Verde"]),
+    ("Branco e Dourado", ["Branco", "Dourado"], ["Filigrana", "Bordados"]),
+    ("Preto e Dourado", ["Preto", "Dourado"], ["Filigrana"]),
+    ("Preto e Branco", ["Preto", "Branco"], ["Filigrana", "Bordados"]),
+    ("Vermelho e Branco", ["Vermelho", "Branco"], ["Filigrana"]),
+    ("Azul e Branco", ["Azul", "Branco"], ["Filigrana", "Bordados"]),
+    ("Verde e Dourado", ["Verde", "Dourado"], ["Bordados"]),
+    ("Preto Floral", ["Preto", "Vermelho", "Verde"], ["Lenços"]),
+    ("Vermelho Floral", ["Vermelho", "Branco", "Verde"], ["Lenços"]),
+    ("Azul-marinho e Dourado", ["Azul-marinho", "Dourado"], ["Filigrana"]),
+    ("Branco e Prateado", ["Branco", "Prateado"], ["Filigrana"]),
+    ("Branco e Rosa", ["Branco", "Rosa"], ["Filigrana"]),
+    ("Dourado e Vermelho", ["Dourado", "Vermelho"], ["Filigrana"]),
+    ("Rosa e Castanho", ["Rosa", "Castanho"], ["Bordados"]),
+    ("Branco Floral", ["Branco", "Vermelho", "Verde"], ["Lenços"]),
 ]
 
 # (name, icon, description). Flat: the family is the type, and the shape is part
@@ -158,11 +164,11 @@ PRODUCTS = [
 
     ("Bastidor Viana é Amor", "Bastidor", "Bordados",
      "Bastidor com letras desenhadas à mão e a filigrana à volta.",
-     ["Branco e Dourado", "Branco e Azul"], ["Médio"]),
+     ["Branco e Dourado", "Azul e Branco"], ["Médio"]),
 
     ("Bastidor Bordado", "Bastidor", "Bordados",
      "Bastidor com os motivos dos bordados de Viana.",
-     ["Branco e Azul", "Verde e Dourado", "Rosa e Castanho"], ["Pequeno", "Médio"]),
+     ["Azul e Branco", "Verde e Dourado", "Rosa e Castanho"], ["Pequeno", "Médio"]),
 
     ("Coração de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em coração, personalizado com o nome.",
@@ -237,7 +243,7 @@ IMAGES = [
 
     ("Bastidor Viana é Amor", "Branco e Dourado", "bastidor-dourado.jpg",
      "Bastidor com um coração de Viana bordado a dourado"),
-    ("Bastidor Viana é Amor", "Branco e Azul", "bastidor-azul-nome.jpg",
+    ("Bastidor Viana é Amor", "Azul e Branco", "bastidor-azul-nome.jpg",
      "Bastidor com coração bordado a azul e um nome"),
 
     ("Bola de Natal", "Branco e Dourado", "bola-natal-branco.jpg",
@@ -306,11 +312,11 @@ def seed():
         }
 
         set_ids = {}
-        for collection, name, colour_names in COLOR_SETS:
+        for name, colour_names, in_collections in COLOR_SETS:
             set_ids[name] = color_sets.create(
                 name=name,
-                collection_id=collection_ids[collection],
                 color_ids=[color_ids[c] for c in colour_names],
+                collection_ids=[collection_ids[c] for c in in_collections],
             )
 
         type_ids = {}

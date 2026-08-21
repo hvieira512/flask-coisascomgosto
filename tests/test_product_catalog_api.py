@@ -25,7 +25,7 @@ def round_box(client, make_collection, make_color, make_color_set, make_product)
     ]
     color_sets = [
         make_color_set(
-            name, [colors[c] for c in members], collection_id=collection["id"]
+            name, [colors[c] for c in members], collection_ids=[collection["id"]]
         )
         for name, members in pairs
     ]
@@ -150,13 +150,22 @@ class TestProductVariants:
         first = next(v for v in variants if v["color_set"]["name"] == "White and Green")
         assert [c["name"] for c in first["color_set"]["colors"]] == ["White", "Green"]
 
-    def test_variant_nests_the_collection(self, client, round_box):
+    def test_variant_names_its_colour_set_and_nothing_about_collections(
+        self, client, round_box
+    ):
+        """A colour set may be gathered by several collections, and a variant has
+        never had a use for them — the storefront filters by the *product's*
+        collection. Carrying the list through every variant of every product would
+        be a join per page for a field nobody reads."""
         product_id = round_box["product"]["id"]
 
         variants = client.get(f"/api/products/{product_id}/variants").get_json()[
             "variants"
         ]
-        assert variants[0]["color_set"]["collection"]["name"] == "Barra da Saia"
+
+        assert variants[0]["color_set"]["name"] == "White and Green"
+        assert "collection" not in variants[0]["color_set"]
+        assert "collections" not in variants[0]["color_set"]
 
     def test_same_colour_set_twice_returns_409(self, client, round_box):
         product_id = round_box["product"]["id"]
