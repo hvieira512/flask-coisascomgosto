@@ -1,0 +1,13 @@
+-- The categories table is not part of this schema and has not been for a long
+-- time. It is in no CREATE TABLE in schema.sql, no repository, no route, no
+-- template and no migration; nothing in the codebase mentions the word. It
+-- survived every `init-db` only because schema.sql drops the tables it owns by
+-- name, and this one was never on that list.
+--
+-- Its single row said "Madeira", which is also materials.id 1 — the lookup that
+-- actually feeds the product form. So there is nothing here that the live schema
+-- does not already hold.
+--
+-- Left alone it is a trap: a table with a plausible name that a future reader
+-- would take for part of the model.
+DROP TABLE IF EXISTS categories;
