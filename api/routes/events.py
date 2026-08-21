@@ -10,7 +10,7 @@ from db import get_db_connection
 from api.models.common import pagination_model
 from api.models.events import event_list_model, event_model, event_write_model
 from repositories import EventRepository
-from api.routes.crud import page_of
+from api.routes.crud import CREATED, page_of
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("events", description="Fairs and markets the workshop attended")
@@ -34,7 +34,7 @@ class EventList(Resource):
 
     @ns.doc(**PROTECTED_DOC)
     @ns.expect(event_write_model, validate=True)
-    @ns.marshal_with(event_model, code=201)
+    @ns.marshal_with(event_model, code=CREATED)
     @ns.response(201, "Event created")
     @ns.response(400, "Missing or invalid fields")
     @auth_required

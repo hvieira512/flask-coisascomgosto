@@ -6,9 +6,46 @@ worth sharing is underneath: paging a search, and the two checks that turn a
 missing row or a taken name into the right status code.
 """
 
+from typing import NoReturn
+
 from flask import request
+from flask_restx._http import HTTPStatus
 
 from api.pagination import get_pagination_params, make_pagination
+
+# The 201 every create returns.
+#
+# flask-restx does not use the standard library's HTTPStatus: it carries a
+# backport of Python 3.5's in flask_restx._http, and that is the type its
+# marshal_with() signature names. So `code=201` and `code=http.HTTPStatus.CREATED`
+# are both the wrong type as far as a checker is concerned, though either works at
+# runtime — the enum is an IntEnum whose str() is "201", which is what keeps the
+# Swagger document's response keys numeric.
+#
+# Imported from a private module here and nowhere else, so twelve call sites can
+# name it without twelve suppressions or nine private imports.
+CREATED = HTTPStatus.CREATED
+
+
+def bail(ns, code: int, message: str) -> NoReturn:
+    """Abort the request, and say so in the signature.
+
+    flask-restx's own abort raises — that is its whole job — but it is typed as
+    returning None, so every guard written as
+
+        if not row:
+            ns.abort(404, "…")
+        use(row)
+
+    reads to a type checker as code that carries on with a row it just called
+    absent. Eight of those, and two more where the value assigned in a `try` was
+    reported unbound below the `except`. NoReturn tells the checker what the
+    function already does, which is cheaper than a `raise` after every abort.
+    """
+    ns.abort(code, message)
+    # Unreachable: abort raises. Here so the body satisfies NoReturn on its own
+    # terms rather than on trust.
+    raise AssertionError(f"ns.abort({code}) returned")
 
 
 def page_of(repository, key: str, **filters) -> dict:
@@ -33,7 +70,7 @@ def page_of(repository, key: str, **filters) -> dict:
 def get_or_404(ns, repository, row_id: int, label: str) -> dict:
     row = repository.get(row_id)
     if not row:
-        ns.abort(404, f"{label} #{row_id} not found")
+        bail(ns, 404, f"{label} #{row_id} not found")
     return row
 
 

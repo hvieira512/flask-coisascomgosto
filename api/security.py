@@ -16,6 +16,7 @@ page to parse as a payload.
 """
 
 from functools import wraps
+from typing import Optional
 
 from flask import session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
@@ -52,8 +53,13 @@ def auth_required(view):
     return wrapped
 
 
-def current_user_id():
-    """The caller's user id, from whichever credential they presented."""
+def current_user_id() -> Optional[int]:
+    """The caller's user id, from whichever credential they presented.
+
+    Optional because both branches can come up empty — no session and no token —
+    even though every caller sits behind @auth_required. The one caller checks,
+    which costs a line and means the guard is in the code rather than in trust.
+    """
     if "user" in session:
         return session["user"]["id"]
 

@@ -6,7 +6,7 @@ from db import get_db_connection
 from api.models.catalog import color_list_model, color_model, color_write_model
 from api.models.common import pagination_model
 from repositories import ColorRepository
-from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.routes.crud import CREATED, get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("colors", description="Colours operations")
@@ -29,7 +29,7 @@ class ColorList(Resource):
             return page_of(ColorRepository(cursor), "colors")
 
     @ns.expect(color_write_model, validate=True)
-    @ns.marshal_with(color_model, code=201)
+    @ns.marshal_with(color_model, code=CREATED)
     @ns.response(201, "Colour created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A colour with that name already exists")

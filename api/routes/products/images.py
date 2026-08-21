@@ -7,6 +7,7 @@ from werkzeug.datastructures import FileStorage
 import uploads
 from db import get_db_connection
 from api.models.catalog import image_model, image_write_model
+from api.routes.crud import CREATED, bail, get_or_404
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
 from repositories import (
@@ -48,7 +49,7 @@ class ProductImageList(Resource):
             )
 
     @ns.expect(image_write_model, validate=True)
-    @ns.marshal_with(image_model, code=201)
+    @ns.marshal_with(image_model, code=CREATED)
     @ns.response(201, "Image added")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product not found, or the variant is not one of its own")
@@ -86,7 +87,7 @@ class ProductImageList(Resource):
 @ns.param("product_id", "The product identifier")
 class ProductImageUpload(Resource):
     @ns.expect(upload_parser)
-    @ns.marshal_with(image_model, code=201)
+    @ns.marshal_with(image_model, code=CREATED)
     @ns.response(201, "Photograph stored and attached")
     @ns.response(400, "Missing file, unsupported format, or too large")
     @ns.response(404, "Product not found, or the variant is not one of its own")
@@ -112,10 +113,7 @@ class ProductImageUpload(Resource):
             try:
                 url = uploads.save(args["file"])
             except uploads.UploadError as error:
-                ns.abort(400, str(error))
-                # ns.abort raises, but its signature does not say so, so without
-                # this the URL below reads as possibly unbound.
-                raise
+                bail(ns, 400, str(error))
 
             images = ProductImageRepository(cursor)
             image_id = images.create(
@@ -180,12 +178,13 @@ class ProductImage(Resource):
             images = ProductImageRepository(cursor)
 
             if not images.belongs_to(image_id, product_id):
-                ns.abort(
+                bail(
+                    ns,
                     404,
                     f"Image #{image_id} does not belong to product #{product_id}",
                 )
 
-            image = images.get(image_id)
+            image = get_or_404(ns, images, image_id, "Image")
             images.delete(image_id)
             # Only removes the file if it was one we stored, so seeded assets
             # and hand-written paths survive.

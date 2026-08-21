@@ -9,6 +9,7 @@ import pytest
 
 from db import migrate as migrations
 from db import connect, get_db_connection
+from repositories.base import one_row
 
 
 PROBE_TABLES = ["probe_one", "probe_two", "probe_order", "probe_dml"]
@@ -121,7 +122,7 @@ class TestApplying:
 
         with get_db_connection() as (_, cursor):
             cursor.execute("SELECT name FROM probe_one WHERE id = 1")
-            assert cursor.fetchone()["name"] == "Médio"
+            assert one_row(cursor)["name"] == "Médio"
 
 
 class TestFailure:
@@ -163,7 +164,7 @@ class TestFailure:
 
         with get_db_connection() as (_, cursor):
             cursor.execute("SELECT name FROM probe_dml WHERE id = 1")
-            assert cursor.fetchone()["name"] == "antes"
+            assert one_row(cursor)["name"] == "antes"
 
 
 class TestConcurrency:
@@ -253,7 +254,7 @@ def _lock_is_free():
     try:
         with probe.cursor() as cursor:
             cursor.execute("SELECT IS_USED_LOCK(%s) AS holder", (migrations.LOCK_NAME,))
-            return cursor.fetchone()["holder"] is None
+            return one_row(cursor)["holder"] is None
     finally:
         probe.close()
 

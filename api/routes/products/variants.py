@@ -3,6 +3,7 @@
 import uploads
 from db import get_db_connection
 from api.models.catalog import variant_list_model, variant_model, variant_write_model
+from api.routes.crud import CREATED
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
 from repositories import (
@@ -32,7 +33,7 @@ class ProductVariantList(Resource):
             }
 
     @ns.expect(variant_write_model, validate=True)
-    @ns.marshal_with(variant_model, code=201)
+    @ns.marshal_with(variant_model, code=CREATED)
     @ns.response(201, "Variant created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Product or colour set not found")

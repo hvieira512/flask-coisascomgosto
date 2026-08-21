@@ -15,7 +15,7 @@ from api.models.catalog import (
     product_type_write_model,
 )
 from api.models.common import pagination_model
-from api.routes.crud import page_of
+from api.routes.crud import CREATED, page_of
 from api.security import PROTECTED_DOC, auth_required
 from repositories import ProductTypeRepository
 
@@ -44,7 +44,7 @@ class ProductTypeList(Resource):
             return page_of(ProductTypeRepository(cursor), "product_types")
 
     @ns.expect(product_type_write_model, validate=True)
-    @ns.marshal_with(product_type_model, code=201)
+    @ns.marshal_with(product_type_model, code=CREATED)
     @ns.response(201, "Product type created")
     @ns.response(400, "Missing fields")
     @ns.response(409, "A type already uses that name")

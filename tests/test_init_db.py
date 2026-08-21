@@ -27,9 +27,17 @@ def _usernames():
 
 
 def _one(sql, params=()):
+    """The single row `sql` selects.
+
+    Asserted here rather than at each call site: every caller means "the row I
+    just asked for", and a query that comes back empty otherwise fails as a
+    TypeError on a subscript, without saying which query it was.
+    """
     with get_db_connection() as (_, cursor):
         cursor.execute(sql, params)
-        return cursor.fetchone()
+        row = cursor.fetchone()
+        assert row is not None, f"no row for: {sql}"
+        return row
 
 
 class TestInitDbKeepsAccounts:

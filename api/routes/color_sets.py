@@ -20,7 +20,7 @@ from api.models.catalog import (
 )
 from api.models.common import pagination_model
 from repositories import ColorRepository, ColorSetRepository, CollectionRepository
-from api.routes.crud import page_of
+from api.routes.crud import CREATED, page_of
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("color-sets", description="Colour set operations")
@@ -67,7 +67,7 @@ class ColorSetList(Resource):
             )
 
     @ns.expect(color_set_write_model, validate=True)
-    @ns.marshal_with(color_set_model, code=201)
+    @ns.marshal_with(color_set_model, code=CREATED)
     @ns.response(201, "Colour set created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Referenced collection or colour does not exist")

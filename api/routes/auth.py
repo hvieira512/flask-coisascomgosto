@@ -30,6 +30,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from db import get_db_connection
 from api.models.auth import login_model, refresh_model, register_model, token_model
 from api.models.users import user_model
+from api.routes.crud import bail
 from repositories import UserRepository
 from api.security import PROTECTED_DOC, auth_required, current_user_id
 
@@ -113,7 +114,7 @@ class Login(Resource):
         with get_db_connection() as (_, cursor):
             credentials = UserRepository(cursor).get_credentials(data["username"])
             if not credentials:
-                ns.abort(404, "User invalid.")
+                bail(ns, 404, "User invalid.")
 
             if not check_password_hash(credentials["password"], data["password"]):
                 ns.abort(401, "Invalid login.")
@@ -148,7 +149,7 @@ class Refresh(Resource):
         with get_db_connection() as (_, cursor):
             user = UserRepository(cursor).get(int(get_jwt_identity()))
             if not user:
-                ns.abort(401, "The account for this token no longer exists.")
+                bail(ns, 401, "The account for this token no longer exists.")
 
             claims = {"username": user["username"], "is_admin": user["is_admin"]}
             return {
@@ -169,10 +170,11 @@ class Me(Resource):
     def get(self):
         """Return the account the caller is authenticated as."""
         with get_db_connection() as (_, cursor):
-            user = UserRepository(cursor).get(current_user_id())
+            user_id = current_user_id()
+            user = UserRepository(cursor).get(user_id) if user_id is not None else None
             if not user:
                 session.clear()
-                ns.abort(401, "This account no longer exists.")
+                bail(ns, 401, "This account no longer exists.")
 
             return user
 

@@ -15,7 +15,7 @@ from api.models.materials import (
     material_write_model,
 )
 from repositories import MaterialRepository
-from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.routes.crud import CREATED, get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("materials", description="Materials operations")
@@ -43,7 +43,7 @@ class MaterialList(Resource):
             return page_of(MaterialRepository(cursor), "materials")
 
     @ns.expect(material_write_model, validate=True)
-    @ns.marshal_with(material_model, code=201)
+    @ns.marshal_with(material_model, code=CREATED)
     @ns.response(201, "Material created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A material with that name already exists")

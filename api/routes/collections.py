@@ -20,7 +20,7 @@ from api.models.catalog import (
 )
 from api.models.common import pagination_model
 from repositories import CollectionRepository, ColorSetRepository
-from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.routes.crud import CREATED, bail, get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("collections", description="Collections operations")
@@ -79,7 +79,7 @@ class CollectionList(Resource):
             return page_of(CollectionRepository(cursor), "collections")
 
     @ns.expect(collection_write_model, validate=True)
-    @ns.marshal_with(collection_model, code=201)
+    @ns.marshal_with(collection_model, code=CREATED)
     @ns.response(201, "Collection created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A collection with that name already exists")
@@ -214,7 +214,7 @@ class CollectionColorSets(Resource):
 @ns.param("collection_id", "The collection identifier")
 class CollectionCover(Resource):
     @ns.expect(cover_parser)
-    @ns.marshal_with(collection_model, code=201)
+    @ns.marshal_with(collection_model, code=CREATED)
     @ns.response(201, "Cover stored and attached")
     @ns.response(400, "Missing file, unsupported format, or too large")
     @ns.response(404, "Collection not found")
@@ -235,10 +235,7 @@ class CollectionCover(Resource):
                     url_prefix=uploads.COLLECTION_PREFIX,
                 )
             except uploads.UploadError as error:
-                ns.abort(400, str(error))
-                # ns.abort raises, but its signature does not say so, so without
-                # this the URL below reads as possibly unbound.
-                raise
+                bail(ns, 400, str(error))
 
             _replace_cover(collections, collection, url)
             return collections.get(collection_id), 201

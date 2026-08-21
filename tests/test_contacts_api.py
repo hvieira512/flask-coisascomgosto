@@ -71,9 +71,11 @@ class TestContactsApi:
 
         from db import get_db_connection
 
+        from repositories.base import one_row
+
         with get_db_connection() as (_, cursor):
             cursor.execute("SELECT COUNT(*) AS total FROM contacts")
-            assert cursor.fetchone()["total"] == 1
+            assert one_row(cursor)["total"] == 1
 
 
 class TestLandingPage:

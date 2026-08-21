@@ -12,6 +12,7 @@ from api.models.products import (
     update_product_model,
 )
 from api.pagination import get_pagination_params, make_pagination
+from api.routes.crud import CREATED
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
 from repositories import (
@@ -99,7 +100,7 @@ class ProductList(Resource):
             }
 
     @ns.expect(product_create_model, validate=True)
-    @ns.marshal_with(product_model, code=201)
+    @ns.marshal_with(product_model, code=CREATED)
     @ns.response(201, "Product created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(404, "Referenced type, material, collection or size not found")

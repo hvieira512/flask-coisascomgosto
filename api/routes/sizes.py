@@ -12,7 +12,7 @@ from db import get_db_connection
 from api.models.catalog import size_list_model, size_model, size_write_model
 from api.models.common import pagination_model
 from repositories import SizeRepository
-from api.routes.crud import get_or_404, page_of, reject_duplicate_name
+from api.routes.crud import CREATED, get_or_404, page_of, reject_duplicate_name
 from api.security import PROTECTED_DOC, auth_required
 
 ns = Namespace("sizes", description="Sizes operations")
@@ -35,7 +35,7 @@ class SizeList(Resource):
             return page_of(SizeRepository(cursor), "sizes")
 
     @ns.expect(size_write_model, validate=True)
-    @ns.marshal_with(size_model, code=201)
+    @ns.marshal_with(size_model, code=CREATED)
     @ns.response(201, "Size created")
     @ns.response(400, "Missing or invalid fields")
     @ns.response(409, "A size with that name already exists")

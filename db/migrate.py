@@ -69,8 +69,10 @@ def _exclusive():
                 "SELECT GET_LOCK(%s, %s) AS acquired",
                 (LOCK_NAME, LOCK_TIMEOUT_SECONDS),
             )
-            # 0 is the timeout, NULL an error. Neither is permission to proceed.
-            if cursor.fetchone()["acquired"] != 1:
+            row = cursor.fetchone()
+            # 0 is the timeout, NULL an error, and no row at all should not happen
+            # — none of the three is permission to proceed.
+            if not row or row["acquired"] != 1:
                 raise MigrationsLocked(
                     "Another process is applying migrations. Wait for it to finish, "
                     "then run `flask migrate --status` to see where it got to."
