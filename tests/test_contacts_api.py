@@ -193,7 +193,9 @@ class TestLandingPage:
 
     def test_reserved_area_replaces_entrar(self, client):
         html = client.get("/").get_data(as_text=True)
-        assert "Área Reservada" in html
+        # Sentence case now, and a quiet link rather than a button: it is the
+        # owners' door and nobody else's business.
+        assert "Área reservada" in html
         assert ">Entrar<" not in html
 
     def test_the_page_is_styled_by_bootstrap_alone(self, client):
@@ -204,7 +206,10 @@ class TestLandingPage:
     def test_navbar_shows_the_logo(self, client):
         html = client.get("/").get_data(as_text=True)
         assert "img/logo.png" in html
-        assert "navbar-brand store-brand" in html
+        # The wordmark beside it, in the display serif. .store-brand is gone: the
+        # navbar is built from utilities now.
+        assert "navbar-brand" in html
+        assert "font-display" in html
 
     def test_contact_details_render_in_the_footer(self, client):
         html = client.get("/").get_data(as_text=True)

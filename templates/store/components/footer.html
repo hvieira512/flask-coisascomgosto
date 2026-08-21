@@ -1,20 +1,19 @@
-{# Deliberately minimal — contact details are a proper section on the landing
-   page now, so the footer only closes the page. #}
-<footer class="store-footer py-4">
-    <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <p class="fw-bold mb-0">Coisas com Gosto</p>
+{# Closes every page on the pitch ground, which on the landing page is the same
+   band the contacts sit in — the two merge into one ending. data-bs-theme does
+   all the colour work; there is nothing here to override. #}
+<footer data-bs-theme="dark" class="bg-body py-4">
+    <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <p class="fs-7 text-body-secondary mb-0">Coisas com Gosto · Viana do Castelo</p>
 
-        <nav class="d-flex" aria-label="rodapé">
-            <a class="fs-7 text-body-secondary mx-3"
+        <nav class="d-flex flex-wrap gap-3" aria-label="rodapé">
+            <a class="fs-7 text-body-secondary text-decoration-none"
                href="{{ url_for('web.store.home') }}">Início</a>
-            <a class="fs-7 text-body-secondary mx-3"
-               href="{{ url_for('web.store.products') }}">Produtos</a>
-            <a class="fs-7 text-body-secondary mx-3"
+            <a class="fs-7 text-body-secondary text-decoration-none"
+               href="{{ url_for('web.store.products') }}">Peças</a>
+            <a class="fs-7 text-body-secondary text-decoration-none"
                href="{{ url_for('web.store.home') }}#contacts">Contactos</a>
         </nav>
 
-        <p class="fs-7 text-body-tertiary mb-0">
-            Viana do Castelo · {{ year }}
-        </p>
+        <p class="fs-7 text-body-tertiary mb-0">{{ year }}</p>
     </div>
 </footer>

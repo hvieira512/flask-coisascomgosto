@@ -80,11 +80,10 @@ a:hover > .tile-scrim {
     opacity: .8;
 }
 
-/* A photograph filling its box. Bootstrap has no object-fit utility. */
-.photo-cover {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+/* The display serif on something that is not a heading — the wordmark, the
+   address, a colourway's name. The heading rule below covers h1-h3. */
+.font-display {
+    font-family: var(--font-display);
 }
 
 /* A colourway, as the two or three colours it is made of. Built in JS, where the
@@ -117,10 +116,13 @@ button.swatch-dot[aria-pressed="true"] {
     max-width: 30rem;
 }
 
-/* Section and page headings carry the display serif; the small headings inside
-   cards stay on the UI sans, where they sit beside badges and buttons. */
+/* Headings carry the display serif down to h3 — the names of the families, of
+   the pieces and of the fairs are all h3, and they are display lines now rather
+   than the card labels they used to be. h4 and below stay on the UI sans, where
+   they sit beside badges and buttons. */
 h1,
-h2 {
+h2,
+h3 {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -.01em;
@@ -132,60 +134,6 @@ h2 {
 .store-display {
     letter-spacing: -.025em;
     line-height: 1.1;
-}
-
-.store-navbar {
-    background: var(--ccg-surface);
-    padding: 0;
-    min-height: 3.25rem;
-}
-
-.store-brand img {
-    max-height: 2rem;
-    height: 2rem;
-    width: auto;
-    margin-right: .5rem;
-}
-
-.store-brand-name {
-    font-weight: 600;
-    color: var(--ccg-blue-900);
-    font-size: 1rem;
-}
-
-/* Bootstrap lays the collapsed menu out in source order, so auto margins alone
-   would only centre the links between the brand and the button — two blocks of
-   different widths, which left them 106px off-centre. Absolute positioning
-   centres them on the bar itself. */
-@media screen and (min-width: 992px) {
-    .store-navbar .container {
-        position: relative;
-    }
-
-    /* Anchored on both axes: setting only `left` left the link block at its
-       static top, above the centre of the bar. */
-    .store-nav-center {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        margin: 0;
-    }
-}
-
-/* Nav links echo the Área Reservada button: brand blue text with a light blue
-   wash on hover, in place of Bootstrap's default body grey. */
-.store-navbar .nav-link {
-    color: var(--ccg-blue-800);
-    padding: .5rem .75rem;
-    border-radius: var(--radius);
-    transition: background-color .15s ease, color .15s ease;
-}
-
-.store-navbar .nav-link:hover,
-.store-navbar .nav-link:focus-visible {
-    background-color: var(--ccg-blue-50);
-    color: var(--ccg-blue-800);
 }
 
 /* The hero fills the first screen and pins the scroll cue just above the fold. */
@@ -255,7 +203,6 @@ h2 {
     overflow-wrap: anywhere;
     word-break: break-word;
 }
-
 
 /* Bootstrap has no aspect-ratio-plus-object-fit helper. */
 .media-photo {
@@ -1044,8 +991,6 @@ a.card:hover {
     display: none;
 }
 
-
-
 /* Colour and shape come from .color-set-badge; this adds only what makes it a
    control rather than a label. Equal cells come from the row's own columns:
    sized to their names, the five sets of one box came out 183, 190, 200, 212 and
@@ -1170,12 +1115,6 @@ a.card:hover {
         animation: none;
         transition: none;
     }
-}
-
-/* Bootstrap has no footer component. */
-.store-footer {
-    background: var(--ccg-paper-deep);
-    border-top: 1px solid var(--ccg-line);
 }
 
 /* The craft steps are an <ol> laid out as a row, so the browser's own list
