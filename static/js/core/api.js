@@ -41,14 +41,17 @@ function query(path, params) {
  * "Request failed: 500". Neither gap was worth two implementations.
  */
 export async function request(url, { method = "GET", body, params, fallback } = {}) {
-    const options = { method };
+    // Proves to api/security.py that a write came from our own code and not from
+    // a cross-site form using the session cookie. Sent on reads too, since the
+    // header is what identifies the caller, not a per-request decision.
+    const options = { method, headers: { "X-Requested-With": "fetch" } };
     if (params) url = query(url, params);
 
     if (body instanceof FormData) {
         // No Content-Type: the browser has to set the multipart boundary itself.
         options.body = body;
     } else if (body !== undefined) {
-        options.headers = { "Content-Type": "application/json" };
+        options.headers["Content-Type"] = "application/json";
         options.body = JSON.stringify(body);
     }
 

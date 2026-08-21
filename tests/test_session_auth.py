@@ -6,6 +6,8 @@ guard accepts it alongside a bearer token. The token half is covered in
 test_jwt_auth.py.
 """
 
+from io import BytesIO
+
 import pytest
 
 GUARDED = [
@@ -63,6 +65,94 @@ class TestGuards:
             "/api/auth/me", headers={"Authorization": "Bearer not-a-jwt"}
         )
         assert response.status_code == 200
+
+
+class TestCrossSiteWritesCannotUseTheCookie:
+    """The cookie is a credential the browser attaches to *any* request to this
+    origin, including one a third-party page made. `X-Requested-With` is what
+    separates our own code from that page: a cross-site HTML form cannot set a
+    header at all, and a cross-site fetch() that sets one asks for a preflight
+    this API does not answer.
+
+    `csrf_client` is a signed-in client that sends no header — exactly what a
+    request forged by another site looks like on the wire. It is a client of its
+    own rather than the shared one stripped of its header, because the fixtures
+    that create test records post through the shared one.
+    """
+
+    @pytest.fixture()
+    def csrf_client(self, app, make_user):
+        make_user("forged", password="Passw0rd!")
+        attacker = app.test_client()
+        response = attacker.post(
+            "/api/auth/login", json={"username": "forged", "password": "Passw0rd!"}
+        )
+        assert response.status_code == 200, response.get_json()
+        return attacker
+
+    def test_a_json_write_without_the_header_is_refused(self, csrf_client):
+        response = csrf_client.post("/api/materials/", json={"name": "Latão"})
+
+        assert response.status_code == 403
+        assert "X-Requested-With" in response.get_json()["message"]
+
+    def test_the_upload_endpoint_is_refused(self, csrf_client, make_product):
+        """The one that was actually reachable: multipart/form-data needs no
+        preflight, so a plain <form> on another site could post to it."""
+        product = make_product("Tigela")
+
+        response = csrf_client.post(
+            f"/api/products/{product['id']}/images/upload",
+            data={"file": (BytesIO(b"not-a-real-image"), "x.jpg")},
+            content_type="multipart/form-data",
+        )
+
+        assert response.status_code == 403
+
+    def test_the_collection_cover_is_refused(self, csrf_client, make_collection):
+        collection = make_collection("Inverno")
+
+        response = csrf_client.post(
+            f"/api/collections/{collection['id']}/cover",
+            data={"file": (BytesIO(b"not-a-real-image"), "x.jpg")},
+            content_type="multipart/form-data",
+        )
+
+        assert response.status_code == 403
+
+    @pytest.mark.parametrize("method", ["put", "delete"])
+    def test_every_unsafe_method_is_covered(self, csrf_client, method):
+        """Not only POST. The API routes no PATCH anywhere, so these two are the
+        rest of what a forged request could reach."""
+        response = getattr(csrf_client, method)("/api/materials/1", json={"name": "x"})
+
+        assert response.status_code == 403
+
+    def test_reads_still_work(self, csrf_client):
+        """A cross-site GET cannot be read back, so refusing one would cost the
+        dashboard something and protect nothing."""
+        assert csrf_client.get("/api/auth/me").status_code == 200
+
+    def test_a_bearer_token_needs_no_header(self, anon_client, bearer):
+        """An API client is not a browser and has no cookie to be used against
+        it. curl and Swagger must not have to know about this."""
+        response = anon_client.post(
+            "/api/materials/", json={"name": "Cortiça"}, headers=bearer
+        )
+
+        assert response.status_code == 201
+
+    def test_swagger_still_writes_from_a_browser_holding_a_session(
+        self, csrf_client, bearer
+    ):
+        """The Authorize button sends a token but the browser sends the cookie
+        too, and Swagger's own fetch() sets no header of ours. A valid token has
+        to be enough on its own."""
+        response = csrf_client.post(
+            "/api/materials/", json={"name": "Bronze"}, headers=bearer
+        )
+
+        assert response.status_code == 201
 
     def test_contacts_put_is_guarded(self, anon_client):
         assert anon_client.put(

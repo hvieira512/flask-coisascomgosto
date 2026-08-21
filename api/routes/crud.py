@@ -22,8 +22,9 @@ from api.pagination import get_pagination_params, make_pagination
 # runtime — the enum is an IntEnum whose str() is "201", which is what keeps the
 # Swagger document's response keys numeric.
 #
-# Imported from a private module here and nowhere else, so twelve call sites can
-# name it without twelve suppressions or nine private imports.
+# Imported from a private module here so twelve call sites can name it without
+# twelve suppressions. api/security.py needs the same backport for its 403 and
+# imports it the same way.
 CREATED = HTTPStatus.CREATED
 
 

@@ -106,6 +106,12 @@ def client(app, make_user):
         "/api/auth/login", json={"username": "tokenuser", "password": "Passw0rd!"}
     )
     assert response.status_code == 200, response.get_json()
+
+    # What core/api.js puts on every request, and what api/security.py requires
+    # of a session-authenticated write. Set here so each test reads as the
+    # dashboard behaving normally; tests of the guard itself use a client without
+    # it, which is what a cross-site request looks like.
+    signed_in.environ_base["HTTP_X_REQUESTED_WITH"] = "fetch"
     return signed_in
 
 

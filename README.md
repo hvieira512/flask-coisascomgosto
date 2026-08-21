@@ -321,6 +321,27 @@ rather than a redesign. Password hashes are never returned.
 > The session cookie is itself a credential — `api/security.py` accepts it in
 > place of a bearer token — so it is `HttpOnly`, `SameSite=Lax`, and `Secure`
 > outside debug.
+>
+> **A session-authenticated write also needs `X-Requested-With`.** The browser
+> attaches the cookie to *any* request to this origin, including one made by a
+> page belonging to somebody else, so accepting the cookie is what makes CSRF
+> possible. A cross-site HTML form cannot set a header at all, and a cross-site
+> `fetch()` that sets one asks for a preflight this API does not answer — so the
+> header's presence is proof the request came from our own code. Its value is
+> irrelevant. `core/api.js` sends it on every request, which is why no call site
+> has to know about it.
+>
+> This mattered for the two upload endpoints. The JSON ones were incidentally
+> safe (`Content-Type: application/json` needs a preflight of its own), but
+> `multipart/form-data` is a content type a plain `<form>` can send, so
+> `POST /products/<id>/images/upload` and `POST /collections/<id>/cover` were
+> reachable from any page in a browser holding a dashboard session.
+>
+> Reads are exempt: a cross-site GET cannot be read back, and refusing one would
+> only lock out a dashboard whose token went stale. A write with a valid bearer
+> token is exempt too — an API client has no cookie to be used against it, and
+> that keeps Swagger's Authorize button working from the same browser the owners
+> have the dashboard open in.
 
 ### Conventions
 
