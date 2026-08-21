@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from repositories.base import NameTableRepository
+from repositories.base import NameTableRepository, one_row
 
 
 class ProductTypeRepository(NameTableRepository):
@@ -81,7 +81,7 @@ class ProductTypeRepository(NameTableRepository):
         self._cursor.execute(
             "SELECT COUNT(*) AS total FROM products WHERE type_id = %s", (type_id,)
         )
-        return self._cursor.fetchone()["total"]
+        return one_row(self._cursor)["total"]
 
     def delete(self, type_id: int) -> None:
         """Delete a type.

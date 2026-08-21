@@ -14,6 +14,23 @@ from typing import Optional, Tuple
 from pymysql.cursors import DictCursor
 
 
+def one_row(cursor: DictCursor) -> dict:
+    """The row from a statement that cannot answer with none.
+
+    `SELECT COUNT(*)` returns a row for an empty table, and LAST_INSERT_ID() for
+    a failed insert would have raised — but fetchone() is typed as optional
+    because most statements can come back empty, so every count in this package
+    was subscripting a value a type checker had to assume might be None.
+
+    Raising rather than defaulting to zero: a count that silently reads 0 when
+    the driver returned nothing would hide a broken cursor as an empty catalogue.
+    """
+    row = cursor.fetchone()
+    if row is None:
+        raise RuntimeError("a statement that always returns one row returned none")
+    return row
+
+
 class NameTableRepository:
     TABLE: str
     COLUMNS: str = "id, name"
@@ -38,7 +55,7 @@ class NameTableRepository:
         self._cursor.execute(
             f"SELECT COUNT(*) AS total FROM {self.TABLE} {where}", params
         )
-        return self._cursor.fetchone()["total"]
+        return one_row(self._cursor)["total"]
 
     def get(self, row_id: int) -> Optional[dict]:
         self._cursor.execute(

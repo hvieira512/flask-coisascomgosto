@@ -6,6 +6,8 @@ from typing import Optional, Tuple
 
 from pymysql.cursors import DictCursor
 
+from repositories.base import one_row
+
 # Every read resolves the type (required) plus the optional material, collection
 # and default size, so callers get one consistent product shape. The type join is
 # inner because type_id is NOT NULL; everything else is a LEFT JOIN.
@@ -94,7 +96,7 @@ class ProductRepository:
     ) -> int:
         where, params = self._filter(search, collection_id, material_id, type_id)
         self._cursor.execute(f"SELECT COUNT(*) AS total {_FROM} {where}", params)
-        return self._cursor.fetchone()["total"]
+        return one_row(self._cursor)["total"]
 
     def get(self, product_id: int) -> Optional[dict]:
         """Return a product with its type, material, sizes and variants."""

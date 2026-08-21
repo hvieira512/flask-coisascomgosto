@@ -7,6 +7,8 @@ from typing import Optional, Tuple
 
 from pymysql.cursors import DictCursor
 
+from repositories.base import one_row
+
 _COLUMNS = "id, name, location, description, starts_on, ends_on, url"
 
 
@@ -29,7 +31,7 @@ class EventRepository:
     def count(self, *, search: Optional[str] = None) -> int:
         where, params = self._filter(search)
         self._cursor.execute(f"SELECT COUNT(*) AS total FROM events {where}", params)
-        return self._cursor.fetchone()["total"]
+        return one_row(self._cursor)["total"]
 
     def get(self, event_id: int) -> Optional[dict]:
         self._cursor.execute(

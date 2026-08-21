@@ -6,6 +6,8 @@ from typing import Optional
 
 from pymysql.cursors import DictCursor
 
+from repositories.base import one_row
+
 # Never selected alongside the public columns, so a password hash cannot
 # leak into a marshalled response by accident.
 _PUBLIC_COLUMNS = "id, username, email, created_at, is_admin"
@@ -25,19 +27,21 @@ class UserRepository:
 
     def count(self) -> int:
         self._cursor.execute("SELECT COUNT(*) AS total FROM users")
-        return self._cursor.fetchone()["total"]
+        return one_row(self._cursor)["total"]
 
     def get(self, user_id: int) -> Optional[dict]:
         self._cursor.execute(
             f"SELECT {_PUBLIC_COLUMNS} FROM users WHERE id = %s", (user_id,)
         )
-        return self._to_dict(self._cursor.fetchone())
+        row = self._cursor.fetchone()
+        return self._to_dict(row) if row else None
 
     def get_by_username(self, username: str) -> Optional[dict]:
         self._cursor.execute(
             f"SELECT {_PUBLIC_COLUMNS} FROM users WHERE username = %s", (username,)
         )
-        return self._to_dict(self._cursor.fetchone())
+        row = self._cursor.fetchone()
+        return self._to_dict(row) if row else None
 
     def get_credentials(self, username: str) -> Optional[dict]:
         """Return the stored password hash plus public fields, for login only."""
@@ -83,15 +87,19 @@ class UserRepository:
         return self._cursor.lastrowid
 
     @staticmethod
-    def _to_dict(row) -> Optional[dict]:
+    def _to_dict(row) -> dict:
         """Convert a driver row into a response-ready dict.
 
         created_at is serialised to ISO here rather than left to the marshalling
         layer, so the repository has one output shape whoever consumes it.
-        """
-        if not row:
-            return None
 
+        It used to take an absent row and answer None, which made every caller's
+        result optional whether it could be absent or not: `list()` came out as
+        list[dict | None] though fetchall() yields only rows, and
+        `get_credentials` had to subscript a value the checker knew might be None.
+        Deciding "was there a row" is the caller's business, and each of them
+        already knows.
+        """
         created_at = row["created_at"]
 
         return {

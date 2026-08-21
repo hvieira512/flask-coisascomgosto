@@ -7,6 +7,7 @@ or was placed there by hand.
 
 import secrets
 from pathlib import Path
+from typing import Optional
 
 from PIL import Image, UnidentifiedImageError
 from werkzeug.utils import secure_filename
@@ -126,8 +127,12 @@ def delete_many(urls) -> None:
         delete(url)
 
 
-def delete_cover(url: str) -> None:
+def delete_cover(url: Optional[str]) -> None:
     """Remove a collection cover, and only ever one stored *as* a cover.
+
+    A collection with no cover passes None, which is why the body tests the URL
+    before looking at it — the annotation said `str` and the callers were passing
+    exactly that None.
 
     A cover may be pointed at any URL, including one of the pieces' own
     photographs. Replacing it then reaches `delete`, which knows how to remove
@@ -138,7 +143,7 @@ def delete_cover(url: str) -> None:
         delete(url)
 
 
-def delete(url: str) -> None:
+def delete(url: Optional[str]) -> None:
     """Remove a previously uploaded file, ignoring anything outside our folders.
 
     Rows may point at files that were never uploaded — seeded assets, or a

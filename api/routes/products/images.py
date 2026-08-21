@@ -113,6 +113,9 @@ class ProductImageUpload(Resource):
                 url = uploads.save(args["file"])
             except uploads.UploadError as error:
                 ns.abort(400, str(error))
+                # ns.abort raises, but its signature does not say so, so without
+                # this the URL below reads as possibly unbound.
+                raise
 
             images = ProductImageRepository(cursor)
             image_id = images.create(

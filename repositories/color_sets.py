@@ -6,6 +6,8 @@ from typing import Optional, Tuple
 
 from pymysql.cursors import DictCursor
 
+from repositories.base import one_row
+
 _SELECT = """
     SELECT
         cs.id AS id,
@@ -51,7 +53,7 @@ class ColorSetRepository:
             f"{where}",
             params,
         )
-        return self._cursor.fetchone()["total"]
+        return one_row(self._cursor)["total"]
 
     def get(self, color_set_id: int) -> Optional[dict]:
         """Return a colour set with its colours, or None if not found."""
@@ -136,7 +138,7 @@ class ColorSetRepository:
         )
         self._replace_colors(color_set_id, color_ids)
 
-    def delete(self, color_set_id: int) -> None:
+    def delete(self, color_set_id: int) -> list[str]:
         """Delete a colour set, its colour membership and any variant using it.
 
         Variants go through ProductVariantRepository so their images are
