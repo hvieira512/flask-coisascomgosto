@@ -21,28 +21,17 @@ import { escapeHtml } from "../core/html.js";
     let gallery;
 
     /**
-     * The chosen colour's photographs first, then the piece's own, each tagged with
-     * the group the strip labels it under.
-     *
-     * A colour used to show only its own, on the grounds that falling back to the
-     * piece's made three of four colours show the same picture and clicking a swatch
-     * look broken. That reasoning was about an unlabelled fallback: the piece's
-     * photographs are now a labelled group of their own, and the stage says
-     * "Fotografia da peça" when it is showing one — so they are reachable instead of
-     * invisible, which is what most of the catalogue's photographs were.
-     */
-    /**
-     * The chosen colour's photographs, then the piece's own.
+     * The chosen colour's photographs.
      *
      * Deliberately not the other colours': a colour's photographs appear by choosing
      * that colour, and nothing else. Offering them all made the gallery a tour of the
      * whole piece, which is not what a shopper looking at one colour asked for.
+     *
+     * There is no second group any more. Every photograph belongs to a colour, so
+     * with no colour chosen there is nothing to show and the placeholder stands in.
      */
     function imagesFor(product, variant) {
-        const tag = (list, group) => (list || []).map((image) => ({ ...image, group }));
-
-        if (!variant) return tag(product.images, "piece");
-        return [...tag(variant.images, "colour"), ...tag(product.images, "piece")];
+        return variant ? variant.images || [] : [];
     }
 
     /** The specification list: the facts a buyer asks about. */

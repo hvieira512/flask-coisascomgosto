@@ -297,11 +297,12 @@ class ProductRepository:
             product["variants"] = variants_by_product[product["id"]]
 
     def _attach_images(self, products: list[dict]) -> None:
-        """Populate product-level `images`, per-variant images and `primary_image`.
+        """Populate each variant's images and the product's `primary_image`.
 
-        `primary_image` is what a listing grid shows: the first product-level
-        photo, falling back to the first photo of the first variant that has
-        one, so a product photographed only per colour set still has a tile.
+        Every photograph belongs to a colour: a piece looks different in each
+        colourway, so a photo that belonged to the product as a whole could only
+        ever be a stand-in for one of them. `primary_image` is what a listing
+        grid shows — the first photograph of the first colour that has one.
         """
         if not products:
             return
@@ -309,28 +310,21 @@ class ProductRepository:
         from repositories.images import ProductImageRepository
 
         images = ProductImageRepository(self._cursor)
-
-        by_product = images.by_product([p["id"] for p in products])
         variant_ids = [v["id"] for p in products for v in p["variants"]]
         by_variant = images.by_variant(variant_ids)
 
         for product in products:
-            product["images"] = by_product.get(product["id"], [])
-
             for variant in product["variants"]:
                 variant["images"] = by_variant.get(variant["id"], [])
 
-            primary = next(iter(product["images"]), None)
-            if primary is None:
-                primary = next(
-                    (
-                        variant["images"][0]
-                        for variant in product["variants"]
-                        if variant["images"]
-                    ),
-                    None,
-                )
-            product["primary_image"] = primary
+            product["primary_image"] = next(
+                (
+                    variant["images"][0]
+                    for variant in product["variants"]
+                    if variant["images"]
+                ),
+                None,
+            )
 
     def _attach_colors_to_variants(self, by_color_set: dict[int, list]) -> None:
         """Fill in each variant's colour-set colours in one query."""
@@ -435,6 +429,5 @@ class ProductRepository:
             ),
             "sizes": [],
             "variants": [],
-            "images": [],
             "primary_image": None,
         }

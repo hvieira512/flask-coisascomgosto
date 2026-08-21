@@ -224,8 +224,7 @@ image_model = Model(
         "alt": fields.String(description="Alt text for accessibility"),
         "position": fields.Integer(description="Display order, ascending"),
         "variant_id": fields.Integer(
-            description="Variant this photo belongs to; null for a product-level "
-            "image used as the fallback"
+            description="The variant, and so the colour, this photograph shows"
         ),
     },
 )
@@ -237,7 +236,9 @@ image_write_model = Model(
         "alt": fields.String(description="Alt text for accessibility"),
         "position": fields.Integer(description="Display order, ascending"),
         "variant_id": fields.Integer(
-            description="Attach to one variant. Omit for a product-level image."
+            required=True,
+            description="The variant this photograph belongs to. Every photograph "
+            "belongs to one: the piece looks different in each colour.",
         ),
     },
 )

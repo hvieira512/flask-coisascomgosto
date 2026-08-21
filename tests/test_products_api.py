@@ -76,14 +76,21 @@ class TestListProducts:
         ]
 
     def test_photographed_first_puts_pieces_with_photographs_ahead(
-        self, client, make_product
+        self, client, make_product, make_color, make_color_set
     ):
         """What the storefront wants: nobody should have to page past pieces
         with nothing to look at."""
         make_product("Sem fotografia")
         photographed = make_product("Com fotografia")
+
+        color_set = make_color_set("Branco", [make_color("Branco")["id"]])
+        variant = client.post(
+            f"/api/products/{photographed['id']}/variants",
+            json={"color_set_id": color_set["id"]},
+        ).get_json()
         client.post(
-            f"/api/products/{photographed['id']}/images", json={"url": "/a.jpg"}
+            f"/api/products/{photographed['id']}/images",
+            json={"url": "/a.jpg", "variant_id": variant["id"]},
         )
 
         body = client.get("/api/products/?photographed_first=1").get_json()

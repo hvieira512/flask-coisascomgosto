@@ -52,6 +52,9 @@ COLORS = [
     ("Azul", "#2C5FA8"),
     ("Azul-marinho", "#1F2A44"),
     ("Verde", "#2E6B4F"),
+    ("Prateado", "#C9CBD1"),
+    ("Rosa", "#D4788F"),
+    ("Castanho", "#8A6A4F"),
 ]
 
 # Motif families, straight from the page description.
@@ -74,6 +77,12 @@ COLOR_SETS = [
     ("Bordados", "Verde e Dourado", ["Verde", "Dourado"]),
     ("Lenços", "Preto Floral", ["Preto", "Vermelho", "Verde"]),
     ("Lenços", "Vermelho Floral", ["Vermelho", "Branco", "Verde"]),
+    ("Filigrana", "Azul-marinho e Dourado", ["Azul-marinho", "Dourado"]),
+    ("Filigrana", "Branco e Prateado", ["Branco", "Prateado"]),
+    ("Filigrana", "Branco e Rosa", ["Branco", "Rosa"]),
+    ("Filigrana", "Dourado e Vermelho", ["Dourado", "Vermelho"]),
+    ("Bordados", "Rosa e Castanho", ["Rosa", "Castanho"]),
+    ("Lenços", "Branco Floral", ["Branco", "Vermelho", "Verde"]),
 ]
 
 # (name, icon, description). Flat: the family is the type, and the shape is part
@@ -113,7 +122,7 @@ PRODUCTS = [
 
     ("Manel e Maria", "Presépio Minhoto", "Filigrana",
      "Presépio minhoto: Manel e Maria em traje sobre um coração dourado.",
-     ["Vermelho e Branco", "Preto e Branco"], ["Médio"]),
+     ["Vermelho e Branco", "Preto e Branco", "Dourado e Vermelho"], ["Médio"]),
 
     ("Caixa de Joias", "Caixa", "Filigrana",
      "Caixa rectangular forrada, para joias e missangas.",
@@ -122,7 +131,7 @@ PRODUCTS = [
 
     ("Caixa Lenço dos Namorados", "Caixa", "Lenços",
      "Tampa com as flores do Lenço dos Namorados.",
-     ["Preto Floral", "Vermelho Floral"], ["Médio"]),
+     ["Preto Floral", "Vermelho Floral", "Branco Floral"], ["Médio"]),
 
     ("Caixa de Garrafa", "Caixa", "Filigrana",
      "Caixa alta para uma garrafa, decorada nas quatro faces.",
@@ -139,12 +148,13 @@ PRODUCTS = [
 
     ("Moldura Filigrana", "Moldura", "Filigrana",
      "Moldura de fotografia com filigrana à volta da janela.",
-     ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco"],
+     ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco",
+      "Branco e Prateado"],
      ["Pequeno", "Médio", "Grande"]),
 
     ("Moldura Oval", "Moldura", "Filigrana",
      "Janela oval, com o motivo a subir pelos lados.",
-     ["Branco e Dourado", "Preto e Dourado"], ["Médio"]),
+     ["Branco e Dourado", "Preto e Dourado", "Branco e Rosa"], ["Médio"]),
 
     ("Bastidor Viana é Amor", "Bastidor", "Bordados",
      "Bastidor com letras desenhadas à mão e a filigrana à volta.",
@@ -152,7 +162,7 @@ PRODUCTS = [
 
     ("Bastidor Bordado", "Bastidor", "Bordados",
      "Bastidor com os motivos dos bordados de Viana.",
-     ["Branco e Azul", "Verde e Dourado"], ["Pequeno", "Médio"]),
+     ["Branco e Azul", "Verde e Dourado", "Rosa e Castanho"], ["Pequeno", "Médio"]),
 
     ("Coração de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em coração, personalizado com o nome.",
@@ -160,7 +170,8 @@ PRODUCTS = [
 
     ("Bola de Natal", "Enfeite de Natal", None,
      "Enfeite de árvore em bola achatada, personalizado com o nome.",
-     ["Vermelho e Branco", "Branco e Dourado"], ["Pequeno"]),
+     ["Vermelho e Branco", "Branco e Dourado", "Azul-marinho e Dourado"],
+     ["Pequeno"]),
 
     ("Abre-cápsulas Coração", "Abre-cápsulas", "Filigrana",
      "Abre-cápsulas com pega em coração.",
@@ -170,13 +181,15 @@ PRODUCTS = [
 
 # Photographs lifted from the page's own albums, cropped square.
 #
-# (product, colour set, file, alt). A photograph belongs to the colour it shows;
-# None means the piece is sold in one look only, and is not a general fallback
-# for a piece offered in several — a colour with no photograph of its own draws
-# the placeholder in its own colour instead.
+# (product, colour set, file, alt). Every photograph names the colour it shows —
+# the column is NOT NULL since 0007, and a colour with no photograph of its own
+# draws the placeholder in its own colour rather than borrowing another's.
 #
-# The entries still on None are the ones whose photograph shows a colour the
-# piece is not currently listed as being made in.
+# Seven of these used to name no colour, because what they show was a colourway
+# the catalogue did not list: silver rather than gold filigree on the white
+# frame, a pink oval frame, a navy bauble. Those sets are in COLOR_SETS now, and
+# the pieces list them. The bottle openers are one photograph of three pieces at
+# once, filed under the colour of the one in front.
 IMAGES = [
     ("Caixa Redonda Filigrana", "Branco e Dourado", "caixa-redonda-dourado.jpg",
      "Caixa redonda branca com coração de filigrana a dourado"),
@@ -187,24 +200,24 @@ IMAGES = [
     ("Caixa Redonda Filigrana", "Vermelho e Branco", "caixa-coracao-vermelho.jpg",
      "Caixa vermelha em forma de coração com filigrana dourada"),
 
-    ("Manel e Maria", None, "manel-e-maria.jpg",
+    ("Manel e Maria", "Dourado e Vermelho", "manel-e-maria.jpg",
      "O par do Minho em traje sobre um coração dourado"),
 
     ("Caixa de Joias", "Preto e Dourado", "caixa-preto-dourado.jpg",
      "Peças pretas com filigrana dourada"),
 
-    ("Moldura Oval", None, "moldura-rosa.jpg",
+    ("Moldura Oval", "Branco e Rosa", "moldura-rosa.jpg",
      "Moldura branca de janela oval com filigrana rosa"),
 
-    ("Bastidor Bordado", None, "bastidor-nome.jpg",
+    ("Bastidor Bordado", "Rosa e Castanho", "bastidor-nome.jpg",
      "Bastidor bordado à mão com um nome ao centro"),
 
     ("Coração de Natal", "Branco e Dourado", "coracao-natal-nome.jpg",
      "Coração de Viana branco com nome escrito a dourado"),
 
-    ("Abre-cápsulas Coração", None, "abre-capsulas.jpg",
+    ("Abre-cápsulas Coração", "Preto e Dourado", "abre-capsulas.jpg",
      "Três abre-cápsulas de madeira com motivos pintados"),
-    ("Caixa Lenço dos Namorados", None, "caixa-lenco-rosas.jpg",
+    ("Caixa Lenço dos Namorados", "Branco Floral", "caixa-lenco-rosas.jpg",
      "Caixa branca com as rosas do Lenço dos Namorados na tampa"),
 
     ("Coração de Viana", "Branco e Dourado", "coracao-branco-nome.jpg",
@@ -217,7 +230,7 @@ IMAGES = [
     ("Coração de Mesa", "Branco e Dourado", "coracao-mesa-par.jpg",
      "Coração de pé com o par do Minho e a frase quem ama fica"),
 
-    ("Moldura Filigrana", None, "moldura-branco.jpg",
+    ("Moldura Filigrana", "Branco e Prateado", "moldura-branco.jpg",
      "Moldura branca com filigrana prateada"),
     ("Moldura Filigrana", "Preto e Dourado", "moldura-preto-dourado.jpg",
      "Moldura preta com janela oval e filigrana dourada"),
@@ -231,7 +244,7 @@ IMAGES = [
      "Bastidor branco com coração dourado e laço vermelho"),
     ("Bola de Natal", "Vermelho e Branco", "bola-natal-vermelho.jpg",
      "Três bastidores vermelhos com filigrana branca"),
-    ("Bola de Natal", None, "bola-natal-azul.jpg",
+    ("Bola de Natal", "Azul-marinho e Dourado", "bola-natal-azul.jpg",
      "Bastidor azul-escuro com coração dourado, pendurado na árvore"),
 
     ("Coração de Natal", "Vermelho e Branco", "coracao-natal-branco.jpg",
@@ -258,8 +271,18 @@ CONTACT = {
 
 def seed():
     with get_db_connection() as (_, cursor):
-        for table in CATALOG_TABLES:
-            cursor.execute(f"TRUNCATE TABLE `{table}`")
+        # MySQL refuses to TRUNCATE a table any foreign key points at, whatever
+        # order they come in, and TRUNCATE is what resets AUTO_INCREMENT so the
+        # seeded catalogue gets the same ids every time. Every catalogue table is
+        # emptied here, so there is no moment where a missing parent matters —
+        # and `users` and `contacts` are not on the list, so no account is
+        # touched by seeding.
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+        try:
+            for table in CATALOG_TABLES:
+                cursor.execute(f"TRUNCATE TABLE `{table}`")
+        finally:
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
         collections = CollectionRepository(cursor)
         colors = ColorRepository(cursor)
@@ -323,9 +346,12 @@ def seed():
         for product_name, set_name, filename, alt in IMAGES:
             key = product_name
             position[key] = position.get(key, 0) + 1
+            # Subscripted rather than .get(): a photograph naming a colour the
+            # piece is not listed in is a mistake in the two tables above, and
+            # inserting NULL is no longer even possible.
             images.create(
                 product_id=product_ids[product_name],
-                variant_id=variant_ids.get((product_name, set_name)),
+                variant_id=variant_ids[(product_name, set_name)],
                 url=f"/static/img/products/{filename}",
                 alt=alt,
                 position=position[key],

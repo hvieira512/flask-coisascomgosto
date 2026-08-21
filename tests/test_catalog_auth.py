@@ -29,7 +29,10 @@ WRITES = [
     ("delete", "/api/sizes/1", None),
     ("post", "/api/products/1/variants", {"color_set_id": 1}),
     ("delete", "/api/products/1/variants/1", None),
-    ("post", "/api/products/1/images", {"url": "/x.jpg"}),
+    # A valid body on purpose: flask-restx validates before the guard runs, so
+    # an incomplete payload would answer 400 and never reach the thing under
+    # test. variant_id is required since photographs belong to a colour.
+    ("post", "/api/products/1/images", {"url": "/x.jpg", "variant_id": 1}),
     ("delete", "/api/products/1/images/1", None),
     ("put", "/api/products/1/sizes", {"size_ids": []}),
 ]

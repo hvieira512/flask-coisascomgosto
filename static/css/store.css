@@ -770,15 +770,6 @@ a.card:hover {
     gap: .3rem;
 }
 
-/* A group is only labelled when there is another group to tell it from. */
-.strip-label {
-    font-size: .62rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--ccg-ink-faint);
-}
-
 .strip-track {
     display: flex;
     gap: .5rem;
@@ -913,8 +904,7 @@ a.card:hover {
     right: .75rem;
 }
 
-.stage-counter,
-.stage-note {
+.stage-counter {
     position: absolute;
     bottom: .75rem;
     background: rgba(255, 255, 255, .92);
@@ -924,22 +914,7 @@ a.card:hover {
     color: var(--ccg-ink-soft);
 }
 
-.stage-counter {
-    right: .75rem;
-}
 
-/* Opposite the counter: this photograph is of the piece, not of the colour chosen.
-   Said on the photograph itself, because the strip's label is only visible to
-   someone who looks down at the strip. */
-.stage-note {
-    left: .75rem;
-    color: var(--ccg-blue-800);
-    font-weight: 600;
-}
-
-.stage-note[hidden] {
-    display: none;
-}
 
 /* Colour and shape come from .color-set-badge; this adds only what makes it a
    control rather than a label. Equal cells come from the row's own columns:

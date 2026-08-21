@@ -23,8 +23,9 @@ upload_parser.add_argument(
     help="Photograph: jpg, png or webp, up to 5 MB",
 )
 upload_parser.add_argument(
-    "variant_id", location="form", type=int, required=False,
-    help="Pin the photograph to one colour set; omit for a product-wide one",
+    "variant_id", location="form", type=int, required=True,
+    help="The colour set this photograph shows. Required: a piece looks "
+         "different in each colour, so every photograph belongs to one.",
 )
 upload_parser.add_argument("alt", location="form", required=False)
 
@@ -56,17 +57,15 @@ class ProductImageList(Resource):
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def post(self, product_id):
-        """Add an image to a product, or to one of its variants."""
+        """Add a photograph to one of a product's colours."""
         data = ns.payload
-        variant_id = data.get("variant_id")
+        variant_id = data["variant_id"]
 
         with get_db_connection() as (_, cursor):
             if not ProductRepository(cursor).exists(product_id):
                 ns.abort(404, f"Product #{product_id} not found")
 
-            if variant_id is not None and not ProductVariantRepository(
-                cursor
-            ).belongs_to(variant_id, product_id):
+            if not ProductVariantRepository(cursor).belongs_to(variant_id, product_id):
                 ns.abort(
                     404,
                     f"Variant #{variant_id} does not belong to product #{product_id}",
@@ -94,17 +93,15 @@ class ProductImageUpload(Resource):
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def post(self, product_id):
-        """Upload a photograph and attach it to a product or one of its variants."""
+        """Upload a photograph and attach it to one of a product's colours."""
         args = upload_parser.parse_args()
-        variant_id = args.get("variant_id")
+        variant_id = args["variant_id"]
 
         with get_db_connection() as (_, cursor):
             if not ProductRepository(cursor).exists(product_id):
                 ns.abort(404, f"Product #{product_id} not found")
 
-            if variant_id is not None and not ProductVariantRepository(
-                cursor
-            ).belongs_to(variant_id, product_id):
+            if not ProductVariantRepository(cursor).belongs_to(variant_id, product_id):
                 ns.abort(
                     404,
                     f"Variant #{variant_id} does not belong to product #{product_id}",
@@ -137,9 +134,9 @@ class ProductImage(Resource):
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def put(self, product_id, image_id):
-        """Update an image's URL, alt text, position or variant."""
+        """Update a photograph's URL, alt text, position or colour."""
         data = ns.payload
-        variant_id = data.get("variant_id")
+        variant_id = data["variant_id"]
 
         with get_db_connection() as (_, cursor):
             images = ProductImageRepository(cursor)
@@ -150,9 +147,7 @@ class ProductImage(Resource):
                     f"Image #{image_id} does not belong to product #{product_id}",
                 )
 
-            if variant_id is not None and not ProductVariantRepository(
-                cursor
-            ).belongs_to(variant_id, product_id):
+            if not ProductVariantRepository(cursor).belongs_to(variant_id, product_id):
                 ns.abort(
                     404,
                     f"Variant #{variant_id} does not belong to product #{product_id}",

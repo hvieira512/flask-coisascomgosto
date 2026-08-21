@@ -184,38 +184,8 @@ export async function variantsPanel(product) {
              Sem cores associadas. Escolha uma abaixo — as fotografias são de uma cor.
            </li>`;
 
-    // Photographs belonging to no colour cannot be made any more, but the seeded ones
-    // exist. Without a place here they would be invisible again — and invisible is what
-    // the owners cannot fix. The block disappears by itself once they are dealt with.
-    const orphans = product.images || [];
-    const orphanBlock = orphans.length
-        ? `<div class="mb-4" id="colourless-photos">
-             <!-- Two whole sentences rather than a stem with suffixes spliced in: the
-                  first attempt read "Apague -a e volte a carregá-la". -->
-             <p class="help fw-medium mb-2">
-               ${orphans.length === 1
-                   ? "Uma fotografia sem cor. Apague-a e volte a carregá-la na cor a que pertence."
-                   : `${orphans.length} fotografias sem cor. Apague-as e volte a carregá-las nas cores a que pertencem.`}
-             </p>
-             <ul class="list-group list-group-flush">
-               ${orphans.map((image) => `
-                 <li class="list-group-item px-0 d-flex align-items-center gap-1">
-                   <img class="dash-thumb" src="${escapeHtml(image.url)}"
-                        alt="${escapeHtml(image.alt ?? "")}">
-                   <span class="badge rounded-pill chip is-attention me-auto">Sem cor</span>
-                   <button class="btn btn-sm btn-ghost text-danger"
-                           data-remove-image="${image.id}" title="Remover"
-                           aria-label="Remover esta fotografia sem cor">
-                     <span class="icon"><i class="fa-solid fa-xmark"></i></span>
-                   </button>
-                 </li>`).join("")}
-             </ul>
-           </div>`
-        : "";
-
     return `
       <ul class="list-group list-group-flush mb-3" id="variant-rows">${rows}</ul>
-      ${orphanBlock}
       <div class="input-group input-group-sm">
         <select class="form-select" id="variant-picker"${available.length ? "" : " disabled"}>
           ${available.length

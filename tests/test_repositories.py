@@ -104,7 +104,6 @@ class TestProductRepository:
             "default_size": None,
             "sizes": [],
             "variants": [],
-            "images": [],
             "primary_image": None,
         }
 
@@ -192,24 +191,46 @@ class TestProductTypeCovers:
     def images(self, cursor):
         return ProductImageRepository(cursor)
 
+    @pytest.fixture()
+    def colour_on(self, cursor):
+        """A photograph needs a colour to belong to, so each piece gets one."""
+        from repositories import ColorSetRepository, ProductVariantRepository
+
+        sets = ColorSetRepository(cursor)
+        variants = ProductVariantRepository(cursor)
+
+        def _make(product_id, name):
+            color_set_id = sets.create(name=name, color_ids=[], collection_id=None)
+            return variants.create(product_id=product_id, color_set_id=color_set_id)
+
+        return _make
+
     def test_the_first_photograph_of_the_earliest_piece_wins(
-        self, types, products, images
+        self, types, products, images, colour_on
     ):
         box = types.create(name="Caixa")
         first = products.create(type_id=box, name="Caixa alta", description="")
         second = products.create(type_id=box, name="Caixa baixa", description="")
-        images.create(product_id=second, url="/second.jpg", position=0)
-        images.create(product_id=first, url="/late.jpg", position=3)
-        images.create(product_id=first, url="/cover.jpg", alt="Uma caixa", position=1)
+
+        images.create(product_id=second, variant_id=colour_on(second, "Azul"),
+                      url="/second.jpg", position=0)
+        on_first = colour_on(first, "Branco")
+        images.create(product_id=first, variant_id=on_first,
+                      url="/late.jpg", position=3)
+        images.create(product_id=first, variant_id=on_first,
+                      url="/cover.jpg", alt="Uma caixa", position=1)
 
         assert types.cover_images([box]) == {
             box: {"url": "/cover.jpg", "alt": "Uma caixa"}
         }
 
-    def test_the_alt_falls_back_to_the_piece_name(self, types, products, images):
+    def test_the_alt_falls_back_to_the_piece_name(
+        self, types, products, images, colour_on
+    ):
         box = types.create(name="Caixa")
         product_id = products.create(type_id=box, name="Caixa de joias", description="")
-        images.create(product_id=product_id, url="/x.jpg")
+        images.create(product_id=product_id, url="/x.jpg",
+                      variant_id=colour_on(product_id, "Branco"))
 
         assert types.cover_images([box])[box]["alt"] == "Caixa de joias"
 

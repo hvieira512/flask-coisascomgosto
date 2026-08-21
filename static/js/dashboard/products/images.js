@@ -1,22 +1,17 @@
 import { API, request } from "../../core/api.js";
 
-/**
- * Every photograph of a product, from both places the API keeps them:
- * `product.images` holds only the product-wide ones, and each variant carries
- * its own. Reading just the first showed nothing for a pinned photograph.
- */
+/** Every photograph of a product, which means every colour's. */
 export function allImages(product) {
-    const pinned = product.variants.flatMap((variant) =>
+    return product.variants.flatMap((variant) =>
         (variant.images ?? []).map((image) => ({ ...image, variant_id: variant.id }))
     );
-    return [...(product.images ?? []), ...pinned];
 }
 
 /**
  * Uploads the chosen file and attaches it in one request.
  *
- * A colour is required. The API still accepts a photograph without one — which is how
- * the seeded photographs came to have none — but nothing here creates another.
+ * A colour is required, here and at the endpoint: a piece looks different in each
+ * one, so a photograph of no particular colour is a photograph of the wrong one.
  */
 export async function uploadImage(productId, { file, variantId, alt }) {
     if (!file) throw new Error("Escolha uma fotografia.");

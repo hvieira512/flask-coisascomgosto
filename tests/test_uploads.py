@@ -62,13 +62,29 @@ def photo():
 
 
 @pytest.fixture()
-def product(make_product):
-    return make_product("Caixa")
+def product(client, make_product, make_color, make_color_set):
+    """A product with one colour on it.
+
+    The colour is part of the fixture because every photograph belongs to one: a
+    piece with no colours cannot be photographed at all.
+    """
+    created = make_product("Caixa")
+    color_set = make_color_set("Branco", [make_color("Branco", hex="#F5F3EF")["id"]])
+    variant = client.post(
+        f"/api/products/{created['id']}/variants",
+        json={"color_set_id": color_set["id"]},
+    )
+    assert variant.status_code == 201, variant.get_json()
+    return {**created, "variant_id": variant.get_json()["id"]}
 
 
-def upload(test_client, product_id, files, **form):
+def upload(test_client, product, files, **form):
+    """POST a photograph. `variant_id` defaults to the product's own colour, so a
+    test only names one when the colour is what it is about."""
+    form.setdefault("variant_id", str(product["variant_id"]))
+
     return test_client.post(
-        f"/api/products/{product_id}/images/upload",
+        f"/api/products/{product['id']}/images/upload",
         data={**files, **form},
         content_type="multipart/form-data",
     )
@@ -76,10 +92,10 @@ def upload(test_client, product_id, files, **form):
 
 class TestUploadEndpoint:
     def test_requires_a_token(self, anon_client, product, photo):
-        assert upload(anon_client, product["id"], photo()).status_code == 401
+        assert upload(anon_client, product, photo()).status_code == 401
 
     def test_stores_the_file_and_attaches_it(self, client, product, photo):
-        response = upload(client, product["id"], photo())
+        response = upload(client, product, photo())
         assert response.status_code == 201
 
         body = response.get_json()
@@ -87,16 +103,18 @@ class TestUploadEndpoint:
         assert (uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name).is_file()
 
     def test_rejects_a_non_image(self, client, product, photo):
-        response = upload(client, product["id"], photo(name="notas.txt"))
+        response = upload(client, product, photo(name="notas.txt"))
         assert response.status_code == 400
         assert "suportado" in response.get_json()["message"]
 
     def test_rejects_an_oversized_file(self, client, product, photo):
         big = photo(data=b"x" * (uploads.MAX_BYTES + 1))
-        assert upload(client, product["id"], big).status_code == 400
+        assert upload(client, product, big).status_code == 400
 
     def test_unknown_product_is_404(self, client, photo):
-        assert upload(client, 9999, photo()).status_code == 404
+        assert upload(
+            client, {"id": 9999, "variant_id": 1}, photo()
+        ).status_code == 404
 
     def test_can_be_pinned_to_a_variant(self, client, product, photo,
                                         make_color, make_color_set):
@@ -107,7 +125,7 @@ class TestUploadEndpoint:
             json={"color_set_id": color_set["id"]},
         ).get_json()
 
-        response = upload(client, product["id"], photo(),
+        response = upload(client, product, photo(),
                           variant_id=str(variant["id"]))
         assert response.status_code == 201
         assert response.get_json()["variant_id"] == variant["id"]
@@ -123,12 +141,12 @@ class TestUploadEndpoint:
             json={"color_set_id": color_set["id"]},
         ).get_json()
 
-        response = upload(client, product["id"], photo(),
+        response = upload(client, product, photo(),
                           variant_id=str(variant["id"]))
         assert response.status_code == 404
 
     def test_deleting_the_image_removes_the_file(self, client, product, photo):
-        created = upload(client, product["id"], photo()).get_json()
+        created = upload(client, product, photo()).get_json()
         path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
         assert path.is_file()
 
@@ -154,14 +172,14 @@ class TestACascadeTakesTheFilesWithIt:
         ).get_json()
         return created, color_set
 
-    def _photo_of(self, client, product_id, photo, **form):
-        created = upload(client, product_id, photo(), **form).get_json()
+    def _photo_of(self, client, product, photo, **form):
+        created = upload(client, product, photo(), **form).get_json()
         path = uploads.UPLOAD_DIR / pathlib.Path(created["url"]).name
         assert path.is_file()
         return path
 
     def test_deleting_the_piece_removes_its_photographs(self, client, product, photo):
-        product_photo = self._photo_of(client, product["id"], photo)
+        product_photo = self._photo_of(client, product, photo)
 
         client.delete(f"/api/products/{product['id']}")
         assert not product_photo.exists()
@@ -171,7 +189,7 @@ class TestACascadeTakesTheFilesWithIt:
     ):
         created, _ = variant
         pinned = self._photo_of(
-            client, product["id"], photo, variant_id=str(created["id"])
+            client, product, photo, variant_id=str(created["id"])
         )
 
         client.delete(f"/api/products/{product['id']}")
@@ -182,14 +200,14 @@ class TestACascadeTakesTheFilesWithIt:
     ):
         created, _ = variant
         pinned = self._photo_of(
-            client, product["id"], photo, variant_id=str(created["id"])
+            client, product, photo, variant_id=str(created["id"])
         )
-        kept = self._photo_of(client, product["id"], photo)
+        kept = self._photo_of(client, product, photo)
 
         client.delete(f"/api/products/{product['id']}/variants/{created['id']}")
 
         assert not pinned.exists()
-        assert kept.is_file(), "the piece's own photograph is not the colour's"
+        assert kept.is_file(), "another colour's photograph is not this colour's"
 
     def test_deleting_a_colour_set_removes_the_photographs_of_its_variants(
         self, client, product, photo, variant
@@ -197,7 +215,7 @@ class TestACascadeTakesTheFilesWithIt:
         """The colour set cascades to every variant offered in it, wherever they are."""
         created, color_set = variant
         pinned = self._photo_of(
-            client, product["id"], photo, variant_id=str(created["id"])
+            client, product, photo, variant_id=str(created["id"])
         )
 
         client.delete(f"/api/color-sets/{color_set['id']}")
@@ -205,10 +223,16 @@ class TestACascadeTakesTheFilesWithIt:
 
     def test_a_photograph_it_did_not_upload_is_left_alone(self, client, product):
         """A row may point at a seeded asset or a path written by hand."""
-        client.post(
+        attached = client.post(
             f"/api/products/{product['id']}/images",
-            json={"url": "/static/img/logo.png"},
+            json={
+                "url": "/static/img/logo.png",
+                "variant_id": product["variant_id"],
+            },
         )
+        # Without this the row is never created and the assertion below passes
+        # for the wrong reason — nothing referenced the file to begin with.
+        assert attached.status_code == 201, attached.get_json()
 
         client.delete(f"/api/products/{product['id']}")
         assert (uploads.PROJECT_ROOT / "static" / "img" / "logo.png").is_file()
@@ -218,7 +242,7 @@ class TestFilenameSafety:
     """The name arrives from the browser, so it is never trusted as a path."""
 
     def test_traversal_is_stripped(self, client, product):
-        body = upload(client, product["id"],
+        body = upload(client, product,
                       {"file": (io.BytesIO(JPEG_BYTES), "../../../evil.jpg")}).get_json()
 
         stored = pathlib.Path(body["url"])
@@ -228,7 +252,7 @@ class TestFilenameSafety:
 
     def test_two_uploads_of_one_name_do_not_collide(self, client, product):
         urls = {
-            upload(client, product["id"],
+            upload(client, product,
                    {"file": (io.BytesIO(JPEG_BYTES), "caixa.jpg")}).get_json()["url"]
             for _ in range(2)
         }
@@ -245,7 +269,7 @@ class TestWhatIsActuallyInTheFile:
     def test_a_file_that_is_not_an_image_is_refused(self, client, product):
         """The old fixture — fourteen bytes with a JPEG magic number — went
         through, and every page then rendered an <img> pointing at rubbish."""
-        response = upload(client, product["id"],
+        response = upload(client, product,
                           {"file": (io.BytesIO(b"\xff\xd8\xff\xe0 fake jpeg"), "foto.jpg")})
 
         assert response.status_code == 400
@@ -255,7 +279,7 @@ class TestWhatIsActuallyInTheFile:
     def test_a_truncated_image_is_refused(self, client, product):
         """A cut-off upload has a perfectly good header."""
         whole = image_bytes(size=(200, 200))
-        response = upload(client, product["id"],
+        response = upload(client, product,
                           {"file": (io.BytesIO(whole[: len(whole) // 3]), "foto.jpg")})
 
         assert response.status_code == 400
@@ -264,7 +288,7 @@ class TestWhatIsActuallyInTheFile:
     def test_the_stored_suffix_follows_the_real_format(self, client, product):
         """A PNG named .jpg is stored as .png, because the suffix is what the
         browser will be told the file is when it is served back."""
-        body = upload(client, product["id"],
+        body = upload(client, product,
                       {"file": (io.BytesIO(image_bytes("PNG")), "enganador.jpg")}).get_json()
 
         assert body["url"].endswith(".png")
@@ -275,7 +299,7 @@ class TestWhatIsActuallyInTheFile:
         """The one that matters: markup with a .png suffix, which Pillow cannot
         open and which a browser would otherwise be free to interpret."""
         svg = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
-        response = upload(client, product["id"], {"file": (io.BytesIO(svg), "foto.png")})
+        response = upload(client, product, {"file": (io.BytesIO(svg), "foto.png")})
 
         assert response.status_code == 400
         assert list(uploads.UPLOAD_DIR.iterdir()) == []
@@ -290,7 +314,7 @@ class TestMetadataIsStripped:
         original = image_bytes(exif=phone_exif())
         assert Image.open(io.BytesIO(original)).getexif(), "the fixture must carry EXIF"
 
-        body = upload(client, product["id"],
+        body = upload(client, product,
                       {"file": (io.BytesIO(original), "foto.jpg")}).get_json()
 
         stored = Image.open(uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name)
@@ -298,7 +322,7 @@ class TestMetadataIsStripped:
         assert stored.info.get("exif") is None
 
     def test_the_gps_tag_in_particular_is_gone(self, client, product):
-        body = upload(client, product["id"],
+        body = upload(client, product,
                       {"file": (io.BytesIO(image_bytes(exif=phone_exif())), "foto.jpg")}).get_json()
 
         stored = Image.open(uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name)
@@ -307,7 +331,7 @@ class TestMetadataIsStripped:
     def test_the_photograph_itself_survives(self, client, product):
         """Stripping must not quietly re-encode the picture into mush: JPEG is
         saved with the source's own quantization tables."""
-        body = upload(client, product["id"],
+        body = upload(client, product,
                       {"file": (io.BytesIO(image_bytes(size=(64, 48))), "foto.jpg")}).get_json()
 
         stored = Image.open(uploads.UPLOAD_DIR / pathlib.Path(body["url"]).name)
@@ -321,7 +345,7 @@ class TestDecompressionLimit:
         decoding is the first thing that happens to it."""
         monkeypatch.setattr(uploads.Image, "MAX_IMAGE_PIXELS", 1000)
 
-        response = upload(client, product["id"],
+        response = upload(client, product,
                           {"file": (io.BytesIO(image_bytes("PNG", size=(400, 400))), "foto.png")})
 
         assert response.status_code == 400

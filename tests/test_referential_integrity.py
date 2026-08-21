@@ -85,7 +85,8 @@ class TestTheDatabaseRefusesAnOrphan:
         "sql",
         [
             "INSERT INTO product_variants (product_id, color_set_id) VALUES (9999, 1)",
-            "INSERT INTO product_images (product_id, url) VALUES (9999, '/x.jpg')",
+            "INSERT INTO product_images (product_id, variant_id, url) "
+            "VALUES (9999, 9999, '/x.jpg')",
             "INSERT INTO product_sizes (product_id, size_id) VALUES (9999, 1)",
             "INSERT INTO color_set_colors (color_set_id, color_id) VALUES (9999, 1)",
         ],

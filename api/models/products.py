@@ -53,15 +53,11 @@ product_model = Model(
             fields.Nested(variant_model),
             description="One entry per colour set this product is offered in",
         ),
-        "images": fields.List(
-            fields.Nested(image_model),
-            description="Product-level photos, used when a variant has none",
-        ),
         "primary_image": fields.Nested(
             image_model,
             allow_null=True,
-            description="The tile image for listings: the first product-level "
-            "photo, falling back to the first variant photo",
+            description="The tile image for listings: the first photograph of "
+            "the first colour that has one",
         ),
     },
 )

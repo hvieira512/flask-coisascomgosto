@@ -10,22 +10,17 @@ import { StoreLightbox } from "./lightbox.js";
  * keeps the active thumbnail in view. Swiping steps too, and a tap opens the
  * photographs full screen through lightbox.js.
  *
- * Images arrive in groups — the chosen colour's photographs, then the piece's own —
- * and the strip labels them when there is more than one. Stepping and the fullscreen
- * view treat the set as one sequence.
- *
  * Only the chosen colour's photographs are ever here. Another colour's appear by
- * choosing that colour.
+ * choosing that colour. They used to arrive in labelled groups, because a
+ * photograph could belong to the piece rather than to a colour; every photograph
+ * belongs to a colour now, so there is one group and nothing to label.
  */
 export const StoreGallery = (function () {
-    const GROUP_LABELS = { colour: "Esta cor", piece: "Da peça" };
-
     function create(root, product) {
         const galleryEl = root.querySelector(".gallery");
         const stage = root.querySelector("#gallery-stage");
         const stageImage = root.querySelector("#stage-image");
         const counter = root.querySelector("#stage-counter");
-        const note = root.querySelector("#stage-note");
         const strip = root.querySelector("#thumb-strip");
         const emptyNotice = root.querySelector("#gallery-empty");
         const prevButton = root.querySelector("[data-prev]");
@@ -33,9 +28,6 @@ export const StoreGallery = (function () {
 
         let images = [];
         let index = 0;
-        /** Only whether a colour is chosen, which is what makes a piece photograph
-         *  worth labelling: with no colours there is nothing to mistake it for. */
-        let hasColourChosen = false;
 
         function show(next) {
             if (images.length === 0) return;
@@ -48,12 +40,6 @@ export const StoreGallery = (function () {
             stageImage.alt = image.alt || "";
             counter.textContent = `${index + 1} / ${images.length}`;
 
-            // The piece's own photograph would otherwise look like the chosen colour's,
-            // most of all when that colour has none and these are all there is.
-            const isPiece = hasColourChosen && image.group === "piece";
-            note.hidden = !isPiece;
-            note.textContent = isPiece ? "Fotografia da peça" : "";
-
             strip.querySelectorAll(".strip-thumb").forEach((thumb, position) => {
                 const isActive = position === index;
                 thumb.classList.toggle("is-active", isActive);
@@ -63,51 +49,26 @@ export const StoreGallery = (function () {
             });
         }
 
-        /**
-         * The thumbnails, in one row, in labelled groups: the chosen colour's, then
-         * the piece's own, then the other colours'. A single group carries no label —
-         * there is nothing to tell apart.
-         *
-         * Presentation only. Each thumbnail keeps its place in the stable sequence the
-         * arrows walk, so grouping them here reorders what is seen without reordering
-         * what "next" means.
-         */
+        /** The thumbnails, in one row, in the order the arrows walk. */
         function renderStrip(all) {
-            const numbered = all.map((image, position) => ({ image, position }));
-            const groups = ["colour", "piece", "other"]
-                .map((name) => ({
-                    name,
-                    items: numbered.filter(({ image }) => (image.group ?? "colour") === name),
-                }))
-                .filter(({ items }) => items.length);
-
-            const labelled = groups.length > 1;
-
-            return groups
-                .map(({ name, items }) => `
-                    <div class="strip-group">
-                      ${labelled
-                          ? `<p class="strip-label">${escapeHtml(GROUP_LABELS[name] ?? "")}</p>`
-                          : ""}
-                      <ul class="strip-track">
-                        ${items.map(({ image, position }) => `
-                          <li>
-                            <button class="strip-thumb" type="button" data-index="${position}"
-                                    aria-label="Ver imagem ${position + 1}">
-                              <img src="${escapeHtml(image.url)}"
-                                   alt="${escapeHtml(image.alt || "")}" loading="lazy">
-                            </button>
-                          </li>`).join("")}
-                      </ul>
-                    </div>`)
-                .join("");
+            return `
+                <div class="strip-group">
+                  <ul class="strip-track">
+                    ${all.map((image, position) => `
+                      <li>
+                        <button class="strip-thumb" type="button" data-index="${position}"
+                                aria-label="Ver imagem ${position + 1}">
+                          <img src="${escapeHtml(image.url)}"
+                               alt="${escapeHtml(image.alt || "")}" loading="lazy">
+                        </button>
+                      </li>`).join("")}
+                  </ul>
+                </div>`;
         }
 
-        /** `variant` names which colour the empty state should be drawn in, and which
-         *  photographs count as its own. */
+        /** `variant` names which colour the empty state should be drawn in. */
         function render(nextImages, variant = null) {
             images = nextImages || [];
-            hasColourChosen = Boolean(variant);
             index = 0;
 
             const hasImages = images.length > 0;
@@ -126,7 +87,6 @@ export const StoreGallery = (function () {
                 prevButton.disabled = true;
                 nextButton.disabled = true;
                 counter.hidden = true;
-                note.hidden = true;
                 strip.hidden = true;
                 strip.innerHTML = "";
 

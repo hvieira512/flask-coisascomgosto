@@ -1,9 +1,13 @@
 """The product page's gallery, in a real browser.
 
-A colour may have several photographs and a piece has its own, and none of them were
-visible: the thumbnails lived in a 72px rail beside the stage that hid itself unless
-the chosen colour had two or more, and a piece's own photographs were not shown at
-all once a colour was chosen.
+A colour may have several photographs, and none of them were visible: the
+thumbnails lived in a 72px rail beside the stage that hid itself unless the
+chosen colour had two or more.
+
+Every photograph belongs to a colour. There used to be a second kind, belonging
+to the piece as a whole and shown for any colour that had none of its own, which
+the strip labelled and the stage annotated — that concept is gone, so a colour
+with no photographs draws its placeholder instead of borrowing another's.
 
 `live_server` and `browser` come from conftest.py.
 """
@@ -17,11 +21,10 @@ pytest.importorskip("playwright.sync_api")
 
 @pytest.fixture()
 def piece(client, make_product, make_color, make_color_set):
-    """A piece with two colours — one photographed twice, one not at all — and a
-    photograph of its own.
+    """A piece with two colours: one photographed twice, one not at all.
 
-    That is the shape the catalogue actually has: most colours carry one photograph
-    and most pieces carry one of their own.
+    Both halves matter. Two photographs is what gives the strip something to
+    preview, and a colour with none is half the catalogue.
     """
     from tests.test_uploads import image_bytes
 
@@ -48,7 +51,6 @@ def piece(client, make_product, make_color, make_color_set):
 
     upload(variant_id=str(variants["photographed"]["id"]))
     upload(variant_id=str(variants["photographed"]["id"]))
-    upload()   # the piece's own
 
     return product
 
@@ -67,15 +69,10 @@ def page(browser, live_server, piece):
     context.close()
 
 
-def labels(page):
-    return [t.strip() for t in page.locator(".strip-label").all_text_contents()]
-
-
 class TestTheStrip:
-    def test_it_shows_every_photograph_the_visitor_can_reach(self, page):
-        """Two of the chosen colour, one of the piece."""
+    def test_it_shows_every_photograph_of_the_chosen_colour(self, page):
         view, errors = page
-        assert view.locator(".strip-thumb").count() == 3
+        assert view.locator(".strip-thumb").count() == 2
         assert errors == []
 
     def test_the_strip_is_below_the_stage(self, page):
@@ -103,13 +100,6 @@ class TestTheStrip:
         )
         assert fills, "something other than the photograph is taking the column's width"
 
-    def test_the_two_sources_are_labelled(self, page):
-        """A photograph of the piece must not pass for one of the chosen colour."""
-        view, _ = page
-        assert labels(view) == ["ESTA COR", "DA PEÇA"] or labels(view) == [
-            "Esta cor", "Da peça"
-        ]
-
     def test_clicking_a_thumbnail_changes_the_photograph(self, page):
         view, _ = page
         before = view.locator("#stage-image").get_attribute("src")
@@ -119,36 +109,15 @@ class TestTheStrip:
             """(previous) => document.getElementById('stage-image').src !== previous""",
             arg=before,
         )
-        assert "2 / 3" in view.locator("#stage-counter").inner_text()
+        assert "2 / 2" in view.locator("#stage-counter").inner_text()
 
     def test_the_active_thumbnail_is_marked(self, page):
         view, _ = page
         assert "is-active" in view.locator(".strip-thumb").first.get_attribute("class")
 
-        view.locator(".strip-thumb").nth(2).click()
-        assert "is-active" in view.locator(".strip-thumb").nth(2).get_attribute("class")
+        view.locator(".strip-thumb").nth(1).click()
+        assert "is-active" in view.locator(".strip-thumb").nth(1).get_attribute("class")
         assert "is-active" not in view.locator(".strip-thumb").first.get_attribute("class")
-
-    def test_the_stage_says_when_it_is_showing_the_piece(self, page):
-        """Third thumbnail is the piece's own; the first two are the colour's."""
-        view, _ = page
-        assert view.locator("#stage-note").is_hidden()
-
-        view.locator(".strip-thumb").nth(2).click()
-        assert view.locator("#stage-note").is_visible()
-        assert "peça" in view.locator("#stage-note").inner_text()
-
-        # On the photograph, not lost behind it: the note had no styles at all at
-        # first and rendered as bare text at the top of the stage.
-        note = view.locator("#stage-note").bounding_box()
-        stage = view.locator("#gallery-stage").bounding_box()
-        assert note["y"] > stage["y"] + stage["height"] / 2, "the note is not on the photo"
-        assert view.locator("#stage-note").evaluate(
-            "el => getComputedStyle(el).position"
-        ) == "absolute"
-
-        view.locator(".strip-thumb").first.click()
-        assert view.locator("#stage-note").is_hidden()
 
     def test_choosing_the_marked_thumbnail_does_not_resize_its_neighbours(self, page):
         """The border is 2px in both states rather than growing when active."""
@@ -163,31 +132,45 @@ class TestTheStrip:
 
 
 class TestAColourWithNoPhotographsOfItsOwn:
-    """Half the catalogue. The piece's own photographs are what there is, and the
-    stage has to say so rather than passing one off as that colour."""
+    """Half the catalogue.
 
-    def test_it_falls_back_to_the_piece_and_says_so(self, page):
+    It used to borrow the piece's own photograph and annotate the stage to say so.
+    Now that every photograph belongs to a colour there is nothing to borrow, and
+    showing another colour's would be a lie about what the shopper picked — so the
+    placeholder is drawn in this colour instead.
+    """
+
+    def test_it_draws_the_placeholder_rather_than_another_colours_photograph(
+        self, page, piece
+    ):
         view, errors = page
+        photographed = view.locator("#stage-image").get_attribute("src")
+
         view.locator(".variant-option", has_text="Preto e Branco").click()
         view.wait_for_function(
-            "() => document.querySelectorAll('#thumb-strip .strip-thumb').length === 1"
-            " || document.getElementById('stage-note').hidden === false"
+            "() => document.querySelectorAll('#gallery-stage .product-placeholder')"
+            ".length === 1"
         )
 
-        assert view.locator("#stage-note").is_visible()
-        assert "peça" in view.locator("#stage-note").inner_text()
+        assert view.locator("#stage-image").is_hidden()
+        assert photographed, "the photographed colour had nothing to show either"
         assert errors == []
 
-    def test_it_used_to_show_nothing_at_all(self, page):
-        """The photograph is reachable, which is the point: with one image there is
-        no strip to preview, but the stage is a real photograph rather than the
-        placeholder tile."""
+    def test_going_back_to_the_photographed_colour_still_works(self, page):
+        """The placeholder is inserted into the stage rather than replacing it, so
+        the photograph has to come back."""
         view, _ = page
         view.locator(".variant-option", has_text="Preto e Branco").click()
-        view.wait_for_timeout(300)
+        view.wait_for_selector("#gallery-stage .product-placeholder")
+
+        view.locator(".variant-option", has_text="Branco e Dourado").click()
+        view.wait_for_function(
+            "() => document.querySelectorAll('#gallery-stage .product-placeholder')"
+            ".length === 0"
+        )
 
         assert view.locator("#stage-image").is_visible()
-        assert view.locator("#gallery-stage .product-placeholder").count() == 0
+        assert view.locator(".strip-thumb").count() == 2
 
 
 class TestAPiecePhotographedOncePerColour:

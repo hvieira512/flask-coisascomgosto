@@ -13,9 +13,8 @@
 --   product variant     a product offered in one specific colour set
 --   size                Pequeno / Médio / Grande; a product may declare a default
 --                       size and/or a set of sizes it is available in
---   product image       a photo. Attached to a variant when the colour set
---                       changes how the item looks, or to the product itself as
---                       a fallback shown when a variant has no photos of its own.
+--   product image       a photo, of one variant. Every photograph belongs to a
+--                       colour set, because the piece looks different in each.
 --   contacts            the shop's own details, shown in the footer and on the
 --                       landing page. A single row, edited rather than added to.
 --   event               a fair, market or show the workshop took part in. Drives
@@ -175,13 +174,16 @@ CREATE TABLE product_variants (
         FOREIGN KEY (color_set_id) REFERENCES color_sets (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Photos of a product. variant_id NULL means the image belongs to the product
--- as a whole and is used as the fallback for variants with no photos of their
--- own; a non-null variant_id ties the photo to one colour set.
+-- Photos of a product, each belonging to one of its colour sets.
+--
+-- variant_id was nullable until 0007, where NULL meant "of the piece as a whole"
+-- and stood in for any colour with no photograph of its own. A piece looks
+-- different in each colourway, so that fallback showed the wrong thing — and,
+-- being preferred by primary_image, it decided which tile the catalogue listed.
 CREATE TABLE product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
-    variant_id INT,
+    variant_id INT NOT NULL,
     url VARCHAR(500) NOT NULL,
     alt VARCHAR(255),
     position INT NOT NULL DEFAULT 0,

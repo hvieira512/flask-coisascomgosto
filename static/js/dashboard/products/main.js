@@ -220,24 +220,6 @@ function wireVariantPanel(product) {
         };
     });
 
-    // The seeded photographs that belong to no colour, which can only be removed.
-    document.querySelectorAll("[data-remove-image]").forEach((button) => {
-        button.onclick = async () => {
-            if (!(await Notify.confirm("Remover esta fotografia?", {
-                danger: true, confirmText: "Remover",
-            }))) return;
-
-            try {
-                await removeImage(product.id, button.dataset.removeImage);
-                Notify.success("Fotografia removida.");
-                await refreshEdit(product.id);
-                showVariantsTab();
-            } catch (error) {
-                Notify.error(error.message);
-            }
-        };
-    });
-
     // A tray per colour. The piece exists here, so a photograph is uploaded the moment
     // it is chosen and the panel is rebuilt from what the server then has.
     wireVariantPhotos(product, {

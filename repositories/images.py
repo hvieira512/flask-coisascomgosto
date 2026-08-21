@@ -1,9 +1,10 @@
 """Data access for product images.
 
-An image belongs to a product, and optionally to one of that product's variants.
-A variant-scoped image is shown when the customer picks that colour set; a
-product-scoped image (variant_id NULL) is the fallback used when a variant has
-no photos of its own.
+Every photograph belongs to a product *and* to one of that product's variants,
+so it is shown when the customer picks that colour. There is no product-level
+photograph: a piece looks different in each colourway, so a photo standing for
+the piece as a whole could only ever be one colour's photo doing double duty —
+which is what it was, and it decided which tile the catalogue showed.
 """
 
 from __future__ import annotations
@@ -23,10 +24,10 @@ class ProductImageRepository:
     def list_for_product(
         self, product_id: int, *, variant_id: Optional[int] = None
     ) -> list[dict]:
-        """Return a product's images, newest-ordered by display position.
+        """Return a product's images, ordered by display position.
 
-        With no `variant_id`, every image for the product is returned including
-        variant-scoped ones. Pass a variant to narrow to that colour set.
+        With no `variant_id`, every photograph of the piece across all its
+        colours. Pass a variant to narrow to one colour.
         """
         if variant_id is None:
             self._cursor.execute(
@@ -40,15 +41,6 @@ class ProductImageRepository:
                 "WHERE product_id = %s AND variant_id = %s ORDER BY position, id",
                 (product_id, variant_id),
             )
-        return [dict(row) for row in self._cursor.fetchall()]
-
-    def list_product_level(self, product_id: int) -> list[dict]:
-        """Return only the images not tied to a variant."""
-        self._cursor.execute(
-            f"SELECT {_COLUMNS} FROM product_images "
-            "WHERE product_id = %s AND variant_id IS NULL ORDER BY position, id",
-            (product_id,),
-        )
         return [dict(row) for row in self._cursor.fetchall()]
 
     def get(self, image_id: int) -> Optional[dict]:
@@ -71,10 +63,12 @@ class ProductImageRepository:
         *,
         product_id: int,
         url: str,
+        variant_id: int,
         alt: Optional[str] = None,
-        variant_id: Optional[int] = None,
         position: int = 0,
     ) -> int:
+        """Insert a photograph. `variant_id` is required — the column is NOT NULL,
+        so a caller with no colour in mind has nothing to insert."""
         self._cursor.execute(
             "INSERT INTO product_images (product_id, variant_id, url, alt, position) "
             "VALUES (%s, %s, %s, %s, %s)",
@@ -87,8 +81,8 @@ class ProductImageRepository:
         image_id: int,
         *,
         url: str,
+        variant_id: int,
         alt: Optional[str] = None,
-        variant_id: Optional[int] = None,
         position: int = 0,
     ) -> None:
         self._cursor.execute(
@@ -103,24 +97,6 @@ class ProductImageRepository:
     # ----------------
     # Bulk helpers used when composing product responses
     # ----------------
-
-    def by_product(self, product_ids: list[int]) -> dict[int, list[dict]]:
-        """Return product-level images for many products in one query."""
-        if not product_ids:
-            return {}
-
-        placeholders = ", ".join(["%s"] * len(product_ids))
-        self._cursor.execute(
-            f"SELECT {_COLUMNS} FROM product_images "
-            f"WHERE product_id IN ({placeholders}) AND variant_id IS NULL "
-            "ORDER BY product_id, position, id",
-            list(product_ids),
-        )
-
-        grouped: dict[int, list[dict]] = {pid: [] for pid in product_ids}
-        for row in self._cursor.fetchall():
-            grouped[row["product_id"]].append(dict(row))
-        return grouped
 
     def by_variant(self, variant_ids: list[int]) -> dict[int, list[dict]]:
         """Return images for many variants in one query."""
