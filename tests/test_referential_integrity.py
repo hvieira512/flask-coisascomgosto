@@ -34,6 +34,12 @@ EXPECTED_RULES = {
     ("product_images", "variant_id"): "CASCADE",
     ("product_sizes", "product_id"): "CASCADE",
     ("product_sizes", "size_id"): "CASCADE",
+    # A view count for a piece that no longer exists answers nothing, so its
+    # history goes with it. A deleted colour or size does not take the enquiry —
+    # the question was asked, and it still counts for the piece.
+    ("storefront_events", "product_id"): "CASCADE",
+    ("storefront_events", "variant_id"): "SET NULL",
+    ("storefront_events", "size_id"): "SET NULL",
 }
 
 

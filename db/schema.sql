@@ -21,6 +21,9 @@
 --                       landing page. A single row, edited rather than added to.
 --   event               a fair, market or show the workshop took part in. Drives
 --                       the timeline on the landing page.
+--   storefront event    one thing a visitor did: opened a piece, asked about one,
+--                       searched, or ticked a filter. Counters only — nothing
+--                       about the person.
 --
 -- NOTE ON REFERENTIAL INTEGRITY
 -- The cascades are written twice, on purpose. Every FOREIGN KEY below states
@@ -41,6 +44,7 @@
 -- that is never searched by equality stays TEXT.
 --
 -- Dropped children-first so a re-run is always clean.
+DROP TABLE IF EXISTS storefront_events;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS contacts;
 DROP TABLE IF EXISTS product_images;
@@ -266,6 +270,47 @@ CREATE TABLE events (
     url VARCHAR(500),
     -- The timeline reads newest-first, so the sort column is indexed.
     KEY idx_events_starts_on (starts_on)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- What visitors do on the storefront: which pieces they open, what they ask
+-- about, what they search for, which filters they use. Four kinds in one table —
+-- one write path and one read path for a page this size — so most columns are
+-- NULL for most rows.
+--
+--   view      product_id
+--   enquiry   product_id, plus the colour and size the visitor had chosen
+--   search    term, and how many pieces it found
+--   filter    facet, and the label as it was clicked
+--
+-- No identifiers, by design: no IP, no user agent, no cookie, no session id, and
+-- no column that could hold one. The endpoint's per-IP rate limit sees the
+-- address for the length of the request and never stores it.
+--
+-- facet_label is text rather than an id because a filter id would point at a
+-- different table per facet, which no foreign key can express. A deleted piece
+-- takes its history with it; a deleted colour leaves the enquiry countable for
+-- the piece.
+CREATE TABLE storefront_events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    kind VARCHAR(16) NOT NULL,
+    product_id INT NULL,
+    variant_id INT NULL,
+    size_id INT NULL,
+    facet VARCHAR(20) NULL,
+    facet_label VARCHAR(120) NULL,
+    term VARCHAR(120) NULL,
+    results INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Every question the dashboard asks is "this kind, since this date", and the
+    -- per-product one is "this piece, since this date".
+    KEY idx_storefront_events_kind_time (kind, created_at),
+    KEY idx_storefront_events_product (product_id, created_at),
+    CONSTRAINT fk_storefront_events_product
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_storefront_events_variant
+        FOREIGN KEY (variant_id) REFERENCES product_variants (id) ON DELETE SET NULL,
+    CONSTRAINT fk_storefront_events_size
+        FOREIGN KEY (size_id) REFERENCES sizes (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- The standard size run. Seeded so the API is usable immediately.

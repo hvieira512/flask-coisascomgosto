@@ -10,6 +10,7 @@ build SQL themselves.
 
 from __future__ import annotations
 
+from repositories.analytics import AnalyticsRepository
 from repositories.collections import CollectionRepository
 from repositories.color_sets import ColorSetRepository
 from repositories.contacts import ContactRepository
@@ -24,6 +25,7 @@ from repositories.users import UserRepository
 from repositories.variants import ProductVariantRepository
 
 __all__ = [
+    "AnalyticsRepository",
     "CollectionRepository",
     "ColorRepository",
     "ColorSetRepository",
