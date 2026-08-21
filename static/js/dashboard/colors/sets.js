@@ -16,10 +16,10 @@ export function setRow(set, pieces) {
 
     return `
       <tr data-set-id="${set.id}">
-        <td>${ColorSet.badge(set)}</td>
+        <td class="dash-col-name">${ColorSet.badge(set)}</td>
         <td class="fs-7 text-body-secondary">${escapeHtml(names || "Sem cores")}</td>
         <td class="fs-7 text-body-secondary">${escapeHtml(set.collection?.name ?? "—")}</td>
-        <td>
+        <td class="dash-col-photos" data-label="Peças">
           ${pieces
               ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
               : `<span class="badge rounded-pill chip is-quiet">Sem peças</span>`}

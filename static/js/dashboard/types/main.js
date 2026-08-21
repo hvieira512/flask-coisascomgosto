@@ -31,16 +31,16 @@ function typeRow(type) {
 
     return `
       <tr data-type-id="${type.id}">
-        <td>
+        <td class="dash-col-thumb">
           <span class="disc dash-type-icon">
             <i class="fa-solid ${escapeHtml(type.icon || "fa-tag")}"></i>
           </span>
         </td>
-        <td>
+        <td class="dash-col-name">
           <p class="fw-medium mb-0">${escapeHtml(type.name)}</p>
         </td>
         <td class="fs-7 text-body-secondary">${escapeHtml(type.description ?? "—")}</td>
-        <td>
+        <td class="dash-col-photos" data-label="Peças">
           ${pieces
               ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
               : `<span class="badge rounded-pill chip is-quiet">Sem peças</span>`}

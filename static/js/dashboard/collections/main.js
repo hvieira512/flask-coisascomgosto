@@ -23,15 +23,15 @@ const findCollection = (id) =>
 function collectionRow(collection, pieces) {
     return `
       <tr data-collection-id="${collection.id}">
-        <td>
+        <td class="dash-col-thumb">
           ${collection.image_url
               ? `<img class="dash-thumb" src="${escapeHtml(collection.image_url)}"
                       alt="Capa de ${escapeHtml(collection.name)}">`
               : `<span class="badge rounded-pill chip is-attention">Sem capa</span>`}
         </td>
-        <td><p class="fw-medium mb-0">${escapeHtml(collection.name)}</p></td>
+        <td class="dash-col-name"><p class="fw-medium mb-0">${escapeHtml(collection.name)}</p></td>
         <td class="fs-7 text-body-secondary">${escapeHtml(collection.description ?? "—")}</td>
-        <td>
+        <td class="dash-col-photos" data-label="Peças">
           ${pieces
               ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
               : `<span class="badge rounded-pill chip is-quiet">Sem peças</span>`}

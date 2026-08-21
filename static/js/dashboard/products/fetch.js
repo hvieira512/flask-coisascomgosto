@@ -72,8 +72,8 @@ const row = (product) => {
     // to. Both under the name, because the name alone rarely distinguishes two
     // boxes.
     tr.innerHTML = `
-        <td>${image}</td>
-        <td>
+        <td class="dash-col-thumb">${image}</td>
+        <td class="dash-col-name">
           <p class="fw-medium mb-0">${escapeHtml(product.name)}</p>
           <p class="fs-7 text-body-secondary mb-0">
             ${escapeHtml(product.type.name)}
@@ -81,7 +81,7 @@ const row = (product) => {
           </p>
         </td>
         <td>${colours}</td>
-        <td>${photoCell(product)}</td>
+        <td class="dash-col-photos" data-label="Fotografias">${photoCell(product)}</td>
         <td class="dash-col-actions">
           <span class="dash-row-actions d-flex gap-1">
             <button class="btn btn-sm btn-ghost" data-product-action="edit"

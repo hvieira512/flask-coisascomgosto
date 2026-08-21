@@ -455,12 +455,6 @@
     min-width: 0;
 }
 
-@media screen and (max-width: 991.98px) {
-    .dash-table-wrap {
-        overflow-x: auto;
-    }
-}
-
 .dash-table {
     --bs-table-hover-bg: var(--ccg-blue-50);
     --bs-table-border-color: var(--ccg-line-soft);
@@ -494,20 +488,6 @@
     letter-spacing: .08em;
     color: var(--ccg-ink-soft);
     white-space: nowrap;
-}
-
-/* Below the breakpoint the wrapper is a scrollport of its own, and sticky resolves
-   against the nearest one — so the header pinned 52px down *inside* the wrapper,
-   which put it on top of the first row. Scrolling a short table past its header is
-   cheaper than losing a row.
-
-   After the rule above, deliberately: at equal specificity the later declaration
-   wins, and inside a media query placed before it this override lost — silently,
-   because both rules are valid. */
-@media screen and (max-width: 991.98px) {
-    .dash-table thead th {
-        position: static;
-    }
 }
 
 .dash-table tbody tr {
@@ -555,6 +535,127 @@
 .dash-col-actions {
     width: 1%;
     white-space: nowrap;
+}
+
+/* Below the sidebar's breakpoint a record is a card, not a row.
+ *
+ * The table was 56rem wide inside a wrapper that scrolled sideways, with no
+ * gradient or shadow to say so, and the actions column started off-screen: on a
+ * 390px phone the only way to reach Apagar was to drag the table and hope. This
+ * is CSS rather than a second renderer in JavaScript, so all five tables — pieces,
+ * conjuntos, tipos, colecções, eventos — become cards from one place, and the
+ * markup stays a table, which is what it is on a real screen.
+ *
+ * A flex row that wraps rather than a grid, because the five tables do not have
+ * the same columns. The thumbnail, the name and the actions share the first line;
+ * everything else takes a full line underneath, in the order the columns are in.
+ */
+@media screen and (max-width: 991.98px) {
+    /* Nothing overflows any more, so the scrollport and the width floor that
+       caused it both go. */
+    .dash-table-wrap {
+        overflow-x: visible;
+    }
+
+    .dash-table.is-wide {
+        min-width: 0;
+    }
+
+    .dash-table,
+    .dash-table > tbody {
+        display: block;
+    }
+
+    /* The column names are on each card instead: a thumbnail, a name and two
+       buttons do not need labelling. */
+    .dash-table > thead {
+        display: none;
+    }
+
+    .dash-table > tbody > tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem .625rem;
+        padding: .75rem;
+        border: 1px solid var(--ccg-line-soft);
+        border-radius: var(--radius);
+    }
+
+    .dash-table > tbody > tr + tr {
+        margin-top: .5rem;
+    }
+
+    /* Bootstrap's striping and hover backgrounds are for rows in a table. On a
+       card they read as one card being selected. */
+    .dash-table > tbody > tr,
+    .dash-table > tbody > tr:hover > td {
+        --bs-table-accent-bg: transparent;
+        background: transparent;
+    }
+
+    .dash-table > tbody > tr > td {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        /* Bootstrap paints the cell, not the row, so without this each cell is a
+           pale panel of its own inside the card. */
+        background: transparent;
+    }
+
+    /* The first line: picture, name, buttons. */
+    .dash-table > tbody > tr > .dash-col-thumb {
+        width: auto;
+        order: 0;
+    }
+
+    .dash-table > tbody > tr > .dash-col-name {
+        flex: 1 1 6rem;
+        width: auto;
+        /* The table's 12rem floor plus the thumbnail plus the buttons is wider
+           than a 390px phone, so the buttons wrapped onto a line of their own
+           with nothing beside them. */
+        min-width: 0;
+        order: 1;
+    }
+
+    .dash-table > tbody > tr > .dash-col-actions {
+        width: auto;
+        order: 2;
+        margin-left: auto;
+    }
+
+    /* Always visible here. They are revealed on hover on a real screen, and a
+       phone has no hover — but @media (hover: none) is about the device, and a
+       narrow window on a laptop still reports a mouse, so it would leave an empty
+       box where the only route to Editar and Apagar should be. */
+    .dash-table > tbody > tr .dash-row-actions {
+        opacity: 1;
+    }
+
+    /* Room for three colour chips across a phone: on one line they truncated to
+       "Branco …", which is not a colour anyone can recognise. */
+    .dash-table > tbody > tr .swatch-row,
+    .dash-table > tbody > tr > td > .d-flex {
+        flex-wrap: wrap;
+    }
+
+    /* Everything else, full width, below. */
+    .dash-table > tbody > tr > td:not(.dash-col-thumb, .dash-col-name, .dash-col-actions) {
+        order: 3;
+    }
+
+    /* A count on its own line reads as a stray number; against the label it is a
+       fact about the piece. */
+    .dash-table > tbody > tr > .dash-col-photos::before {
+        content: attr(data-label);
+        color: var(--ccg-ink-faint);
+        font-size: .6875rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-right: .4rem;
+    }
 }
 
 /* Revealed on hover, so a row of icons does not compete with the names. Always

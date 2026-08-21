@@ -17,9 +17,19 @@ PHONE = {"width": 390, "height": 780}
 
 
 @pytest.fixture()
-def phone(browser, live_server, client, make_user, make_product):
+def phone(browser, live_server, client, make_user, make_product,
+          make_color, make_color_set):
     make_user("phone", password="Passw0rd!")
-    make_product("Caixa Redonda")
+    product = make_product("Caixa Redonda")
+
+    # Three colours with real names, because that is what a card has to fit: on
+    # one line the chips truncated to "Branco …", which names no colour.
+    for name in ("Branco e Dourado", "Preto e Dourado", "Vermelho e Branco"):
+        color_set = make_color_set(name, [make_color(f"Cor {name}")["id"]])
+        client.post(
+            f"/api/products/{product['id']}/variants",
+            json={"color_set_id": color_set["id"]},
+        )
 
     context = browser.new_context(viewport=PHONE)
     context.request.post(
@@ -167,27 +177,121 @@ class TestTheNavbar:
         assert page.locator("#sidebar .nav-link.active").count() == 1
 
 
-class TestTheTable:
-    def test_the_first_row_is_not_behind_the_header(self, phone):
-        """The header is sticky on a desktop, where the page is the scrollport. At
-        this width the table's own wrapper is the scrollport, so sticky pinned the
-        header 52px down inside it — on top of the first piece in the catalogue.
-        The override lives after the rule it overrides: at equal specificity the
-        later declaration wins, and it lost silently the other way round."""
+class TestARecordIsACard:
+    """It was a 56rem table inside a wrapper that scrolled sideways, with nothing
+    to say it scrolled, and the actions column started off-screen: the only way to
+    reach Apagar on a 390px phone was to drag the table and hope.
+
+    The markup is still a table — it is one on a real screen — so this is CSS, and
+    all five dashboard listings become cards from the same rules.
+    """
+
+    def test_the_column_header_is_gone(self, phone):
+        """A card carries its own labels; a header row above one column of cards
+        labels nothing. It also used to be sticky here, which pinned it on top of
+        the first piece."""
         page, _ = phone
-        state = page.evaluate(
+
+        assert page.evaluate(
+            "() => getComputedStyle(document.querySelector('.dash-table thead'))"
+            ".display"
+        ) == "none"
+
+    def test_the_page_does_not_scroll_sideways(self, phone):
+        """The honest test is trying to move it: documentElement.scrollWidth is
+        inflated by any descendant scrollport and reported 524px on a page that
+        cannot move at all."""
+        page, _ = phone
+
+        page.evaluate("() => window.scrollTo(300, 0)")
+
+        assert page.evaluate("() => window.scrollX") == 0
+
+    def test_the_records_wrapper_has_nothing_left_to_scroll(self, phone):
+        page, _ = phone
+
+        overflow = page.evaluate(
             """() => {
-                const th = document.querySelector('.dash-table thead th');
-                const first = document.querySelector('#product-list tr');
+                const wrap = document.querySelector('.dash-table-wrap');
+                return wrap.scrollWidth - wrap.clientWidth;
+            }"""
+        )
+
+        assert overflow <= 1, "the table is still wider than its card"
+
+    def test_every_action_is_on_screen(self, phone):
+        """Editar and Apagar were the far right of a 56rem table."""
+        page, _ = phone
+
+        offscreen = page.evaluate(
+            """(width) => [...document.querySelectorAll(
+                    '#product-list tr [data-product-action]')]
+                .filter(button => {
+                    const box = button.getBoundingClientRect();
+                    return box.right > width + 1 || box.left < 0 || box.width === 0;
+                }).length""",
+            PHONE["width"],
+        )
+
+        assert offscreen == 0
+
+    def test_the_actions_are_visible_without_a_hover(self, phone):
+        """They are revealed on hover on a real screen. A phone cannot hover, and
+        `@media (hover: none)` describes the device rather than the width — a
+        narrow window on a laptop still reports a mouse, and left an empty box
+        where the only route to Editar should be."""
+        page, _ = phone
+
+        opacity = page.evaluate(
+            "() => getComputedStyle(document.querySelector("
+            "'#product-list tr .dash-row-actions')).opacity"
+        )
+
+        assert opacity == "1"
+
+    def test_a_card_is_a_card_and_not_a_row(self, phone):
+        page, _ = phone
+        shape = page.evaluate(
+            """() => {
+                const row = document.querySelector('#product-list tr');
+                const style = getComputedStyle(row);
+                const box = row.getBoundingClientRect();
                 return {
-                    position: getComputedStyle(th).position,
-                    headBottom: Math.round(th.getBoundingClientRect().bottom),
-                    firstTop: Math.round(first.getBoundingClientRect().top),
+                    display: style.display,
+                    borderWidth: parseFloat(style.borderTopWidth),
+                    radius: parseFloat(style.borderTopLeftRadius),
+                    width: Math.round(box.width),
                 };
             }"""
         )
-        assert state["position"] == "static"
-        assert state["firstTop"] >= state["headBottom"] - 1, state
+
+        assert shape["display"] == "flex"
+        assert shape["borderWidth"] >= 1
+        assert shape["radius"] > 0
+        assert shape["width"] <= PHONE["width"]
+
+    def test_the_colour_names_are_not_truncated_to_nothing(self, phone):
+        """On one line three chips came out "Branco …", "Preto …", "Preto …" — the
+        colour is the whole point of the chip."""
+        page, _ = phone
+        page.wait_for_selector("#product-list .color-set-name")
+
+        clipped = page.evaluate(
+            """() => [...document.querySelectorAll('#product-list .color-set-name')]
+                .filter(el => el.scrollWidth > el.clientWidth + 1).length"""
+        )
+
+        assert clipped == 0
+
+    def test_tapping_a_card_still_opens_the_editor(self, phone):
+        """The row click is how a record is opened, and it has to survive the row
+        becoming a card."""
+        page, _ = phone
+
+        page.locator("#product-list tr[data-product-id]").first.click()
+
+        page.wait_for_selector("#editProductModal.show", timeout=5000)
+        assert page.locator("#editProductModal").is_visible()
 
 
 class TestTheModalScrollsItsOwnBody:

@@ -20,7 +20,7 @@ async function loadEvents() {
     rows.innerHTML = events.length
         ? events.map((event) => `
             <tr data-event-id="${event.id}">
-              <td>
+              <td class="dash-col-name">
                 <p class="fw-medium mb-0">
                   ${escapeHtml(event.name)}
                   ${stateChip(event, { extraClass: "ms-2" })}
