@@ -1,34 +1,26 @@
-"""Guards for the element IDs and wrappers the front-end JavaScript depends on.
+"""Guards for the element IDs the front-end JavaScript depends on.
 
 These exist because a template rewrite silently broke the login page: a framework
 migration dropped `id="form-header"` and `id="auth-container"`, and
 `document.querySelector` returned null at runtime. Nothing else in the suite
 caught it, because the server-rendered HTML was still perfectly valid — only the
-browser knew it was broken.
+browser knew it was broken. Any test here should name the JS file that would
+break if the assertion fails.
 
-Any test here should name the JS file that would break if the assertion fails.
+What is deliberately *not* here any more: tests that read a JavaScript file and
+asserted strings in it — the endpoints a page calls, the markup a template
+literal contains, a particular line of code. They pass whether the page works or
+not, and they fail whenever a line moves, which is the wrong way round on both
+counts. Between them they never caught anything but my own renames. The behaviour
+they claimed to protect is now checked where it happens: in a browser
+(test_collection_form.py, test_dialog_behaviour.py), against the API, or against
+a screenshot (test_appearance.py).
 """
 
 import pathlib
 import re
 
 import pytest
-
-
-def page_source(*paths):
-    """Every module a page is built from, concatenated.
-
-    A directory rather than one file on purpose. These tests kept failing on a
-    page that had not changed behaviour at all, only been split into modules —
-    which is the opposite of what a guard should do. What the page can do belongs
-    to the page, not to whichever file currently holds the call.
-    """
-    sources = []
-    for path in paths:
-        target = pathlib.Path(path)
-        files = sorted(target.rglob("*.js")) if target.is_dir() else [target]
-        sources += [f.read_text(encoding="utf-8") for f in files]
-    return "\n".join(sources)
 
 
 class TestLoginPageHooks:
@@ -387,31 +379,6 @@ class TestDashboardColors:
         assert "/dashboard/colors" in html
         assert ">Cores<" in html
 
-    def test_the_page_offers_the_full_set_on_both_halves(self, client, make_user):
-        """Colour sets and the colours they are built from are both editable.
-
-        The dashboard had neither: the API has carried full CRUD for both since
-        the beginning, but a variant could only be pointed at a set that was
-        already in the database, so the owners could not add a combination.
-        """
-        source = page_source("static/js/dashboard/colors")
-        # The endpoints and the methods, rather than the names of wrappers around
-        # them: what matters is that both halves of the page can be written to.
-        for endpoint in ["API.colorSets.create", "API.colorSets.update",
-                         "API.colorSets.delete", "API.colors.create",
-                         "API.colors.update", "API.colors.delete"]:
-            assert endpoint in source, endpoint
-
-    def test_the_delete_dialog_says_what_goes_with_the_set(self, client, make_user):
-        """Deleting a set deletes every variant offered in it, and their photos.
-
-        Unlike a type, this is allowed — so the count has to be on the dialog
-        rather than discovered afterwards.
-        """
-        source = page_source("static/js/dashboard/colors")
-        assert "pieceCounts.get(set.id)" in source
-        assert "fotografias" in source
-
 
 class TestDashboardCollections:
     """The collections page is driven by js/dashboard/collections/main.js.
@@ -438,26 +405,6 @@ class TestDashboardCollections:
         html = self._page(client, make_user)
         assert "/dashboard/collections" in html
         assert "Colecções" in html
-
-    def test_the_page_can_set_and_clear_a_cover(self):
-        source = page_source("static/js/dashboard/collections")
-        for endpoint in ["API.collections.create", "API.collections.update",
-                         "API.collections.delete", "API.collections.cover"]:
-            assert endpoint in source, endpoint
-        # The cover is multipart, which is the one call that cannot be a plain body.
-        assert "new FormData()" in source
-
-    def test_the_form_is_split_in_two(self):
-        """What the collection is on the left, what it looks like on the right."""
-        source = page_source("static/js/dashboard/collections")
-        assert '<div class="row g-3">' in source
-        assert source.count('<div class="col-md">') == 2
-
-    def test_editing_carries_the_existing_cover_through(self):
-        """PUT replaces the row, so a form that does not send image_url would
-        clear a cover the owner never touched."""
-        source = page_source("static/js/dashboard/collections")
-        assert "payload.image_url = collection.image_url" in source
 
 
 class TestSteppedCreateForms:
@@ -715,14 +662,6 @@ def test_the_materials_panel_offers_the_full_set(client, make_user):
 
     for hook in ["material-form", "material-name", "material-rows", "material-count"]:
         assert f'id="{hook}"' in html, hook
-
-    # The endpoints, not the names of wrappers around them: this test used to
-    # assert createMaterial/updateMaterial/deleteMaterial and broke the day those
-    # one-line forwarders were deleted, though the panel does exactly what it did.
-    source = page_source("static/js/dashboard/types")
-    for endpoint in ["API.materials.list", "API.materials.create",
-                     "API.materials.update", "API.materials.delete"]:
-        assert endpoint in source, endpoint
 
 
 class TestStylesheetsParse:

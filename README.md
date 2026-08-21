@@ -187,6 +187,34 @@ true` once did nothing at all, because a class rule set its own `display` and
 outranked the attribute, and only a real layout notices that the button is still
 there.
 
+#### Appearance
+
+The rest of the suite tests geometry and never appearance, and the difference has
+cost real defects: a modal card that rendered transparent, colour-set names
+invisible because a line-height collapsed them, a 32px list indent, photo slots at
+three times their size, hover underlines the design never had. Every one was found
+by eye, on a screenshot, after the tests had gone green.
+
+```bash
+SCREENSHOTS=1 pytest tests/test_appearance.py        # compare with the baselines
+SCREENSHOTS=update pytest tests/test_appearance.py   # recapture them
+```
+
+Eleven pages at two widths, downscaled to 240px wide and compared with the PNGs in
+`tests/baselines/`. Downscaled deliberately: a full-resolution comparison fails on
+font anti-aliasing and would be switched off within a week, while this still fails
+loudly on anything the eye would notice. On the machine that captured them the
+difference is 0.00% on every page, so the threshold is 0.1%; retinting one colour
+token trips 21 of the 22 views, and deleting `.section`'s padding trips the phone
+pages by 43–100%.
+
+**Opt-in, and not run by CI.** Chromium renders text differently on macOS and on
+Linux, so a baseline captured on one fails on the other — committing baselines that
+match one machine would leave the suite red for everybody else. This is a check the
+person changing the design runs, and the honest scope of it. Only the first 1400
+compared pixels of each page are looked at, which is the fold and a good way past
+it.
+
 #### Types, and CI
 
 ```bash
