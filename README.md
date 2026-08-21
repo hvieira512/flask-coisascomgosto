@@ -354,6 +354,19 @@ rather than a redesign. Password hashes are never returned.
 
 Non-numeric or non-positive values return `400`.
 
+> **The front end mostly does not page — and says so when it cannot.** The
+> dashboard works out its counts and filters from whole lists in the browser,
+> because no endpoint computes pieces-per-type or filters on "has a photograph".
+> That is deliberate at this size and wrong past 100 pieces, which is the API's
+> own cap. So `core/api.js` compares `pagination.total` against what arrived and
+> throws, naming the endpoint and both numbers, rather than rendering a count
+> that is quietly short. A caller that means to page says `page` (the storefront
+> grid does, nine at a time), and one that only wants `pagination.total` says
+> `partial`.
+>
+> When that error shows up, the fix is server-side: a `has_photos` filter on the
+> products list and an endpoint for pieces-per-lookup.
+
 **Search** — list endpoints accept `q` for a case-insensitive substring match on
 name.
 
@@ -364,7 +377,7 @@ name.
 | `200` / `201` | Success |
 | `400` | Missing/invalid body fields, bad pagination, or illegal type nesting |
 | `401` | Wrong password, or a missing/expired access token and no session |
-| `403` | Authenticated, but the account lacks the required privilege |
+| `403` | A session-authenticated write with no `X-Requested-With` header |
 | `422` | Malformed token, or the wrong token type for the endpoint |
 | `404` | The resource, or something it references, does not exist |
 | `409` | Name (or variant) already taken |

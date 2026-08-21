@@ -40,7 +40,7 @@ function query(path, params) {
  * failure in Portuguese and that one did not, so a shopper got
  * "Request failed: 500". Neither gap was worth two implementations.
  */
-export async function request(url, { method = "GET", body, params, fallback } = {}) {
+export async function request(url, { method = "GET", body, params, fallback, partial = false } = {}) {
     // Proves to api/security.py that a write came from our own code and not from
     // a cross-site form using the session cookie. Sent on reads too, since the
     // header is what identifies the caller, not a per-request decision.
@@ -69,14 +69,55 @@ export async function request(url, { method = "GET", body, params, fallback } = 
 
     // 204 and an empty 200 have nothing to parse; a DELETE returning the row does.
     if (response.status === 204) return null;
-    return response.json().catch(() => null);
+
+    const payload = await response.json().catch(() => null);
+    if (!partial) assertWholeList(url, payload);
+    return payload;
+}
+
+/**
+ * Refuse a list that arrived incomplete.
+ *
+ * Almost every list on these screens is "fetch it all and work it out here":
+ * the dashboard counts pieces per type, per collection and per colour set in the
+ * browser, and filters by photograph there too, because no endpoint does either.
+ * That is fine at fourteen products and wrong at a hundred and one — the API
+ * caps `limit` at 100, so past that the counts, the filter and the home page's
+ * "sem fotografia" strip are all quietly built on a fraction of the catalogue.
+ * Nothing fails; the numbers are just smaller than the truth.
+ *
+ * So make it fail. A caller that means to page through says `page`, which is how
+ * the storefront's paginated grid opts out; anyone else asking for a list is
+ * asking for the whole list and should hear about it when they did not get one.
+ */
+function assertWholeList(url, payload) {
+    const envelope = payload?.pagination;
+    if (!envelope) return;
+
+    const received = envelope.page * envelope.limit;
+    if (envelope.total <= received) return;
+    if (new URL(url, window.location.origin).searchParams.has("page")) return;
+
+    const error = new Error(
+        `${url} answered ${received} of ${envelope.total} records. This screen ` +
+        `works out its counts and filters from the whole list, so it would be ` +
+        `built on part of one. The API caps limit at 100: this now needs a ` +
+        `server-side filter or real pagination.`
+    );
+    // The fallbacks below exist for a list that failed to arrive, where showing
+    // nothing beats showing an error. This is not that: the data is there and we
+    // asked for it wrongly, and swallowing it is what made the bug invisible in
+    // the first place.
+    error.truncated = true;
+    throw error;
 }
 
 /** The same, for reads where an empty result is a better answer than a toast. */
-export async function requestOr(url, fallbackValue) {
+export async function requestOr(url, fallbackValue, options = {}) {
     try {
-        return await request(url);
+        return await request(url, options);
     } catch (error) {
+        if (error.truncated) throw error;
         return fallbackValue;
     }
 }
@@ -87,10 +128,12 @@ export async function requestOr(url, fallbackValue) {
  * `key` is what the envelope calls it: /api/color-sets/ answers
  * `{ color_sets: [...], pagination: {...} }`. limit=100 because every list on
  * these screens is a lookup the owners scroll, not a page they leaf through —
- * it used to be spelled out at fifteen call sites.
+ * it used to be spelled out at fifteen call sites. 100 is also the API's own
+ * ceiling, so `request` refuses a reply that had to leave records out.
  *
  * `orEmpty` is for a list that is context rather than content: a filter bar with
- * no options is worth more than a page that refused to load.
+ * no options is worth more than a page that refused to load. A truncated list is
+ * not context, though — it is a wrong answer, so it comes through regardless.
  */
 export async function list(url, key, { fallback, orEmpty = false, limit = 100 } = {}) {
     const options = { params: { limit }, fallback };
@@ -100,6 +143,7 @@ export async function list(url, key, { fallback, orEmpty = false, limit = 100 } 
     try {
         return (await request(url, options))[key] ?? [];
     } catch (error) {
+        if (error.truncated) throw error;
         return [];
     }
 }

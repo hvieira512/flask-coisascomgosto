@@ -1,4 +1,4 @@
-import { API, requestOr } from "../../core/api.js";
+import { API, list } from "../../core/api.js";
 
 
 /**
@@ -8,8 +8,10 @@ import { API, requestOr } from "../../core/api.js";
  */
 let cache = null;
 
-const listOf = async (url, key) =>
-    (await requestOr(`${url}?limit=100`, {}))[key] ?? [];
+/** A missing lookup leaves its select empty rather than failing the form; a
+ *  truncated one still throws, since a form offering half the collections is
+ *  worse than one that says it broke. */
+const listOf = (url, key) => list(url, key, { orEmpty: true });
 
 export async function reference({ refresh = false } = {}) {
     if (cache && !refresh) return cache;

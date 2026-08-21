@@ -1,12 +1,17 @@
-import { API, requestOr } from "../core/api.js";
+import { API, list, requestOr } from "../core/api.js";
 import { Notify } from "../core/notify.js";
 import { daysUntil, eventState, shortDate, stateChip } from "./events/dates.js";
 import { escapeHtml } from "../core/html.js";
 
 /** Every list endpoint answers with a pagination envelope. A card that cannot be
- *  counted shows nothing rather than taking the whole page down with it. */
+ *  counted shows nothing rather than taking the whole page down with it.
+ *
+ *  One record, because only the envelope is read — `partial` says so, since
+ *  asking for one of fourteen is otherwise exactly the truncation `request`
+ *  refuses. */
 const totalOf = async (url) =>
-    (await requestOr(`${url}?limit=1`, { pagination: { total: 0 } })).pagination.total;
+    (await requestOr(url, { pagination: { total: 0 } },
+                     { params: { limit: 1 }, partial: true })).pagination.total;
 
 /** Photographs live on the product and on each variant. */
 const photoCount = (product) =>
@@ -158,19 +163,24 @@ function renderEvents(events) {
         : `<p class="text-body-secondary fs-7">Sem eventos registados.</p>`;
 }
 
-/** One request for each list, shared by the strip and the panels below it. */
+/** One request for each list, shared by the strip and the panels below it.
+ *
+ *  Through `list` rather than fetch(): the strip counts the pieces with no
+ *  photograph out of everything it was given, so a list that arrived short would
+ *  put a wrong number on the page. `list` refuses one instead. */
 async function load() {
-    const [productsRes, eventsRes] = await Promise.all([
-        fetch(`${API.products.list}?limit=100`),
-        fetch(`${API.events.list}?limit=100`),
-    ]);
-    if (!productsRes.ok || !eventsRes.ok) {
+    let products;
+    let events;
+    try {
+        [products, events] = await Promise.all([
+            list(API.products.list, "products"),
+            list(API.events.list, "events"),
+        ]);
+    } catch (error) {
         Notify.error("Erro ao carregar o painel.");
+        console.error(error);
         return;
     }
-
-    const { products } = await productsRes.json();
-    const { events } = await eventsRes.json();
 
     renderAttention(products, events);
     renderMissingPhotos(products);
