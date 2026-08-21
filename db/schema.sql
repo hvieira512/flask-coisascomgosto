@@ -22,11 +22,17 @@
 --                       the timeline on the landing page.
 --
 -- NOTE ON REFERENTIAL INTEGRITY
--- This schema is deliberately non-relational: there are no FOREIGN KEY
--- constraints. Relationships are plain integer columns backed by indexes, and
--- every cascade or orphan-cleanup is performed in the repository layer instead
--- of by the database. That means MySQL will NOT stop an orphan row being
--- written by anything that bypasses api/repositories/.
+-- The cascades are written twice, on purpose. Every FOREIGN KEY below states
+-- what the repository layer already does — detach a product from a deleted
+-- material, remove the variants of a deleted colour set, refuse to delete a type
+-- still in use — and the repositories keep doing it, because they also return
+-- the URLs of the photographs whose rows have gone so the routes can delete the
+-- files. A cascade cannot do that.
+--
+-- So the repositories are the behaviour and the constraints are the backstop:
+-- one direct DELETE that bypasses repositories/ no longer leaves orphans, it
+-- fails or cascades correctly. The rules were added in 0006 against a database
+-- with no orphan rows in it, which is the evidence the two agree.
 --
 -- NOTE ON COLUMN TYPES
 -- Text columns that are indexed, unique, or part of a composite key must be
@@ -48,6 +54,10 @@ DROP TABLE IF EXISTS sizes;
 DROP TABLE IF EXISTS collections;
 DROP TABLE IF EXISTS materials;
 DROP TABLE IF EXISTS users;
+-- Not created below, and not part of this schema. It is dropped here because
+-- init-db only removes what it names, which is how a table nothing referenced
+-- survived in the live database until 0005.
+DROP TABLE IF EXISTS categories;
 
 -- What a piece is made of: "Madeira", "Tecido". A lookup the owners maintain
 -- themselves, and optional on a product — a piece that mixes materials, or one
@@ -104,7 +114,9 @@ CREATE TABLE color_sets (
     collection_id INT,
     name VARCHAR(120) NOT NULL,
     UNIQUE KEY uq_color_sets_collection_name (collection_id, name),
-    KEY idx_color_sets_collection (collection_id)
+    KEY idx_color_sets_collection (collection_id),
+    CONSTRAINT fk_color_sets_collection
+        FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Which colours make up a set, and in what order.
@@ -113,7 +125,11 @@ CREATE TABLE color_set_colors (
     color_id INT NOT NULL,
     position INT NOT NULL DEFAULT 0,
     PRIMARY KEY (color_set_id, color_id),
-    KEY idx_color_set_colors_color (color_id)
+    KEY idx_color_set_colors_color (color_id),
+    CONSTRAINT fk_color_set_colors_set
+        FOREIGN KEY (color_set_id) REFERENCES color_sets (id) ON DELETE CASCADE,
+    CONSTRAINT fk_color_set_colors_color
+        FOREIGN KEY (color_id) REFERENCES colors (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- type_id is required: what the object is, is the one fact every piece has.
@@ -130,7 +146,18 @@ CREATE TABLE products (
     KEY idx_products_type (type_id),
     KEY idx_products_collection (collection_id),
     KEY idx_products_default_size (default_size_id),
-    KEY idx_products_name (name)
+    KEY idx_products_name (name),
+    -- RESTRICT, not SET NULL: type_id is NOT NULL, so there is no unfiled state
+    -- to fall back on. routes/product_types.py answers 409 with the number of
+    -- pieces still using the type; this is the same refusal, one layer down.
+    CONSTRAINT fk_products_type
+        FOREIGN KEY (type_id) REFERENCES product_types (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_products_material
+        FOREIGN KEY (material_id) REFERENCES materials (id) ON DELETE SET NULL,
+    CONSTRAINT fk_products_collection
+        FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE SET NULL,
+    CONSTRAINT fk_products_default_size
+        FOREIGN KEY (default_size_id) REFERENCES sizes (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- One product offered in one colour set. The unique constraint stops the same
@@ -141,7 +168,11 @@ CREATE TABLE product_variants (
     color_set_id INT NOT NULL,
     UNIQUE KEY uq_product_variants_product_color_set (product_id, color_set_id),
     KEY idx_product_variants_product (product_id),
-    KEY idx_product_variants_color_set (color_set_id)
+    KEY idx_product_variants_color_set (color_set_id),
+    CONSTRAINT fk_product_variants_product
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_variants_color_set
+        FOREIGN KEY (color_set_id) REFERENCES color_sets (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Photos of a product. variant_id NULL means the image belongs to the product
@@ -155,7 +186,11 @@ CREATE TABLE product_images (
     alt VARCHAR(255),
     position INT NOT NULL DEFAULT 0,
     KEY idx_product_images_product (product_id),
-    KEY idx_product_images_variant (variant_id)
+    KEY idx_product_images_variant (variant_id),
+    CONSTRAINT fk_product_images_product
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_images_variant
+        FOREIGN KEY (variant_id) REFERENCES product_variants (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- The sizes a product is available in. Empty means "only the default size".
@@ -163,7 +198,11 @@ CREATE TABLE product_sizes (
     product_id INT NOT NULL,
     size_id INT NOT NULL,
     PRIMARY KEY (product_id, size_id),
-    KEY idx_product_sizes_size (size_id)
+    KEY idx_product_sizes_size (size_id),
+    CONSTRAINT fk_product_sizes_product
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_sizes_size
+        FOREIGN KEY (size_id) REFERENCES sizes (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE users (

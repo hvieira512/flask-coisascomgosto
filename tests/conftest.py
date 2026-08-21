@@ -56,15 +56,23 @@ def clean_database(database):
         )
         tables = [row["name"] for row in cursor.fetchall()]
 
-        for table in tables:
-            # schema_migrations is a record of the schema, not application data.
-            # Emptying it between tests would say the migrations had never run
-            # against a schema that already has them.
-            if table == "schema_migrations":
-                continue
-            cursor.execute(f"TRUNCATE TABLE `{table}`")
-        for statement in seeds:
-            cursor.execute(statement)
+        # MySQL refuses to TRUNCATE a table any foreign key points at, whatever
+        # order the tables come in — and TRUNCATE is what resets AUTO_INCREMENT,
+        # which the fixtures rely on for IDs starting at 1. Since every table is
+        # emptied here, there is no moment where a missing parent row matters.
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+        try:
+            for table in tables:
+                # schema_migrations is a record of the schema, not application
+                # data. Emptying it between tests would say the migrations had
+                # never run against a schema that already has them.
+                if table == "schema_migrations":
+                    continue
+                cursor.execute(f"TRUNCATE TABLE `{table}`")
+            for statement in seeds:
+                cursor.execute(statement)
+        finally:
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
 
 @pytest.fixture(autouse=True)

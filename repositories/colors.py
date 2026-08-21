@@ -25,7 +25,8 @@ class ColorRepository(NameTableRepository):
     def delete(self, color_id: int) -> None:
         """Delete a colour, removing it from any colour set that used it.
 
-        With no foreign keys, the join rows are cleared here.
+        The join rows are cleared here as well as by ON DELETE CASCADE, so the
+        behaviour is stated where it is decided.
         """
         self._cursor.execute(
             "DELETE FROM color_set_colors WHERE color_id = %s", (color_id,)

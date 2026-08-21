@@ -22,8 +22,9 @@ class MaterialRepository(NameTableRepository):
 
         Material is descriptive, not structural — a piece does not stop existing
         because the owners renamed or removed the material list entry, so the
-        products are detached rather than deleted. With no foreign keys in the
-        schema, that detaching happens here.
+        products are detached rather than deleted. The schema says the same thing
+        (ON DELETE SET NULL); doing it here keeps the behaviour readable where it
+        is decided rather than only in the constraint.
         """
         self._cursor.execute(
             "UPDATE products SET material_id = NULL WHERE material_id = %s",

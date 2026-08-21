@@ -90,6 +90,12 @@ services:
       MYSQL_DATABASE: coisascomgosto_test
       # The reloader would fight the test runner.
       FLASK_DEBUG: "0"
+      # And with the reloader off, config.py refuses the placeholder secrets
+      # .env ships — which is the whole point of that check. These are the same
+      # values the `app` fixture sets, so the suite behaves identically; without
+      # them the container will not import config at all.
+      SECRET_KEY: test-secret
+      JWT_SECRET_KEY: test-jwt-secret-key-at-least-32-bytes-long
     entrypoint: ["pytest", "-q"]
 
 volumes:

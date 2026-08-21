@@ -180,12 +180,11 @@ class ProductRepository:
     def delete(self, product_id: int) -> list[str]:
         """Delete a product and everything hanging off it.
 
-        The schema has no foreign keys, so the rows a cascade would remove are
-        removed explicitly here — otherwise they would linger as orphans.
-
-        Returns the URLs of the photographs whose rows have gone, product-level and
-        per-colour alike, so the caller can remove the files. Deleting a piece used
-        to leave every one of its photographs on disk.
+        ON DELETE CASCADE would remove the child rows on its own. This method
+        stays because it returns the URLs of the photographs whose rows have gone,
+        product-level and per-colour alike, so the caller can remove the files —
+        a cascade deletes the row and leaves the JPEG on disk, which is how a
+        deleted piece used to leave every one of its photographs behind.
         """
         self._cursor.execute(
             "SELECT url FROM product_images WHERE product_id = %s", (product_id,)

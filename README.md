@@ -199,29 +199,32 @@ Caixa Redonda
 
 ### Storage model
 
-The schema is **deliberately non-relational**: primary keys and indexes only,
-**no `FOREIGN KEY` constraints**. Relationships are plain integer columns with
-an index on each (13 explicit indexes; `EXPLAIN QUERY PLAN` confirms lookups
-like `products.type_id` use them).
+Relationships are integer columns with an index on each, and **every one of them
+also carries a `FOREIGN KEY`** (added in migration `0006`, against a database
+that had no orphan row in it).
 
-**Every cascade lives in the repository layer**, not the database:
+**Every cascade is still written in the repository layer**, and that is not
+redundancy to be tidied away: a repository delete returns the URLs of the
+photographs whose rows it removed, so the route can delete the files, which a
+database cascade cannot do. The repositories are the behaviour; the constraints
+are the backstop for the one direct `DELETE` that bypasses them. Each rule below
+matches the method beside it.
 
-| Deleting… | …does this, in `api/repositories/` |
-|---|---|
-| material | clears `material_id` on the pieces made of it; they survive |
-| collection | clears `collection_id` on its colour sets and products |
-| colour | removes it from every colour set |
-| colour set | deletes variants using it, plus their images |
-| size | unlinks it from products, clears it as any default size |
-| product type | deletes sub-types, clears `type_id` on products |
-| product | deletes its images, sizes and variants |
-| variant | deletes its images |
+| Deleting… | …does this, in `repositories/` | and the constraint |
+|---|---|---|
+| material | clears `material_id` on the pieces made of it; they survive | `SET NULL` |
+| collection | clears `collection_id` on its colour sets and products | `SET NULL` |
+| colour | removes it from every colour set | `CASCADE` |
+| colour set | deletes variants using it, plus their images | `CASCADE` |
+| size | unlinks it from products, clears it as any default size | `CASCADE`, `SET NULL` |
+| product type | refused while any piece uses it — `409` with the count | `RESTRICT` |
+| product | deletes its images, sizes and variants | `CASCADE` |
+| variant | deletes its images | `CASCADE` |
 
-> **The database no longer prevents orphans.** Anything writing outside
-> `api/repositories/` — a manual SQL session, a future script — can leave
-> dangling rows, and MySQL will not complain. The cascade tests in
-> `tests/test_repositories.py` and `tests/test_catalog_api.py` are what keep
-> this honest.
+`RESTRICT` on `products.type_id` is the one that is not a cascade: `type_id` is
+`NOT NULL`, so there is no unfiled-piece state to fall back on. The 409 with the
+count of pieces still using the type is what the owners see; the constraint stops
+the same thing happening behind the API's back.
 
 ### Rules worth knowing
 
@@ -544,5 +547,6 @@ tests/                  pytest suite, isolated per test by truncating tables
   plain dicts, which makes them directly unit-testable.
 - **`get_db_connection()` owns the transaction** — it commits on success and
   rolls back on exception, so handlers don't call `commit()` themselves.
-- The schema has **no foreign keys**; cascades are implemented in the
-  repositories. See *Storage model* above.
+- Cascades are implemented in the repositories **and** declared as foreign keys.
+  The repositories are what runs; the constraints are the backstop. See *Storage
+  model* above.
