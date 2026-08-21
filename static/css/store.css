@@ -460,6 +460,14 @@ a.card:hover {
     gap: .55rem;
 }
 
+/* An <a> with no href gets no focus ring of its own, and these are reached by
+   keyboard now. Bootstrap's own variables, so it matches every other control. */
+.filters-panel .nav-link.filter-entry:focus-visible {
+    outline: 0;
+    border-radius: var(--bs-border-radius-sm);
+    box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), .3);
+}
+
 /* Nothing behind it: still listed, because it is part of the vocabulary, but
    ticking it could only empty the grid. */
 .filters-panel .nav-link.is-empty {

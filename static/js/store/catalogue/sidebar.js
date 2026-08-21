@@ -14,6 +14,13 @@ import { list } from "../../core/api.js";
  * One entry: a checkbox, the name, and how many pieces are behind it. The box
  * is what says these are cumulative — before it, a second click looked like
  * it had undone the first.
+ *
+ * role="checkbox" with aria-checked rather than a button with aria-pressed,
+ * because that is what these are: several can be on at once, and each is
+ * independent. And `tabindex` because an <a> with no href is not focusable —
+ * every filter was unreachable by keyboard while the badges that *remove* the
+ * same filters were focusable, so a keyboard user could undo a filter they had
+ * no way to apply.
  */
 function renderEntry(group, item, counts) {
     const count = counts.get(item.id) ?? 0;
@@ -24,6 +31,7 @@ function renderEntry(group, item, counts) {
     return `
       <li class="nav-item">
         <a class="nav-link filter-entry${empty ? " is-empty" : ""}"
+           role="checkbox" aria-checked="false" tabindex="${empty ? -1 : 0}"
            data-filter-group="${group}" data-filter-value="${item.id}"
            data-filter-label="${escapeHtml(item.name)}"
            ${empty ? 'aria-disabled="true" title="Sem peças"' : ""}>
@@ -68,17 +76,34 @@ async function loadGroup(group, facets) {
 export async function mountSidebar(facets) {
     const root = document.getElementById("filter-groups");
 
+    function toggle(entry) {
+        if (entry.classList.contains("is-empty")) return;
+        StoreFilters.toggle(
+            entry.dataset.filterGroup,
+            entry.dataset.filterValue,
+            entry.dataset.filterLabel
+        );
+    }
+
     root.addEventListener("click", (event) => {
-        const link = event.target.closest("a[data-filter-group]");
-        if (!link) return;
+        const entry = event.target.closest("a[data-filter-group]");
+        if (!entry) return;
 
         event.preventDefault();
-        if (link.classList.contains("is-empty")) return;
-        StoreFilters.toggle(
-            link.dataset.filterGroup,
-            link.dataset.filterValue,
-            link.dataset.filterLabel
-        );
+        toggle(entry);
+    });
+
+    // Space is how a checkbox is ticked; Enter costs nothing and is what a
+    // keyboard user tries first on something that looks like a link.
+    root.addEventListener("keydown", (event) => {
+        if (event.key !== " " && event.key !== "Enter") return;
+
+        const entry = event.target.closest("a[data-filter-group]");
+        if (!entry) return;
+
+        // Space would otherwise scroll the page out from under the sidebar.
+        event.preventDefault();
+        toggle(entry);
     });
 
     await Promise.all(
@@ -89,11 +114,11 @@ export async function mountSidebar(facets) {
 
     return {
         sync() {
-            root.querySelectorAll("a[data-filter-group]").forEach((link) => {
-                const { filterGroup, filterValue } = link.dataset;
+            root.querySelectorAll("a[data-filter-group]").forEach((entry) => {
+                const { filterGroup, filterValue } = entry.dataset;
                 const on = StoreFilters.isSelected(filterGroup, filterValue);
-                link.classList.toggle("is-active", on);
-                link.setAttribute("aria-pressed", String(on));
+                entry.classList.toggle("is-active", on);
+                entry.setAttribute("aria-checked", String(on));
             });
         },
     };
