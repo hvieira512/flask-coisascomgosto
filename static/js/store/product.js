@@ -45,12 +45,15 @@ import { escapeHtml } from "../core/html.js";
         if (product.collection) rows.push(["Colecção", product.collection.name]);
         if (product.default_size) rows.push(["Tamanho base", product.default_size.name]);
 
+        // mb-0 on the value: Bootstrap gives every <dd> a bottom margin, which in a
+        // flex row becomes 8px of dead space under the pair — the label and value
+        // then sit high instead of centred between the row's rules.
         meta.innerHTML = rows
             .map(
                 ([label, value]) => `
                 <div class="spec-row">
                   <dt>${escapeHtml(label)}</dt>
-                  <dd>${escapeHtml(value)}</dd>
+                  <dd class="mb-0">${escapeHtml(value)}</dd>
                 </div>`
             )
             .join("");
@@ -199,7 +202,9 @@ import { escapeHtml } from "../core/html.js";
         document.title = `${product.name} · Coisas com Gosto`;
         document.getElementById("crumb-name").textContent = product.name;
         document.getElementById("product-name").textContent = product.name;
-        document.getElementById("product-description").textContent = product.description || "";
+        const description = document.getElementById("product-description");
+        description.textContent = product.description || "";
+        description.hidden = !product.description;
 
         gallery = StoreGallery.create(root, product);
 
