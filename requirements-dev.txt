@@ -5,3 +5,8 @@ pytest==9.1.1
 #   playwright install chromium
 # tests/test_dialog_behaviour.py skips itself when either is missing.
 playwright==1.62.0
+
+# The type checker. pyrightconfig.json points it at env/, so `pyright` from the
+# project root checks the same thing an editor does — and CI runs it, which is
+# what stops the count of findings drifting back up.
+pyright==1.1.411

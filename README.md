@@ -154,6 +154,31 @@ true` once did nothing at all, because a class rule set its own `display` and
 outranked the attribute, and only a real layout notices that the button is still
 there.
 
+#### Types, and CI
+
+```bash
+pyright                              # 0 errors, and it stays that way
+```
+
+`pyrightconfig.json` sets `venvPath`/`venv` so the checker uses `env/` — without
+it, pyright picks whichever interpreter it finds and reports every dependency as
+unresolved, which was 79 of the 108 findings it first produced on a project whose
+imports all work.
+
+`.github/workflows/checks.yml` runs `pytest` and `pyright` on every push to
+`main` or `dev` and on every pull request, against a real MySQL service. Two
+things about it are deliberate:
+
+- It builds a virtualenv at `./env`, the path `pyrightconfig.json` names, so one
+  configuration means the same thing in CI and on a developer's machine.
+- It installs Chromium and then *checks that it launched*. Without the browser
+  the hundred-odd browser tests skip themselves and the run still goes green,
+  which is worse than failing — a skipped test that looks like a passing one is
+  how a broken dialog ships.
+
+It also passes `SECRET_KEY` and `JWT_SECRET_KEY`, because `FLASK_DEBUG=0` there
+and `config.py` refuses to start on the values `.env.example` ships.
+
 ---
 
 ## Domain model
