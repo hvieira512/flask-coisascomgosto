@@ -45,16 +45,22 @@ body::after {
 /* The light in the hero: a radial wash of the gold the pieces are painted with.
    Bootstrap's bg-gradient is a fixed white overlay and nothing else comes close. */
 .hero-wash {
+    /* The first screen, less the navbar. min-vh-100 would leave a scrollbar with
+       nothing under it. */
+    min-height: calc(100vh - 5.25rem);
     background:
         radial-gradient(58rem 32rem at 50% -6%,
             rgba(201, 162, 78, .26) 0%, rgba(201, 162, 78, .05) 46%, transparent 72%),
         var(--ccg-paper);
 }
 
-/* The section mark: a short gold rule above a heading. One device, used on every
-   section, which is what makes it read as a signature rather than as decoration
-   on one of them. */
-.mark::before {
+/* A short gold rule above a heading. One device, used on every section, which is
+   what makes it read as a signature rather than as decoration on one of them.
+
+   Not called .mark: that is Bootstrap's highlighter — `.mark, mark { padding:
+   .1875em; background-color: var(--bs-highlight-bg) }` — and every eyebrow came
+   out sitting in a yellow band. */
+.rule-above::before {
     content: "";
     display: block;
     width: 2.5rem;
@@ -63,7 +69,7 @@ body::after {
     margin-bottom: 1.25rem;
 }
 
-[data-bs-theme="dark"] .mark::before {
+[data-bs-theme="dark"] .rule-above::before {
     background: var(--ccg-gold-lift);
 }
 
@@ -71,8 +77,13 @@ body::after {
    nothing in Bootstrap tints it. Reaching .88 at the foot because half these
    pieces are painted on white. */
 .tile-scrim {
+    /* The stops are variables so the same rule serves a 4:5 tile and a band the
+       height of the viewport, where the text block is much taller and the fade
+       has to start much higher. */
     background: linear-gradient(to top,
-        rgba(23, 22, 26, .88) 0%, rgba(23, 22, 26, .3) 44%, transparent 74%);
+        rgba(23, 22, 26, .88) 0%,
+        rgba(23, 22, 26, .3) var(--scrim-mid, 44%),
+        transparent var(--scrim-end, 74%));
     transition: opacity .35s ease;
 }
 
@@ -110,6 +121,42 @@ button.swatch-dot[aria-pressed="true"] {
     outline-offset: 2px;
 }
 
+/* A full-bleed photographic band with text on it. Bootstrap's height utilities
+   stop at min-vh-100, and this needs a height that answers the viewport without
+   filling it. The scrim comes from .tile-scrim, whose stops are variables. */
+.photo-band {
+    min-height: 22rem;
+    background-size: cover;
+    background-position: center 22%;
+    background-repeat: no-repeat;
+}
+
+@media screen and (min-width: 768px) {
+    .photo-band {
+        min-height: min(86vh, 46rem);
+    }
+}
+
+/* The scroll cue's disc. Geometry comes from .disc in theme.css. */
+.cue-disc {
+    width: 2.625rem;
+    height: 2.625rem;
+    border: 1px solid var(--ccg-gold);
+    background: var(--ccg-surface);
+    color: var(--ccg-gold);
+    animation: hero-nudge 2.6s ease-in-out infinite;
+}
+
+@keyframes hero-nudge {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(5px);
+    }
+}
+
 /* Unbounded body copy is unreadable, and Bootstrap has no max-width helper.
    Narrower here than theme.css's shared value: these are display lines. */
 .measure-narrow {
@@ -136,83 +183,6 @@ h3 {
     line-height: 1.1;
 }
 
-/* The hero fills the first screen and pins the scroll cue just above the fold. */
-.store-hero {
-    position: relative;
-    display: flex;
-    align-items: center;
-    min-height: calc(100vh - 3.25rem);
-    background:
-        radial-gradient(60rem 30rem at 50% -10%, var(--ccg-blue-50) 0%, transparent 70%),
-        var(--ccg-paper);
-}
-
-.store-hero-body {
-    width: 100%;
-}
-
-.hero-scroll {
-    position: absolute;
-    bottom: 3rem;
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--ccg-ink-soft);
-    letter-spacing: .1em;
-    transition: color .2s ease;
-}
-
-.hero-scroll:hover {
-    color: var(--ccg-blue-700);
-}
-
-.hero-scroll-icon {
-    width: 42px;
-    height: 42px;
-    border: 1px solid var(--ccg-line);
-    background: var(--ccg-surface);
-    color: var(--ccg-blue-600);
-    /* A slow nudge downward, echoing the loader's breathing rhythm. */
-    animation: hero-nudge 2.4s ease-in-out infinite;
-}
-
-@keyframes hero-nudge {
-    0%, 100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(5px);
-    }
-}
-
-/* The step number is rendered as an eyebrow ("01"), so the browser's own
-   marker would show it twice: "1. 01". */
-.craft-step {
-    border-top: 2px solid var(--ccg-blue-200);
-    list-style: none;
-}
-
-/* Long handles like "coisascomgosto.vianadocastelo" overflow a 250px card,
-   so values wrap on any character rather than pushing the card wider. */
-#contacts .card {
-    min-width: 0;
-    height: 100%;
-}
-
-#contacts .card p {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-/* Bootstrap has no aspect-ratio-plus-object-fit helper. */
-.media-photo {
-    display: block;
-    width: 100%;
-    height: 24rem;
-    object-fit: cover;
-    border-radius: var(--radius-lg);
-}
-
 /* Cards lift slightly on hover, which Bootstrap does not do on its own. */
 .card {
     transition: border-color .2s ease, transform .2s ease;
@@ -222,41 +192,6 @@ h3 {
 a.card:hover {
     border-color: var(--ccg-blue-300);
     transform: translateY(-3px);
-}
-
-.type-card {
-    color: inherit;
-    display: block;
-    overflow: hidden;
-}
-
-/* A photographed family and an unphotographed one occupy the same box, so the
-   row keeps one baseline whatever the owners have got round to shooting. */
-.type-card-media {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    background: var(--ccg-paper-deep);
-}
-
-.type-card-media--empty {
-    background: var(--ccg-blue-50);
-}
-
-/* Geometry comes from .disc in theme.css. */
-.type-card-icon {
-    width: 3rem;
-    height: 3rem;
-    background: var(--ccg-blue-100);
-    color: var(--ccg-blue-500);
-    font-size: 1.15rem;
-}
-
-.type-card:hover .type-card-icon {
-    background: var(--ccg-blue-200);
 }
 
 /* Timeline. The connecting line is each entry's top border, so the entries
@@ -1117,8 +1052,3 @@ a.card:hover {
     }
 }
 
-/* The craft steps are an <ol> laid out as a row, so the browser's own list
-   marker would show the step number twice: "1. 01". */
-.craft-steps {
-    list-style: none;
-}

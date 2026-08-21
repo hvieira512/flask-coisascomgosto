@@ -5,9 +5,10 @@ from repositories import EventRepository, ProductTypeRepository
 
 bp = Blueprint("store", __name__)
 
-# Two full rows of three. The landing page is a way into the catalogue, not a
-# copy of it, and a seventh type left an orphan card alone on a third row.
-TYPES_LIMIT = 6
+# Seven families and the "ver tudo" tile fill two rows of four. The landing page
+# is a way into the catalogue rather than a copy of it, but the tiles are now
+# photographs rather than cards and the whole range fits.
+TYPES_LIMIT = 7
 TIMELINE_LIMIT = 12
 
 
@@ -16,9 +17,12 @@ def home():
     with get_db_connection() as (_, cursor):
         types = ProductTypeRepository(cursor)
         product_types = types.list(limit=TYPES_LIMIT, offset=0)
-        covers = types.cover_images([t["id"] for t in product_types])
+        ids = [t["id"] for t in product_types]
+        covers = types.cover_images(ids)
+        counts = types.product_counts(ids)
         for product_type in product_types:
             product_type["cover"] = covers.get(product_type["id"])
+            product_type["count"] = counts.get(product_type["id"], 0)
 
         events = EventRepository(cursor).list(limit=TIMELINE_LIMIT, offset=0)
 

@@ -154,9 +154,12 @@
     --bs-link-hover-color-rgb: 228, 193, 121;
 }
 
+/* No background-color or color here. Bootstrap's own body rule already reads
+   --bs-body-bg and --bs-body-color, which the block above retints — and hard
+   coding the ink here is what stopped data-bs-theme from inverting anything:
+   text inside a dark band inherited the light theme's colour from the body and
+   came out invisible. */
 body {
-    background-color: var(--ccg-paper);
-    color: var(--ccg-ink);
     -webkit-font-smoothing: antialiased;
 }
 

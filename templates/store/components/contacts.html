@@ -1,62 +1,51 @@
-{% macro contact_card(icon, label, value, href=None, external=False) -%}
-{%- set tag = 'a' if href else 'div' -%}
-{#- flex-row because a Bootstrap .card is a flex column, which would drop the
-    label under the icon. -#}
-<div class="col">
-    <{{ tag }} class="card h-100 p-4 flex-row align-items-center text-body"
-        {%- if href %} href="{{ href }}"{% endif %}
-        {%- if external %} target="_blank" rel="noopener"{% endif %}>
-        <span class="disc contact-icon me-3"><i class="{{ icon }}"></i></span>
-        {# The value was sr-only, so a sighted visitor read "MORADA" and had to
-           click to find out where the workshop is. #}
-        <span class="contact-body">
-            <span class="eyebrow mb-0">{{ label }}</span>
-            <span class="contact-value">{{ value }}</span>
-        </span>
-    </{{ tag }}>
+{# Contacts, and the end of the page.
+
+   Five cards and five icon discs for five short strings became one block of
+   type: the address in the display serif, then the ways to reach the workshop as
+   labelled rows. data-bs-theme="dark" does the colour work, and the footer that
+   follows sits on the same ground, so the two read as one ending. #}
+{% macro reach(label, value, href, external=False) -%}
+{% if href %}
+<div class="row g-2 border-top py-2">
+    <dt class="col-4 col-sm-3 fs-7 text-uppercase font-monospace text-body-tertiary mb-0">{{ label }}</dt>
+    <dd class="col-8 col-sm-9 mb-0">
+        <a href="{{ href }}"{% if external %} target="_blank" rel="noopener"{% endif %}>{{ value }}</a>
+    </dd>
 </div>
+{% endif %}
 {%- endmacro %}
 
-<section class="section bg-body-secondary" id="contacts">
+{# bg-body and text-body as well as data-bs-theme. The attribute redefines the
+   variables and paints nothing: bg-body is what puts the pitch ground down, and
+   text-body is what makes ordinary text follow the theme — plain prose inherits
+   its colour from <body>, which is still the light one, so without it the
+   address came out ink-on-pitch. #}
+<section class="section pb-4 bg-body text-body" id="contacts" data-bs-theme="dark">
     <div class="container">
-        <header class="mb-4">
-            <p class="eyebrow">Contactos</p>
-            <h2 class="h2 mb-3">Onde nos encontra</h2>
-            <p class="text-body-secondary measure mb-0">
-                Estamos em Viana do Castelo. Fale connosco por mensagem, e-mail
-                ou passe pela loja.
-            </p>
-        </header>
+        <p class="eyebrow rule-above text-gold">Contactos</p>
+        <h2 class="h1 mb-4">Onde nos encontra</h2>
 
-        {# Wider cells than the labels alone need: a card carries a street address
-           or a long social handle. #}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2">
-            {% if contact.address %}
-            {{ contact_card('fa-solid fa-location-dot', 'Morada',
-                            contact.address, contact.maps_url, external=true) }}
-            {% endif %}
+        <div class="row g-5">
+            <div class="col-lg-5">
+                {% if contact.address %}
+                <p class="font-display fs-4 lh-sm mb-2">{{ contact.address }}</p>
+                {% endif %}
+                {% if contact.maps_url %}
+                <a class="fs-7 text-uppercase" href="{{ contact.maps_url }}"
+                   target="_blank" rel="noopener">Ver no mapa</a>
+                {% endif %}
+            </div>
 
-            {% if contact.email %}
-            {{ contact_card('fa-solid fa-envelope', 'E-mail',
-                            contact.email, 'mailto:' ~ contact.email) }}
-            {% endif %}
-
-            {% if contact.whatsapp_url %}
-            {{ contact_card('fa-brands fa-whatsapp', 'WhatsApp',
-                            contact.whatsapp, contact.whatsapp_url, external=true) }}
-            {% endif %}
-
-            {% if contact.facebook_url %}
-            {{ contact_card('fa-brands fa-facebook-f', 'Facebook',
-                            contact.facebook_url | social_handle,
-                            contact.facebook_url, external=true) }}
-            {% endif %}
-
-            {% if contact.instagram_url %}
-            {{ contact_card('fa-brands fa-instagram', 'Instagram',
-                            contact.instagram_url | social_handle,
-                            contact.instagram_url, external=true) }}
-            {% endif %}
+            <div class="col-lg-7">
+                <dl class="mb-0">
+                    {{ reach('WhatsApp', contact.whatsapp, contact.whatsapp_url, external=true) }}
+                    {{ reach('E-mail', contact.email, 'mailto:' ~ contact.email if contact.email) }}
+                    {{ reach('Instagram', contact.instagram_url | social_handle,
+                             contact.instagram_url, external=true) }}
+                    {{ reach('Facebook', contact.facebook_url | social_handle,
+                             contact.facebook_url, external=true) }}
+                </dl>
+            </div>
         </div>
     </div>
 </section>

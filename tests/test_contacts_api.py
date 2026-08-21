@@ -96,7 +96,7 @@ class TestLandingPage:
         headings = [
             "Começou numa bancada pequena",              # 2. Origem
             "três mãos-cheias de tempo",                 # 3. O ofício
-            "As peças que saem da oficina",              # 4. O que fazemos
+            "O que sai da oficina",                      # 4. As peças
             "Onde nos encontra</h2>",                    # 6. Contactos
         ]
         positions = [html.index(h) for h in headings]
@@ -109,7 +109,7 @@ class TestLandingPage:
         make_product_type("Caixa")
         html = client.get("/").get_data(as_text=True)
 
-        assert html.index('id="origin"') < html.index("O que fazemos")
+        assert html.index('id="origem"') < html.index("O que sai da oficina")
 
     def test_contacts_are_a_section_not_the_navbar(self, client):
         html = client.get("/").get_data(as_text=True)
@@ -117,19 +117,31 @@ class TestLandingPage:
         navbar = html[html.index("<nav"):html.index("</nav>")]
         assert "wa.me" not in navbar, "socials must not live in the navbar"
         assert 'id="contacts"' in html
-        # Cards are Bootstrap's .card; contact-icon is the bit that stays ours.
-        assert "contact-icon" in html
 
-    def test_the_cards_fill_their_row(self, client, make_product_type):
-        """A .card is only as tall as its content, so a row of them ends ragged
-        wherever one address wraps to two lines and its neighbour does not."""
+    def test_the_contacts_are_type_and_not_cards(self, client):
+        """Five cards and five icon discs for five short strings became one block
+        of type: the address in the display serif, then labelled rows."""
+        contacts = self._contacts_section(client)
+
+        assert "card" not in contacts
+        assert "contact-icon" not in contacts
+        assert "font-display" in contacts
+
+    def test_the_page_closes_on_the_dark_band(self, client):
+        """Contacts and the footer share one pitch ground, which is what gives
+        the page an ending. Bootstrap's own inversion does the colours."""
+        html = client.get("/").get_data(as_text=True)
+
+        assert html.count('data-bs-theme="dark"') >= 2
+        assert html.index('id="contacts"') < html.index("<footer")
+
+    def test_a_family_tile_keeps_one_baseline(self, client, make_product_type):
+        """Every tile is the same shape whatever the owners have got round to
+        photographing: Bootstrap's ratio box, at 4:5."""
         make_product_type("Caixa")
         html = client.get("/").get_data(as_text=True)
 
-        cards = re.findall(r'class="card [^"]*"', html)
-        assert cards, "no cards on the landing page"
-        for card in cards:
-            assert "h-100" in card, card
+        assert "--bs-aspect-ratio: 125%" in html
 
     def _contacts_section(self, client):
         html = client.get("/").get_data(as_text=True)
@@ -161,17 +173,13 @@ class TestLandingPage:
         assert "https://www.instagram.com" not in visible
 
     def test_labels_are_still_visible(self, client):
+        """The address carries no label — it is the display line the block opens
+        with, and "Morada" above a street address says nothing."""
         visible = self._visible_text(self._contacts_section(client))
 
-        for label in ["Morada", "E-mail", "WhatsApp", "Facebook", "Instagram"]:
+        for label in ["E-mail", "WhatsApp", "Facebook", "Instagram"]:
             assert label in visible, label
-
-    def test_label_sits_beside_the_icon(self, client):
-        """A .card is a flex column, so the label drops onto its own line without
-        an explicit row direction."""
-        contacts = self._contacts_section(client)
-
-        assert "flex-row" in contacts
+        assert "Viana do Castelo" in visible, "the address is the opening line"
 
     def test_address_card_opens_the_map(self, client):
         contacts = self._contacts_section(client)
@@ -189,7 +197,8 @@ class TestLandingPage:
         contacts = self._contacts_section(client)
 
         assert "maps.app.goo.gl" not in contacts
-        assert "Morada" in contacts
+        assert "Ver no mapa" not in contacts
+        assert "Viana do Castelo" in contacts
 
     def test_reserved_area_replaces_entrar(self, client):
         html = client.get("/").get_data(as_text=True)
@@ -237,7 +246,7 @@ class TestLandingPage:
         created = make_product_type("Coracao")
 
         html = client.get("/").get_data(as_text=True)
-        section = html[html.index("O que fazemos"):html.index('id="contacts"')]
+        section = html[html.index("As peças"):html.index('id="contacts"')]
         assert f'/products?type_id={created["id"]}' in section
 
     def test_empty_catalog_does_not_break_the_page(self, client):
@@ -246,8 +255,8 @@ class TestLandingPage:
         assert response.status_code == 200
 
         html = response.get_data(as_text=True)
-        assert "O que fazemos" not in html
-        assert 'id="origin"' in html
+        assert "O que sai da oficina" not in html
+        assert 'id="origem"' in html
         assert 'id="contacts"' in html
 
 

@@ -76,6 +76,23 @@ class ProductTypeRepository(NameTableRepository):
             for row in self._cursor.fetchall()
         }
 
+    def product_counts(self, type_ids: list[int]) -> dict[int, int]:
+        """How many pieces each type holds, in one query.
+
+        The landing page names the count on every family tile, and asking
+        product_count() once per tile is six queries for one number.
+        """
+        if not type_ids:
+            return {}
+
+        placeholders = ", ".join(["%s"] * len(type_ids))
+        self._cursor.execute(
+            "SELECT type_id, COUNT(*) AS total FROM products "
+            f"WHERE type_id IN ({placeholders}) GROUP BY type_id",
+            type_ids,
+        )
+        return {row["type_id"]: row["total"] for row in self._cursor.fetchall()}
+
     def product_count(self, type_id: int) -> int:
         """How many pieces are filed under this type."""
         self._cursor.execute(

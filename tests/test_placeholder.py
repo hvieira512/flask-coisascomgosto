@@ -100,22 +100,31 @@ class TestTypeIconFilter:
         assert self._icon(app, None) == "fa-gift"
 
 
-class TestProductTypeGridIcons:
-    """The landing page draws each type with its icon."""
+class TestAFamilyWithNoPhotograph:
+    """The landing page's tiles are photographs with the family's name on them.
+    A family nobody has photographed yet gets its name, set in the display serif,
+    and an honest line — not an icon in a blue disc, which is what it used to
+    get and which sold an empty database column.
 
-    def test_type_card_renders_its_icon(self, client, make_product_type):
+    The icons themselves are not gone: the catalogue still draws one for a
+    *piece* with no photograph (static/js/store/placeholder.js)."""
+
+    def test_it_shows_its_name_and_says_so(self, client, make_product_type):
         make_product_type("Moldura", icon="fa-image")
 
         html = client.get("/").get_data(as_text=True)
-        assert "type-card-icon" in html
-        assert "fa-image" in html
 
-    def test_type_without_an_icon_falls_back_to_the_guess(self, client,
-                                                          make_product_type):
+        assert "fotografia a caminho" in html
+        assert "Moldura" in html
+
+    def test_no_icon_disc_stands_in_for_a_photograph(self, client,
+                                                     make_product_type):
         make_product_type("Coração de Viana")
 
         html = client.get("/").get_data(as_text=True)
-        assert "fa-heart" in html
+
+        assert "type-card-icon" not in html
+        assert "fa-heart" not in html
 
 
 class TestPlaceholderIsImported:

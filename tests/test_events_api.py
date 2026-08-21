@@ -116,7 +116,7 @@ class TestTimelineSection:
         make_event()
 
         html = client.get("/").get_data(as_text=True)
-        assert html.index("O que fazemos") < html.index('id="events"')
+        assert html.index("O que sai da oficina") < html.index('id="events"')
         assert html.index('id="events"') < html.index('id="contacts"')
 
     def test_a_single_event_is_a_card_not_a_rail(self, client, make_event):
