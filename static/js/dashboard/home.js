@@ -55,11 +55,14 @@ function figure(label, value, previous, { hasHistory }) {
 
 function renderTotals({ totals, previous, window: win }, days) {
     const hasHistory = Boolean(win.counting_since);
+    // The labels say what is actually counted. "Vistas" and "Peças vistas" side by
+    // side read as the same thing twice, and neither says that what is counted is
+    // a piece's own page being opened rather than a visit to the site.
     const cards = [
-        ["Vistas", totals.views, previous.views],
-        ["Perguntas", totals.enquiries, previous.enquiries],
+        ["Aberturas de peças", totals.views, previous.views],
+        ["Peças diferentes", totals.pieces, previous.pieces],
+        ["Pedidos de informação", totals.enquiries, previous.enquiries],
         ["Procuras", totals.searches, previous.searches],
-        ["Peças vistas", totals.pieces, previous.pieces],
     ]
         .map(([label, value, before]) => figure(label, value, before, { hasHistory }))
         .join("");
@@ -68,7 +71,10 @@ function renderTotals({ totals, previous, window: win }, days) {
       <p class="eyebrow mb-2">O que aconteceu ${escapeHtml(period(days))}</p>
       <div class="row row-cols-2 row-cols-lg-4 g-2">${cards}</div>
       ${hasHistory
-          ? ""
+          ? `<p class="help mt-2 mb-0">
+               Uma abertura é alguém a abrir a página de uma peça, contada uma vez
+               por visita. Um pedido é um clique em “Pedir informações”.
+             </p>`
           : `<p class="help mt-2 mb-0">
                Ainda não há nada registado. A contagem começa quando alguém
                visitar a loja.
@@ -93,7 +99,7 @@ function renderMostViewed({ top_products: pieces, window: win }) {
     const target = document.getElementById("most-viewed");
 
     if (!pieces.length) {
-        target.innerHTML = nothing(win.counting_since, "Nenhuma peça foi vista neste período.");
+        target.innerHTML = nothing(win.counting_since, "Ninguém abriu uma peça neste período.");
         return;
     }
 
@@ -110,8 +116,8 @@ function renderMostViewed({ top_products: pieces, window: win }) {
                 <span class="d-flex align-items-center gap-2">
                   <span class="data text-body-secondary">${piece.views}</span>
                   ${piece.enquiries
-                      ? `<span class="badge rounded-pill chip is-ready">${piece.enquiries} ${piece.enquiries === 1 ? "pergunta" : "perguntas"}</span>`
-                      : `<span class="fs-7 text-body-tertiary">sem perguntas</span>`}
+                      ? `<span class="badge rounded-pill chip is-ready">${piece.enquiries} ${piece.enquiries === 1 ? "pedido" : "pedidos"}</span>`
+                      : `<span class="fs-7 text-body-tertiary">sem pedidos</span>`}
                 </span>
               </li>`)
             .join("")}
@@ -136,29 +142,6 @@ function renderAskedColors({ top_color_sets: sets, window: win }) {
               <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
                 <span>${escapeHtml(set.name)}</span>
                 <span class="data text-body-secondary">${set.enquiries}</span>
-              </li>`)
-            .join("")}
-      </ul>`;
-}
-
-function renderEmptySearches({ empty_searches: searches, window: win }) {
-    const target = document.getElementById("empty-searches");
-
-    if (!searches.length) {
-        target.innerHTML = nothing(
-            win.counting_since,
-            "Todas as procuras deram resultados."
-        );
-        return;
-    }
-
-    target.innerHTML = `
-      <ul class="list-group list-group-flush">
-        ${searches
-            .map((search) => `
-              <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
-                <span>“${escapeHtml(search.term)}”</span>
-                <span class="data text-body-secondary">${search.count}</span>
               </li>`)
             .join("")}
       </ul>`;
@@ -236,7 +219,6 @@ async function load(days) {
     renderTotals(overview, days);
     renderMostViewed(overview);
     renderAskedColors(overview);
-    renderEmptySearches(overview);
     renderTopFilters(overview);
 }
 

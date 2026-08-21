@@ -218,23 +218,23 @@ class TestWhatPeopleAskFor:
         assert client.get(URL).get_json()["top_color_sets"] == []
 
 
-class TestWhatPeopleCouldNotFind:
-    def test_only_the_searches_that_found_nothing(self, client, record):
-        record("search", term="caixa", results=4)
-        record("search", term="tabuleiro", results=0)
+class TestSearchesAreCountedButNotListed:
+    """Hugo does not want to read what people searched for and did not find, so the
+    overview no longer answers it. The terms are still recorded — the total is
+    counted from them — and nothing reads them."""
 
-        (row,) = client.get(URL).get_json()["empty_searches"]
+    def test_the_words_are_not_in_the_answer(self, client, record):
+        record("search", term="tabuleiro de queijos", results=0)
 
-        assert row["term"] == "tabuleiro"
-        assert row["count"] == 1
+        body = client.get(URL).get_json()
 
-    def test_the_same_words_are_one_row(self, client, record):
-        for _ in range(3):
-            record("search", term="tabuleiro", results=0)
+        assert "empty_searches" not in body
+        assert "tabuleiro" not in str(body)
 
-        (row,) = client.get(URL).get_json()["empty_searches"]
+    def test_but_the_search_still_counts(self, client, record):
+        record("search", term="tabuleiro de queijos", results=0)
 
-        assert row["count"] == 3
+        assert client.get(URL).get_json()["totals"]["searches"] == 1
 
 
 class TestWhichFiltersGetUsed:

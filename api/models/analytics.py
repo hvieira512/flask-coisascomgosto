@@ -48,14 +48,6 @@ asked_color_set_model = Model(
     },
 )
 
-empty_search_model = Model(
-    "AnalyticsEmptySearch",
-    {
-        "term": fields.String(description="What was typed"),
-        "count": fields.Integer(description="How many times, finding nothing"),
-    },
-)
-
 used_filter_model = Model(
     "AnalyticsUsedFilter",
     {
@@ -93,7 +85,6 @@ overview_model = Model(
         ),
         "top_products": fields.List(fields.Nested(viewed_product_model)),
         "top_color_sets": fields.List(fields.Nested(asked_color_set_model)),
-        "empty_searches": fields.List(fields.Nested(empty_search_model)),
         "top_filters": fields.List(fields.Nested(used_filter_model)),
         "catalogue": fields.Nested(
             catalogue_model,
@@ -108,7 +99,6 @@ ANALYTICS_MODELS = [
     totals_model,
     viewed_product_model,
     asked_color_set_model,
-    empty_search_model,
     used_filter_model,
     catalogue_model,
     overview_model,

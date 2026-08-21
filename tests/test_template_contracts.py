@@ -310,7 +310,7 @@ class TestDashboardHome:
         html = client.get("/dashboard/home").get_data(as_text=True)
 
         for element_id in ["catalogue-line", "totals", "most-viewed",
-                           "asked-colors", "empty-searches", "top-filters"]:
+                           "asked-colors", "top-filters"]:
             assert f'id="{element_id}"' in html, element_id
         assert "js/dashboard/home.js" in html
         assert 'data-days="7"' in html

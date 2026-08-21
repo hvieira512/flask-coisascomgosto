@@ -140,7 +140,7 @@ class TestBeforeAnythingIsRecorded:
         open_home, page, _ = owner
         open_home()
 
-        for panel in ("most-viewed", "asked-colors", "empty-searches", "top-filters"):
+        for panel in ("most-viewed", "asked-colors", "top-filters"):
             assert page.locator(f"#{panel} li").count() == 0, panel
 
     def test_the_catalogue_line_leaves_out_the_start_date(self, owner):
@@ -213,17 +213,18 @@ class TestWithSomethingRecorded:
 
         row = page.locator("#most-viewed li").first.inner_text()
         assert "Caixa Redonda" in row
-        assert "1 pergunta" in row
+        assert "1 pedido" in row
 
     def test_a_piece_nobody_asked_about_says_so(self, owner, piece, record):
-        """Views without questions is a different problem from no views, and the
-        two columns beside each other are what makes it visible."""
+        """Openings without a single request is a different problem from nobody
+        opening it, and the two columns beside each other are what makes it
+        visible."""
         record("view", product_id=piece["product"]["id"])
         open_home, page, _ = owner
 
         open_home()
 
-        assert "sem perguntas" in page.locator("#most-viewed li").first.inner_text()
+        assert "sem pedidos" in page.locator("#most-viewed li").first.inner_text()
 
     def test_the_piece_links_to_it_in_the_catalogue(self, owner, piece, record):
         record("view", product_id=piece["product"]["id"])
@@ -250,21 +251,20 @@ class TestWithSomethingRecorded:
 
         assert "Preto e Dourado" in page.locator("#asked-colors").inner_text()
 
-    def test_a_search_that_found_nothing_is_quoted(self, owner, record):
+    def test_a_search_is_counted_without_being_quoted(self, owner, record):
+        """The page shows how many searches there were and never what they said —
+        the list of words that found nothing was not something Hugo wanted to
+        read."""
         record("search", term="tabuleiro de queijos", results=0)
         open_home, page, _ = owner
 
         open_home()
 
-        assert "tabuleiro de queijos" in page.locator("#empty-searches").inner_text()
-
-    def test_a_search_that_found_something_is_not(self, owner, record):
-        record("search", term="caixa", results=4)
-        open_home, page, _ = owner
-
-        open_home()
-
-        assert "caixa" not in page.locator("#empty-searches").inner_text()
+        # The eyebrow labels are uppercased in CSS, so the rendered text is not the
+        # string in the source.
+        totals = page.locator("#totals").inner_text().lower()
+        assert "procuras" in totals
+        assert "tabuleiro" not in page.content()
 
     def test_the_filters_show_the_group_and_the_option(self, owner, record):
         record("filter", facet="Tipo", facet_label="Caixa")

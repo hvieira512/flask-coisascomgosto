@@ -150,7 +150,6 @@ class AnalyticsRepository:
             "previous": self._totals(days, days),
             "top_products": self._top_products(days, top),
             "top_color_sets": self._top_color_sets(days, top),
-            "empty_searches": self._empty_searches(days, top),
             "top_filters": self._top_filters(days, top),
         }
 
@@ -241,21 +240,6 @@ class AnalyticsRepository:
         )
         return [
             {"id": row["id"], "name": row["name"], "enquiries": int(row["enquiries"])}
-            for row in self._cursor.fetchall()
-        ]
-
-    def _empty_searches(self, days: int, top: int) -> list[dict]:
-        """What people looked for and did not find — a list of things to consider
-        making, in their own words."""
-        where, params = self._since(days, 0)
-        self._cursor.execute(
-            "SELECT term, COUNT(*) AS count FROM storefront_events e "
-            f"WHERE {where} AND kind = 'search' AND results = 0 AND term IS NOT NULL "
-            "GROUP BY term ORDER BY count DESC, term LIMIT %s",
-            params + [top],
-        )
-        return [
-            {"term": row["term"], "count": int(row["count"])}
             for row in self._cursor.fetchall()
         ]
 
