@@ -601,30 +601,36 @@ static/js/store/product.js    detail page wiring
 ## Project layout
 
 ```
-app.py                  Flask app entrypoint + the init-db, migrate, seed and
-                        create-user commands
+app.py                  The entry point: builds the app, and nothing else
+cli.py                  The flask commands: init-db, migrate, seed,
+                        sweep-uploads, create-user
 config.py               Config read from environment variables
+uploads.py              Storing uploaded photographs on disk, and sweeping them
+type_icons.py           Name -> Font Awesome class, the one copy of that table
 
-api/
+api/                    The HTTP surface, and only that
   __init__.py           Api object; mounts every namespace under /api
-  db.py                 PyMySQL connection handling and schema init
-  migrations.py         The numbered-.sql runner behind `flask migrate`
   pagination.py         Request-arg parsing and the pagination envelope
+  rate_limit.py         The sliding windows behind logins and storefront events
   security.py           auth_required — bearer token or session, on every write
-  uploads.py            Storing uploaded photographs on disk
   models/               flask-restx marshalling models — these ARE the Swagger docs
-  repositories/         Every SQL statement in the application, one class per table
-    base.py             The reads the lookup tables share
   routes/               HTTP concerns only: validation, status codes, marshalling
     crud.py             The route bodies they share: paging, 404, 409
     products/           One namespace, four modules: the product itself, its
                         variants, its photographs, its sizes
-  type_icons.py         Name -> Font Awesome class, the one copy of that table
+
+repositories/           Every SQL statement in the application, one class per table
+  base.py               The reads the lookup tables share
+db/
+  __init__.py           PyMySQL connection handling and schema init
+  migrate.py            The numbered-.sql runner behind `flask migrate`
+  seed.py               The development catalogue behind `flask seed`
+  schema.sql            Full schema, dropped and recreated by init-db
+  migrations/           Numbered .sql files, each applied once, in order
 
 web/                    Server-rendered storefront and dashboard blueprints
 templates/  static/     Jinja templates and assets
-db/schema.sql           Full schema, dropped and recreated by init-db
-db/migrations/          Numbered .sql files, each applied once, in order
+docs/                   Written-down plans for work in progress
 tests/                  pytest suite, isolated per test by truncating tables
 ```
 
