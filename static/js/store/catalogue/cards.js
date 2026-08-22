@@ -2,7 +2,6 @@ import { ColorSet } from "../color-set.js";
 import { ProductPlaceholder } from "../placeholder.js";
 import { escapeHtml } from "../../core/html.js";
 
-/** Three swatches and a count. Every colourway is on the piece's own page. */
 const MAX_DOTS = 3;
 
 function renderColourways(product) {
@@ -18,15 +17,9 @@ function renderColourways(product) {
     return `<span class="dots d-flex align-items-center gap-1">${shown}${more}</span>`;
 }
 
-/**
- * One tile of the grid: the photograph, then the name and its family on a line,
- * then which colours the piece is made in.
- *
- * align-content-start is not decoration. A grid item is stretched to its row's
- * height and an item whose own rows are all implicit distributes that extra
- * height into them — so a piece whose name takes two lines made every
- * photograph in its row taller than the rest.
- */
+// align-content-start on the card: a grid item is stretched to its row's height
+// and spreads the extra into its implicit rows, so a piece whose name takes two
+// lines made every photograph in that row taller.
 export function productCard(product) {
     const image = product.primary_image;
     const media = image

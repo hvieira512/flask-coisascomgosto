@@ -1,15 +1,3 @@
-/**
- * Catalog page.
- *
- * Four pieces render the same StoreFilters state — the sidebar, the collection
- * rail, the applied-filter badges and the grid — so choosing a filter anywhere
- * updates all of them from one place: the onChange at the foot of this file.
- *
- * This file holds only what is shared: the page number, the per-option counts
- * both the sidebar and the rail read, and the request for the products
- * themselves. Each piece lives in catalogue/.
- */
-
 import { API, request } from "../core/api.js";
 import { StoreFilters } from "./filters.js";
 import { mountBadges } from "./catalogue/badges.js";
@@ -26,12 +14,8 @@ import { Track } from "./track.js";
     const searchInput = document.getElementById("filter-search");
 
     let page = 1;
-    // The last search term reported, so paging through its results does not
-    // record the same search again.
     let reported = null;
 
-    /** Per-option product counts, so a sidebar entry and a rail card can each say
-     *  what they hold. One request, read by both. */
     async function loadFacets() {
         try {
             const payload = await request("/api/products/facets");
@@ -50,8 +34,6 @@ import { Track } from "./track.js";
     const pagination = mountPagination((wanted) => {
         page = wanted;
         loadProducts();
-        // The grid starts above the fold on a filtered view; without this the
-        // second page loads with its first row already scrolled past.
         grid.scrollIntoView({ block: "start" });
     });
 
@@ -90,10 +72,6 @@ import { Track } from "./track.js";
         resultCount.textContent = total === 1 ? "1 produto" : `${total} produtos`;
         pagination.render(page, pages || 1);
 
-        // Here rather than on the keystroke: what is worth knowing is the term
-        // *and* what it found, and nothing knows the count until now. Zero is the
-        // interesting value — it is a list of things people want and the
-        // catalogue does not offer.
         const term = StoreFilters.get("q");
         if (term && term !== reported) {
             reported = term;
@@ -104,8 +82,6 @@ import { Track } from "./track.js";
     (async function init() {
         searchInput.value = StoreFilters.get("q") || "";
 
-        // Counts first: the entries and the cards are rendered with their numbers
-        // rather than patched afterwards.
         const facets = await loadFacets();
         const [sidebar, rail] = await Promise.all([
             mountSidebar(facets),
@@ -120,7 +96,7 @@ import { Track } from "./track.js";
         };
 
         StoreFilters.onChange(() => {
-            page = 1; // a changed filter invalidates the current page number
+            page = 1;
             draw();
         });
 

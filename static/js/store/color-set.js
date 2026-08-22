@@ -1,18 +1,8 @@
 import { escapeHtml } from "../core/html.js";
 
-
-/**
- * Renders a colour set as a rounded badge: its overlapping colour circles and
- * the set's name, drawn in its first colour on a pale wash of the same.
- *
- * Shared by the catalog cards and the product page's variant buttons so the two
- * cannot drift apart.
- */
 export const ColorSet = (function () {
     const FALLBACK = "#4472C4";
-    /** WCAG AA for body text, which is what a badge's name is. */
     const MIN_CONTRAST = 4.5;
-    /** --ccg-paper, the ground the wash is composited over. */
     const PAPER = [250, 248, 245];
     const WASH_ALPHA = 0.14;
 
@@ -23,8 +13,6 @@ export const ColorSet = (function () {
         return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
     }
 
-    /** WCAG relative luminance, not the perceived-brightness approximation:
-     *  the contrast ratio below is only meaningful against this one. */
     function relativeLuminance([r, g, b]) {
         const channel = (c) => {
             const v = c / 255;
@@ -41,31 +29,20 @@ export const ColorSet = (function () {
     const over = (channels, alpha, ground) =>
         channels.map((c, i) => c * alpha + ground[i] * (1 - alpha));
 
-    /**
-     * The set's darkest colour, not its first.
-     *
-     * "Branco e Dourado" led with white, which had to be darkened so far to be
-     * readable that the badge came out grey — the name of a gold piece printed in
-     * grey, at 3.4:1 against its own wash. The darkest colour is the one that can
-     * carry the text and still say which set this is.
-     */
     function inkFor(colours) {
         return colours.reduce((darkest, c) =>
             relativeLuminance(c) < relativeLuminance(darkest) ? c : darkest
         );
     }
 
-    /** Scales a colour down until it reads against the wash behind it. */
     function readable(channels, wash) {
         let current = channels;
-        // Bounded: 0.86^40 is black long before it runs out.
         for (let i = 0; i < 40 && contrast(current, wash) < MIN_CONTRAST; i += 1) {
             current = current.map((c) => Math.round(c * 0.86));
         }
         return current;
     }
 
-    /** The inline custom properties the .color-set-badge rule paints with. */
     function style(colorSet) {
         const colours = (colorSet.colors || [])
             .map((c) => rgb(c.hex))
@@ -83,7 +60,6 @@ export const ColorSet = (function () {
                `--cs-fg:rgb(${tr},${tg},${tb})`;
     }
 
-    /** The overlapping circles, one per colour. */
     function dots(colorSet) {
         const colors = (colorSet.colors || []).filter((c) => c.hex);
         if (!colors.length) return "";
@@ -101,16 +77,6 @@ export const ColorSet = (function () {
                       style="${style(colorSet)}">${dots(colorSet)}<span class="color-set-name">${escapeHtml(colorSet.name)}</span></span>`;
     }
 
-    /**
-     * The colourway as one circle divided between its colours.
-     *
-     * What the catalogue shows now, in place of the badge: the photograph above
-     * it already says what colour the piece is, so the row only has to say
-     * *there are others*. Four named badges under a photograph were four
-     * rounded rectangles of borrowed colour arguing with the piece.
-     *
-     * The name travels as the title, and is spelled out on the piece's own page.
-     */
     function dot(colorSet, { as = "span", pressed = null, extra = "" } = {}) {
         if (!colorSet) return "";
 

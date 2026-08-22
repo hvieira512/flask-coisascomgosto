@@ -6,20 +6,9 @@ import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { formDialog, modal } from "../../core/modal.js";
 import { nameTaken } from "../errors.js";
 
-/**
- * The collection form: what it is on the left, what it looks like on the right,
- * and the colour sets it is made in underneath both.
- *
- * Three fields and two pickers, which is why it is not in main.js: the cover picker
- * writes on its own the moment a photograph is cleared, and the colour-set picker
- * has a sort order that carries meaning.
- */
-
 function markup(collection) {
     return `
     <form id="collection-form" data-collection-id="${collection?.id ?? ""}">
-      <!-- What it is on the left, what it looks like on the right. The columns stack
-           below 768px, so on a phone the cover simply follows the fields. -->
       <div class="row g-3">
         <div class="col-md">
           <div class="mb-3">
@@ -33,8 +22,6 @@ function markup(collection) {
 
           <div>
             <label class="form-label fs-7" for="cof-description">Descrição</label>
-            <!-- Taller than the two lines it needs, so the column of fields reaches
-                 roughly the depth of the cover beside it. -->
             <textarea class="form-control" id="cof-description" name="description" rows="6"
                       placeholder="O que reúne esta colecção."
                       >${escapeHtml(collection?.description ?? "")}</textarea>
@@ -51,8 +38,6 @@ function markup(collection) {
         </div>
       </div>
 
-      <!-- Across the full width, under both columns: nine badges need the room, and
-           they are about the collection as a whole rather than about either side. -->
       <div class="mt-3">
         <label class="form-label fs-7">Conjuntos de cores</label>
         <div class="d-flex flex-wrap gap-1" id="cof-sets"></div>
@@ -64,15 +49,6 @@ function markup(collection) {
     </form>`;
 }
 
-/**
- * The colour sets, as the badges the storefront draws, with the ones already in this
- * collection chosen. Same chip and same ring as the create wizard's colour step, so
- * "chosen" looks the same wherever it is asked.
- *
- * Sorted so this collection's own come first and the rest follow alphabetically.
- * Where else a set appears is in its title, as information: it used to be a warning,
- * because choosing it moved it, and now it does not.
- */
 function wireColorSets(modalId, collection, colorSets) {
     const container = modal(modalId).querySelector("#cof-sets");
 
@@ -80,16 +56,12 @@ function wireColorSets(modalId, collection, colorSets) {
         Boolean(collection) &&
         (set.collections ?? []).some((c) => c.id === collection.id);
 
-    // This collection's first, then the rest alphabetically. There is no third
-    // rank any more: a set another collection gathers is not spoken for, because
-    // choosing it here does not take it from there.
     const rank = (set) => (isMine(set) ? 0 : 1);
 
     container.innerHTML = [...colorSets]
         .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "pt"))
         .map((set) => {
             const mine = isMine(set);
-            // Where else it appears, as information rather than a warning.
             const others = (set.collections ?? [])
                 .filter((c) => c.id !== collection?.id)
                 .map((c) => c.name);
@@ -119,11 +91,6 @@ function wireColorSets(modalId, collection, colorSets) {
             .map((chip) => Number(chip.dataset.colorSetId));
 }
 
-/**
- * The cover slot. One photograph, so one slot: it shows the cover the collection
- * already has, and clearing it removes the cover then and there — the collection
- * exists, unlike a piece being created.
- */
 function wireCover(modalId, collection, after) {
     return PhotoPicker.mount(modal(modalId).querySelector("#cof-cover"), {
         initial: collection?.image_url
@@ -160,8 +127,6 @@ export function openCollectionForm({ modalId, collection = null, colorSets, afte
 
             const payload = { name: value("name") };
             if (value("description")) payload.description = value("description");
-            // Carried through explicitly: a PUT replaces the row, so leaving it
-            // out would clear a cover the owner never touched.
             if (collection?.image_url) payload.image_url = collection.image_url;
 
             let saved;
@@ -175,12 +140,6 @@ export function openCollectionForm({ modalId, collection = null, colorSets, afte
                 throw new Error(nameTaken(error, "uma colecção"));
             }
 
-            // Both of these need an id, so they follow the save rather than riding
-            // along with it.
-            //
-            // A colour set belongs to one collection, so this moves them rather
-            // than linking them: a set listed here leaves whichever collection it
-            // was in.
             await request(API.collections.colorSets(saved.id), {
                 method: "PUT",
                 body: { color_set_ids: chosenSets() },

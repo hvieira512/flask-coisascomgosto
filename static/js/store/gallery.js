@@ -2,19 +2,6 @@ import { ProductPlaceholder } from "./placeholder.js";
 import { escapeHtml } from "../core/html.js";
 import { StoreLightbox } from "./lightbox.js";
 
-/**
- * Product gallery: a previewer with a strip of thumbnails under it.
- *
- * The previewer shows one image at a time. Arrows overlaid on it step to the
- * previous/next image and are revealed on hover; the strip scrolls sideways and
- * keeps the active thumbnail in view. Swiping steps too, and a tap opens the
- * photographs full screen through lightbox.js.
- *
- * Only the chosen colour's photographs are ever here. Another colour's appear by
- * choosing that colour. They used to arrive in labelled groups, because a
- * photograph could belong to the piece rather than to a colour; every photograph
- * belongs to a colour now, so there is one group and nothing to label.
- */
 export const StoreGallery = (function () {
     function create(root, product) {
         const galleryEl = root.querySelector(".gallery");
@@ -33,7 +20,6 @@ export const StoreGallery = (function () {
         function show(next) {
             if (images.length === 0) return;
 
-            // Wrap around so the arrows never dead-end.
             index = (next + images.length) % images.length;
             const image = images[index];
 
@@ -50,7 +36,6 @@ export const StoreGallery = (function () {
             });
         }
 
-        /** The thumbnails, in one row, in the order the arrows walk. */
         function renderStrip(all) {
             return `
                 <div class="strip-group">
@@ -67,7 +52,6 @@ export const StoreGallery = (function () {
                 </div>`;
         }
 
-        /** `variant` names which colour the empty state should be drawn in. */
         function render(nextImages, variant = null) {
             images = nextImages || [];
             index = 0;
@@ -76,9 +60,6 @@ export const StoreGallery = (function () {
             stage.hidden = false;
             emptyNotice.hidden = true;
 
-            // With no photographs the stage shows the product's placeholder.
-            // The image and controls are hidden rather than replaced, so
-            // switching to a variant that DOES have photos still works.
             const existing = stage.querySelector(".product-placeholder");
             if (existing) existing.remove();
 
@@ -88,7 +69,6 @@ export const StoreGallery = (function () {
                 prevButton.disabled = true;
                 nextButton.disabled = true;
                 counter.hidden = true;
-                // Nothing to enlarge: the stage is showing the placeholder.
                 zoom.hidden = true;
                 strip.hidden = true;
                 strip.innerHTML = "";
@@ -104,13 +84,10 @@ export const StoreGallery = (function () {
                 return;
             }
 
-            // A single image needs no navigation, and nothing to preview.
             const navigable = images.length > 1;
             prevButton.disabled = !navigable;
             nextButton.disabled = !navigable;
             counter.hidden = !navigable;
-            // Unlike the counter and the strip, this is worth saying for a single
-            // photograph too — one photograph is still worth opening.
             zoom.hidden = false;
             strip.hidden = !navigable;
 
@@ -127,7 +104,6 @@ export const StoreGallery = (function () {
             if (thumb) show(Number(thumb.dataset.index));
         });
 
-        // Arrow keys drive the previewer once it has focus.
         stage.addEventListener("keydown", (event) => {
             if (event.key === "ArrowLeft") show(index - 1);
             if (event.key === "ArrowRight") show(index + 1);
@@ -135,13 +111,8 @@ export const StoreGallery = (function () {
         });
         stage.tabIndex = 0;
 
-        // ----------------------------------------------------------------
-        // Swipe, and the fullscreen view
-        // ----------------------------------------------------------------
-
         const openLightbox = () => StoreLightbox.open(images, index);
 
-        /** Past this many pixels the gesture is a swipe, not a tap. */
         const SWIPE_THRESHOLD = 40;
         let startX = null;
         let startY = null;
@@ -158,14 +129,11 @@ export const StoreGallery = (function () {
             const dy = event.clientY - startY;
             startX = null;
 
-            // Ignore a mostly-vertical drag: that is the page scrolling.
             if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
                 show(index + (dx < 0 ? 1 : -1));
                 return;
             }
 
-            // A tap on the photograph opens it full screen. The arrows sit on
-            // top of the stage, so a tap on one must not also open it.
             if (Math.abs(dx) < 8 && Math.abs(dy) < 8 &&
                 !event.target.closest("[data-prev], [data-next]")) {
                 openLightbox();

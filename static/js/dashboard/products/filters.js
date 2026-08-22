@@ -1,20 +1,10 @@
 import { reference, typeOptions } from "./reference.js";
 
-
-/**
- * The filter bar above the product grid.
- *
- * Name, type and collection are query parameters, so the API does the work and
- * the result stays correct however large the catalog grows. Filtering by
- * whether a product has photographs has no endpoint, so it is applied to the
- * fetched page — see hasPhotos in fetch.js.
- */
 const state = { q: "", type_id: "", collection_id: "", photos: "" };
 let onChange = () => {};
 
 const control = (id) => document.getElementById(id);
 
-/** The query string for the API-backed filters. */
 export function query() {
     const params = new URLSearchParams({ limit: "100" });
     if (state.q) params.set("q", state.q);
@@ -23,7 +13,6 @@ export function query() {
     return params.toString();
 }
 
-/** "none" | "some" | "" — applied after the fetch. */
 export const photoFilter = () => state.photos;
 
 export const isFiltered = () => Object.values(state).some(Boolean);
@@ -48,7 +37,6 @@ export async function mountFilters(handler) {
         collections.map((c) => `<option value="${c.id}">${c.name}</option>`).join("")
     );
 
-    // Typing should not fire a request per keystroke.
     let timer;
     control("filter-q").addEventListener("input", (event) => {
         clearTimeout(timer);
@@ -79,11 +67,6 @@ export async function mountFilters(handler) {
     applyUrlFilters();
 }
 
-/**
- * Lets another page link straight to a filtered catalogue — the panel's "N peças
- * sem fotografia" opens ?fotos=none, and the bar has to show that it did, or the
- * list looks wrong rather than filtered.
- */
 function applyUrlFilters() {
     const params = new URLSearchParams(window.location.search);
 

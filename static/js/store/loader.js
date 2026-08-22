@@ -5,7 +5,7 @@
     function dismiss() {
         if (loader.classList.contains("is-done")) return;
         loader.classList.add("is-done");
-        setTimeout(() => loader.remove(), 500);   // matches the .45s CSS fade
+        setTimeout(() => loader.remove(), 500);
     }
 
     if (document.readyState === "complete") {
@@ -14,7 +14,5 @@
         window.addEventListener("load", dismiss);
     }
 
-    // If `load` never fires — a stalled image, a slow font — do not hold the
-    // page hostage behind the loader.
     setTimeout(dismiss, 3000);
 })();

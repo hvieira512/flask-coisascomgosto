@@ -1,4 +1,3 @@
-{# Page furniture for the dashboard, so the pages cannot drift apart. #}
 
 
 {% macro page_head(eyebrow, title, subtitle=None) %}
@@ -11,7 +10,6 @@
 </header>
 {% endmacro %}
 
-{# Header with an action on the right, for pages that create something. #}
 {% macro page_head_action(eyebrow, title, subtitle, button_id, button_label,
                          icon='fa-plus') %}
 <header class="d-flex justify-content-between align-items-center mb-5">
@@ -27,10 +25,6 @@
 </header>
 {% endmacro %}
 
-{# One filter control, as a cell of the filter bar's row. Repeated four times.
-
-   `icon` defaults to the filter mark, which is what a select in this bar is;
-   text cells pass their own. #}
 {% macro filter_field(id, label, options=None, placeholder=None,
                       icon='fa-solid fa-filter') %}
 <div class="col">

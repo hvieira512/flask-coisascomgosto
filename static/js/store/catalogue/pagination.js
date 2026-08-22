@@ -1,19 +1,5 @@
-/**
- * Previous, every page number, next — one row, centred under the grid.
- *
- * `onGo` is handed the page the visitor asked for; the page it is on and how many
- * there are come from the caller on every render, so this holds no state of its
- * own.
- */
-
-/** Above this many pages the middle is elided rather than listed. */
 const MAX_PAGE_BUTTONS = 7;
 
-/**
- * The page numbers to draw, with null standing for an ellipsis. Always keeps
- * the first, the last and the current page's neighbours, so the row never
- * changes width as you walk through it.
- */
 function pageWindow(page, totalPages) {
     if (totalPages <= MAX_PAGE_BUTTONS) {
         return Array.from({ length: totalPages }, (_, i) => i + 1);

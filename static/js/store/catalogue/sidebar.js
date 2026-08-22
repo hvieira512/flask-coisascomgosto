@@ -3,38 +3,13 @@ import { escapeHtml } from "../../core/html.js";
 import { list } from "../../core/api.js";
 import { Track } from "../track.js";
 
-/**
- * The filter sidebar: one group per facet, each entry a checkbox with a count.
- *
- * There is no Colecção group. The rail of covers above the grid is how a
- * collection is chosen, and a checkbox list beside it was the same question asked
- * twice.
- */
-
-// What the dashboard calls each group. The filter state uses the API's own names
-// (type_id, material_id); the owners read "Tipo" and "Material". Collection is
-// not here — it is chosen from the rail of covers, which reports its own.
 const FACET_NAMES = {
     type_id: "Tipo",
     material_id: "Material",
 };
 
-/**
- * One entry: a checkbox, the name, and how many pieces are behind it. The box
- * is what says these are cumulative — before it, a second click looked like
- * it had undone the first.
- *
- * role="checkbox" with aria-checked rather than a button with aria-pressed,
- * because that is what these are: several can be on at once, and each is
- * independent. And `tabindex` because an <a> with no href is not focusable —
- * every filter was unreachable by keyboard while the badges that *remove* the
- * same filters were focusable, so a keyboard user could undo a filter they had
- * no way to apply.
- */
 function renderEntry(group, item, counts) {
     const count = counts.get(item.id) ?? 0;
-    // Kept visible but not clickable: it is part of the workshop's vocabulary,
-    // and ticking it could only ever empty the grid.
     const empty = count === 0;
 
     return `
@@ -55,7 +30,6 @@ function renderEntry(group, item, counts) {
       </li>`;
 }
 
-/** Fill one group from the endpoint named on it. */
 async function loadGroup(group, facets) {
     const { filterGroup, endpoint, collectionKey, facet } = group.dataset;
 
@@ -71,17 +45,9 @@ async function loadGroup(group, facets) {
     const counts = facets[facet] ?? new Map();
     group.innerHTML = items.map((item) => renderEntry(filterGroup, item, counts)).join("");
 
-    // Cache names so badges can render before the sidebar is consulted.
     items.forEach((item) => StoreFilters.registerLabel(filterGroup, item.id, item.name));
 }
 
-/**
- * Fills every group and wires the clicks. `facets` carries the per-option counts,
- * so entries are rendered with their number rather than patched afterwards.
- *
- * Returns the one thing the page has to call again: ticking the entries that the
- * filter state says are chosen.
- */
 export async function mountSidebar(facets) {
     const root = document.getElementById("filter-groups");
 
@@ -89,14 +55,10 @@ export async function mountSidebar(facets) {
         if (entry.classList.contains("is-empty")) return;
 
         const { filterGroup, filterValue, filterLabel } = entry.dataset;
-        // Read before the toggle, so "was it off" means "is it being switched on".
         const turningOn = !StoreFilters.isSelected(filterGroup, filterValue);
 
         StoreFilters.toggle(filterGroup, filterValue, filterLabel);
 
-        // Only on the way on: unticking a filter is not a preference for
-        // anything, and counting it would double every visitor who changes
-        // their mind.
         if (turningOn) Track.filter(FACET_NAMES[filterGroup] ?? filterGroup, filterLabel);
     }
 
@@ -108,15 +70,12 @@ export async function mountSidebar(facets) {
         toggle(entry);
     });
 
-    // Space is how a checkbox is ticked; Enter costs nothing and is what a
-    // keyboard user tries first on something that looks like a link.
     root.addEventListener("keydown", (event) => {
         if (event.key !== " " && event.key !== "Enter") return;
 
         const entry = event.target.closest("a[data-filter-group]");
         if (!entry) return;
 
-        // Space would otherwise scroll the page out from under the sidebar.
         event.preventDefault();
         toggle(entry);
     });

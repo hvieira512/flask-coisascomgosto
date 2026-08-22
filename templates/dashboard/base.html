@@ -1,15 +1,5 @@
 {% extends 'base.html' %}
 
-{% set tabs = [
-{'icon': 'fa-house', 'label': 'Início', 'endpoint': 'web.dashboard.home'},
-{'icon': 'fa-box', 'label': 'Produtos', 'endpoint': 'web.dashboard.products'},
-{'icon': 'fa-tags', 'label': 'Tipos', 'endpoint': 'web.dashboard.types'},
-{'icon': 'fa-palette', 'label': 'Cores', 'endpoint': 'web.dashboard.colors'},
-{'icon': 'fa-layer-group', 'label': 'Colecções', 'endpoint': 'web.dashboard.collections'},
-{'icon': 'fa-calendar-days', 'label': 'Eventos', 'endpoint': 'web.dashboard.events'},
-{'icon': 'fa-address-book', 'label': 'Contactos', 'endpoint': 'web.dashboard.contacts'}
-] %}
-
 {% block title %}{% block page_title %}Painel{% endblock %} · Dashboard{% endblock %}
 
 {% block body_class %}dashboard-body{% endblock %}
@@ -19,79 +9,10 @@
 {% endblock %}
 
 {% block body %}
-<nav class="navbar fixed-top dash-navbar" aria-label="navegação do painel">
-    <a class="navbar-brand fw-bold" href="{{ url_for('web.dashboard.home') }}">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
-        {# The brand is what gives way when the bar runs out of room: on a 320px
-           screen the controls matter more than the wordmark. #}
-        <span class="text-truncate">CoisasComGosto</span>
-    </a>
-
-    <div class="d-flex align-items-center flex-shrink-0">
-        <div class="dropdown">
-            <button class="btn btn-ghost dash-user-btn" data-bs-toggle="dropdown"
-                    data-dropdown-trigger aria-expanded="false">
-                <span class="icon"><i class="fa-solid fa-user"></i></span>
-                <span class="dash-user-name text-truncate">{{ session["user"]["username"] }}</span>
-                <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                {# In full, since the bar truncates a long one. #}
-                <li><h6 class="dropdown-header dash-user-header">{{ session["user"]["username"] }}</h6></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <a class="dropdown-item" href="{{ url_for('web.logout') }}">
-                        <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
-                        <span>Sair</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        {# Last in the bar, so it lands against the right edge, which is where a
-           thumb expects it. #}
-        <button class="btn btn-ghost dash-burger d-lg-none" data-bs-toggle="offcanvas"
-                data-bs-target="#sidebar" aria-controls="sidebar" id="sidebarToggle"
-                aria-label="Abrir menu">
-            <span class="icon"><i class="fa-solid fa-bars"></i></span>
-        </button>
-    </div>
-</nav>
+{% include 'dashboard/components/navbar.html' %}
 
 <div class="d-flex align-items-start">
-    {# offcanvas-lg: a column of the page from 992px up, a slide-in panel with
-       Bootstrap's own backdrop, focus trap and scroll lock below it. #}
-    <aside class="offcanvas-lg offcanvas-start dash-sidebar" id="sidebar" tabindex="-1"
-           aria-label="Secções do painel">
-        <div class="offcanvas-header">
-            <span class="offcanvas-title fw-semibold">Secções</span>
-            <button class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
-                    aria-label="Fechar"></button>
-        </div>
-
-        <div class="offcanvas-body">
-            <ul class="nav flex-column">
-                {% for tab in tabs %}
-                <li class="nav-item">
-                    <a href="{{ url_for(tab.endpoint) }}"
-                       class="nav-link{{ ' active' if request.endpoint == tab.endpoint else '' }}">
-                        <span class="icon"><i class="fa-solid {{ tab.icon }}"></i></span>
-                        <span>{{ tab.label }}</span>
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-
-            <ul class="nav flex-column dash-sidebar-foot">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('web.store.home') }}">
-                        <span class="icon"><i class="fa-solid fa-arrow-left"></i></span>
-                        <span>Ver a loja</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </aside>
+    {% include 'dashboard/components/sidebar.html' %}
 
     <section class="dash-main">
         {% block content %}{% endblock %}
@@ -100,12 +21,6 @@
 {% endblock %}
 
 {% block scripts %}
-{# SweetAlert2 bundles its own CSS, so there is no stylesheet to load. It is the
-   one vendored library that only publishes a global, so it stays a classic script
-   and core/notify.js reads window.Swal from its own module.
-
-   There is no chrome script: the navbar dropdown, the offcanvas sidebar, the tabs
-   and the modals are all Bootstrap's data-api. #}
 <script src="{{ url_for('static', filename='sweetalert2/sweetalert2.all.min.js') }}"></script>
 {% block page_scripts %}{% endblock %}
 {% endblock %}

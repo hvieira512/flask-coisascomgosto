@@ -31,8 +31,6 @@
                        href="{{ url_for('web.store.home') }}#contacts">Contactos</a>
                 </li>
                 <li class="nav-item">
-                    {# The owners' door, and nobody else's business: a quiet link
-                       rather than the button it used to be. #}
                     <a class="nav-link text-uppercase fs-7 text-body-tertiary"
                        href="{{ url_for('web.dashboard.home') if 'user' in session else url_for('web.auth.home') }}">
                         Área reservada

@@ -1,23 +1,6 @@
-/**
- * Drag-to-scroll and arrow buttons for a horizontal rail.
- *
- * Two rails use this: the fairs on the landing page and the collections above
- * the catalogue. It was written for the first and copied for nothing — the
- * second asked the same question, so it is the same code.
- *
- * Touch is left alone: it already pans natively.
- */
-
-/** Past this many pixels a gesture is a drag, not a click. */
 const DRAG_THRESHOLD = 5;
-/** Tolerance for "we are at the end", since scrollLeft can be fractional. */
 const EDGE_SLACK = 2;
 
-/**
- * @param {HTMLElement} rail        the scroll container
- * @param {object}      controls    { prev, next, item } — item is the selector
- *                                  for one entry, so a click advances by one
- */
 export function mountDragRail(rail, { prev, next, item }) {
     if (!rail) return;
 
@@ -28,7 +11,6 @@ export function mountDragRail(rail, { prev, next, item }) {
 
     function syncArrows() {
         const maxScroll = rail.scrollWidth - rail.clientWidth;
-        // A stacked rail — the phone layout — has nothing to page through.
         const scrollable =
             maxScroll > EDGE_SLACK && getComputedStyle(rail).overflowX !== "visible";
         const atStart = rail.scrollLeft <= EDGE_SLACK;
@@ -37,8 +19,6 @@ export function mountDragRail(rail, { prev, next, item }) {
         if (prev) prev.hidden = !scrollable || atStart;
         if (next) next.hidden = !scrollable || atEnd;
 
-        // Fade an edge only while content sits past it, so an arrow never covers
-        // solid text.
         rail.classList.toggle("has-fade-start", scrollable && !atStart);
         rail.classList.toggle("has-fade-end", scrollable && !atEnd);
     }
@@ -75,11 +55,8 @@ export function mountDragRail(rail, { prev, next, item }) {
         moved = Math.max(moved, Math.abs(delta));
         rail.scrollLeft = startScroll - delta;
 
-        // Both of these wait for the gesture to actually be a drag. On
-        // pointerdown they are wrong in ways that only show up on a rail whose
-        // entries are controls: preventDefault on every move between down and up
-        // cancels the click that follows, and the grabbing cursor is a lie until
-        // something has moved.
+        // Only once it is a drag: preventDefault on every move between down and
+        // up cancels the click that follows, so a tile in the rail did nothing.
         if (moved > DRAG_THRESHOLD) {
             rail.classList.add("is-dragging");
             event.preventDefault();
@@ -97,7 +74,6 @@ export function mountDragRail(rail, { prev, next, item }) {
     rail.addEventListener("pointercancel", endDrag);
     rail.addEventListener("pointerleave", endDrag);
 
-    // A drag that ends on top of a link or a button must not activate it.
     rail.addEventListener(
         "click",
         (event) => {

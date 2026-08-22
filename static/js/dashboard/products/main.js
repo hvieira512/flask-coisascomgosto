@@ -16,39 +16,11 @@ import { stepDialog } from "../../core/steps.js";
 const getProduct = (id) =>
     request(API.products.get(id), { fallback: "Produto não encontrado." });
 
-/**
- * Where the colours and their photographs live, which is what is left to do for a
- * piece that has just been created — and where to land again after adding or
- * removing one, since the panel is rebuilt from the server each time.
- *
- * Bootstrap's own API rather than a click on the tab: the toggle is the button
- * inside the <li>, and a synthetic click on the wrong element does nothing at all.
- */
 const showVariantsTab = () =>
     bootstrap.Tab.getOrCreateInstance(
         document.querySelector('#edit-tabs [data-tab="variants"] .nav-link')
     ).show();
 
-/**
- * Creating asks what the piece is, then the optional details, then the colours it
- * is offered in — and writes once at the end. A piece is on the storefront the
- * moment its row exists, so a half-answered form must not create one.
- *
- * The colours are chosen here but attached afterwards, because a variant needs a
- * product id. Photographs are the one thing that cannot be chosen in advance at
- * all: they need both an id and a file, so the save hands over to the edit modal on
- * its Fotografias tab, which is where the work continues.
- */
-/**
- * Sends the photographs the wizard collected, each against the variant it belongs
- * to. The variant ids only exist now, so they are read back off the saved piece
- * rather than guessed from the order they were posted in.
- *
- * A failed photograph does not fail the save. The piece and its colours are already
- * written, and a retry would upload the ones that did work a second time — so this
- * reports what did not arrive and lets the Fotografias tab, which the wizard is
- * about to open, be where it is tried again.
- */
 async function uploadChosenPhotos(productId, picks) {
     const withPhotos = picks.filter((pick) => pick.files.length);
     if (!withPhotos.length) return;
@@ -112,11 +84,6 @@ async function openCreate() {
 async function openEdit(id) {
     const product = await getProduct(id);
 
-    // Two tabs, not three: every photograph belongs to a colour, so Cores holds the
-    // colours and each colour's photographs together. Fotografias was the same
-    // information asked for a second time, through a dropdown naming the colour.
-    // Bootstrap's tabs: data-bs-toggle does the switching, and the panes are a
-    // .tab-content, so there is no code here beyond building the two bodies.
     bodyOf("editProductModal").innerHTML = `
         <ul class="nav nav-tabs mb-3" id="edit-tabs" role="tablist">
           <li class="nav-item" role="presentation" data-tab="details">
@@ -154,14 +121,6 @@ async function openEdit(id) {
         });
 }
 
-/**
- * Only the details form has pending changes to save: colours and photographs are
- * written the moment they are added or removed, so leaving "Guardar alterações" on
- * that tab promised a save that never happened — and reported "Produto
- * actualizado" for a form nobody had touched.
- *
- * Bootstrap announces the switch, so this listens rather than doing the switching.
- */
 function wireEditTabs() {
     const root = modal("editProductModal");
     const save = root.querySelector("#edit-submit");
@@ -173,7 +132,6 @@ function wireEditTabs() {
     });
 }
 
-/** Re-opens the modal on the same product so every panel sees fresh data. */
 async function refreshEdit(productId) {
     await mountFilters(fetchProducts).then(fetchProducts);
     await openEdit(productId);
@@ -198,8 +156,6 @@ function wireVariantPanel(product) {
             );
             const photos = removing?.images?.length ?? 0;
 
-            // The colour's photographs go with it, and there is no undo, so the number
-            // is on the question rather than discovered afterwards.
             const confirmed = await Notify.confirm("Remover esta cor?", {
                 text: photos
                     ? `${photos} ${photos === 1 ? "fotografia desta cor" : "fotografias desta cor"} também ${photos === 1 ? "desaparece" : "desaparecem"}.`
@@ -220,8 +176,6 @@ function wireVariantPanel(product) {
         };
     });
 
-    // A tray per colour. The piece exists here, so a photograph is uploaded the moment
-    // it is chosen and the panel is rebuilt from what the server then has.
     wireVariantPhotos(product, {
         onUpload: async (variant, files) => {
             for (const file of files) {
@@ -240,7 +194,6 @@ function wireVariantPanel(product) {
                 danger: true,
                 confirmText: "Remover",
             });
-            // Throwing is how the picker is told to keep the photograph it is showing.
             if (!confirmed) throw new Error("");
 
             await removeImage(product.id, image.id);
@@ -278,8 +231,6 @@ document.addEventListener("click", (event) => {
         return;
     }
 
-    // The whole row opens the piece for editing, which is what the pointer
-    // cursor on it promises. Checked after the buttons so their own actions win.
     const row = event.target.closest("#product-list tr[data-product-id]");
     if (row) openEdit(row.dataset.productId);
 });

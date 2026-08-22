@@ -7,7 +7,6 @@
     <title>{% block title %}CoisasComGosto{% endblock %}</title>
     <link href="{{ url_for('static', filename='img/logo.png') }}" rel="icon" type="image/png">
     <link href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}" rel="stylesheet">
-    {# theme.css must follow bootstrap so it can override its own variables. #}
     <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
     {% block styles %}{% endblock %}
     <script src="{{ url_for('static', filename='fontawesome/a38dd6e785.js') }}" crossorigin="anonymous"></script>
@@ -19,13 +18,8 @@
 
     {% block body %}{% block content %}{% endblock %}{% endblock %}
 
-    {# Bootstrap's bundle is a classic script, so it runs before any module below
-       and its data-api has the navbar, dropdowns and offcanvas wired by the time
-       our own code runs. #}
     <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
 
-    {# Every other script in this project is a module, so each one imports what it
-       needs and none of them depend on the order they appear in. #}
     <script type="module" src="{{ url_for('static', filename='js/store/loader.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>

@@ -4,13 +4,6 @@ import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { nameTaken } from "../errors.js";
 
-/**
- * Conjuntos: the combinations a piece can be offered in.
- *
- * The page's subject, so it takes the table. The individual colours are a lookup
- * beside it — see palette.js — and this half needs them only to build its picker.
- */
-
 export function setRow(set, pieces) {
     const names = set.colors.map((c) => c.name).join(", ");
 
@@ -49,8 +42,6 @@ const colorChip = (color) => `
     <span>${escapeHtml(color.name)}</span>
   </button>`;
 
-/** Chips rather than a select, because a set is in as many collections as it is
- *  in — the same two colours are the same combination wherever they appear. */
 const collectionChip = (collection, chosen) => `
   <button type="button" data-collection-id="${collection.id}" aria-pressed="${chosen}"
           class="badge rounded-pill chip is-quiet collection-chip${chosen ? " is-active" : ""}">
@@ -99,13 +90,6 @@ function setForm(set, colors, collections) {
     </form>`;
 }
 
-/**
- * The picker, the preview and the chosen order, wired together.
- *
- * Order is the click order rather than the colours' own: "Branco e Dourado" and
- * "Dourado e Branco" are different sets, and the first colour is the one the
- * badge takes its tint from.
- */
 function wireSetForm(modalId, set, colors) {
     const form = modal(modalId).querySelector("#set-form");
     const chosen = (set?.colors ?? []).map((c) => c.id);
@@ -161,9 +145,6 @@ function wireSetForm(modalId, set, colors) {
             payload: {
                 name: value("name"),
                 color_ids: chosen,
-                // Always sent, empty included: this is the full list of where the
-                // set appears, so leaving it out on an edit would be indistinguishable
-                // from "in no collection at all".
                 collection_ids: [...inCollections],
             },
         };
@@ -193,8 +174,6 @@ export function openSetForm({ modalId, set = null, colors, collections, after })
 }
 
 export function openDeleteSet({ set, pieces, after }) {
-    // Deleting a set deletes every variant offered in it, and a variant's photos
-    // go with it. Unlike a type, this is allowed — so the number is the warning.
     const warning = pieces
         ? `<p class="text-body-secondary fs-7 mt-2">
              ${pieces} ${pieces === 1 ? "peça é oferecida" : "peças são oferecidas"}

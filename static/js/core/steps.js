@@ -1,16 +1,3 @@
-/**
- * A dialog that asks for one group of fields at a time.
- *
- * For creating something big enough that a single screen puts questions in front
- * of the owners before they can answer them. The required fields come first and
- * nothing is written until the last step, so the record never exists half-made.
- *
- * The caller owns the markup and marks each group with `data-step`; this only
- * supplies the chrome — where you are, Voltar/Continuar, and which group shows.
- * Every group stays in the DOM the whole time, so going back and forth keeps what
- * has been typed.
- */
-
 import { bodyOf, close, footOf, modal, open, submitting } from "./modal.js";
 import { Notify } from "./notify.js";
 
@@ -45,8 +32,6 @@ export function stepDialog({
 
     function show(index, { focus = true, from = "right" } = {}) {
         current = index;
-        // Which way the group travels in. Un-hiding restarts the CSS animation,
-        // so the slide needs nothing here but the direction.
         panels[index].style.setProperty("--step-from", from === "left" ? "-1.5rem" : "1.5rem");
         panels.forEach((panel, i) => { panel.hidden = i !== index; });
 
@@ -64,8 +49,6 @@ export function stepDialog({
     back.onclick = () => show(current - 1, { from: "left" });
 
     next.onclick = (event) => {
-        // A step's own check runs before leaving it, so a missing name is caught
-        // on the step that asks for it rather than three screens later.
         if (!last()) {
             try {
                 validate[current]?.(root);
@@ -86,7 +69,6 @@ export function stepDialog({
         });
     };
 
-    // open() focuses the first field in the body, which is on step 1 anyway.
     open(id);
     afterRender?.(root);
     show(0, { focus: false });

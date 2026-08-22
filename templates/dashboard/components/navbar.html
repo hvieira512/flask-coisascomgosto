@@ -1,0 +1,33 @@
+<nav class="navbar fixed-top dash-navbar" aria-label="navegação do painel">
+    <a class="navbar-brand fw-bold" href="{{ url_for('web.dashboard.home') }}">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
+        <span class="text-truncate">CoisasComGosto</span>
+    </a>
+
+    <div class="d-flex align-items-center flex-shrink-0">
+        <div class="dropdown">
+            <button class="btn btn-ghost dash-user-btn" data-bs-toggle="dropdown"
+                    data-dropdown-trigger aria-expanded="false">
+                <span class="icon"><i class="fa-solid fa-user"></i></span>
+                <span class="dash-user-name text-truncate">{{ session["user"]["username"] }}</span>
+                <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header dash-user-header">{{ session["user"]["username"] }}</h6></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('web.logout') }}">
+                        <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                        <span>Sair</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="btn btn-ghost dash-burger d-lg-none" data-bs-toggle="offcanvas"
+                data-bs-target="#sidebar" aria-controls="sidebar" id="sidebarToggle"
+                aria-label="Abrir menu">
+            <span class="icon"><i class="fa-solid fa-bars"></i></span>
+        </button>
+    </div>
+</nav>

@@ -5,14 +5,6 @@
 {% from 'dashboard/components/page.html' import page_head %}
 
 {% block content %}
-{# What this page used to be: four counters, a list of pieces without a
-   photograph, and the next event. Every one of those was a second copy of what
-   the page it linked to already showed — the products page carries the
-   photograph count in its own subtitle and filters on it, the events page lists
-   every event with its dates. And the owners know their own fairs by heart.
-
-   What it could not say was whether anybody looks at any of it, because nothing
-   was ever recorded. That is what it says now. #}
 <header class="d-flex justify-content-between align-items-start gap-3 mb-4 flex-wrap">
     <div>
         <p class="eyebrow mb-2">Painel</p>
@@ -20,8 +12,6 @@
         <p class="text-body-secondary mb-0">O que os visitantes andam a ver.</p>
     </div>
 
-    {# The window. In the URL so a reload keeps it, and so a link can carry it —
-       the same reason the products page reads its filters from there. #}
     <div class="btn-group btn-group-sm" role="group" aria-label="Período">
         <button class="btn btn-outline-secondary" data-days="7" aria-pressed="false">7 dias</button>
         <button class="btn btn-outline-secondary" data-days="30" aria-pressed="false">30 dias</button>
@@ -29,8 +19,6 @@
     </div>
 </header>
 
-{# One quiet line rather than four cards: how big the catalogue is orients you,
-   and each figure is its own page's subtitle if you want it. #}
 <p class="text-body-secondary fs-7 mb-4" id="catalogue-line">—</p>
 
 <section id="totals" class="mb-4"></section>

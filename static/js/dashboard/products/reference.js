@@ -1,16 +1,7 @@
 import { API, list } from "../../core/api.js";
 
-
-/**
- * The lookup lists every product form needs: types, materials, collections,
- * colour sets and sizes. Fetched once and reused, since they change rarely and
- * every modal would otherwise refetch them.
- */
 let cache = null;
 
-/** A missing lookup leaves its select empty rather than failing the form; a
- *  truncated one still throws, since a form offering half the collections is
- *  worse than one that says it broke. */
 const listOf = (url, key) => list(url, key, { orEmpty: true });
 
 export async function reference({ refresh = false } = {}) {

@@ -25,15 +25,10 @@ const renderEmptyMessage = () => {
         </tr>`;
 };
 
-/** Photographs live on the product and on each variant. */
 const photoCount = (product) =>
     (product.images ?? []).length
     + product.variants.reduce((n, v) => n + (v.images ?? []).length, 0);
 
-/**
- * A photograph count is the one number on this page that needs acting on, so
- * zero is a state and not just a smaller number.
- */
 const photoCell = (product) => {
     const photos = photoCount(product);
     if (photos === 0) {
@@ -54,9 +49,6 @@ const row = (product) => {
                 alt="${escapeHtml(product.name)}">`
         : ProductPlaceholder.markup(product);
 
-    // Capped at three so a piece offered in five colours does not make its row
-    // twice the height of its neighbours and break the scan down the column.
-    // The full list is one click away, in the row's own Cores tab.
     const SHOWN = 3;
     const shown = product.variants.slice(0, SHOWN);
     const rest = product.variants.length - shown.length;
@@ -68,9 +60,6 @@ const row = (product) => {
            </span>`
         : `<span class="badge rounded-pill chip is-quiet">Sem cores</span>`;
 
-    // The type is what the piece is; the collection is which family it belongs
-    // to. Both under the name, because the name alone rarely distinguishes two
-    // boxes.
     tr.innerHTML = `
         <td class="dash-col-thumb">${image}</td>
         <td class="dash-col-name">
@@ -101,9 +90,6 @@ const row = (product) => {
 const renderProducts = (products) => {
     productList.innerHTML = "";
 
-    // The subtitle carries the one figure worth knowing before you read a row,
-    // and it is set on every path: leaving it at its placeholder made an empty
-    // filtered list look like a page that had failed to load.
     const count = document.getElementById("product-count");
     const total = products?.length ?? 0;
     const pieces = `${total} ${total === 1 ? "peça" : "peças"}`;
@@ -122,7 +108,6 @@ const renderProducts = (products) => {
         : pieces;
 };
 
-/** One placeholder row per record the table is about to hold. */
 const renderSkeleton = () => {
     productList.innerHTML = `
         <tr>
@@ -135,12 +120,9 @@ const renderSkeleton = () => {
 export const fetchProducts = async () => {
     renderSkeleton();
     try {
-        // The query carries limit=100 plus whatever the filter bar has set.
-        // The API defaults to 10, which silently hid four of fourteen products.
         const { products } = await request(`${API.products.list}?${query()}`,
                                           { fallback: "Erro ao buscar produtos." });
 
-        // No endpoint filters on photographs, so it is applied here.
         const wanted = photoFilter();
         const visible = wanted
             ? products.filter((p) =>

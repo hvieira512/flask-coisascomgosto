@@ -29,8 +29,6 @@
     </div>
 </div>
 
-{# One record per row. js/dashboard/products/fetch.js fills the tbody; the
-   header is markup so it is there before the first request answers. #}
 <div class="card dash-panel">
     <div class="dash-table-wrap">
         <table class="table dash-table is-wide table-hover">
@@ -48,8 +46,6 @@
     </div>
 </div>
 
-{# Bodies and footers are rendered by js/dashboard/products/main.js, which
-   needs the product before it can build a form. #}
 {% with modal_id="newProductModal", modal_title="Novo produto" %}
     {% include 'dashboard/components/modal.html' %}
 {% endwith %}

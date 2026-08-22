@@ -3,10 +3,6 @@ import { Notify } from "../core/notify.js";
 import { escapeHtml } from "../core/html.js";
 import { submitting } from "../core/modal.js";
 
-/**
- * The shop's contact details. A singleton — one row, edited in place, so there
- * is no create or delete, and the page is a form rather than a list.
- */
 const FIELDS = [
     "address", "maps_url", "email", "whatsapp", "facebook_url", "instagram_url",
 ];
@@ -14,14 +10,11 @@ const FIELDS = [
 const field = (name) => document.getElementById(`cf-${name}`);
 let saved = {};
 
-/** wa.me takes digits only — the same rule the API applies. */
 const whatsappUrl = (number) => {
     const digits = String(number ?? "").replace(/\D/g, "");
     return digits ? `https://wa.me/${digits}` : "";
 };
 
-/** The shop shows the profile name, not the whole URL. Mirrors the
- *  `social_handle` filter in web/filters.py — keep them in step. */
 const socialHandle = (url) => {
     const path = String(url ?? "").replace(/^https?:\/\/[^/]+/i, "").split("?")[0];
     const handle = path.replace(/^\/+|\/+$/g, "").split("/").pop();
@@ -75,9 +68,6 @@ function save(event) {
     event.preventDefault();
 
     return submitting(document.getElementById("contact-save"), async () => {
-        // PUT replaces the whole row: a field left out is cleared, so every
-        // field is always sent. Empty ones are omitted deliberately — that is
-        // how a detail is removed — and the API rejects an explicit null.
         const payload = {};
         FIELDS.forEach((name) => {
             const value = field(name).value.trim();

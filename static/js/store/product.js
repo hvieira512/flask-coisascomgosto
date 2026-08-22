@@ -1,11 +1,3 @@
-/**
- * Product detail page.
- *
- * Loads one product, renders its details, and drives the gallery. Selecting a
- * colour shows that colour's photographs, or the placeholder in that colour when
- * there are none of it yet.
- */
-
 import { API, request } from "../core/api.js";
 import { ColorSet } from "./color-set.js";
 import { StoreGallery } from "./gallery.js";
@@ -17,25 +9,12 @@ import { escapeHtml } from "../core/html.js";
     const errorNotice = document.getElementById("detail-error");
     const productId = root.dataset.productId;
 
-    // The gallery needs the product so it can draw the type/colour
-    // placeholder when there are no photographs.
     let gallery;
 
-    /**
-     * The chosen colour's photographs.
-     *
-     * Deliberately not the other colours': a colour's photographs appear by choosing
-     * that colour, and nothing else. Offering them all made the gallery a tour of the
-     * whole piece, which is not what a shopper looking at one colour asked for.
-     *
-     * There is no second group any more. Every photograph belongs to a colour, so
-     * with no colour chosen there is nothing to show and the placeholder stands in.
-     */
     function imagesFor(product, variant) {
         return variant ? variant.images || [] : [];
     }
 
-    /** The specification list: the facts a buyer asks about. */
     function renderMeta(product) {
         const meta = document.getElementById("product-meta");
         const rows = [];
@@ -45,9 +24,6 @@ import { escapeHtml } from "../core/html.js";
         if (product.collection) rows.push(["Colecção", product.collection.name]);
         if (product.default_size) rows.push(["Tamanho base", product.default_size.name]);
 
-        // mb-0 on the value: Bootstrap gives every <dd> a bottom margin, which in a
-        // flex row becomes 8px of dead space under the pair — the label and value
-        // then sit high instead of centred between the row's rules.
         meta.innerHTML = rows
             .map(
                 ([label, value]) => `
@@ -59,16 +35,8 @@ import { escapeHtml } from "../core/html.js";
             .join("");
     }
 
-    // What the visitor has picked, folded into the enquiry they send. There is no
-    // basket, so a chosen colour and size have nowhere else to go — and a control
-    // that looks pressable has to do something.
-    //
-    // The variant and the size themselves rather than their names: the message
-    // needs the names, and the enquiry we record needs the ids — which is the
-    // field that tells the owners which colourway to make next.
     let chosen = { variant: null, size: null };
 
-    /** Pre-fill the WhatsApp message with the piece, colour and size on screen. */
     function renderEnquiry(product) {
         const link = document.getElementById("enquiry-link");
         if (!link) return;
@@ -81,11 +49,6 @@ import { escapeHtml } from "../core/html.js";
         link.href = `${base}?text=${encodeURIComponent(`${parts.join(", ")}.`)}`;
     }
 
-    /** The enquiry click, with whatever was chosen when it happened.
-     *
-     *  On the link itself rather than inside renderEnquiry: that runs on every
-     *  colour and size change, and what is worth counting is the visitor
-     *  actually leaving to ask. */
     function wireEnquiryTracking(product) {
         const link = document.getElementById("enquiry-link");
         if (!link) return;
@@ -120,8 +83,6 @@ import { escapeHtml } from "../core/html.js";
             const button = event.target.closest("[data-size]");
             if (!button) return;
 
-            // Clicking the chosen size again clears it, so a visitor who only
-            // wanted to look is not stuck having asked for a size.
             const already = button.getAttribute("aria-pressed") === "true";
             options.querySelectorAll("[data-size]").forEach((option) => {
                 option.classList.remove("btn-dark");
@@ -168,15 +129,11 @@ import { escapeHtml } from "../core/html.js";
         });
     }
 
-    /** The chosen colourway, named. The swatches carry no text — a circle is
-     *  not a label — so the name is said once, here. */
     function nameChosen(product, index) {
         const target = document.getElementById("variant-chosen");
         if (target) target.textContent = product.variants?.[index]?.color_set?.name ?? "";
     }
 
-    /** Choose a colour: mark its swatch, tell the enquiry, and hand the gallery that
-     *  colour's photographs. */
     function selectVariant(product, index) {
         const variant = product.variants?.[index];
         if (!variant) return;
@@ -211,18 +168,12 @@ import { escapeHtml } from "../core/html.js";
 
         gallery = StoreGallery.create(root, product);
 
-        // Open on the first colour that has been photographed, rather than
-        // simply the first: a piece whose opening colour has no photograph yet
-        // would otherwise greet every visitor with the placeholder while a real
-        // photograph of it sat one swatch away.
         const variants = product.variants || [];
         const photographed = variants.findIndex((v) => v.images?.length);
         const activeIndex = photographed === -1 ? 0 : photographed;
 
         chosen.variant = variants[activeIndex] ?? null;
 
-        // Once per piece per tab: a reload is the same visit looking at the same
-        // thing. Recorded after the product loads, so a 404 counts as nothing.
         Track.view(product.id);
         wireEnquiryTracking(product);
 

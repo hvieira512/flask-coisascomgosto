@@ -1,15 +1,3 @@
-{#
-  Breathing butterfly loader.
-
-  Both the markup and its CSS are inlined rather than linked, so the loader
-  paints on the very first frame — before bootstrap.min.css or any script has been
-  fetched. That is what makes the page appear to load "instantly" and then
-  settle, instead of flashing unstyled content.
-
-  It is removed by static/js/store/loader.js on window.load. The CSS carries a
-  fallback animation that hides it after 6s regardless, so a JavaScript error
-  can never leave a visitor staring at a permanent overlay.
-#}
 <style>
     #page-loader {
         position: fixed;
@@ -114,14 +102,12 @@
 <div id="page-loader" role="status" aria-label="A carregar">
     <svg class="ccg-butterfly" viewBox="0 0 120 120" fill="none" aria-hidden="true">
         <g class="wing" fill="#4472C4">
-            {# Left wings #}
             <path
                 d="M58 54C48 28 27 7 15 18 3 29 10 52 30 60c12 5 24 3 28-6z"
                 opacity=".92" />
             <path
                 d="M58 66c-6 14-18 24-26 34-7 9 7 12 15 0 6-9 10-22 11-34z"
                 opacity=".72" />
-            {# Right wings: the same shapes mirrored about the body axis #}
             <g transform="translate(120,0) scale(-1,1)">
                 <path
                     d="M58 54C48 28 27 7 15 18 3 29 10 52 30 60c12 5 24 3 28-6z"
@@ -132,7 +118,6 @@
             </g>
         </g>
 
-        {# Body and antennae stay still: only the wings breathe. #}
         <ellipse cx="60" cy="62" rx="3.2" ry="17" fill="#1F3864" />
         <path d="M59 46c-3-7-9-11-14-12M61 46c3-7 9-11 14-12" stroke="#1F3864"
             stroke-width="2.2" stroke-linecap="round" />

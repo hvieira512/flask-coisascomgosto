@@ -5,18 +5,6 @@ import { Notify } from "../../core/notify.js";
 import { byType } from "../counts.js";
 import { mountMaterials } from "./materials.js";
 
-/**
- * Tipos.
- *
- * Types are the page's subject — every piece must have one — so they take the
- * table. The list is flat: a type is the family ("Caixa"), and the shape lives
- * in the piece's own name.
- *
- * The materials panel beside it is its own module: nothing here reads a material,
- * so the two halves share only the page.
- */
-
-// Enough to cover the workshop's vocabulary without a picker.
 const ICONS = [
     "fa-box", "fa-box-archive", "fa-circle-dot", "fa-heart", "fa-image",
     "fa-circle-notch", "fa-gift", "fa-star", "fa-wine-bottle", "fa-brush",
@@ -128,7 +116,6 @@ function typeForm(type = null) {
     </form>`;
 }
 
-/** The chosen icon, drawn next to the picker, so the choice is not a guess. */
 function wireIconPreview(modalId) {
     const select = modal(modalId).querySelector("#tf-icon");
     const preview = modal(modalId).querySelector("#tf-icon-preview");
@@ -149,7 +136,6 @@ function payloadFrom(modalId) {
     const payload = { name: value("name") };
     if (!payload.name) throw new Error("O nome é obrigatório.");
 
-    // The API rejects an explicit null, so an empty field is omitted instead.
     if (value("description")) payload.description = value("description");
     if (value("icon")) payload.icon = value("icon");
 
@@ -178,9 +164,6 @@ async function openDeleteType(id) {
 
     const pieces = pieceCounts.get(type.id) ?? 0;
 
-    // A type in use cannot be deleted — every piece needs one. Saying so here,
-    // and withholding the button, beats offering an action that can only fail
-    // and then relaying the API's English back to the owner.
     if (pieces) {
         bodyOf("deleteTypeModal").innerHTML = `
             <p><strong>${escapeHtml(type.name)}</strong> ainda tem
@@ -204,8 +187,6 @@ async function openDeleteType(id) {
         after: loadTypes,
     });
 }
-
-// ---- Wiring ----
 
 document.getElementById("type-rows").addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-type-action]");

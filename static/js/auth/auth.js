@@ -17,12 +17,6 @@ form.addEventListener("submit", async (e) => {
 
     if (mode === "check") {
         submitBtn.classList.add("is-loading");
-        // The username alone: 401 means the account exists and wants its
-        // password, 404 that it does not and can be created. This used to send
-        // password: "fake", which made every visit to this page a failed login —
-        // a wasted hash on the server and, now that wrong guesses are counted,
-        // five page loads away from locking the owners out of their own
-        // dashboard.
         const res = await fetch(API.auth.login, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -40,9 +34,6 @@ form.addEventListener("submit", async (e) => {
                 await renderRegisterForm(username);
                 break;
             case 429:
-                // The lockout is checked before the account is even looked up, so
-                // it lands on this step too. Saying so beats a password form that
-                // refuses every attempt.
                 Notify.error((await res.json()).message);
                 break;
             default:
@@ -177,7 +168,6 @@ function appendInput({ icon, type, id, name, placeholder }) {
         </div>
     `;
 
-    // Insert above the row the submit button sits in.
     const anchor = submitBtn.parentElement;
     anchor.parentNode.insertBefore(field, anchor);
 }

@@ -4,16 +4,6 @@ import { escapeHtml } from "../../core/html.js";
 import { nameTaken } from "../errors.js";
 import { submitting } from "../../core/modal.js";
 
-/**
- * Materials: what the pieces are made of.
- *
- * A short lookup, edited in place beside the types rather than through dialogs of
- * its own — the owners add one every few months, not every day. Renaming asks for
- * the new name in a prompt for the same reason.
- *
- * Self-contained: nothing else on the page reads a material, so this mounts once
- * and keeps its own list.
- */
 export function mountMaterials() {
     const rows = document.getElementById("material-rows");
     const count = document.getElementById("material-count");

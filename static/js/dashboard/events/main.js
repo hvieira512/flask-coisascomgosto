@@ -55,11 +55,6 @@ async function loadEvents() {
 
 const EVENT_STEPS = ["Quando", "Detalhes"];
 
-/**
- * Two `data-step` groups: the name and the dates the API insists on, then the
- * rest. core/steps.js shows one at a time when creating; editing leaves both
- * visible.
- */
 function eventForm(event = null) {
     return `
     <form id="event-form" data-event-id="${event?.id ?? ""}">
@@ -124,7 +119,6 @@ function eventForm(event = null) {
     </form>`;
 }
 
-/** The dates step's own check, run before it will let go. */
 function validateWhen(root) {
     const form = root.querySelector("#event-form");
     const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
@@ -136,11 +130,6 @@ function validateWhen(root) {
     }
 }
 
-/**
- * `modalId` scopes the lookup: the create and edit modals both hold a form with
- * the same ids, and the closed one stays in the DOM. Reading by id alone found
- * the create form and posted a new event instead of updating.
- */
 async function submitEventForm(modalId) {
     const form = modal(modalId).querySelector("#event-form");
     const id = form.dataset.eventId;
@@ -150,7 +139,6 @@ async function submitEventForm(modalId) {
     if (!payload.name) throw new Error("O nome é obrigatório.");
     if (!payload.starts_on) throw new Error("A data de início é obrigatória.");
 
-    // The API rejects an explicit null, so empty optional fields are omitted.
     for (const field of ["location", "description", "url", "ends_on"]) {
         if (value(field)) payload[field] = value(field);
     }
@@ -165,7 +153,6 @@ async function submitEventForm(modalId) {
     });
 }
 
-/** Editing is changing one thing, so it stays a single screen. */
 function openEdit({ id, event }) {
     formDialog({
         id,
@@ -217,7 +204,6 @@ document.addEventListener("click", async (clicked) => {
         return;
     }
 
-    // The whole row opens the event, matching the catalogue.
     const row = clicked.target.closest("#event-rows tr[data-event-id]");
     if (row) {
         openEdit({ id: "editEventModal", event: await getEvent(row.dataset.eventId) });

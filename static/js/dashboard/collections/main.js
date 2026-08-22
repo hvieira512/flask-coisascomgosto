@@ -5,14 +5,6 @@ import { confirmDialog } from "../../core/modal.js";
 import { escapeHtml } from "../../core/html.js";
 import { openCollectionForm } from "./form.js";
 
-/**
- * Colecções.
- *
- * A collection is what the owners say people ask for first, so the catalogue
- * offers them as photographs. This page is where those photographs are chosen —
- * the form that chooses them is form.js.
- */
-
 let collections = [];
 let colorSets = [];
 let pieceCounts = new Map();
@@ -54,8 +46,6 @@ function collectionRow(collection, pieces) {
 }
 
 async function loadCollections() {
-    // The colour sets come along because the form offers all of them, and because
-    // which collection each belongs to changes when one is saved.
     const [all, counts, sets] = await Promise.all([
         list(API.collections.list, "collections",
              { fallback: "Erro ao carregar as colecções." }),
@@ -90,8 +80,6 @@ function openDelete(id) {
 
     const pieces = pieceCounts.get(collection.id) ?? 0;
 
-    // Nothing is lost with the collection: its pieces and colour sets stay,
-    // simply unowned. Saying so is what stops the owners fearing the button.
     const detail = pieces
         ? `<p class="text-body-secondary fs-7 mt-2">
              ${pieces} ${pieces === 1 ? "peça deixa" : "peças deixam"} de pertencer a

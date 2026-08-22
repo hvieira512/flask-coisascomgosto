@@ -6,17 +6,6 @@ import { nameTaken } from "../errors.js";
 import { openDeleteSet, openSetForm, setRow } from "./sets.js";
 import { submitting } from "../../core/modal.js";
 
-/**
- * Cores e conjuntos.
- *
- * Two screens on one page, which is why this file only holds what they share: the
- * three lists, and the fact that a change to either side redraws both. A colour
- * set is built from colours, and a renamed colour has to reappear inside every
- * set that uses it.
- *
- * sets.js draws and edits the conjuntos; palette.js the colours.
- */
-
 let sets = [];
 let colors = [];
 let collections = [];
@@ -51,10 +40,7 @@ async function loadColors() {
     document.getElementById("color-count").textContent = String(colors.length);
 }
 
-/** A renamed or recoloured colour shows up inside every set that uses it. */
 const reloadBoth = async () => { await loadColors(); await loadSets(); };
-
-// ---- Wiring ----
 
 document.getElementById("color-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -120,7 +106,6 @@ document.getElementById("new-set").addEventListener("click", () =>
     openSetForm({ modalId: "newSetModal", colors, collections, after: loadSets })
 );
 
-// Colours load first: the set form's picker is built from them.
 loadColors()
     .then(async () => {
         collections = await list(API.collections.list, "collections", { orEmpty: true });

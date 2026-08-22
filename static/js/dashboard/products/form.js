@@ -5,20 +5,8 @@ import { reference, typeOptions } from "./reference.js";
 const option = (value, label, selected) =>
     `<option value="${value}"${String(selected) === String(value) ? " selected" : ""}>${escapeHtml(label)}</option>`;
 
-/** What the two field groups are called, in order. */
 export const PRODUCT_STEPS = ["A peça", "Detalhes"];
 
-/**
- * The create/edit form. `product` is null when creating.
- *
- * The fields come in two `data-step` groups: what the piece is, which is all the
- * API requires, and then everything optional. core/steps.js shows one at a time
- * when creating; the edit modal leaves both visible, since editing is changing
- * one thing rather than answering a sequence.
- *
- * Variants and photographs are in neither group — both need a product id, which
- * does not exist until this form is saved.
- */
 export async function productForm(product = null) {
     const { materials, types, collections, sizes } = await reference();
     const selectedSizes = new Set((product?.sizes ?? []).map((s) => s.id));
@@ -94,7 +82,6 @@ export async function productForm(product = null) {
     </form>`;
 }
 
-/** The first step's own check, run before it will let go. */
 export function validateIdentity(root) {
     const form = root.querySelector("#product-form");
     if (!form.querySelector('[name="name"]').value.trim()) {
@@ -105,12 +92,6 @@ export function validateIdentity(root) {
     }
 }
 
-/**
- * Reads the form, writes the product, and returns its id.
- *
- * `root` scopes the lookup to one modal: the create and edit modals both hold a
- * form with the same ids, and the closed one stays in the DOM.
- */
 export async function submitProductForm(root = document) {
     const form = root.querySelector("#product-form");
     const id = form.dataset.productId;
@@ -121,7 +102,6 @@ export async function submitProductForm(root = document) {
         description: value("description"),
         type_id: Number(value("type_id")),
     };
-    // The API rejects an explicit null on these, so they are omitted instead.
     if (value("material_id")) payload.material_id = Number(value("material_id"));
     if (value("collection_id")) payload.collection_id = Number(value("collection_id"));
 
@@ -136,10 +116,6 @@ export async function submitProductForm(root = document) {
 
     const productId = id || saved.id;
 
-    // Remembered on the form, so a second press updates the piece rather than
-    // creating another one. Everything after the product itself — the sizes here,
-    // the colours the wizard chose — happens in its own request, and a failure in
-    // any of them leaves the dialog open on a piece that already exists.
     form.dataset.productId = productId;
 
     const sizeIds = [...root.querySelectorAll("#pf-sizes input:checked")]

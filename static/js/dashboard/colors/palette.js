@@ -3,11 +3,6 @@ import { confirmDialog, formDialog } from "../../core/modal.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { nameTaken } from "../errors.js";
 
-/**
- * The individual colours, which only exist to be combined into a conjunto — so
- * they are a short lookup beside the sets rather than a page of their own.
- */
-
 export const colorList = (colors) =>
     colors.length
         ? `<ul class="list-group list-group-flush">${colors
@@ -69,8 +64,6 @@ export function openColorForm({ color, after }) {
     });
 }
 
-/** `using` is the sets this colour is part of: they lose a colour, so they are
- *  named rather than silently changed. */
 export function openDeleteColor({ color, using, after }) {
     const warning = using.length
         ? `<p class="text-body-secondary fs-7 mt-2">

@@ -4,17 +4,6 @@ import { PhotoPicker } from "../../core/photo-picker.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { reference } from "./reference.js";
 
-/**
- * The create wizard's colour step: which colour sets the piece will be offered in,
- * chosen before the piece exists.
- *
- * A variant needs a product id, so nothing here can be written while the wizard is
- * open. The choice is held in the DOM and posted once the product has been created,
- * which keeps the wizard's promise that a half-answered form leaves nothing behind.
- *
- * Toggle chips rather than the edit panel's picker-and-Adicionar: that panel writes
- * on every click, which is right when the piece exists and impossible here.
- */
 export function variantChoiceStep(colorSets) {
     if (!colorSets.length) {
         return `
@@ -37,8 +26,6 @@ export function variantChoiceStep(colorSets) {
           Em que cores a peça se faz. Opcional — pode associá-las mais tarde.
         </p>
 
-        <!-- Only the chosen colours are asked for a photograph, so the dialog grows
-             with the answer rather than with the list. -->
         <div id="variant-photos" hidden>
           <label class="form-label fs-7">Fotografias destas cores</label>
           <ul class="list-group list-group-flush mb-2" id="variant-photo-rows"></ul>
@@ -50,15 +37,6 @@ export function variantChoiceStep(colorSets) {
       </div>`;
 }
 
-/**
- * Wires the chips and a photo tray for each colour chosen, and returns a reader for
- * both.
- *
- * Each colour gets its own tray because a variant may be photographed more than
- * once. The trays are kept in a Map and moved in and out of the DOM rather than
- * rebuilt, so a photograph chosen for the first colour survives a second being
- * ticked — a redrawn tray would lose the files it was holding.
- */
 export function wireVariantChoice(root) {
     const choices = root.querySelector("#variant-choices");
     if (!choices) return () => [];
@@ -73,7 +51,6 @@ export function wireVariantChoice(root) {
 
     const chipOf = (id) => choices.querySelector(`[data-color-set-id="${id}"]`);
 
-    /** One row per chosen colour: its badge, and a tray under it. */
     function rowFor(id) {
         if (trays.has(id)) return trays.get(id).row;
 
@@ -96,18 +73,12 @@ export function wireVariantChoice(root) {
         const ids = chosen();
         panel.hidden = ids.length === 0;
 
-        // A colour that has been unticked takes its photographs with it, or the
-        // upload would arrive for a variant the piece does not have. The row has to
-        // be taken out of the list by hand: nothing here rebuilds the list, so
-        // forgetting the tray alone left the row on screen.
         [...trays.keys()].forEach((id) => {
             if (ids.includes(id)) return;
             trays.get(id).row.remove();
             trays.delete(id);
         });
 
-        // Appending an element that is already in the list moves it, so the rows
-        // end up in the chips' order without any of them being re-created.
         ids.forEach((id) => rows.appendChild(rowFor(id)));
     }
 
@@ -128,12 +99,6 @@ export function wireVariantChoice(root) {
         }));
 }
 
-/**
- * A tray per colour, holding that colour's photographs. Mounted after the panel's
- * markup is in the DOM, and returns nothing: in the edit modal the piece already
- * exists, so a photograph chosen here is uploaded at once and the panel is rebuilt
- * from what came back.
- */
 export function wireVariantPhotos(product, { onUpload, onRemove }) {
     product.variants.forEach((variant) => {
         const host = document.querySelector(`[data-variant-photos="${variant.id}"]`);
@@ -152,15 +117,6 @@ export function wireVariantPhotos(product, { onUpload, onRemove }) {
     });
 }
 
-/**
- * The colours panel inside the edit modal: what the piece is offered in, and each
- * colour's photographs with it.
- *
- * One panel rather than two tabs. Every photograph belongs to a colour, so a tab of
- * colours and a tab of photographs were two views of the same fact — and the
- * photographs tab had to name the colour again in a dropdown to say what it already
- * knew.
- */
 export async function variantsPanel(product) {
     const { colorSets } = await reference();
     const used = new Set(product.variants.map((v) => v.color_set.id));
@@ -207,13 +163,6 @@ export async function addVariant(productId, colorSetId) {
     });
 }
 
-/**
- * Attach several colour sets to a piece that has just been created.
- *
- * A 409 means that colour is already attached, which is not a failure here: the
- * product is created before its variants, so a wizard whose first attempt failed
- * halfway is retried against a product that already has some of them.
- */
 export async function addVariants(productId, colorSetIds) {
     for (const colorSetId of colorSetIds) {
         try {

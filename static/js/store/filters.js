@@ -1,17 +1,4 @@
-/**
- * Filter state for the catalog page.
- *
- * Holds the selected filters, keeps them in the URL query string so a filtered
- * view is shareable and survives a reload, and renders two views of the same
- * state: the sidebar (active entries highlighted) and the badge row (one pill per
- * selected value, removable by clicking it).
- *
- * The three id filters hold a list, not a value: a shopper looking for boxes and
- * frames wants both families rather than having each click undo the last. Search
- * stays single — there is only one search box.
- */
 export const StoreFilters = (function () {
-    /** Filters that map straight onto /api/products query parameters. */
     const GROUPS = {
         q: { label: "Pesquisa", multiple: false },
         material_id: { label: "Material", multiple: true },
@@ -20,7 +7,6 @@ export const StoreFilters = (function () {
     };
 
     const state = {};
-    /** "type_id:3" -> display name, so a badge can show "Tipo: Caixa". */
     const labels = {};
     const listeners = [];
 
@@ -42,7 +28,6 @@ export const StoreFilters = (function () {
     function writeToUrl() {
         const params = new URLSearchParams();
         Object.entries(state).forEach(([key, value]) => {
-            // append, not set: repeated keys are how the API takes several values.
             if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
             else if (value) params.set(key, value);
         });
@@ -60,7 +45,6 @@ export const StoreFilters = (function () {
         listeners.forEach((fn) => fn(active()));
     }
 
-    /** Only the filters that are actually set. */
     function active() {
         return Object.fromEntries(
             Object.entries(state).filter(([, value]) =>
@@ -69,7 +53,6 @@ export const StoreFilters = (function () {
         );
     }
 
-    /** Every selected value, flattened, in the order the groups are declared. */
     function selections() {
         return Object.keys(GROUPS).flatMap((group) => {
             const value = state[group];
@@ -89,7 +72,6 @@ export const StoreFilters = (function () {
             : current === String(value);
     }
 
-    /** Replaces whatever the group holds. Used by the search box. */
     function set(group, value, label) {
         if (!(group in GROUPS)) return;
 
@@ -102,7 +84,6 @@ export const StoreFilters = (function () {
         notify();
     }
 
-    /** Adds a value, or removes it if it is already selected. */
     function toggle(group, value, label) {
         if (!(group in GROUPS)) return;
 
@@ -124,7 +105,6 @@ export const StoreFilters = (function () {
         notify();
     }
 
-    /** Drops one value from a group, or the whole group when no value is given. */
     function clear(group, value = null) {
         if (value === null || !isMultiple(group)) {
             delete state[group];
@@ -156,7 +136,6 @@ export const StoreFilters = (function () {
         listeners.push(fn);
     }
 
-    /** Register a display name discovered while rendering the sidebar. */
     function registerLabel(group, value, label) {
         labels[`${group}:${value}`] = label;
     }
