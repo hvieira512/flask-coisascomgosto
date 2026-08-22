@@ -646,7 +646,6 @@
 
     /* Room for three colour chips across a phone: on one line they truncated to
        "Branco …", which is not a colour anyone can recognise. */
-    .dash-table > tbody > tr .swatch-row,
     .dash-table > tbody > tr > td > .d-flex {
         flex-wrap: wrap;
     }

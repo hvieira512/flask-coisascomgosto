@@ -113,13 +113,13 @@ import { escapeHtml } from "../core/html.js";
 
         block.hidden = false;
         options.innerHTML = product.variants
-            .map((variant, position) =>
-                ColorSet.dot(variant.color_set, {
-                    as: "button",
-                    pressed: position === activeIndex,
-                    extra: "variant-option",
-                }).replace("<button ", `<button data-variant-index="${position}" `)
-            )
+            .map((variant, position) => `
+              <button class="variant-option" type="button"
+                      data-variant-index="${position}"
+                      aria-pressed="${position === activeIndex}"
+                      title="${escapeHtml(variant.color_set?.name ?? "")}">
+                ${ColorSet.dots(variant.color_set)}
+              </button>`)
             .join("");
         nameChosen(product, activeIndex);
 

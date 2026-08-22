@@ -77,23 +77,5 @@ export const ColorSet = (function () {
                       style="${style(colorSet)}">${dots(colorSet)}<span class="color-set-name">${escapeHtml(colorSet.name)}</span></span>`;
     }
 
-    function dot(colorSet, { as = "span", pressed = null, extra = "" } = {}) {
-        if (!colorSet) return "";
-
-        const colours = (colorSet.colors || []).map((c) => c.hex).filter(Boolean);
-        const shades = colours.length ? colours : [FALLBACK];
-        const share = 100 / shades.length;
-        const stops = shades
-            .map((hex, i) => `${escapeHtml(hex)} ${i * share}% ${(i + 1) * share}%`)
-            .join(", ");
-
-        const state = pressed === null ? "" : ` aria-pressed="${pressed}"`;
-        const type = as === "button" ? ' type="button"' : "";
-
-        return `<${as} class="swatch-dot ${extra}"${type}${state}
-                      title="${escapeHtml(colorSet.name)}"
-                      style="background-image:linear-gradient(135deg, ${stops})"></${as}>`;
-    }
-
-    return { badge, dot, dots, style };
+    return { badge, dots, style };
 })();

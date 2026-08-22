@@ -2,19 +2,19 @@ import { ColorSet } from "../color-set.js";
 import { ProductPlaceholder } from "../placeholder.js";
 import { escapeHtml } from "../../core/html.js";
 
-const MAX_DOTS = 3;
+// Two names fill a card's width, so the third badge and the count share the
+// second line rather than leaving a lone "+3" under a full row.
+const MAX_BADGES = 3;
 
 function renderColourways(product) {
     const sets = product.variants.map((variant) => variant.color_set).filter(Boolean);
     if (!sets.length) return "";
 
-    const shown = sets.slice(0, MAX_DOTS).map((set) => ColorSet.dot(set)).join("");
-    const rest = sets.length - MAX_DOTS;
-    const more = rest > 0
-        ? `<span class="fs-7 font-monospace text-body-tertiary">+${rest}</span>`
-        : "";
+    const shown = sets.slice(0, MAX_BADGES).map((set) => ColorSet.badge(set)).join("");
+    const rest = sets.length - MAX_BADGES;
+    const more = rest > 0 ? `<span class="color-set-more">+${rest}</span>` : "";
 
-    return `<span class="dots d-flex align-items-center gap-1">${shown}${more}</span>`;
+    return `<span class="d-flex flex-wrap align-items-center gap-1 lh-1">${shown}${more}</span>`;
 }
 
 // align-content-start on the card: a grid item is stretched to its row's height

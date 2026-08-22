@@ -554,52 +554,16 @@ html {
     margin-left: -5px;
 }
 
-/* Two fixed columns rather than wrapping: a card with five colour sets used to
-   break 3 + 2 and leave a ragged edge, and neighbouring cards broke at different
-   points. Fixed columns keep every card's badges on the same lines — the row
-   itself is `row row-cols-2`, set where it is rendered. */
-
-/* The cells hold nothing but a badge, and the body's 1.7 line-height wrapped each
-   one in a 27px line box around a 22px pill — five pixels of leading per row,
-   which is what made the two rows of badges taller than the card allowed for. */
-.swatch-row {
-    line-height: 1;
-}
-
-/* A column is ~134px and "Vermelho e Branco" wants 152px at the badge's normal
-   size, so a card runs a tighter one. The product page, where there is no
-   column to fit, keeps the larger badge. */
-.swatch-row .color-set-badge {
-    font-size: .68rem;
-    gap: .3rem;
-    justify-content: flex-start;
-    /* Fills its column. Left to its content each badge was as wide as its own
-       name, so the two columns never lined up and the row read as a set of
-       ragged gaps rather than a pair of cells. */
-    width: 100%;
-}
-
-/* Sits in the fourth cell when a card has more colour sets than fit, so it
-   matches the badges' size rather than a default badge. */
-.swatch-row .color-set-more {
+/* The count of colourways a card has no room to name. Same pill as a badge so
+   the row reads as one set of tags rather than a tag and a stray number. */
+.color-set-more {
     display: inline-flex;
     align-items: center;
-    width: 100%;
     height: 2em;
     padding: 0 .75em;
     border-radius: 999px;
-    font-size: .68rem;
+    font-size: .75rem;
     background: var(--ccg-paper-deep);
     color: var(--ccg-ink-soft);
     border: 1px solid var(--ccg-line);
-    justify-content: flex-start;
-}
-
-.swatch-row .swatch {
-    width: 11px;
-    height: 11px;
-}
-
-.swatch-row .swatch + .swatch {
-    margin-left: -4px;
 }

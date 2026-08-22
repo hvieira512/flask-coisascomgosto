@@ -97,30 +97,6 @@ a:hover > .tile-scrim {
     font-family: var(--font-display);
 }
 
-/* A colourway, as the two or three colours it is made of. Built in JS, where the
-   colours come from, so the gradient stops cannot be a class. */
-.swatch-dot {
-    display: inline-block;
-    width: 1.125rem;
-    height: 1.125rem;
-    border-radius: 50%;
-    border: 1px solid rgba(38, 34, 29, .22);
-    flex: none;
-    padding: 0;
-    background-color: transparent;
-    transition: transform .18s ease;
-}
-
-a:hover > .dots > .swatch-dot,
-button.swatch-dot:hover {
-    transform: scale(1.1);
-}
-
-button.swatch-dot[aria-pressed="true"] {
-    outline: 1px solid var(--ccg-ink);
-    outline-offset: 2px;
-}
-
 /* A full-bleed photographic band with text on it. Bootstrap's height utilities
    stop at min-vh-100, and this needs a height that answers the viewport without
    filling it. The scrim comes from .tile-scrim, whose stops are variables. */
@@ -927,19 +903,31 @@ a.card:hover {
     display: none;
 }
 
-/* The colourway swatch is a control, not a label: 18px is the circle, and a
-   44px hit area around it is what a fingertip needs. Bootstrap has no such
-   utility pair. */
+/* A colourway is a control here, not a label: it holds the same overlapping
+   circles the badges use, inside the 44px hit area a fingertip needs. Bootstrap
+   has no such utility pair. */
 .variant-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 2.75rem;
     height: 2.75rem;
-    background-clip: content-box;
-    padding: .8rem;
+    padding: 0;
+    border: 1px solid var(--ccg-line);
+    border-radius: 50%;
+    background: none;
     cursor: pointer;
+    transition: transform .18s ease;
 }
 
-.variant-option.is-active .variant-check {
-    opacity: 1;
+.variant-option:hover {
+    transform: scale(1.08);
+}
+
+.variant-option[aria-pressed="true"] {
+    border-color: var(--ccg-ink);
+    outline: 1px solid var(--ccg-ink);
+    outline-offset: 2px;
 }
 
 /* Colour and size are one decision made twice, so the rows match. */
