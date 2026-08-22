@@ -1,13 +1,3 @@
-{# Public navbar.
-
-   Deliberately minimal: no social icons and no contact details — those live in
-   one Contacts section at the foot of the landing page.
-
-   Built from utilities. bg-body and border-bottom replace what .store-navbar
-   used to declare, and nav-underline is Bootstrap's own component for a link
-   that grows a rule under it — which is also what let the absolute-positioning
-   hack that centred the links go: they sit on the right now, where ms-auto puts
-   them for free. #}
 <nav class="navbar navbar-expand-lg bg-body border-bottom py-3" aria-label="main navigation">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2 me-0"
@@ -32,15 +22,9 @@
                        {% if here == 'web.store.home' %}aria-current="page"{% endif %}>Início</a>
                 </li>
                 <li class="nav-item">
-                    {# "Peças" and not "Produtos": the whole shop calls them
-                       peças, and the nav was the only place saying otherwise. #}
                     <a class="nav-link text-uppercase fs-7"
                        href="{{ url_for('web.store.products') }}"
-                       {% if here in ('web.store.products', 'web.store.product') %}aria-current="page"{% endif %}>Peças</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-uppercase fs-7"
-                       href="{{ url_for('web.store.home') }}#oficio">Oficina</a>
+                       {% if here in ('web.store.products', 'web.store.product') %}aria-current="page"{% endif %}>Produtos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-uppercase fs-7"

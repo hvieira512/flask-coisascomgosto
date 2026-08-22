@@ -2,124 +2,93 @@
 
 {% block page_title %}Produto{% endblock %}
 
-{#
-  Product detail.
-
-  Left: the gallery. Right: an information panel that earns its space —
-  colours, sizes, the piece's description and facts, and a way to get in touch.
-  There is no cart in this shop, so the call to action is a WhatsApp message
-  pre-filled with the piece's name.
-#}
-
 {% block content %}
 <section class="section">
-<div class="container">
+    <div class="container">
 
-<nav class="mb-4" aria-label="breadcrumbs">
-    <ol class="breadcrumb fs-7 mb-0">
-        <li class="breadcrumb-item"><a href="{{ url_for('web.store.products') }}">Catálogo</a></li>
-        <li class="breadcrumb-item active" aria-current="page" id="crumb-name">…</li>
-    </ol>
-</nav>
+        <nav class="mb-4" aria-label="breadcrumbs">
+            <ol class="breadcrumb fs-7 mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('web.store.products') }}">Catálogo</a></li>
+                <li class="breadcrumb-item active" aria-current="page" id="crumb-name">…</li>
+            </ol>
+        </nav>
 
-<div id="product-detail" class="row g-5" data-product-id="{{ product_id }}">
+        <div id="product-detail" class="row g-5" data-product-id="{{ product_id }}">
 
-    {# ---------------- Gallery: previewer + a strip of thumbnails ---------- #}
-    {# Seven columns to five. The stage carries its own 4:5 shape rather than
-       taking its height from the panel, and the split is chosen so the two come
-       out the same height on their own.
+            <div class="col-lg-7">
+                <div class="gallery">
+                    <figure class="gallery-stage mb-0" id="gallery-stage">
+                        <img id="stage-image" src="" alt="">
 
-       From lg the thumbnails run down the left of the stage; below it they keep
-       the row, which is the right shape on a phone. #}
-    <div class="col-lg-7">
-        <div class="gallery">
-            <figure class="gallery-stage mb-0" id="gallery-stage">
-                <img id="stage-image" src="" alt="">
+                        <button class="disc stage-arrow stage-arrow-left" data-prev type="button" aria-label="Imagem anterior">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="disc stage-arrow stage-arrow-right" data-next type="button" aria-label="Imagem seguinte">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
 
-                <button class="disc stage-arrow stage-arrow-left" data-prev type="button" aria-label="Imagem anterior">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <button class="disc stage-arrow stage-arrow-right" data-next type="button" aria-label="Imagem seguinte">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
+                        <span class="stage-zoom" id="stage-zoom" hidden>
+                            <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
+                            <span>Ampliar</span>
+                        </span>
 
-                {# Says the photograph opens full screen. Nothing else on the
-                   stage suggests it: the arrows step, and a tap did nothing
-                   visible until it had already happened. #}
-                <span class="stage-zoom" id="stage-zoom" hidden>
-                    <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
-                    <span>Ampliar</span>
-                </span>
+                        <span class="stage-counter" id="stage-counter"></span>
+                    </figure>
 
-                <span class="stage-counter" id="stage-counter"></span>
-            </figure>
+                    <div class="thumb-strip" id="thumb-strip"></div>
+                </div>
 
-            <div class="thumb-strip" id="thumb-strip"></div>
+                <p id="gallery-empty" class="alert alert-light text-center mt-3" hidden>
+                Este produto ainda não tem imagens.
+                </p>
+            </div>
+
+            <div class="col-lg-5">
+                <h1 class="h2 mb-3" id="product-name">…</h1>
+
+                <div class="mb-4" id="variants-block" hidden>
+                    <p class="eyebrow mb-2">Cores</p>
+                    <div class="d-flex flex-wrap align-items-center gap-2" id="variant-options"></div>
+                    <p class="fs-7 text-body-secondary mt-2 mb-0">
+                    Escolhida: <span class="fw-semibold text-body" id="variant-chosen"></span>
+                    </p>
+                </div>
+
+                <div class="mb-4" id="sizes-block" hidden>
+                    <p class="eyebrow mb-2">Tamanhos</p>
+                    <div id="size-options"></div>
+                </div>
+
+                <p class="text-body-secondary border-top py-3 mb-0" id="product-description" hidden></p>
+
+                <dl class="spec-list" id="product-meta"></dl>
+
+                {% if contact.whatsapp_url %}
+                <div class="mt-4">
+                    <a class="btn btn-pitch btn-lg w-100" id="enquiry-link"
+                                                          href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
+                        <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
+                        <span>Pedir informações</span>
+                    </a>
+                    <p class="fs-7 text-body-secondary mt-3 mb-0">
+                    Cada peça é feita e pintada à mão, por isso não há duas
+                    exactamente iguais. Fale connosco para encomendas ou
+                    personalizações.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
         </div>
 
-        <p id="gallery-empty" class="alert alert-light text-center mt-3" hidden>
-            Este produto ainda não tem imagens.
-        </p>
+        <div id="detail-error" class="alert alert-danger" hidden>
+            Produto não encontrado.
+        </div>
+
     </div>
-
-    {# ---------------- Information panel ---------------------------------- #}
-    <div class="col-lg-5">
-        <h1 class="h2 mb-3" id="product-name">…</h1>
-
-        <div class="mb-4" id="variants-block" hidden>
-            <p class="eyebrow mb-2">Cores</p>
-            {# Swatches, not named badges: the photograph above already says what
-               colour the piece is, so the row only has to say there are others.
-               The chosen one is named on the line below, once. #}
-            <div class="d-flex flex-wrap align-items-center gap-2" id="variant-options"></div>
-            <p class="fs-7 text-body-secondary mt-2 mb-0">
-                Escolhida: <span class="fw-semibold text-body" id="variant-chosen"></span>
-            </p>
-        </div>
-
-        <div class="mb-4" id="sizes-block" hidden>
-            <p class="eyebrow mb-2">Tamanhos</p>
-            <div id="size-options"></div>
-        </div>
-
-        {# The description opens the specification block. Its rule is on top and
-           the list keeps its own, so a piece with no description leaves no gap and
-           no rule of its own behind — it is simply hidden. #}
-        <p class="text-body-secondary border-top py-3 mb-0" id="product-description" hidden></p>
-
-        {# Specification list — the facts a buyer asks for. #}
-        <dl class="spec-list" id="product-meta"></dl>
-
-        {% if contact.whatsapp_url %}
-        <div class="mt-4">
-            <a class="btn btn-pitch btn-lg w-100" id="enquiry-link"
-               href="{{ contact.whatsapp_url }}" target="_blank" rel="noopener">
-                <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
-                <span>Pedir informações</span>
-            </a>
-            {# mb-0 so the column ends where its last line ends: Bootstrap gives
-               every <p> a bottom margin, where Bulma spared the last one, and the
-               gallery beside it takes its height from this column. #}
-            <p class="fs-7 text-body-secondary mt-3 mb-0">
-                Cada peça é feita e pintada à mão, por isso não há duas
-                exactamente iguais. Fale connosco para encomendas ou
-                personalizações.
-            </p>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<div id="detail-error" class="alert alert-danger" hidden>
-    Produto não encontrado.
-</div>
-
-</div>
 </section>
 {% endblock %}
 
 {% block page_scripts %}
-{# PhotoSwipe's stylesheet; the lightbox itself is imported by the gallery. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='photoswipe/photoswipe.css') }}">
 <script type="module" src="{{ url_for('static', filename='js/store/product.js') }}"></script>
 {% endblock %}

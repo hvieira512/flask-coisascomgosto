@@ -1,9 +1,3 @@
-"""The entry point: build the app, and nothing else.
-
-The five `flask …` commands used to live here and made this file 145 lines, of
-which fifteen were the application. They are in cli.py.
-"""
-
 from flask import Flask
 from flask_jwt_extended import JWTManager
 

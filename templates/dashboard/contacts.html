@@ -3,7 +3,6 @@
 {% block page_title %}Contactos{% endblock %}
 
 {% from 'dashboard/components/page.html' import page_head %}
-{% from 'components/forms.html' import field_icon %}
 
 {% block content %}
 {{ page_head('A loja', 'Contactos',
@@ -19,7 +18,7 @@
                 <div class="input-group">
                     <input class="form-control" id="cf-address" name="address"
                            placeholder="Rua de Cardielos, n. 222, Viana do Castelo">
-                    {{ field_icon('fa-solid fa-location-dot') }}
+                    <span class="input-group-text"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span>
                 </div>
             </div>
 
@@ -28,7 +27,7 @@
                 <div class="input-group">
                     <input class="form-control" id="cf-maps_url" name="maps_url"
                            placeholder="https://maps.app.goo.gl/...">
-                    {{ field_icon('fa-solid fa-map') }}
+                    <span class="input-group-text"><i class="fa-solid fa-map" aria-hidden="true"></i></span>
                 </div>
                 <p class="help mb-0">
                     Onde abre o cartão da morada. Prefira a ligação curta do Google Maps.
@@ -40,7 +39,7 @@
                 <div class="input-group">
                     <input class="form-control" id="cf-email" name="email" type="email"
                            placeholder="geral@coisascomgosto.pt">
-                    {{ field_icon('fa-solid fa-envelope') }}
+                    <span class="input-group-text"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
                 </div>
             </div>
 
@@ -51,7 +50,7 @@
                 <div class="input-group">
                     <input class="form-control" id="cf-whatsapp" name="whatsapp"
                            placeholder="939320334">
-                    {{ field_icon('fa-brands fa-whatsapp') }}
+                    <span class="input-group-text"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></span>
                 </div>
                 <p class="help mb-0" id="cf-whatsapp-preview"></p>
             </div>
@@ -61,7 +60,7 @@
                 <div class="input-group">
                     <input class="form-control" id="cf-facebook_url" name="facebook_url"
                            placeholder="https://www.facebook.com/...">
-                    {{ field_icon('fa-brands fa-facebook-f') }}
+                    <span class="input-group-text"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></span>
                 </div>
             </div>
 
@@ -70,7 +69,7 @@
                 <div class="input-group">
                     <input class="form-control" id="cf-instagram_url" name="instagram_url"
                            placeholder="https://www.instagram.com/...">
-                    {{ field_icon('fa-brands fa-instagram') }}
+                    <span class="input-group-text"><i class="fa-brands fa-instagram" aria-hidden="true"></i></span>
                 </div>
             </div>
 

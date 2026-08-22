@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{# Nested so a page sets only its own part: text outside a block in a child
-   template is discarded, so the suffix cannot live at the top level here. #}
 {% block title %}{% block page_title %}{% endblock %} · Coisas com Gosto{% endblock %}
 
 {% block styles %}
@@ -19,8 +17,6 @@
 {% endblock %}
 
 {% block scripts %}
-{# Only what has to run on every page. The components the page scripts use —
-   placeholder, api, color-set — are imported by whoever needs them. #}
 <script type="module" src="{{ url_for('static', filename='js/store/timeline.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/store/visit.js') }}"></script>
 {% block page_scripts %}{% endblock %}

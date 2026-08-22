@@ -1,9 +1,3 @@
-{# Contacts, and the end of the page.
-
-   Five cards and five icon discs for five short strings became one block of
-   type: the address in the display serif, then the ways to reach the workshop as
-   labelled rows. data-bs-theme="dark" does the colour work, and the footer that
-   follows sits on the same ground, so the two read as one ending. #}
 {% macro reach(label, value, href, external=False) -%}
 {% if href %}
 <div class="row g-2 border-top py-2">
@@ -15,11 +9,6 @@
 {% endif %}
 {%- endmacro %}
 
-{# bg-body and text-body as well as data-bs-theme. The attribute redefines the
-   variables and paints nothing: bg-body is what puts the pitch ground down, and
-   text-body is what makes ordinary text follow the theme — plain prose inherits
-   its colour from <body>, which is still the light one, so without it the
-   address came out ink-on-pitch. #}
 <section class="section pb-4 bg-body text-body" id="contacts" data-bs-theme="dark">
     <div class="container">
         <p class="eyebrow rule-above text-gold">Contactos</p>
