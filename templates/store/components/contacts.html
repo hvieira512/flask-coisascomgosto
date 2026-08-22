@@ -1,6 +1,6 @@
 {% macro reach(label, value, href, external=False) -%}
 {% if href %}
-<div class="row g-2 border-top py-2">
+<div class="row gx-2 align-items-center border-top py-2">
     <dt class="col-4 col-sm-3 fs-7 text-uppercase font-monospace text-body-tertiary mb-0">{{ label }}</dt>
     <dd class="col-8 col-sm-9 mb-0">
         <a href="{{ href }}"{% if external %} target="_blank" rel="noopener"{% endif %}>{{ value }}</a>
