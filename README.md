@@ -249,7 +249,7 @@ A product sits at the centre of several independent layers.
 
 ```
 product type ──┐                        (required: what the object IS)
-material ──────┤                        (optional: what it is made OF)
+materials ─────┤                        (what it is made OF: none, one or several)
 collection ────┼──► product ──► variant ──► colour set ──► colours
                │        │                     ▲
 default size ──┘        └──► sizes            └── gathered by any number
@@ -259,7 +259,7 @@ default size ──┘        └──► sizes            └── gathered b
 | Layer | Meaning | Example |
 |---|---|---|
 | **Product type** | What the object *is*. Required. | `Caixa`, `Moldura`, `Coração`, `Presépio Minhoto` |
-| **Material** | What it is made *of*. Optional, and maintained by the owners. | `Madeira`, `Tecido` |
+| **Material** | What it is made *of*, and a piece may be made of several: Manel e Maria is a wooden base with figures of modelling paste. Maintained by the owners. | `Madeira`, `Pasta de modelar` |
 | **Collection** | A themed grouping. It gathers colour sets rather than owning them. | `Barra da Saia` |
 | **Colour** | A single named swatch, optionally with a hex code. | `Branco`, `Dourado` |
 | **Colour set** | A named combination of **two or more** colours, shared: it may be gathered by several collections, or by none. | `Preto e Branco`, `Preto Floral` |
@@ -298,7 +298,7 @@ matches the method beside it.
 
 | Deleting… | …does this, in `repositories/` | and the constraint |
 |---|---|---|
-| material | clears `material_id` on the pieces made of it; they survive | `SET NULL` |
+| material | takes it off the pieces made of it; they survive, keeping any other material they are made of | `CASCADE` on the join |
 | collection | unlinks its colour sets (they survive, possibly in other collections) and clears `collection_id` on its products | `CASCADE` on the join, `SET NULL` on products |
 | colour | removes it from every colour set | `CASCADE` |
 | colour set | deletes variants using it, plus their images | `CASCADE` |
@@ -314,10 +314,12 @@ the same thing happening behind the API's back.
 
 ### Rules worth knowing
 
-- A product needs a **product type** — the one fact every piece has. Material,
+- A product needs a **product type** — the one fact every piece has. Materials,
   collection and default size are optional.
 - **Materials are a lookup the owners maintain** from the dashboard, so the list
-  grows with the workshop rather than with a migration.
+  grows with the workshop rather than with a migration. A piece may be made of
+  more than one, so `/api/products/` takes `material_ids` and the material facet
+  counts can add up to more than the catalogue holds.
 - **Types are flat.** They nested one level until migration `0001`; the shape of
   a piece lives in its own name ("Caixa Redonda", "Caixa de Joias") rather than
   in a level above it.
@@ -567,14 +569,13 @@ clients never receive HTML.
 
 ### Catalog
 
-- Filters live in the sidebar: search, material, product type (with sub-types
-  indented under their parent) and collection.
+- Filters live in the sidebar: search, material, product type and collection.
+  A piece made of two materials is found under either.
 - Every applied filter renders as a navy pill reading `Group: Value ×`, with
   Bootstrap's `.btn-close` as the ×. Clicking the badge removes that filter; the
   sidebar and the badge row are two views of the same state.
 - Filters are mirrored into the query string, so a filtered view is shareable
   and survives a reload.
-- Selecting a parent type also matches products filed under its sub-types.
 
 ### Product page
 
