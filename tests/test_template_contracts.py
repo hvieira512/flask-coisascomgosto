@@ -496,22 +496,27 @@ class TestDashboardChrome:
         client.post("/api/auth/login", json={"username": "dash", "password": "pw"})
         return client.get("/dashboard/products").get_data(as_text=True)
 
-    def test_sidebar_links_back_to_the_storefront(self, client, make_user):
+    def test_the_rail_ends_with_the_way_back_to_the_storefront(self, client,
+                                                               make_user):
+        """Pushed to the bottom by mt-auto, away from the sections: leaving the
+        dashboard is not one of them."""
         html = self._page(client, make_user)
         assert "Ver a loja" in html
-        assert "dash-sidebar-foot" in html
+        assert 'class="mt-auto px-2 pt-4"' in html
 
-    def test_the_navbar_is_fixed_and_the_page_reserves_room_for_it(self, client,
+    def test_the_bar_sticks_over_the_work_rather_than_over_the_rail(self, client,
                                                                    make_user):
-        """Bootstrap's .fixed-top takes the bar out of the flow and reserves
-        nothing for it, so the padding is dashboard.css's own — and both have to
-        agree on the height, which is why it is a variable."""
+        """It used to be .fixed-top across the whole viewport, with the page
+        padding its own top to reserve the room. Now the rail owns the left column
+        and the bar sticks inside the right one — so nothing is taken out of the
+        flow and there is no padding to keep in step with it."""
         html = self._page(client, make_user)
-        assert 'class="navbar fixed-top dash-navbar"' in html
+        assert 'class="navbar dash-navbar' in html
+        assert "fixed-top" not in html
 
         css = pathlib.Path("static/css/dashboard.css").read_text(encoding="utf-8")
-        assert "padding-top: var(--dash-navbar-height)" in css
         assert "--dash-navbar-height:" in css
+        assert "padding-top: var(--dash-navbar-height)" not in css
 
 
 class TestProductGallery:

@@ -38,6 +38,9 @@
        loses against black. */
     --ccg-gold: #A67C2E;
     --ccg-gold-lift: #C9A24E;
+    /* The accent at the weight a whole row can carry: what "you are on this one"
+       looks like when the row itself is paper. */
+    --ccg-gold-wash: rgba(166, 124, 46, .09);
 
     /* The black the boxes are painted. One band at the foot of the landing page
        and one button, and that is the whole budget. */
@@ -260,6 +263,13 @@ html {
    is, and this is the most-repeated element in both halves of the product — so
    it gets the darker blue (4.12:1 against paper failed AA) and a size that does
    not need perfect eyesight. */
+/* The display serif on something that is not a heading — the shop's wordmark and
+   addresses, the dashboard's page titles and the names in its ledgers. Shared,
+   because both halves of the site set type in it. */
+.font-display {
+    font-family: var(--font-display);
+}
+
 .eyebrow {
     font-size: .78rem;
     font-weight: 600;

@@ -91,12 +91,6 @@ a:hover > .tile-scrim {
     opacity: .8;
 }
 
-/* The display serif on something that is not a heading — the wordmark, the
-   address, a colourway's name. The heading rule below covers h1-h3. */
-.font-display {
-    font-family: var(--font-display);
-}
-
 /* A full-bleed photographic band with text on it. Bootstrap's height utilities
    stop at min-vh-100, and this needs a height that answers the viewport without
    filling it. The scrim comes from .tile-scrim, whose stops are variables. */

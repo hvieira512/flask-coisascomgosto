@@ -9,12 +9,15 @@
 {% endblock %}
 
 {% block body %}
-{% include 'dashboard/components/navbar.html' %}
+{% include 'dashboard/components/sidebar.html' %}
 
-<div class="d-flex align-items-start">
-    {% include 'dashboard/components/sidebar.html' %}
+<div class="dash-work d-flex flex-column">
+    {# self.page_title() resolves here, in the template that declares the block;
+       inside the include it does not, because an include has its own blocks. #}
+    {% set where = self.page_title() %}
+    {% include 'dashboard/components/navbar.html' %}
 
-    <section class="dash-main">
+    <section class="p-3 p-md-4 p-xl-5 pb-5 flex-grow-1">
         {% block content %}{% endblock %}
     </section>
 </div>

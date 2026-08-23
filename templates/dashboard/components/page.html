@@ -1,22 +1,20 @@
-
-
 {% macro page_head(eyebrow, title, subtitle=None) %}
-<header class="mb-5">
-    <p class="eyebrow mb-2">{{ eyebrow }}</p>
-    <h1 class="h4 mb-1">{{ title }}</h1>
-    {% if subtitle %}
-    <p class="text-body-secondary mb-0">{{ subtitle }}</p>
-    {% endif %}
+<header class="d-flex flex-wrap align-items-end justify-content-between gap-4 pb-3 mb-4 border-bottom">
+    <div>
+        <p class="eyebrow">{{ eyebrow }}</p>
+        <h1 class="font-display dash-title mb-0">{{ title }}</h1>
+        {% if subtitle %}<p class="text-body-secondary mt-2 mb-0">{{ subtitle }}</p>{% endif %}
+    </div>
 </header>
 {% endmacro %}
 
 {% macro page_head_action(eyebrow, title, subtitle, button_id, button_label,
                          icon='fa-plus') %}
-<header class="d-flex justify-content-between align-items-center mb-5">
+<header class="d-flex flex-wrap align-items-end justify-content-between gap-4 pb-3 mb-4 border-bottom">
     <div>
-        <p class="eyebrow mb-2">{{ eyebrow }}</p>
-        <h1 class="h4 mb-1">{{ title }}</h1>
-        <p class="text-body-secondary mb-0" id="{{ subtitle }}">—</p>
+        <p class="eyebrow">{{ eyebrow }}</p>
+        <h1 class="font-display dash-title mb-0">{{ title }}</h1>
+        <p class="text-body-secondary mt-2 mb-0" id="{{ subtitle }}">—</p>
     </div>
     <button class="btn btn-dark" id="{{ button_id }}">
         <span class="icon"><i class="fa-solid {{ icon }}"></i></span>

@@ -1,191 +1,187 @@
 /*
  * The dashboard is a workbench, not a shop window.
  *
- * It shares the storefront's palette and tokens, but not its rhythm: the store
- * is read, this is operated. So the type scale is tighter, the ground is the
- * deeper paper with white work surfaces sitting on it, and state is carried by
- * colour and shape rather than by prose.
+ * It shares the storefront's palette and its two faces, but not its rhythm: the
+ * shop is read, this is operated. The chrome is pitch — a dark rail down the side
+ * and a dark bar over the work — so the paper it frames is unmistakably the work,
+ * and the gold is spent on the row you are on rather than on the furniture.
  *
- * Bootstrap provides the navbar, offcanvas sidebar, dropdown, table, card,
- * badge and modal parts; this file adds the app shell, the density, and the
- * state chips it has no vocabulary for.
+ * Layout, spacing and borders are Bootstrap's utilities, in the markup. What is
+ * here is only what Bootstrap has no vocabulary for: this palette on a dark
+ * surface, the accent states it does not ship, the display face where it belongs,
+ * and the positioning no utility expresses. Where a rule was unavoidable it sets
+ * Bootstrap's own variables, so the component keeps its behaviour and only
+ * changes its paint.
  */
 
 :root {
     --dash-border: var(--ccg-line);
-    --dash-sidebar-width: 232px;
-    /* Pinned so the sidebar, the sticky table headers and the body's own top
-       padding all subtract exactly the same amount. */
+    --dash-sidebar-width: 14.5rem;
     --dash-navbar-height: 3.25rem;
+
+    --dash-pitch-lift: #211F26;
+    --dash-on-pitch: #FBF8F3;
+    --dash-on-pitch-soft: rgba(251, 248, 243, .62);
+    --dash-on-pitch-faint: rgba(251, 248, 243, .38);
 }
 
-/* The desk. Work surfaces are white cards on top of it, which is what separates
-   "the thing I am editing" from "the application around it". */
+/* Squarer than the shop, which is the difference between a page and a tool. Set
+   as Bootstrap's own radius so every card, button, badge and modal follows. */
 .dashboard-body {
-    background: var(--ccg-paper-deep);
-    color: var(--ccg-ink);
+    --bs-border-radius: 2px;
+    --bs-border-radius-sm: 2px;
+    --bs-border-radius-lg: 3px;
+    --bs-heading-color: var(--ccg-ink);
+    --bs-emphasis-color: var(--ccg-ink);
+    --bs-link-color: var(--ccg-gold);
+    --bs-link-hover-color: var(--ccg-ink);
+    --radius: 2px;
+    --radius-lg: 3px;
+
+    display: grid;
+    grid-template-columns: var(--dash-sidebar-width) 1fr;
     min-height: 100vh;
-    /* Bootstrap's .fixed-top takes the bar out of the flow without reserving
-       room for it. */
-    padding-top: var(--dash-navbar-height);
+    background: var(--ccg-paper);
 }
 
-.dash-navbar {
-    border-bottom: 1px solid var(--dash-border);
-    background: var(--ccg-surface);
-    min-height: var(--dash-navbar-height);
-    height: var(--dash-navbar-height);
-    padding: 0 .75rem;
-    /* A .navbar wraps by default, and this one has a fixed height: at 320px the
-       user menu and the burger dropped onto a second line that the bar then
-       clipped. Nothing here may wrap — the brand truncates instead. */
-    flex-wrap: nowrap;
+@media screen and (max-width: 991.98px) {
+    .dashboard-body {
+        grid-template-columns: 1fr;
+    }
 }
 
-.dash-navbar .navbar-brand {
-    display: flex;
-    align-items: center;
-    color: var(--ccg-blue-900);
-    font-size: 1rem;
+/* Bootstrap's display sizes are fixed steps; a page title that answers the
+   viewport needs a clamp, which no utility expresses. The face is .font-display. */
+.dash-title {
+    font-size: clamp(1.625rem, 3vw, 2.25rem);
+    letter-spacing: -.015em;
+}
+
+/* The shop's eyebrow is a blue heading over prose; here it is a machine label
+   over a figure, so it is the workshop's mono and steps back to let the figure
+   read. Only the three declarations that differ. */
+.dashboard-body .eyebrow {
+    font-family: var(--font-data);
+    font-weight: 400;
+    color: var(--ccg-ink-faint);
+}
+
+.dash-sidebar .eyebrow,
+.dash-navbar .eyebrow {
+    color: var(--dash-on-pitch-faint);
+}
+
+/* A grid item's min-width is auto, so the bar's own content — the burger, the
+   trail, the name — made this column 0.14px wider than a 390px phone and the
+   whole page scrolled sideways. Bootstrap ships no min-width utility. */
+.dash-work {
     min-width: 0;
-}
-
-.dash-logo {
-    max-height: 1.75rem;
-    height: 1.75rem;
-    width: auto;
-    margin-right: .5rem;
-}
-
-.dash-user-btn {
-    --bs-btn-color: var(--ccg-ink);
-    --bs-btn-padding-x: .6rem;
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    /* The bar cannot grow, so a long username has to give way rather than push
-       the burger off the edge — .text-truncate in the markup does the giving way,
-       and needs this to be allowed to shrink at all. The dropdown carries the
-       name in full. */
-    min-width: 0;
-}
-
-.dash-navbar .dropdown-menu {
-    --bs-dropdown-min-width: 12rem;
-    --bs-dropdown-border-color: var(--dash-border);
-    --bs-dropdown-border-radius: var(--radius);
-    --bs-dropdown-box-shadow: 0 8px 24px rgba(22, 39, 69, .12);
-    margin-top: .35rem;
-}
-
-.dash-navbar .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
 }
 
 /* ----------------------------------------------------------------
-   Shell
+   The pitch chrome: the rail and the bar over the work
    ---------------------------------------------------------------- */
 
-/* Sticky under the fixed navbar, sized to exactly the space left below it, so
-   the foot of the menu is always on screen however long the page gets. */
+/* !important because Bootstrap forces an .offcanvas-lg transparent above its
+   breakpoint, and the rail is the darkest surface in the application. */
 .dash-sidebar {
-    flex: 0 0 var(--dash-sidebar-width);
-    width: var(--dash-sidebar-width);
-    /* !important because Bootstrap forces an .offcanvas-lg transparent with one
-       of its own above the breakpoint, and the sidebar is a white surface. */
-    background: var(--ccg-surface) !important;
-}
-
-/* Bootstrap pads the body below the breakpoint and zeroes it above; the padding
-   belongs to the sidebar at both widths. */
-.dash-sidebar .offcanvas-body {
-    flex-direction: column;
-    padding: 1rem .75rem;
+    background: var(--ccg-pitch) !important;
+    color: var(--dash-on-pitch);
 }
 
 .dash-sidebar .offcanvas-header {
-    border-bottom: 1px solid var(--dash-border);
+    border-bottom: 1px solid rgba(251, 248, 243, .14);
 }
 
-@media screen and (min-width: 992px) {
-    .dash-sidebar {
-        position: sticky;
-        top: var(--dash-navbar-height);
-        height: calc(100vh - var(--dash-navbar-height));
-        /* Bootstrap only makes an .offcanvas a flex column below its breakpoint;
-           above it the body has to be told to fill the sidebar, or the foot's
-           margin-top: auto has no space to push into and "Ver a loja" sits right
-           under the tabs. */
-        display: flex;
-        flex-direction: column;
-        /* The border only exists in the offcanvas half of Bootstrap's own
-           breakpoint, so above it the column has none. */
-        border-right: 1px solid var(--dash-border);
-    }
+.dash-sidebar .offcanvas-header .btn-close {
+    filter: invert(1) grayscale(1) brightness(2);
+}
 
+/* The rail runs the whole length of the page and the links stay put inside it.
+   Sticking the <aside> instead made it exactly one viewport tall and left the
+   column under it bare paper. */
+@media screen and (min-width: 992px) {
     .dash-sidebar .offcanvas-body {
-        flex-grow: 1;
+        position: sticky;
+        top: 0;
+        max-height: 100vh;
         overflow-y: auto;
     }
 }
 
-/* Pushed to the bottom, away from the section tabs: leaving the dashboard is
-   not one of them. */
-.dash-sidebar-foot {
-    margin-top: auto;
-    padding-top: .75rem;
-    border-top: 1px solid var(--ccg-line);
+.dash-brand,
+.dash-on-pitch {
+    color: var(--dash-on-pitch);
 }
 
-.dash-sidebar .nav-link {
-    display: flex;
-    align-items: center;
-    gap: .6rem;
-    padding: .5rem .7rem;
-    font-size: .875rem;
-    border-radius: var(--radius);
-    color: var(--ccg-ink);
-    transition: background-color .15s ease, color .15s ease;
+.dash-brand span {
+    color: var(--ccg-gold-lift);
 }
 
-/* The icons carry the section; at full ink they competed with the label. */
-.dash-sidebar .nav-link .icon {
-    color: var(--ccg-ink-faint);
-    transition: color .15s ease;
+.dash-rail-link {
+    color: var(--dash-on-pitch-soft);
+    border-left: 2px solid transparent;
+    transition: color .16s ease, background-color .16s ease;
 }
 
-.dash-sidebar .nav-link:hover .icon,
-.dash-sidebar .nav-link.active .icon {
-    color: currentColor;
+.dash-rail-link:hover {
+    color: var(--dash-on-pitch);
+    background: var(--dash-pitch-lift);
 }
 
-.dash-sidebar .nav-link:hover {
-    background-color: var(--ccg-blue-50);
-    color: var(--ccg-blue-800);
+/* Gold and a rule rather than a filled pill: the rail is dark enough that a
+   two-pixel edge is louder than a wash, and it leaves the wash for the row being
+   worked on out on the paper. */
+.dash-rail-link[aria-current] {
+    color: var(--dash-on-pitch);
+    background: var(--dash-pitch-lift);
+    border-left-color: var(--ccg-gold-lift);
 }
 
-.dash-sidebar .nav-link.active {
-    background-color: var(--ccg-blue-800);
-    color: var(--ccg-surface);
+.dash-rail-link .count {
+    color: var(--dash-on-pitch-faint);
 }
 
-.dash-main {
-    flex: 1 1 auto;
-    padding: 1.75rem 2rem 4rem;
-    min-width: 0;
+.dash-rail-link[aria-current] .count {
+    color: var(--ccg-gold-lift);
+}
+
+.dash-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    height: var(--dash-navbar-height);
+    min-height: var(--dash-navbar-height);
+    background: var(--ccg-pitch);
+    border-bottom: 1px solid rgba(251, 248, 243, .14);
+}
+
+.dash-navbar .btn {
+    color: var(--dash-on-pitch-soft);
+}
+
+.dash-where b {
+    color: var(--dash-on-pitch);
+    font-weight: 500;
+}
+
+.dash-where a:hover {
+    color: var(--ccg-gold-lift);
+}
+
+.dash-user-dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--ccg-gold);
+    color: var(--ccg-pitch);
+    font-size: .6875rem;
+    font-weight: 600;
 }
 
 @media screen and (max-width: 991.98px) {
-    .dash-main {
-        padding: 1.25rem;
-    }
-
-    /* Enough for a first name, which is what these two owners use. It used to be
-       display: none here, on the grounds that the name was "inside the menu" —
-       it was not, the menu held only Sair, so on a phone the dashboard never
-       said who was signed in. */
+    /* Enough for a first name, which is what these two owners use. */
     .dash-user-name {
         max-width: 7rem;
     }
@@ -195,9 +191,45 @@
    Work surfaces
    ---------------------------------------------------------------- */
 
+/* A panel is paper with a hairline, not a card with a shadow: nothing on this
+   surface is floating above anything. */
 .dash-panel {
     border: 1px solid var(--ccg-line);
-    height: 100%;
+    background: var(--ccg-paper);
+}
+
+/* Bootstrap has no colour for the accent, and a sparkline drawn in currentColor
+   would otherwise be ink. The grid, the hairlines and the padding are utilities. */
+.dash-figure svg {
+    color: var(--ccg-gold);
+}
+
+/* The one solid thing on the page is the action that changes the catalogue, and
+   it is pitch, not blue. Hovering hollows it out rather than lightening it —
+   the same move the shop's buttons make. */
+.dashboard-body .btn-dark {
+    --bs-btn-bg: var(--ccg-pitch);
+    --bs-btn-border-color: var(--ccg-pitch);
+    --bs-btn-color: var(--ccg-paper);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: var(--ccg-pitch);
+    --bs-btn-hover-color: var(--ccg-pitch);
+    --bs-btn-active-bg: var(--ccg-pitch);
+    --bs-btn-active-color: var(--ccg-paper);
+    font-size: .8125rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.dashboard-body .btn-outline-secondary {
+    --bs-btn-color: var(--ccg-ink);
+    --bs-btn-border-color: var(--ccg-line);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-color: var(--ccg-gold);
+    --bs-btn-hover-border-color: var(--ccg-gold);
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-color: var(--ccg-gold);
+    font-size: .8125rem;
 }
 
 /* Counts, dates and ids: a column of figures should line up, and should not be
@@ -284,9 +316,9 @@
 
 .color-chip.is-active,
 .pick-chip.is-active {
-    background-color: var(--ccg-blue-50);
-    color: var(--ccg-blue-800);
-    box-shadow: inset 0 0 0 2px var(--ccg-blue-400);
+    background-color: var(--ccg-gold-wash);
+    color: var(--ccg-gold);
+    box-shadow: inset 0 0 0 1px var(--ccg-gold);
 }
 
 /* ----------------------------------------------------------------
@@ -301,9 +333,9 @@
     width: 100%;
     aspect-ratio: 4 / 3;
     padding: .4rem;
-    border: 2px dashed var(--ccg-blue-200);
+    border: 1px dashed var(--ccg-line);
     border-radius: var(--radius);
-    background: var(--ccg-blue-50);
+    background: var(--ccg-paper-deep);
     cursor: pointer;
     overflow: hidden;
     text-align: center;
@@ -316,12 +348,12 @@
 .photo-slot:hover,
 .photo-slot:focus-within,
 .photo-slot.is-over {
-    border-color: var(--ccg-blue-400);
-    background: var(--ccg-blue-100);
+    border-color: var(--ccg-gold);
+    background: var(--ccg-gold-wash);
 }
 
 .photo-slot.is-over {
-    border-color: var(--ccg-blue-500);
+    border-color: var(--ccg-gold);
 }
 
 /* Hidden but still focusable. display: none would take it out of the tab order and
@@ -344,7 +376,7 @@
 .photo-slot-icon {
     font-size: 1.5rem;
     line-height: 1;
-    color: var(--ccg-blue-400);
+    color: var(--ccg-ink-faint);
 }
 
 .photo-slot-hint {
@@ -441,7 +473,7 @@
 }
 
 .variant-choice.is-active {
-    border-color: var(--ccg-blue-500);
+    border-color: var(--ccg-gold);
 }
 
 /* <input type="color"> only ever needs to be the swatch. Bootstrap's
@@ -467,10 +499,27 @@
 }
 
 .dash-table {
-    --bs-table-hover-bg: var(--ccg-blue-50);
+    --bs-table-hover-bg: var(--ccg-gold-wash);
     --bs-table-border-color: var(--ccg-line-soft);
+    --bs-table-bg: transparent;
     font-size: .875rem;
     margin-bottom: 0;
+}
+
+/* Rules, not cards. The row's height, one hairline and the photograph carry it,
+   and the name is set in the display face so the eye lands on the piece rather
+   than on the grid. */
+.dash-table .dash-col-name .fw-medium,
+.dash-table .dash-col-name > p:first-child {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+.dash-table tbody tr:hover .dash-col-name .fw-medium,
+.dash-table tbody tr:hover .dash-col-name > p:first-child {
+    color: var(--ccg-gold);
 }
 
 .dash-table > :not(caption) > * > * {
@@ -492,12 +541,13 @@
     position: sticky;
     top: var(--dash-navbar-height);
     z-index: 2;
-    background: var(--ccg-surface);
+    background: var(--ccg-paper);
+    font-family: var(--font-data);
     font-size: .6875rem;
-    font-weight: 600;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--ccg-ink-soft);
+    letter-spacing: .1em;
+    color: var(--ccg-ink-faint);
     white-space: nowrap;
 }
 
@@ -514,10 +564,12 @@
 .dash-table .dash-thumb,
 .dash-table .product-placeholder {
     width: 42px;
-    height: 42px;
+    height: 52px;
+    object-fit: cover;
     flex: none;
-    border-radius: var(--radius);
-    border: 1px solid var(--ccg-line);
+    border-radius: 0;
+    border: 0;
+    background: var(--ccg-paper-deep);
 }
 
 /* The tile's glyph is sized in cqw with a 1rem floor, which a 42px thumbnail has
@@ -724,14 +776,16 @@
 .dash-modal .modal-content {
     /* Two shadows: a tight one to seat the card, a broad soft one for depth. */
     box-shadow:
-        0 1px 2px rgba(31, 56, 100, .08),
-        0 24px 48px -12px rgba(31, 56, 100, .22);
+        0 1px 2px rgba(38, 34, 29, .08),
+        0 24px 48px -12px rgba(23, 22, 26, .28);
 }
 
 .dash-modal .modal-title {
-    font-size: 1rem;
+    font-family: var(--font-display);
+    font-size: 1.125rem;
     font-weight: 600;
-    color: var(--ccg-blue-900);
+    letter-spacing: -.01em;
+    color: var(--ccg-ink);
 }
 
 .dash-modal .modal-footer {
@@ -762,8 +816,8 @@
 .dash-type-icon {
     width: 34px;
     height: 34px;
-    background: var(--ccg-blue-50);
-    color: var(--ccg-blue-600);
+    background: var(--ccg-paper-deep);
+    color: var(--ccg-ink-soft);
     font-size: .8rem;
 }
 
@@ -779,7 +833,7 @@
    .eyebrow reads as a second heading. */
 .step-progress {
     height: .35rem;
-    --bs-progress-bar-bg: var(--ccg-blue-500);
+    --bs-progress-bar-bg: var(--ccg-gold);
 }
 
 /* The signed-in name at the head of its own menu. Bootstrap's dropdown-header is
@@ -787,5 +841,5 @@
 .dash-user-header {
     font-size: .8rem;
     font-weight: 600;
-    color: var(--ccg-blue-900);
+    color: var(--ccg-ink);
 }

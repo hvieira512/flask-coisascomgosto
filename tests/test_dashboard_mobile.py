@@ -56,7 +56,7 @@ class TestTheNavbar:
         state = page.evaluate(
             """() => {
                 const bar = document.querySelector('.dash-navbar').getBoundingClientRect();
-                const user = document.querySelector('.dash-user-btn').getBoundingClientRect();
+                const user = document.querySelector('[data-dropdown-trigger]').getBoundingClientRect();
                 const burger = document.getElementById('sidebarToggle').getBoundingClientRect();
                 return {
                     barBottom: Math.round(bar.bottom),
@@ -111,29 +111,34 @@ class TestTheNavbar:
             """() => {
                 const name = document.querySelector('.dash-user-name');
                 const burger = document.getElementById('sidebarToggle').getBoundingClientRect();
-                const brand = document.querySelector('.navbar-brand').getBoundingClientRect();
+                const where = document.querySelector('.dash-where').getBoundingClientRect();
                 return {
                     truncated: name.scrollWidth > name.clientWidth + 1,
-                    burgerRight: Math.round(burger.right),
-                    onTheBrandsLine: brand.right <= name.getBoundingClientRect().left,
+                    burgerLeft: Math.round(burger.left),
+                    onOneLine: burger.top < where.bottom
+                        && where.top < burger.bottom
+                        && where.left >= burger.right - 1,
                     viewport: window.innerWidth,
                 };
             }"""
         )
         assert state["truncated"], "the name should ellipsize, not push"
-        assert state["viewport"] - state["burgerRight"] < 24, state
-        assert state["onTheBrandsLine"], "the bar wrapped onto a second line"
+        assert state["burgerLeft"] < 24, state
+        assert state["onOneLine"], "the bar wrapped onto a second line"
 
-    def test_the_burger_is_against_the_right_edge(self, phone):
-        """It is the last thing in the bar, which is where a thumb expects it."""
+    def test_the_burger_is_against_the_left_edge(self, phone):
+        """The rail is an offcanvas-start drawer, so the control that pulls it out
+        sits on the edge it comes from. The user's own menu keeps the right."""
         page, _ = phone
         state = page.evaluate(
             """() => ({
-                burgerRight: Math.round(document.getElementById('sidebarToggle').getBoundingClientRect().right),
+                burgerLeft: Math.round(document.getElementById('sidebarToggle').getBoundingClientRect().left),
+                userRight: Math.round(document.querySelector('[data-dropdown-trigger]').getBoundingClientRect().right),
                 viewport: window.innerWidth,
             })"""
         )
-        assert state["viewport"] - state["burgerRight"] < 24, state
+        assert state["burgerLeft"] < 24, state
+        assert state["viewport"] - state["userRight"] < 24, state
 
     def test_the_dropdown_opens_below_the_bar_and_on_top(self, phone):
         """It used to be drawn and then clipped out of existence by the fixed bar's
@@ -148,11 +153,14 @@ class TestTheNavbar:
                 const menu = document.querySelector('.dropdown-menu.show');
                 const box = menu.getBoundingClientRect();
                 const bar = document.querySelector('.dash-navbar').getBoundingClientRect();
+                const trigger = document.querySelector('[data-dropdown-trigger]')
+                    .getBoundingClientRect();
                 const top = document.elementFromPoint(
                     box.x + box.width / 2, box.y + box.height / 2);
                 return {
                     hasSize: box.height > 0,
-                    belowTheBar: box.top >= bar.bottom - 2,
+                    belowTheTrigger: box.top >= trigger.bottom - 2,
+                    insideTheBarsWidth: box.top < bar.bottom + 24,
                     withinViewport: box.right <= window.innerWidth && box.left >= 0,
                     isOnTop: menu.contains(top),
                 };
@@ -160,7 +168,8 @@ class TestTheNavbar:
         )
         assert state["hasSize"], "the dropdown has no box"
         assert state["isOnTop"], "something is painted over the dropdown"
-        assert state["belowTheBar"], state
+        assert state["belowTheTrigger"], state
+        assert state["insideTheBarsWidth"], state
         assert state["withinViewport"], state
 
     def test_the_burger_opens_the_sidebar(self, phone):
@@ -174,7 +183,7 @@ class TestTheNavbar:
         )
 
         assert page.locator(".offcanvas-backdrop").count() == 1
-        assert page.locator("#sidebar .nav-link.active").count() == 1
+        assert page.locator("#sidebar [aria-current]").count() == 1
 
 
 class TestARecordIsACard:

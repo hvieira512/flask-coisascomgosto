@@ -1,41 +1,52 @@
-{% set sections = [
-{'icon': 'fa-house', 'label': 'Início', 'endpoint': 'web.dashboard.home'},
-{'icon': 'fa-box', 'label': 'Produtos', 'endpoint': 'web.dashboard.products'},
-{'icon': 'fa-tags', 'label': 'Tipos', 'endpoint': 'web.dashboard.types'},
-{'icon': 'fa-palette', 'label': 'Cores', 'endpoint': 'web.dashboard.colors'},
-{'icon': 'fa-layer-group', 'label': 'Colecções', 'endpoint': 'web.dashboard.collections'},
-{'icon': 'fa-calendar-days', 'label': 'Eventos', 'endpoint': 'web.dashboard.events'},
-{'icon': 'fa-address-book', 'label': 'Contactos', 'endpoint': 'web.dashboard.contacts'}
+{% set catalogue = [
+{'label': 'Peças', 'endpoint': 'web.dashboard.products', 'count': counts.pieces},
+{'label': 'Tipos', 'endpoint': 'web.dashboard.types', 'count': none},
+{'label': 'Cores', 'endpoint': 'web.dashboard.colors', 'count': counts.color_sets},
+{'label': 'Colecções', 'endpoint': 'web.dashboard.collections', 'count': counts.collections}
 ] %}
+{% set workshop = [
+{'label': 'Feiras', 'endpoint': 'web.dashboard.events', 'count': counts.events},
+{'label': 'Contactos', 'endpoint': 'web.dashboard.contacts', 'count': none}
+] %}
+
+{% macro rail_link(section) %}
+<a href="{{ url_for(section.endpoint) }}"
+   class="dash-rail-link d-flex align-items-center justify-content-between gap-3 px-2 py-2 text-decoration-none"
+   {% if request.endpoint == section.endpoint %}aria-current="page"{% endif %}>
+    <span>{{ section.label }}</span>
+    {% if section.count is not none %}<span class="count data fs-7">{{ section.count }}</span>{% endif %}
+</a>
+{% endmacro %}
+
+{% macro rail_group(head, sections) %}
+<div class="px-2 mt-4">
+    <p class="eyebrow px-2 mb-2">{{ head }}</p>
+    {% for section in sections %}{{ rail_link(section) }}{% endfor %}
+</div>
+{% endmacro %}
 
 <aside class="offcanvas-lg offcanvas-start dash-sidebar" id="sidebar" tabindex="-1"
        aria-label="Secções do painel">
     <div class="offcanvas-header">
-        <span class="offcanvas-title fw-semibold">Secções</span>
+        <span class="offcanvas-title font-display">Secções</span>
         <button class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
                 aria-label="Fechar"></button>
     </div>
 
-    <div class="offcanvas-body">
-        <ul class="nav flex-column">
-            {% for section in sections %}
-            <li class="nav-item">
-                <a href="{{ url_for(section.endpoint) }}"
-                   class="nav-link{{ ' active' if request.endpoint == section.endpoint else '' }}">
-                    <span class="icon"><i class="fa-solid {{ section.icon }}"></i></span>
-                    <span>{{ section.label }}</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+    <div class="offcanvas-body d-flex flex-column py-4 px-0">
+        <a class="dash-brand font-display fs-6 px-4 pb-3 text-decoration-none"
+           href="{{ url_for('web.dashboard.home') }}">Coisas com Gosto<span>.</span></a>
 
-        <ul class="nav flex-column dash-sidebar-foot">
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('web.store.home') }}">
-                    <span class="icon"><i class="fa-solid fa-arrow-left"></i></span>
-                    <span>Ver a loja</span>
-                </a>
-            </li>
-        </ul>
+        <div class="px-2">
+            <p class="eyebrow px-2 mb-2">O que acontece</p>
+            {{ rail_link({'label': 'Início', 'endpoint': 'web.dashboard.home', 'count': none}) }}
+        </div>
+
+        {{ rail_group('Catálogo', catalogue) }}
+        {{ rail_group('A oficina', workshop) }}
+
+        <div class="mt-auto px-2 pt-4">
+            {{ rail_link({'label': '← Ver a loja', 'endpoint': 'web.store.home', 'count': none}) }}
+        </div>
     </div>
 </aside>

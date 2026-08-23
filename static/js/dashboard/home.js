@@ -39,17 +39,16 @@ function figure(key, label, value, previous, { hasHistory, series }) {
     const tone = delta > 0 ? "--ccg-ready" : "--ccg-attention";
 
     return `
-      <div class="col">
-        <div class="card dash-panel p-3 h-100" data-figure="${key}">
-          <span class="h4 mb-1 data">${value}</span>
-          <span class="eyebrow mb-0">${escapeHtml(label)}</span>
-          ${show
-              ? `<span class="fs-7 mt-1" style="color: var(${tone})">
-                   ${delta > 0 ? "▲" : "▼"} ${Math.abs(delta)} vs. período anterior
-                 </span>`
-              : `<span class="fs-7 mt-1 text-body-tertiary">&nbsp;</span>`}
-          ${sparkline(series)}
-        </div>
+      <div class="col d-flex flex-column p-3 border-end border-bottom dash-figure"
+           data-figure="${key}">
+        <b class="data fs-3 fw-medium lh-1">${value}</b>
+        <span class="eyebrow mt-1 mb-0">${escapeHtml(label)}</span>
+        ${show
+            ? `<span class="fs-7 data" style="color: var(${tone})">
+                 ${delta > 0 ? "▲" : "▼"} ${Math.abs(delta)} vs. período anterior
+               </span>`
+            : `<span class="fs-7 text-body-tertiary">&nbsp;</span>`}
+        ${sparkline(series)}
       </div>`;
 }
 
@@ -72,7 +71,7 @@ function renderTotals({ totals, previous, daily, window: win }, days) {
 
     document.getElementById("totals").innerHTML = `
       <p class="eyebrow mb-2">O que aconteceu ${escapeHtml(period(days))}</p>
-      <div class="row row-cols-2 row-cols-lg-5 g-2">${cards}</div>
+      <div class="row row-cols-2 row-cols-lg-5 g-0 border-top border-start">${cards}</div>
       ${hasHistory
           ? `<p class="help mt-2 mb-0">
                Uma visita é alguém a abrir a loja, contada uma vez por visita; uma

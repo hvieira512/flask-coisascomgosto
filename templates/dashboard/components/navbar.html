@@ -1,33 +1,32 @@
-<nav class="navbar fixed-top dash-navbar" aria-label="navegação do painel">
-    <a class="navbar-brand fw-bold" href="{{ url_for('web.dashboard.home') }}">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="dash-logo">
-        <span class="text-truncate">CoisasComGosto</span>
-    </a>
+<nav class="navbar dash-navbar d-flex flex-nowrap align-items-center justify-content-between gap-3 px-3 px-xl-5"
+     aria-label="navegação do painel">
+    <button class="btn btn-ghost dash-on-pitch flex-shrink-0 d-lg-none" id="sidebarToggle"
+            data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"
+            aria-label="Abrir menu">
+        <span class="icon"><i class="fa-solid fa-bars"></i></span>
+    </button>
 
-    <div class="d-flex align-items-center flex-shrink-0">
-        <div class="dropdown">
-            <button class="btn btn-ghost dash-user-btn" data-bs-toggle="dropdown"
-                    data-dropdown-trigger aria-expanded="false">
-                <span class="icon"><i class="fa-solid fa-user"></i></span>
-                <span class="dash-user-name text-truncate">{{ session["user"]["username"] }}</span>
-                <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header dash-user-header">{{ session["user"]["username"] }}</h6></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <a class="dropdown-item" href="{{ url_for('web.logout') }}">
-                        <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
-                        <span>Sair</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+    <p class="eyebrow dash-where mb-0 text-truncate">
+        <a class="dash-on-pitch text-decoration-none" href="{{ url_for('web.dashboard.home') }}">Painel</a>
+        <span class="opacity-50 mx-1" aria-hidden="true">/</span><b>{{ where }}</b>
+    </p>
 
-        <button class="btn btn-ghost dash-burger d-lg-none" data-bs-toggle="offcanvas"
-                data-bs-target="#sidebar" aria-controls="sidebar" id="sidebarToggle"
-                aria-label="Abrir menu">
-            <span class="icon"><i class="fa-solid fa-bars"></i></span>
+    <div class="dropdown flex-shrink-0">
+        <button class="btn btn-ghost dash-on-pitch d-inline-flex align-items-center gap-2 fs-7"
+                data-bs-toggle="dropdown" data-dropdown-trigger aria-expanded="false">
+            <span class="dash-user-dot data d-grid flex-shrink-0" aria-hidden="true">{{ session["user"]["username"][0] | upper }}</span>
+            <span class="dash-user-name text-truncate">{{ session["user"]["username"] }}</span>
+            <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
         </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><h6 class="dropdown-header dash-user-header">{{ session["user"]["username"] }}</h6></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('web.logout') }}">
+                    <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                    <span>Sair</span>
+                </a>
+            </li>
+        </ul>
     </div>
 </nav>

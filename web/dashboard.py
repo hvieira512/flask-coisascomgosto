@@ -7,7 +7,27 @@ guard and the render_templates.
 
 from flask import Blueprint, redirect, render_template, session, url_for
 
+from db import get_db_connection
+from repositories.base import one_row
+
 bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
+
+
+@bp.context_processor
+def rail_counts():
+    """What the rail says beside each section.
+
+    One query for all four: they are four numbers on the chrome of every page, and
+    four round trips for them would be four more than the chrome deserves.
+    """
+    with get_db_connection() as (_, cursor):
+        cursor.execute(
+            "SELECT (SELECT COUNT(*) FROM products) AS pieces,"
+            "       (SELECT COUNT(*) FROM color_sets) AS color_sets,"
+            "       (SELECT COUNT(*) FROM collections) AS collections,"
+            "       (SELECT COUNT(*) FROM events) AS events"
+        )
+        return {"counts": one_row(cursor)}
 
 
 @bp.before_request

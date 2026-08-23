@@ -73,7 +73,7 @@ def owner(browser, live_server, client, make_user):
     def open_home(days=None):
         suffix = f"?dias={days}" if days else ""
         page.goto(f"{live_server}/dashboard/home{suffix}")
-        page.wait_for_selector("#totals .card")
+        page.wait_for_selector("#totals [data-figure]")
         return page
 
     yield open_home, page, errors
@@ -301,7 +301,7 @@ class TestTheFiguresSayWhatTheyCount:
 
         open_home()
 
-        labels = page.locator("#totals .card").all_inner_texts()
+        labels = page.locator("#totals [data-figure]").all_inner_texts()
         assert len(labels) == 5
         joined = " ".join(labels).lower()
         for word in ("visitas", "aberturas de peças", "peças diferentes",
@@ -453,7 +453,7 @@ class TestTheWindowSelector:
         open_home(90)
 
         page.reload()
-        page.wait_for_selector("#totals .card")
+        page.wait_for_selector("#totals [data-figure]")
 
         assert page.locator("[data-days][aria-pressed=true]").inner_text() == "90 dias"
 
@@ -482,7 +482,7 @@ class TestOnAPhone:
         page = context.new_page()
         try:
             page.goto(f"{live_server}/dashboard/home")
-            page.wait_for_selector("#totals .card")
+            page.wait_for_selector("#totals [data-figure]")
 
             page.evaluate("() => window.scrollTo(300, 0)")
 
