@@ -3,6 +3,7 @@ import { ColorSet } from "../../store/color-set.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { nameTaken } from "../errors.js";
+import { picked, pickChip, wirePicks } from "../picks.js";
 
 export function setRow(set, pieces) {
     const names = set.colors.map((c) => c.name).join(", ");
@@ -42,12 +43,6 @@ const colorChip = (color) => `
     <span>${escapeHtml(color.name)}</span>
   </button>`;
 
-const collectionChip = (collection, chosen) => `
-  <button type="button" data-collection-id="${collection.id}" aria-pressed="${chosen}"
-          class="badge rounded-pill chip is-quiet collection-chip${chosen ? " is-active" : ""}">
-    ${escapeHtml(collection.name)}
-  </button>`;
-
 function setForm(set, colors, collections) {
     const mine = new Set((set?.collections ?? []).map((c) => c.id));
 
@@ -75,7 +70,7 @@ function setForm(set, colors, collections) {
       <div class="mb-3">
         <label class="form-label fs-7">Colecções</label>
         <div class="d-flex flex-wrap gap-1" id="sf-collections">
-          ${collections.map((c) => collectionChip(c, mine.has(c.id))).join("")
+          ${collections.map((c) => pickChip(c.id, c.name, mine.has(c.id))).join("")
             || `<p class="help mb-0">Ainda não há colecções.</p>`}
         </div>
         <p class="help mb-0">
@@ -93,8 +88,8 @@ function setForm(set, colors, collections) {
 function wireSetForm(modalId, set, colors) {
     const form = modal(modalId).querySelector("#set-form");
     const chosen = (set?.colors ?? []).map((c) => c.id);
-    const inCollections = new Set((set?.collections ?? []).map((c) => c.id));
     const findColor = (id) => colors.find((c) => c.id === Number(id)) ?? null;
+    const collectionsBox = form.querySelector("#sf-collections");
 
     const draw = () => {
         for (const chip of form.querySelectorAll(".color-chip")) {
@@ -120,18 +115,7 @@ function wireSetForm(modalId, set, colors) {
         draw();
     });
 
-    form.querySelector("#sf-collections").addEventListener("click", (event) => {
-        const chip = event.target.closest(".collection-chip");
-        if (!chip) return;
-
-        const id = Number(chip.dataset.collectionId);
-        if (inCollections.has(id)) inCollections.delete(id);
-        else inCollections.add(id);
-
-        chip.classList.toggle("is-active", inCollections.has(id));
-        chip.setAttribute("aria-pressed", String(inCollections.has(id)));
-    });
-
+    wirePicks(collectionsBox);
     form.querySelector("#sf-name").addEventListener("input", draw);
     draw();
 
@@ -145,7 +129,7 @@ function wireSetForm(modalId, set, colors) {
             payload: {
                 name: value("name"),
                 color_ids: chosen,
-                collection_ids: [...inCollections],
+                collection_ids: picked(collectionsBox),
             },
         };
     };

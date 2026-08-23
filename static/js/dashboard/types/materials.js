@@ -16,7 +16,7 @@ export function mountMaterials() {
         const [materials, facets] = await Promise.all([
             list(API.materials.list, "materials",
                  { fallback: "Erro ao carregar os materiais." }),
-            request("/api/products/facets", { fallback: "Erro ao contar as peças." }),
+            request(API.products.facets, { fallback: "Erro ao contar as peças." }),
         ]);
         const pieces = new Map(
             (facets.materials ?? []).map((row) => [row.id, row.count])

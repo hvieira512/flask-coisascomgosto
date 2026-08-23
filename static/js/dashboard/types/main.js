@@ -11,7 +11,6 @@ const ICONS = [
 ];
 
 let types = [];
-let pieceCounts = new Map();
 
 // The photograph is one of the type's own pieces, borrowed the way the shop's
 // family tiles borrow it. Without one the type falls back to the drawing it lends
@@ -71,7 +70,6 @@ async function loadTypes() {
     const all = await list(API.productTypes.list, "product_types",
                            { fallback: "Erro ao carregar os tipos." });
     types = all;
-    pieceCounts = new Map(all.map((type) => [type.id, type.pieces ?? 0]));
 
     const rows = all.map(typeRow);
 
@@ -176,7 +174,7 @@ async function openDeleteType(id) {
     const type = findType(id);
     if (!type) return;
 
-    const pieces = pieceCounts.get(type.id) ?? 0;
+    const pieces = type.pieces ?? 0;
 
     if (pieces) {
         bodyOf("deleteTypeModal").innerHTML = `

@@ -164,16 +164,16 @@ class TestWhatAPieceIsMadeOf:
         page.click(f'#product-list tr[data-product-id="{product["id"]}"]')
         page.wait_for_selector("#pf-materials")
 
-        chips = page.locator("#pf-materials .collection-chip")
+        chips = page.locator("#pf-materials .pick-chip")
         assert chips.count() == 2
         assert (
             page.locator(
-                f'#pf-materials [data-material-id="{wood["id"]}"]'
+                f'#pf-materials [data-pick="{wood["id"]}"]'
             ).get_attribute("aria-pressed")
             == "true"
         )
 
-        page.click(f'#pf-materials [data-material-id="{paste["id"]}"]')
+        page.click(f'#pf-materials [data-pick="{paste["id"]}"]')
         page.click("#edit-submit")
         page.wait_for_timeout(800)
 
@@ -195,7 +195,7 @@ class TestWhatAPieceIsMadeOf:
         page.click(f'#product-list tr[data-product-id="{product["id"]}"]')
         page.wait_for_selector("#pf-materials")
 
-        page.click(f'#pf-materials [data-material-id="{wood["id"]}"]')
+        page.click(f'#pf-materials [data-pick="{wood["id"]}"]')
         page.click("#edit-submit")
         page.wait_for_timeout(800)
 

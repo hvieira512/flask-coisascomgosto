@@ -19,11 +19,15 @@ import { escapeHtml } from "../core/html.js";
         const meta = document.getElementById("product-meta");
         const rows = [];
 
-        const materials = product.materials ?? [];
+        const materials = (product.materials ?? []).map((m) => m.name);
         if (materials.length) {
             rows.push([
                 materials.length === 1 ? "Material" : "Materiais",
-                materials.map((m) => m.name).join(" e "),
+                // "Madeira e pasta de modelar", and with three "a, b e c" — a
+                // string of "e"s reads as a list nobody finished writing.
+                materials.length > 2
+                    ? `${materials.slice(0, -1).join(", ")} e ${materials.at(-1)}`
+                    : materials.join(" e "),
             ]);
         }
         if (product.type) rows.push(["Tipo", product.type.name]);

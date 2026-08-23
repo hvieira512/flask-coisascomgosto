@@ -18,7 +18,7 @@ import { Track } from "./track.js";
 
     async function loadFacets() {
         try {
-            const payload = await request("/api/products/facets");
+            const payload = await request(API.products.facets);
             return Object.fromEntries(
                 Object.entries(payload).map(([key, rows]) => [
                     key,

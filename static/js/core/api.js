@@ -96,6 +96,7 @@ export const API = {
         create: "/api/products/",
         update: (id) => `/api/products/${id}`,
         delete: (id) => `/api/products/${id}`,
+        facets: "/api/products/facets",
         sizes: (id) => `/api/products/${id}/sizes`,
         variants: (id) => `/api/products/${id}/variants`,
         variant: (id, variantId) => `/api/products/${id}/variants/${variantId}`,

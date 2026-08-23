@@ -53,13 +53,17 @@ piece is still one request. An unknown id is a 404, via `missing_ids`.
 
 ### 3. The photograph a type shows
 
-`ProductTypeRepository` gains `borrowed_image_url` the way
-`CollectionRepository` did last commit: a photograph of a piece of that type,
-most recent first. The Tipos page uses it, so a type reads as the thing it is
-rather than as an icon.
+Nothing new: `ProductTypeRepository.cover_images` already answers this for the
+shop's family tiles, and `product_counts` already counts the pieces. `list` and
+`get` wrap the base's to attach both, so `/api/product-types/` carries `image` and
+`pieces` and the dashboard reads the same numbers the shop does.
 
-The two subqueries are the same idea over a different path, and that duplication
-is the first thing to look at in the cleanup pass.
+That leaves two ways of borrowing a photograph in the codebase — this batch one,
+and the correlated subquery in `CollectionRepository.COLUMNS`. Deliberate: the
+join paths differ (type → piece → photograph against collection → colour set →
+variant → photograph), the type's batch query predates this work and is used by a
+server-rendered page, and a shared helper would have to be parameterised by join
+path to serve both, which is more indirection than the repetition costs.
 
 ### 4. The pages
 
@@ -77,6 +81,12 @@ capped at 100 products and this page would have quietly stopped being true.
 **The piece's form**: the material `<select>` becomes the same multi-select chips
 the colour-set form uses for its collections, with the note that most pieces have
 one material.
+
+That widget existed twice by the end, so it is now one module —
+`js/dashboard/picks.js`: the chip, the toggle, and reading the answer back. The
+colour-set form kept a `Set` in step with its chips; it no longer does, because
+the chips already know. `.collection-chip` became `.pick-chip`, since it stopped
+being about collections the moment a material wore it.
 
 **The shop**: the spec block says "Material" or "Materiais" and lists them.
 

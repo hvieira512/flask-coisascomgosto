@@ -14,15 +14,21 @@ from repositories.base import NameTableRepository, one_row
 
 
 class ProductTypeRepository(NameTableRepository):
-    """Flat, so it is one of the name tables: list, count, get, exists and
-    name_exists all come from the base. It kept its own copies of them while
-    types had a parent_id to filter on, which they no longer do."""
+    """Flat, so it is one of the name tables: count, exists and name_exists come
+    from the base unchanged, and it kept its own copies of them only while types
+    had a parent_id to filter on. `list` and `get` wrap the base's to add how many
+    pieces the type holds and a photograph of one of them, because a type is not
+    much use as a name on its own."""
 
     TABLE = "product_types"
     COLUMNS = "id, name, description, icon"
 
-    def list(self, **kwargs) -> list[dict]:
-        return self._with_pieces(super().list(**kwargs))
+    def list(
+        self, *, search: Optional[str] = None, limit: int, offset: int
+    ) -> list[dict]:
+        return self._with_pieces(
+            super().list(search=search, limit=limit, offset=offset)
+        )
 
     def get(self, row_id: int) -> Optional[dict]:
         row = super().get(row_id)

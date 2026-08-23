@@ -1,26 +1,10 @@
 import { API, request } from "../../core/api.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { picked, pickChip, wirePicks } from "../picks.js";
 import { reference, typeOptions } from "./reference.js";
 
 const option = (value, label, selected) =>
     `<option value="${value}"${String(selected) === String(value) ? " selected" : ""}>${escapeHtml(label)}</option>`;
-
-const materialChip = (material, chosen) => `
-  <button type="button" data-material-id="${material.id}" aria-pressed="${chosen}"
-          class="badge rounded-pill chip is-quiet collection-chip${chosen ? " is-active" : ""}">
-    ${escapeHtml(material.name)}
-  </button>`;
-
-// Delegated on the document because this form is mounted from two places — the
-// new-piece wizard and the edit panels — and neither needs to know about it.
-document.addEventListener("click", (event) => {
-    const chip = event.target.closest("#pf-materials .collection-chip");
-    if (!chip) return;
-
-    const on = chip.getAttribute("aria-pressed") !== "true";
-    chip.setAttribute("aria-pressed", String(on));
-    chip.classList.toggle("is-active", on);
-});
 
 export const PRODUCT_STEPS = ["A peça", "Detalhes"];
 
@@ -64,7 +48,7 @@ export async function productForm(product = null) {
         <div class="mb-3">
           <label class="form-label fs-7">De que é feita</label>
           <div class="d-flex flex-wrap gap-1" id="pf-materials">
-            ${materials.map((m) => materialChip(m, chosenMaterials.has(m.id))).join("")}
+            ${materials.map((m) => pickChip(m.id, m.name, chosenMaterials.has(m.id))).join("")}
           </div>
           <p class="help mb-0">Quase sempre uma só. Escolha mais do que uma quando a
             peça as junta — uma base de madeira com um boneco de pasta de modelar.</p>
@@ -99,6 +83,12 @@ export async function productForm(product = null) {
     </form>`;
 }
 
+/** Call after the form is in the DOM: it is mounted from the new-piece wizard and
+ *  from the edit panels, and neither knows what is inside it. */
+export function wireProductForm(root) {
+    wirePicks(root.querySelector("#pf-materials"));
+}
+
 export function validateIdentity(root) {
     const form = root.querySelector("#product-form");
     if (!form.querySelector('[name="name"]').value.trim()) {
@@ -121,8 +111,7 @@ export async function submitProductForm(root = document) {
         // Always sent, empty included: this replaces what the piece was made of,
         // so unpressing every chip has to mean "unclassified" rather than
         // "leave it alone".
-        material_ids: [...root.querySelectorAll('#pf-materials [aria-pressed="true"]')]
-            .map((chip) => Number(chip.dataset.materialId)),
+        material_ids: picked(root.querySelector("#pf-materials")),
     };
     if (value("collection_id")) payload.collection_id = Number(value("collection_id"));
 

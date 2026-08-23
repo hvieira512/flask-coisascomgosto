@@ -10,7 +10,9 @@ import { bodyOf, close, confirmDialog, footOf, modal, open, submitting } from ".
 import { escapeHtml } from "../../core/html.js";
 import { fetchProducts } from "./fetch.js";
 import { mountFilters } from "./filters.js";
-import { PRODUCT_STEPS, productForm, submitProductForm, validateIdentity } from "./form.js";
+import {
+    PRODUCT_STEPS, productForm, submitProductForm, validateIdentity, wireProductForm,
+} from "./form.js";
 import { stepDialog } from "../../core/steps.js";
 
 const getProduct = (id) =>
@@ -64,7 +66,10 @@ async function openCreate() {
         titles: [...PRODUCT_STEPS, "Cores"],
         validate: [validateIdentity, validateIdentity, validateIdentity],
         finishLabel: "Criar produto",
-        afterRender: (root) => { chosenColorSets = wireVariantChoice(root); },
+        afterRender: (root) => {
+            wireProductForm(root);
+            chosenColorSets = wireVariantChoice(root);
+        },
         onFinish: async (root) => {
             const picks = chosenColorSets();
             const id = await submitProductForm(root);
@@ -109,6 +114,7 @@ async function openEdit(id) {
         <button class="btn btn-dark" id="edit-submit">Guardar alterações</button>`;
 
     open("editProductModal");
+    wireProductForm(modal("editProductModal"));
     wireEditTabs();
     wireVariantPanel(product);
 
