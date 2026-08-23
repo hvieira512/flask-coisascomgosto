@@ -351,6 +351,97 @@ class TestCollectionCover:
         assert client.delete("/api/collections/9999/cover").status_code == 404
 
 
+class TestABorrowedCover:
+    """A collection with no cover of its own still shows a photograph: one of a
+    piece it gathers, reached the way a collection reaches a piece — through the
+    colour set."""
+
+    @pytest.fixture()
+    def gathered(self, client, make_collection, make_color, make_color_set, make_product):
+        def _make(collection_name, set_name, product_name, url):
+            collection = make_collection(collection_name)
+            color_set = make_color_set(
+                set_name,
+                [make_color(f"{set_name} colour")["id"]],
+                collection_ids=[collection["id"]],
+            )
+            product = make_product(product_name)
+            variant = client.post(
+                f"/api/products/{product['id']}/variants",
+                json={"color_set_id": color_set["id"]},
+            ).get_json()
+            image = client.post(
+                f"/api/products/{product['id']}/images",
+                json={"variant_id": variant["id"], "url": url},
+            )
+            assert image.status_code == 201, image.get_json()
+            return collection, color_set, product, image.get_json()
+
+        return _make
+
+    def _cover(self, client, collection_id):
+        return client.get(f"/api/collections/{collection_id}").get_json()
+
+    def test_it_borrows_a_photograph_of_a_piece_it_gathers(self, client, gathered):
+        collection, _, _, _ = gathered(
+            "Filigrana", "Branco e Dourado", "Caixa Redonda", "/static/img/caixa.jpg"
+        )
+
+        body = self._cover(client, collection["id"])
+        assert body["image_url"] is None
+        assert body["borrowed_image_url"] == "/static/img/caixa.jpg"
+
+    def test_a_collection_with_no_photographed_piece_borrows_nothing(
+        self, client, make_collection
+    ):
+        collection = make_collection("Lenços")
+        assert self._cover(client, collection["id"])["borrowed_image_url"] is None
+
+    def test_a_removed_photograph_is_not_borrowed(self, client, gathered):
+        collection, _, product, image = gathered(
+            "Filigrana", "Branco e Dourado", "Caixa Redonda", "/static/img/caixa.jpg"
+        )
+        assert (
+            client.delete(
+                f"/api/products/{product['id']}/images/{image['id']}"
+            ).status_code
+            == 200
+        )
+
+        assert self._cover(client, collection["id"])["borrowed_image_url"] is None
+
+    def test_a_colour_of_its_own_beats_one_every_collection_shares(
+        self, client, gathered, make_color, make_color_set, make_product
+    ):
+        """Why the ordering is not simply the newest piece: Filigrana and Bordados
+        both gather Branco e Dourado, which nearly every piece has, so recency
+        alone gave the two of them the same photograph side by side."""
+        filigrana, shared_set, _, _ = gathered(
+            "Filigrana", "Branco e Dourado", "Caixa Redonda", "/static/img/comum.jpg"
+        )
+        bordados, _, _, _ = gathered(
+            "Bordados", "Rosa e Castanho", "Bastidor", "/static/img/proprio.jpg"
+        )
+
+        # The set every collection has reaches Bordados too, and its piece is the
+        # older of the two — so only the sharing count keeps them apart.
+        assert (
+            client.put(
+                f"/api/color-sets/{shared_set['id']}",
+                json={
+                    "name": shared_set["name"],
+                    "color_ids": [c["id"] for c in shared_set["colors"]],
+                    "collection_ids": [filigrana["id"], bordados["id"]],
+                },
+            ).status_code
+            == 200
+        )
+
+        assert self._cover(client, bordados["id"])["borrowed_image_url"] == (
+            "/static/img/proprio.jpg"
+        )
+
+
 class TestColors:
     def test_create_with_hex(self, client):
         response = client.post("/api/colors/", json={"name": "White", "hex": "#FFFFFF"})

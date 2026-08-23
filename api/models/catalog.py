@@ -25,6 +25,12 @@ collection_model = Model(
             description="Cover photograph shown for the collection on the "
             "catalogue. Null until the owners choose one."
         ),
+        "borrowed_image_url": fields.String(
+            readOnly=True,
+            description="A photograph of a piece in this collection, used as the "
+            "cover while image_url is null. Null only when no piece in the "
+            "collection has a photograph at all.",
+        ),
     },
 )
 

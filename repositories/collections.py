@@ -9,7 +9,32 @@ from repositories.base import NameTableRepository
 
 class CollectionRepository(NameTableRepository):
     TABLE = "collections"
-    COLUMNS = "id, name, description, image_url"
+
+    # borrowed_image_url is a photograph of a piece in the collection, so a
+    # collection with no cover of its own still shows something instead of a grey
+    # box. Reaching the piece goes through the colour set, because that is what a
+    # collection gathers: collection -> colour set -> variant -> photograph. The
+    # A colour shared with fewer collections wins first: Filigrana and Bordados
+    # both reach Branco e Dourado, which nearly every piece has, and ordering by
+    # recency alone gave the two of them the same photograph side by side in the
+    # rail. Then the most recent piece, so the cover follows what they are making
+    # now — though rows predating migration 0011 all carry that migration's date,
+    # which makes the order among the first fourteen arbitrary rather than wrong.
+    COLUMNS = """
+        id, name, description, image_url,
+        (SELECT i.url
+           FROM collection_color_sets cs
+           JOIN product_variants v ON v.color_set_id = cs.color_set_id
+           JOIN products p ON p.id = v.product_id
+           JOIN product_images i ON i.variant_id = v.id
+          WHERE cs.collection_id = collections.id
+            AND i.deleted_at IS NULL
+          ORDER BY (SELECT COUNT(*)
+                      FROM collection_color_sets shared
+                     WHERE shared.color_set_id = cs.color_set_id) ASC,
+                   p.created_at DESC, i.position, i.id
+          LIMIT 1) AS borrowed_image_url
+    """
 
     def create(
         self,

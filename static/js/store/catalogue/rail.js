@@ -82,7 +82,7 @@ export async function mountRail(facets) {
                     return tile({
                         id: collection.id,
                         name: collection.name,
-                        photo: collection.image_url,
+                        photo: collection.image_url || collection.borrowed_image_url,
                         detail: pieces
                             ? `${pieces} ${pieces === 1 ? "peça" : "peças"}`
                             : "ainda sem peças",
