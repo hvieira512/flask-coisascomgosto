@@ -4,8 +4,9 @@
 --   product type        the family a piece belongs to ("Caixa", "Coração",
 --                       "Moldura"). Required: it is the one fact every piece has.
 --                       Flat — the shape lives in the product's own name.
---   material            what it is made of ("Madeira", "Tecido"). Optional, and
---                       a lookup the owners maintain themselves.
+--   material            what it is made of ("Madeira", "Tecido"). A lookup the
+--                       owners maintain themselves, and a piece may be made of
+--                       several: a wooden base with a figure of modelling paste.
 --   collection          a themed grouping (e.g. "Barra da Saia"). It gathers
 --                       colour sets rather than owning them
 --   colour              a single named colour, optionally with a hex swatch
@@ -29,6 +30,7 @@
 -- The cascades are written twice, on purpose. Every FOREIGN KEY below states
 -- what the repository layer already does — detach a product from a deleted
 -- material, remove the variants of a deleted colour set, refuse to delete a type
+-- (the wording predates 0012: a deleted material now loses its join rows)
 -- still in use — and the repositories keep doing it, because they also return
 -- the URLs of the photographs whose rows have gone so the routes can delete the
 -- files. A cascade cannot do that.
@@ -48,6 +50,7 @@ DROP TABLE IF EXISTS storefront_events;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS contacts;
 DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS product_materials;
 DROP TABLE IF EXISTS product_sizes;
 DROP TABLE IF EXISTS product_variants;
 DROP TABLE IF EXISTS collection_color_sets;
@@ -66,8 +69,8 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS categories;
 
 -- What a piece is made of: "Madeira", "Tecido". A lookup the owners maintain
--- themselves, and optional on a product — a piece that mixes materials, or one
--- nobody has classified yet, simply has none.
+-- themselves. Which pieces are made of it is product_materials, below: a piece
+-- may be made of several, and one nobody has classified has none.
 CREATE TABLE materials (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE
@@ -153,11 +156,11 @@ CREATE TABLE color_set_colors (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- type_id is required: what the object is, is the one fact every piece has.
--- material_id is not — a piece may mix materials, or predate the list.
+-- What it is made of is not here at all: a piece may be made of several things,
+-- so the materials are a join table (below), as of 0012.
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     type_id INT NOT NULL,
-    material_id INT,
     collection_id INT,
     default_size_id INT,
     name VARCHAR(180) NOT NULL,
@@ -167,7 +170,6 @@ CREATE TABLE products (
     -- window beginning before it.
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_products_created (created_at),
-    KEY idx_products_material (material_id),
     KEY idx_products_type (type_id),
     KEY idx_products_collection (collection_id),
     KEY idx_products_default_size (default_size_id),
@@ -177,8 +179,6 @@ CREATE TABLE products (
     -- pieces still using the type; this is the same refusal, one layer down.
     CONSTRAINT fk_products_type
         FOREIGN KEY (type_id) REFERENCES product_types (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_products_material
-        FOREIGN KEY (material_id) REFERENCES materials (id) ON DELETE SET NULL,
     CONSTRAINT fk_products_collection
         FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE SET NULL,
     CONSTRAINT fk_products_default_size
@@ -230,6 +230,21 @@ CREATE TABLE product_images (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- The sizes a product is available in. Empty means "only the default size".
+-- What a piece is made of. A join because a piece may mix materials: Manel e
+-- Maria is a wooden base and a figure of modelling paste. Unordered and with no
+-- "main" one — a base and a figure are both what the piece is made of. A piece
+-- with no row here is one nobody has classified.
+CREATE TABLE product_materials (
+    product_id INT NOT NULL,
+    material_id INT NOT NULL,
+    PRIMARY KEY (product_id, material_id),
+    KEY idx_product_materials_material (material_id),
+    CONSTRAINT fk_product_materials_product
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_materials_material
+        FOREIGN KEY (material_id) REFERENCES materials (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE product_sizes (
     product_id INT NOT NULL,
     size_id INT NOT NULL,

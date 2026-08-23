@@ -2,7 +2,6 @@ import { API, list, request } from "../../core/api.js";
 import { escapeHtml, fieldIcon } from "../../core/html.js";
 import { bodyOf, confirmDialog, footOf, formDialog, modal, open } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
-import { byType } from "../counts.js";
 import { mountMaterials } from "./materials.js";
 
 const ICONS = [
@@ -14,20 +13,35 @@ const ICONS = [
 let types = [];
 let pieceCounts = new Map();
 
+// The photograph is one of the type's own pieces, borrowed the way the shop's
+// family tiles borrow it. Without one the type falls back to the drawing it lends
+// its unphotographed pieces, which is the next-best thing it has.
 function typeRow(type) {
     const pieces = type.pieces ?? 0;
+    const icon = type.icon || "fa-tag";
+
+    const art = type.image
+        ? `<img class="dash-thumb" src="${escapeHtml(type.image.url)}"
+                alt="${escapeHtml(type.image.alt || type.name)}">`
+        : `<span class="disc dash-type-icon">
+             <i class="fa-solid ${escapeHtml(icon)}"></i>
+           </span>`;
 
     return `
       <tr data-type-id="${type.id}">
-        <td class="dash-col-thumb">
-          <span class="disc dash-type-icon">
-            <i class="fa-solid ${escapeHtml(type.icon || "fa-tag")}"></i>
-          </span>
-        </td>
+        <td class="dash-col-thumb">${art}</td>
         <td class="dash-col-name">
           <p class="fw-medium mb-0">${escapeHtml(type.name)}</p>
+          <p class="help mb-0">${escapeHtml(type.description ?? "—")}</p>
         </td>
-        <td class="fs-7 text-body-secondary">${escapeHtml(type.description ?? "—")}</td>
+        <td data-label="Sem fotografia mostra">
+          <span class="d-inline-flex align-items-center gap-2">
+            <span class="disc dash-type-icon is-small">
+              <i class="fa-solid ${escapeHtml(icon)}"></i>
+            </span>
+            <span class="data text-body-secondary">${escapeHtml(icon)}</span>
+          </span>
+        </td>
         <td class="dash-col-photos" data-label="Peças">
           ${pieces
               ? `<span class="data text-body-secondary">${pieces} ${pieces === 1 ? "peça" : "peças"}</span>`
@@ -50,26 +64,26 @@ function typeRow(type) {
       </tr>`;
 }
 
+// The count comes with the type, from the same query the shop's landing page
+// asks. It used to be counted in the browser over every product, which the
+// hundred-product page limit would eventually have made quietly wrong.
 async function loadTypes() {
-    const [all, counts] = await Promise.all([
-        list(API.productTypes.list, "product_types",
-             { fallback: "Erro ao carregar os tipos." }),
-        byType(),
-    ]);
-    pieceCounts = counts;
+    const all = await list(API.productTypes.list, "product_types",
+                           { fallback: "Erro ao carregar os tipos." });
     types = all;
+    pieceCounts = new Map(all.map((type) => [type.id, type.pieces ?? 0]));
 
-    const rows = all.map((type) =>
-        typeRow({ ...type, pieces: counts.get(type.id) ?? 0 })
-    );
+    const rows = all.map(typeRow);
 
     document.getElementById("type-rows").innerHTML = rows.length
         ? rows.join("")
         : `<tr><td colspan="5" class="text-center text-body-secondary py-5">
              Ainda não há tipos. Cada peça precisa de um.</td></tr>`;
 
+    const pieces = all.reduce((total, type) => total + (type.pieces ?? 0), 0);
     document.getElementById("type-count").textContent =
-        `${all.length} ${all.length === 1 ? "tipo" : "tipos"}`;
+        `${all.length} ${all.length === 1 ? "tipo" : "tipos"} · ` +
+        `${pieces} ${pieces === 1 ? "peça" : "peças"}`;
 }
 
 const findType = (id) => types.find((type) => type.id === Number(id)) ?? null;

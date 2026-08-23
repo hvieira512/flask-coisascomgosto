@@ -31,10 +31,9 @@ def _validate_refs(cursor, data):
     if not ProductTypeRepository(cursor).exists(type_id):
         ns.abort(404, f"The product type #{type_id} does not exist.")
 
-    if (material_id := data.get("material_id")) is not None and not MaterialRepository(
-        cursor
-    ).exists(material_id):
-        ns.abort(404, f"The material #{material_id} does not exist.")
+    missing = MaterialRepository(cursor).missing_ids(data.get("material_ids") or [])
+    if missing:
+        ns.abort(404, f"Unknown material IDs: {sorted(missing)}")
 
     if (
         collection_id := data.get("collection_id")
@@ -121,12 +120,12 @@ class ProductList(Resource):
 
             product_id = products.create(
                 type_id=data["type_id"],
-                material_id=data.get("material_id"),
                 name=name,
                 description=data["description"],
                 collection_id=data.get("collection_id"),
                 default_size_id=data.get("default_size_id"),
             )
+            products.set_materials(product_id, data.get("material_ids") or [])
             return products.get(product_id), 201
 
 
@@ -168,9 +167,11 @@ class Product(Resource):
     @ns.doc(**PROTECTED_DOC)
     @auth_required
     def put(self, product_id):
-        """Update a product's own fields.
+        """Update a product's own fields, including what it is made of.
 
-        Variants and available sizes are managed through the sub-resources.
+        Variants and available sizes are managed through the sub-resources; the
+        materials are here, because they are a fact about the piece rather than a
+        list somebody manages separately, and a piece is saved once.
         """
         data = ns.payload
         name = data["name"]
@@ -191,12 +192,12 @@ class Product(Resource):
             products.update(
                 product_id,
                 type_id=data["type_id"],
-                material_id=data.get("material_id"),
                 name=name,
                 description=data["description"],
                 collection_id=data.get("collection_id"),
                 default_size_id=data.get("default_size_id"),
             )
+            products.set_materials(product_id, data.get("material_ids") or [])
             return products.get(product_id), 200
 
     @ns.marshal_with(product_model)

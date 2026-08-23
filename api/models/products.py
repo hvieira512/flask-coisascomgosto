@@ -29,10 +29,11 @@ product_model = Model(
             product_type_nested_model,
             description="What the object is, e.g. a Coracao with a string",
         ),
-        "material": fields.Nested(
-            material_model,
-            allow_null=True,
-            description="What it is made of; null when unclassified or mixed",
+        "materials": fields.List(
+            fields.Nested(material_model),
+            description="What it is made of. Usually one, but a piece may mix "
+            "them — a wooden base with a figure of modelling paste. Empty means "
+            "nobody has classified it.",
         ),
         "collection": fields.Nested(
             collection_ref_model,
@@ -72,7 +73,12 @@ product_create_model = Model(
         "type_id": fields.Integer(
             required=True, description="Product type ID"
         ),
-        "material_id": fields.Integer(description="Optional material ID"),
+        "material_ids": fields.List(
+            fields.Integer,
+            description="What the piece is made of. Omit or send an empty list "
+            "for a piece nobody has classified; send several for one that mixes "
+            "materials. Replaces whatever it was made of before.",
+        ),
         "collection_id": fields.Integer(description="Optional collection ID"),
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },
@@ -86,7 +92,12 @@ update_product_model = Model(
         "type_id": fields.Integer(
             required=True, description="Product type ID"
         ),
-        "material_id": fields.Integer(description="Optional material ID"),
+        "material_ids": fields.List(
+            fields.Integer,
+            description="What the piece is made of. Omit or send an empty list "
+            "for a piece nobody has classified; send several for one that mixes "
+            "materials. Replaces whatever it was made of before.",
+        ),
         "collection_id": fields.Integer(description="Optional collection ID"),
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },

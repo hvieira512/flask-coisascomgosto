@@ -766,6 +766,14 @@
     font-size: .8rem;
 }
 
+/* Beside the class name in the Tipos table, where it stands for the drawing
+   rather than for the type: small enough to read as a sample. */
+.dash-type-icon.is-small {
+    width: 24px;
+    height: 24px;
+    font-size: .65rem;
+}
+
 /* The wizard's progress bar. Bootstrap's default is 1rem tall, which next to a
    .eyebrow reads as a second heading. */
 .step-progress {

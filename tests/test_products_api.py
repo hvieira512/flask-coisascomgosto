@@ -9,17 +9,33 @@ class TestListProducts:
         assert body["products"] == []
         assert body["pagination"]["total"] == 0
 
-    def test_product_is_returned_with_nested_material(self, client, make_material, make_product):
+    def test_product_is_returned_with_nested_materials(self, client, make_material, make_product):
         material = make_material("Madeira")
-        make_product("Vinho", material_id=material["id"])
+        make_product("Vinho", material_ids=[material["id"]])
 
         product = client.get("/api/products/").get_json()["products"][0]
         assert product["name"] == "Vinho"
-        assert product["material"] == {"id": material["id"], "name": "Madeira"}
+        assert product["materials"] == [{"id": material["id"], "name": "Madeira"}]
+
+    def test_a_piece_can_be_made_of_several(self, client, make_material, make_product):
+        """Manel e Maria: a wooden base and a figure of modelling paste."""
+        wood = make_material("Madeira")
+        paste = make_material("Pasta de modelar")
+        make_product("Manel e Maria", material_ids=[wood["id"], paste["id"]])
+
+        product = client.get("/api/products/").get_json()["products"][0]
+        assert [m["name"] for m in product["materials"]] == [
+            "Madeira",
+            "Pasta de modelar",
+        ]
+
+    def test_a_piece_nobody_classified_has_none(self, client, make_product):
+        make_product("Vinho")
+        assert client.get("/api/products/").get_json()["products"][0]["materials"] == []
 
     def test_search_matches_product_name(self, client, make_product):
         make_product("Vinho")
-        make_product("Cerveja", material_id=None)
+        make_product("Cerveja")
 
         body = client.get("/api/products/?q=Vin").get_json()
         assert [p["name"] for p in body["products"]] == ["Vinho"]
@@ -43,14 +59,14 @@ class TestListProducts:
 
     def test_search_total_reflects_filter(self, client, make_product):
         make_product("Vinho")
-        make_product("Cerveja", material_id=None)
+        make_product("Cerveja")
 
         assert client.get("/api/products/?q=Vin").get_json()["pagination"]["total"] == 1
 
     def test_pagination_splits_results(self, client, make_material, make_product):
         material = make_material("Madeira")
         for name in ["A", "B", "C"]:
-            make_product(name, material_id=material["id"])
+            make_product(name, material_ids=[material["id"]])
 
         body = client.get("/api/products/?page=2&limit=2").get_json()
         assert [p["name"] for p in body["products"]] == ["C"]
@@ -158,39 +174,53 @@ class TestCreateProduct:
         response = client.post(
             "/api/products/",
             json={"name": "Vinho", "description": "Tinto", "type_id": product_type["id"],
-                  "material_id": material["id"]},
+                  "material_ids": [material["id"]]},
         )
         assert response.status_code == 201
 
         body = response.get_json()
         assert body["name"] == "Vinho"
         assert body["description"] == "Tinto"
-        assert body["material"]["name"] == "Madeira"
+        assert [m["name"] for m in body["materials"]] == ["Madeira"]
 
     def test_unknown_material_returns_404(self, client, product_type):
         response = client.post(
             "/api/products/",
             json={"name": "Vinho", "description": "Tinto", "type_id": product_type["id"],
-                  "material_id": 9999},
+                  "material_ids": [9999]},
         )
         assert response.status_code == 404
 
+    def test_one_unknown_material_refuses_the_whole_list(
+        self, client, product_type, make_material
+    ):
+        """Half-applied would be worse: the piece would be saved made of only the
+        material that happened to exist."""
+        material = make_material("Madeira")
+        response = client.post(
+            "/api/products/",
+            json={"name": "Vinho", "description": "Tinto", "type_id": product_type["id"],
+                  "material_ids": [material["id"], 9999]},
+        )
+        assert response.status_code == 404
+        assert client.get("/api/products/").get_json()["products"] == []
+
     def test_duplicate_name_returns_409(self, client, product_type, make_material, make_product):
         material = make_material("Madeira")
-        make_product("Vinho", material_id=material["id"])
+        make_product("Vinho", material_ids=[material["id"]])
 
         response = client.post(
             "/api/products/",
             json={"name": "Vinho", "description": "Outro", "type_id": product_type["id"],
-                  "material_id": material["id"]},
+                  "material_ids": [material["id"]]},
         )
         assert response.status_code == 409
 
     @pytest.mark.parametrize(
         "payload",
         [
-            {"description": "Tinto", "material_id": 1},
-            {"name": "Vinho", "material_id": 1},
+            {"description": "Tinto", "material_ids": [1]},
+            {"name": "Vinho", "material_ids": [1]},
             {"name": "Vinho", "description": "Tinto"},
             {},
         ],
@@ -219,14 +249,41 @@ class TestUpdateProduct:
         response = client.put(
             f"/api/products/{created['id']}",
             json={"name": "Bolo", "description": "Doce", "type_id": product_type["id"],
-                  "material_id": other["id"]},
+                  "material_ids": [other["id"]]},
         )
         assert response.status_code == 200
 
         body = response.get_json()
         assert body["name"] == "Bolo"
         assert body["description"] == "Doce"
-        assert body["material"]["name"] == "Tecido"
+        assert [m["name"] for m in body["materials"]] == ["Tecido"]
+
+    def test_the_materials_sent_replace_the_ones_before(
+        self, client, product_type, make_material, make_product
+    ):
+        wood = make_material("Madeira")
+        paste = make_material("Pasta de modelar")
+        created = make_product("Manel e Maria", material_ids=[wood["id"], paste["id"]])
+
+        body = client.put(
+            f"/api/products/{created['id']}",
+            json={"name": "Manel e Maria", "description": "d",
+                  "type_id": product_type["id"], "material_ids": [paste["id"]]},
+        ).get_json()
+        assert [m["name"] for m in body["materials"]] == ["Pasta de modelar"]
+
+    def test_sending_none_leaves_the_piece_unclassified(
+        self, client, product_type, make_material, make_product
+    ):
+        wood = make_material("Madeira")
+        created = make_product("Vinho", material_ids=[wood["id"]])
+
+        body = client.put(
+            f"/api/products/{created['id']}",
+            json={"name": "Vinho", "description": "d", "type_id": product_type["id"],
+                  "material_ids": []},
+        ).get_json()
+        assert body["materials"] == []
 
     def test_unknown_product_returns_404(self, client, product_type, make_material):
         material = make_material("Madeira")
@@ -234,7 +291,7 @@ class TestUpdateProduct:
         response = client.put(
             "/api/products/9999",
             json={"name": "Ghost", "description": "d", "type_id": product_type["id"],
-                  "material_id": material["id"]},
+                  "material_ids": [material["id"]]},
         )
         assert response.status_code == 404
 
@@ -245,7 +302,7 @@ class TestUpdateProduct:
         response = client.put(
             "/api/products/9999",
             json={"name": "Ghost", "description": "d", "type_id": product_type["id"],
-                  "material_id": material["id"]},
+                  "material_ids": [material["id"]]},
         )
         assert response.get_json().get("id") is None
         assert response.status_code != 200
@@ -256,30 +313,30 @@ class TestUpdateProduct:
         response = client.put(
             f"/api/products/{created['id']}",
             json={"name": "Vinho", "description": "d", "type_id": product_type["id"],
-                  "material_id": 9999},
+                  "material_ids": [9999]},
         )
         assert response.status_code == 404
 
     def test_name_taken_by_another_returns_409(self, client, product_type, make_material, make_product):
         material = make_material("Madeira")
-        make_product("Vinho", material_id=material["id"])
-        other = make_product("Cerveja", material_id=material["id"])
+        make_product("Vinho", material_ids=[material["id"]])
+        other = make_product("Cerveja", material_ids=[material["id"]])
 
         response = client.put(
             f"/api/products/{other['id']}",
             json={"name": "Vinho", "description": "d", "type_id": product_type["id"],
-                  "material_id": material["id"]},
+                  "material_ids": [material["id"]]},
         )
         assert response.status_code == 409
 
     def test_keeping_own_name_is_allowed(self, client, product_type, make_material, make_product):
         material = make_material("Madeira")
-        created = make_product("Vinho", material_id=material["id"])
+        created = make_product("Vinho", material_ids=[material["id"]])
 
         response = client.put(
             f"/api/products/{created['id']}",
             json={"name": "Vinho", "description": "novo", "type_id": product_type["id"],
-                  "material_id": material["id"]},
+                  "material_ids": [material["id"]]},
         )
         assert response.status_code == 200
 
@@ -391,7 +448,7 @@ class TestProductFacets:
     ):
         collection = make_collection("Filigrana")
         material = make_material("Madeira")
-        make_product("Caixa", collection_id=collection["id"], material_id=material["id"])
+        make_product("Caixa", collection_id=collection["id"], material_ids=[material["id"]])
 
         facets = client.get("/api/products/facets").get_json()
         assert {row["id"]: row["count"] for row in facets["collections"]} == {
@@ -399,6 +456,21 @@ class TestProductFacets:
         }
         assert {row["id"]: row["count"] for row in facets["materials"]} == {
             material["id"]: 1
+        }
+
+    def test_a_piece_of_two_materials_counts_under_both(
+        self, client, make_product, make_material
+    ):
+        """So the counts can add up to more than the catalogue holds, which is the
+        true answer to "how many pieces are made of wood"."""
+        wood = make_material("Madeira")
+        paste = make_material("Pasta de modelar")
+        make_product("Manel e Maria", material_ids=[wood["id"], paste["id"]])
+
+        facets = client.get("/api/products/facets").get_json()
+        assert {row["id"]: row["count"] for row in facets["materials"]} == {
+            wood["id"]: 1,
+            paste["id"]: 1,
         }
 
     def test_facets_are_public(self, anon_client):

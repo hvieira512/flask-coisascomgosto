@@ -88,17 +88,18 @@ class TestMaterialRepository:
 
 
 class TestProductRepository:
-    def test_get_nests_the_type_and_material(self, materials, products, wood):
+    def test_get_nests_the_type_and_materials(self, materials, products, wood):
         material_id = materials.create("Madeira")
         product_id = products.create(
-            type_id=wood, material_id=material_id, name="Vinho", description="Tinto"
+            type_id=wood, name="Vinho", description="Tinto"
         )
+        products.set_materials(product_id, [material_id])
 
         assert products.get(product_id) == {
             "id": product_id,
             "name": "Vinho",
             "description": "Tinto",
-            "material": {"id": material_id, "name": "Madeira"},
+            "materials": [{"id": material_id, "name": "Madeira"}],
             "type": {"id": wood, "name": "Caixa", "icon": None},
             "collection": None,
             "default_size": None,
@@ -107,6 +108,27 @@ class TestProductRepository:
             "primary_image": None,
         }
 
+    def test_set_materials_replaces_and_deduplicates(
+        self, materials, products, wood
+    ):
+        oak = materials.create("Madeira")
+        paste = materials.create("Pasta de modelar")
+        product_id = products.create(type_id=wood, name="Manel e Maria", description="")
+
+        products.set_materials(product_id, [oak, paste, oak])
+        assert [m["name"] for m in products.get_materials(product_id)] == [
+            "Madeira",
+            "Pasta de modelar",
+        ]
+
+        products.set_materials(product_id, [paste])
+        assert [m["name"] for m in products.get_materials(product_id)] == [
+            "Pasta de modelar"
+        ]
+
+        products.set_materials(product_id, [])
+        assert products.get_materials(product_id) == []
+
     def test_get_returns_none_when_missing(self, products, wood):
         assert products.get(9999) is None
 
@@ -114,50 +136,51 @@ class TestProductRepository:
         """Material is descriptive, and searching it would surprise: a shopper
         looking for "madeira" wants pieces named that, not every wooden thing."""
         wood_id = materials.create("Madeira")
-        products.create(type_id=wood, material_id=wood_id, name="Vinho", description="")
+        product_id = products.create(type_id=wood, name="Vinho", description="")
+        products.set_materials(product_id, [wood_id])
 
         assert products.list(search="Madeira", limit=10, offset=0) == []
 
     def test_search_matches_the_product_name(self, materials, products, wood):
         material_id = materials.create("Madeira")
-        products.create(type_id=wood, material_id=material_id, name="Vinho", description="")
-        products.create(type_id=wood, material_id=material_id, name="Cerveja", description="")
+        products.create(type_id=wood,name="Vinho", description="")
+        products.create(type_id=wood,name="Cerveja", description="")
 
         found = products.list(search="Vin", limit=10, offset=0)
         assert [p["name"] for p in found] == ["Vinho"]
 
     def test_count_matches_search_results(self, materials, products, wood):
         material_id = materials.create("Madeira")
-        products.create(type_id=wood, material_id=material_id, name="Vinho", description="")
-        products.create(type_id=wood, material_id=material_id, name="Cerveja", description="")
+        products.create(type_id=wood,name="Vinho", description="")
+        products.create(type_id=wood,name="Cerveja", description="")
 
         assert products.count(search="Vin") == 1
         assert products.count() == 2
 
     def test_name_exists_can_exclude_one_row(self, materials, products, wood):
         material_id = materials.create("Madeira")
-        product_id = products.create(type_id=wood, material_id=material_id, name="Vinho", description=""
+        product_id = products.create(type_id=wood,name="Vinho", description=""
         )
 
         assert products.name_exists("Vinho") is True
         assert products.name_exists("Vinho", exclude_id=product_id) is False
 
     def test_update_overwrites_fields(self, materials, products, wood):
-        bebidas = materials.create("Madeira")
-        doces = materials.create("Tecido")
-        product_id = products.create(type_id=wood, material_id=bebidas, name="Vinho", description="Tinto"
-        )
+        wood_id = materials.create("Madeira")
+        cloth = materials.create("Tecido")
+        product_id = products.create(type_id=wood, name="Vinho", description="Tinto")
+        products.set_materials(product_id, [wood_id])
 
-        products.update(product_id, type_id=wood, material_id=doces, name="Bolo", description="Doce"
-        )
+        products.update(product_id, type_id=wood, name="Bolo", description="Doce")
+        products.set_materials(product_id, [cloth])
 
         updated = products.get(product_id)
         assert updated["name"] == "Bolo"
-        assert updated["material"]["id"] == doces
+        assert [m["id"] for m in updated["materials"]] == [cloth]
 
     def test_delete_removes_the_row(self, materials, products, wood):
         material_id = materials.create("Madeira")
-        product_id = products.create(type_id=wood, material_id=material_id, name="V", description="")
+        product_id = products.create(type_id=wood,name="V", description="")
 
         products.delete(product_id)
         assert products.get(product_id) is None
@@ -167,16 +190,17 @@ class TestProductRepository:
     ):
         """Material is not structural: the piece survives, unclassified."""
         material_id = materials.create("Madeira")
-        product_id = products.create(
-            type_id=wood, material_id=material_id, name="Vinho", description=""
-        )
+        product_id = products.create(type_id=wood, name="Vinho", description="")
+        products.set_materials(product_id, [material_id])
 
         materials.delete(material_id)
 
         assert products.count() == 1
-        assert products.get(product_id)["material"] is None
-        cursor.execute("SELECT material_id FROM products WHERE id = %s", (product_id,))
-        assert cursor.fetchone()["material_id"] is None, "stale material_id left behind"
+        assert products.get(product_id)["materials"] == []
+        cursor.execute(
+            "SELECT 1 FROM product_materials WHERE product_id = %s", (product_id,)
+        )
+        assert cursor.fetchone() is None, "stale product_materials row left behind"
 
 
 class TestProductTypeCovers:

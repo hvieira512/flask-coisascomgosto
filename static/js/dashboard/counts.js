@@ -12,7 +12,6 @@ export async function pieceCounts(idsOf) {
     return counts;
 }
 
-export const byType = () => pieceCounts((product) => [product.type.id]);
 export const byCollection = () =>
     pieceCounts((product) => (product.collection ? [product.collection.id] : []));
 export const byColorSet = () =>

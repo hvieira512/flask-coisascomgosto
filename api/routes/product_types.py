@@ -13,6 +13,7 @@ from api.models.catalog import (
     product_type_list_model,
     product_type_model,
     product_type_write_model,
+    type_cover_model,
 )
 from api.models.common import pagination_model
 from api.routes.crud import CREATED, page_of
@@ -23,6 +24,7 @@ ns = Namespace("product-types", description="Product type operations")
 
 for model in [
     pagination_model,
+    type_cover_model,
     product_type_model,
     product_type_list_model,
     product_type_write_model,

@@ -19,7 +19,6 @@ from pymysql.err import IntegrityError
 # rather than as nothing at all.
 EXPECTED_RULES = {
     ("products", "type_id"): "RESTRICT",
-    ("products", "material_id"): "SET NULL",
     ("products", "collection_id"): "SET NULL",
     ("products", "default_size_id"): "SET NULL",
     # A colour set is shared, so where it appears is a join rather than a column;
@@ -34,6 +33,11 @@ EXPECTED_RULES = {
     ("product_images", "variant_id"): "CASCADE",
     ("product_sizes", "product_id"): "CASCADE",
     ("product_sizes", "size_id"): "CASCADE",
+    # What a piece is made of is a join, because it may be made of several. A
+    # deleted material comes off the pieces made of it — the same thing the
+    # column's SET NULL used to mean, one table over.
+    ("product_materials", "product_id"): "CASCADE",
+    ("product_materials", "material_id"): "CASCADE",
     # A view count for a piece that no longer exists answers nothing, so its
     # history goes with it. A deleted colour or size does not take the enquiry —
     # the question was asked, and it still counts for the piece.
@@ -182,12 +186,16 @@ class TestDeletingCascadesTheSameWayTheRepositoryWould:
         self, cursor, make_material, make_product
     ):
         material = make_material("Cortiça")
-        product = make_product("Caixa de cortiça", material_id=material["id"])
+        product = make_product("Caixa de cortiça", material_ids=[material["id"]])
 
         cursor.execute("DELETE FROM materials WHERE id = %s", (material["id"],))
 
-        cursor.execute("SELECT material_id FROM products WHERE id = %s", (product["id"],))
-        assert cursor.fetchone()["material_id"] is None
+        cursor.execute("SELECT 1 FROM products WHERE id = %s", (product["id"],))
+        assert cursor.fetchone() is not None, "the piece went with the material"
+        cursor.execute(
+            "SELECT 1 FROM product_materials WHERE product_id = %s", (product["id"],)
+        )
+        assert cursor.fetchone() is None, "stale product_materials row left behind"
 
 
 class TestATypeInUseCannotBeDeleted:

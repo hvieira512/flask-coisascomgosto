@@ -8,13 +8,14 @@ from pymysql.cursors import DictCursor
 
 from repositories.base import one_row
 
-# Every read resolves the type (required) plus the optional material, collection
-# and default size, so callers get one consistent product shape. The type join is
-# inner because type_id is NOT NULL; everything else is a LEFT JOIN.
+# Every read resolves the type (required) plus the optional collection and default
+# size, so callers get one consistent product shape. The type join is inner
+# because type_id is NOT NULL; everything else is a LEFT JOIN. Materials are not
+# here: a piece may be made of several, so they arrive per page in
+# _attach_materials the way the sizes do.
 _FROM = """
     FROM products p
     JOIN product_types t ON p.type_id = t.id
-    LEFT JOIN materials m ON p.material_id = m.id
     LEFT JOIN collections col ON p.collection_id = col.id
     LEFT JOIN sizes s ON p.default_size_id = s.id
 """
@@ -24,8 +25,6 @@ _SELECT = f"""
         p.id AS id,
         p.name AS name,
         p.description AS description,
-        m.id AS material_id,
-        m.name AS material_name,
         col.id AS collection_id,
         col.name AS collection_name,
         s.id AS default_size_id,
@@ -81,6 +80,7 @@ class ProductRepository:
             params + [limit, offset],
         )
         products = [self._to_dict(row) for row in self._cursor.fetchall()]
+        self._attach_materials(products)
         self._attach_sizes(products)
         self._attach_variants(products)
         self._attach_images(products)
@@ -106,6 +106,7 @@ class ProductRepository:
             return None
 
         product = self._to_dict(row)
+        self._attach_materials([product])
         self._attach_sizes([product])
         self._attach_variants([product])
         self._attach_images([product])
@@ -132,17 +133,15 @@ class ProductRepository:
         type_id: int,
         name: str,
         description: str,
-        material_id: Optional[int] = None,
         collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> int:
         self._cursor.execute(
             "INSERT INTO products "
-            "(type_id, material_id, collection_id, default_size_id, name, description) "
-            "VALUES (%s, %s, %s, %s, %s, %s)",
+            "(type_id, collection_id, default_size_id, name, description) "
+            "VALUES (%s, %s, %s, %s, %s)",
             (
                 type_id,
-                material_id,
                 collection_id,
                 default_size_id,
                 name,
@@ -158,17 +157,16 @@ class ProductRepository:
         type_id: int,
         name: str,
         description: str,
-        material_id: Optional[int] = None,
         collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> None:
-        """Overwrite a product's own fields (not its sizes or variants)."""
+        """Overwrite a product's own fields (not its materials, sizes or
+        variants)."""
         self._cursor.execute(
-            "UPDATE products SET type_id = %s, material_id = %s, collection_id = %s, "
+            "UPDATE products SET type_id = %s, collection_id = %s, "
             "default_size_id = %s, name = %s, description = %s WHERE id = %s",
             (
                 type_id,
-                material_id,
                 collection_id,
                 default_size_id,
                 name,
@@ -188,6 +186,9 @@ class ProductRepository:
         """
         self._cursor.execute(
             "DELETE FROM product_images WHERE product_id = %s", (product_id,)
+        )
+        self._cursor.execute(
+            "DELETE FROM product_materials WHERE product_id = %s", (product_id,)
         )
         self._cursor.execute(
             "DELETE FROM product_sizes WHERE product_id = %s", (product_id,)
@@ -245,6 +246,55 @@ class ProductRepository:
 
         for product in products:
             product["sizes"] = by_product[product["id"]]
+
+    # ----------------
+    # What a piece is made of
+    # ----------------
+
+    def get_materials(self, product_id: int) -> list[dict]:
+        self._cursor.execute(
+            "SELECT m.id, m.name FROM product_materials pm "
+            "JOIN materials m ON pm.material_id = m.id "
+            "WHERE pm.product_id = %s ORDER BY m.name",
+            (product_id,),
+        )
+        return [dict(row) for row in self._cursor.fetchall()]
+
+    def set_materials(self, product_id: int, material_ids: list[int]) -> None:
+        """Replace what a piece is made of with exactly `material_ids`."""
+        self._cursor.execute(
+            "DELETE FROM product_materials WHERE product_id = %s", (product_id,)
+        )
+        for material_id in dict.fromkeys(material_ids):
+            self._cursor.execute(
+                "INSERT INTO product_materials (product_id, material_id) "
+                "VALUES (%s, %s)",
+                (product_id, material_id),
+            )
+
+    def _attach_materials(self, products: list[dict]) -> None:
+        """Populate `materials` for a whole page in one query."""
+        if not products:
+            return
+
+        ids = [p["id"] for p in products]
+        placeholders = ", ".join(["%s"] * len(ids))
+        self._cursor.execute(
+            "SELECT pm.product_id, m.id, m.name FROM product_materials pm "
+            "JOIN materials m ON pm.material_id = m.id "
+            f"WHERE pm.product_id IN ({placeholders}) "
+            "ORDER BY pm.product_id, m.name",
+            ids,
+        )
+
+        by_product: dict[int, list] = {i: [] for i in ids}
+        for row in self._cursor.fetchall():
+            by_product[row["product_id"]].append(
+                {"id": row["id"], "name": row["name"]}
+            )
+
+        for product in products:
+            product["materials"] = by_product[product["id"]]
 
     def _attach_variants(self, products: list[dict]) -> None:
         """Populate `variants` (with nested colour sets) for a whole page."""
@@ -352,7 +402,6 @@ class ProductRepository:
 
         for column, value in (
             ("p.collection_id", collection_id),
-            ("p.material_id", material_id),
             ("p.type_id", type_id),
         ):
             ids = _as_ids(value)
@@ -360,6 +409,17 @@ class ProductRepository:
                 continue
             placeholders = ", ".join(["%s"] * len(ids))
             clauses.append(f"{column} IN ({placeholders})")
+            params += ids
+
+        # Materials hang off a join, so this is EXISTS rather than IN: a piece
+        # made of wood and modelling paste has two rows, and matching them with a
+        # JOIN would return the piece twice.
+        if ids := _as_ids(material_id):
+            placeholders = ", ".join(["%s"] * len(ids))
+            clauses.append(
+                "EXISTS (SELECT 1 FROM product_materials pm "
+                f"WHERE pm.product_id = p.id AND pm.material_id IN ({placeholders}))"
+            )
             params += ids
 
         return ("WHERE " + " AND ".join(clauses) if clauses else ""), params
@@ -371,7 +431,6 @@ class ProductRepository:
         facets = {}
         for key, column in (
             ("types", "type_id"),
-            ("materials", "material_id"),
             ("collections", "collection_id"),
         ):
             self._cursor.execute(
@@ -379,6 +438,15 @@ class ProductRepository:
                 f"WHERE {column} IS NOT NULL GROUP BY {column}"
             )
             facets[key] = [dict(row) for row in self._cursor.fetchall()]
+
+        # A piece made of two materials counts under both, so these can add up to
+        # more than the catalogue holds. That is the honest answer to "how many
+        # pieces are made of wood", and the pages that show it say so.
+        self._cursor.execute(
+            "SELECT material_id AS id, COUNT(*) AS count "
+            "FROM product_materials GROUP BY material_id"
+        )
+        facets["materials"] = [dict(row) for row in self._cursor.fetchall()]
         return facets
 
     @staticmethod
@@ -387,10 +455,6 @@ class ProductRepository:
             "id": row["id"],
             "name": row["name"],
             "description": row["description"],
-            "material": (
-                {"id": row["material_id"], "name": row["material_name"]}
-                if row["material_id"] else None
-            ),
             "type": (
                 {
                     "id": row["type_id"],
@@ -414,6 +478,7 @@ class ProductRepository:
                 if row["default_size_id"] is not None
                 else None
             ),
+            "materials": [],
             "sizes": [],
             "variants": [],
             "primary_image": None,

@@ -258,7 +258,7 @@ def make_product(client, product_type):
         name="Vinho",
         description="Tinto",
         type_id=None,
-        material_id=None,
+        material_ids=None,
         collection_id=None,
         default_size_id=None,
     ):
@@ -274,7 +274,7 @@ def make_product(client, product_type):
             "type_id": type_id,
         }
         for key, value in (
-            ("material_id", material_id),
+            ("material_ids", material_ids),
             ("collection_id", collection_id),
             ("default_size_id", default_size_id),
         ):

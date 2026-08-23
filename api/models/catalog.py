@@ -194,6 +194,14 @@ product_sizes_write_model = Model(
 # Product types
 # ----------------
 
+type_cover_model = Model(
+    "TypeCover",
+    {
+        "url": fields.String(description="Where the photograph is served from"),
+        "alt": fields.String(description="Its alt text, or the piece's name"),
+    },
+)
+
 product_type_model = Model(
     "ProductType",
     {
@@ -206,6 +214,16 @@ product_type_model = Model(
         "icon": fields.String(
             description="Font Awesome class, e.g. 'fa-heart'. Drawn on products "
             "that have no photo yet; null falls back to a guess from the name."
+        ),
+        "pieces": fields.Integer(
+            readOnly=True, description="How many pieces are filed under this type"
+        ),
+        "image": fields.Nested(
+            type_cover_model,
+            allow_null=True,
+            readOnly=True,
+            description="A photograph of one of its pieces, standing for the "
+            "family. Null while none of them has one.",
         ),
     },
 )
@@ -317,6 +335,7 @@ CATALOG_MODELS = [
     size_list_model,
     size_write_model,
     product_sizes_write_model,
+    type_cover_model,
     product_type_model,
     product_type_list_model,
     product_type_write_model,

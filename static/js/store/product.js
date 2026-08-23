@@ -19,7 +19,13 @@ import { escapeHtml } from "../core/html.js";
         const meta = document.getElementById("product-meta");
         const rows = [];
 
-        if (product.material) rows.push(["Material", product.material.name]);
+        const materials = product.materials ?? [];
+        if (materials.length) {
+            rows.push([
+                materials.length === 1 ? "Material" : "Materiais",
+                materials.map((m) => m.name).join(" e "),
+            ]);
+        }
         if (product.type) rows.push(["Tipo", product.type.name]);
         if (product.collection) rows.push(["Colecção", product.collection.name]);
         if (product.default_size) rows.push(["Tamanho base", product.default_size.name]);

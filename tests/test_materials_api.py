@@ -134,10 +134,22 @@ class TestDeleteMaterial:
         """Material is descriptive, not structural: a piece does not stop
         existing because the owners tidied the material list."""
         material = make_material("Madeira")
-        product = make_product("Vinho", material_id=material["id"])
+        product = make_product("Vinho", material_ids=[material["id"]])
 
         client.delete(f"/api/materials/{material['id']}")
 
         body = client.get(f"/api/products/{product['id']}").get_json()
         assert body["name"] == "Vinho"
-        assert body["material"] is None
+        assert body["materials"] == []
+
+    def test_deleting_one_material_leaves_the_others_on_the_piece(
+        self, client, make_material, make_product
+    ):
+        wood = make_material("Madeira")
+        paste = make_material("Pasta de modelar")
+        product = make_product("Manel e Maria", material_ids=[wood["id"], paste["id"]])
+
+        client.delete(f"/api/materials/{paste['id']}")
+
+        body = client.get(f"/api/products/{product['id']}").get_json()
+        assert [m["name"] for m in body["materials"]] == ["Madeira"]

@@ -64,7 +64,8 @@ class TestProductType:
         material = make_material("Madeira")
         response = client.post(
             "/api/products/",
-            json={"name": "Sem tipo", "description": "d", "material_id": material["id"]},
+            json={"name": "Sem tipo", "description": "d",
+                  "material_ids": [material["id"]]},
         )
         assert response.status_code == 400
 
@@ -75,7 +76,7 @@ class TestProductType:
             json={
                 "name": "Ghost",
                 "description": "d",
-                "material_id": material["id"],
+                "material_ids": [material["id"]],
                 "type_id": 9999,
             },
         )
@@ -260,7 +261,7 @@ class TestProductSizes:
                 "name": "Ghost",
                 "description": "d",
                 "type_id": product_type["id"],
-                "material_id": material["id"],
+                "material_ids": [material["id"]],
                 "default_size_id": 9999,
             },
         )
@@ -377,7 +378,7 @@ class TestProductCollection:
                 "name": "Ghost",
                 "description": "d",
                 "type_id": product_type["id"],
-                "material_id": material["id"],
+                "material_ids": [material["id"]],
                 "collection_id": 9999,
             },
         )
@@ -391,14 +392,32 @@ class TestProductCollection:
         assert [p["name"] for p in body["products"]] == ["Caixa Redonda"]
         assert body["pagination"]["total"] == 1
 
-    def test_filter_by_category(self, client, make_material, make_product):
+    def test_filter_by_material(self, client, make_material, make_product):
         madeira = make_material("Madeira")
         tecido = make_material("Tecido")
-        make_product("Caixa", material_id=madeira["id"])
-        make_product("Lenco", material_id=tecido["id"])
+        make_product("Caixa", material_ids=[madeira["id"]])
+        make_product("Lenco", material_ids=[tecido["id"]])
 
         body = client.get(f"/api/products/?material_id={madeira['id']}").get_json()
         assert [p["name"] for p in body["products"]] == ["Caixa"]
+
+    def test_a_piece_of_two_materials_is_found_under_either(
+        self, client, make_material, make_product
+    ):
+        """And exactly once: matching the join with a JOIN would return it twice."""
+        madeira = make_material("Madeira")
+        pasta = make_material("Pasta de modelar")
+        make_product("Manel e Maria", material_ids=[madeira["id"], pasta["id"]])
+
+        for material in (madeira, pasta):
+            body = client.get(f"/api/products/?material_id={material['id']}").get_json()
+            assert [p["name"] for p in body["products"]] == ["Manel e Maria"]
+            assert body["pagination"]["total"] == 1
+
+        both = client.get(
+            f"/api/products/?material_id={madeira['id']}&material_id={pasta['id']}"
+        ).get_json()
+        assert [p["name"] for p in both["products"]] == ["Manel e Maria"]
 
     def test_search_matches_type_name(
         self, client, make_product, make_product_type

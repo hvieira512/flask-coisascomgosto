@@ -43,7 +43,12 @@ CATALOG_TABLES = [
     "events",
 ]
 
-MATERIALS = ["Madeira", "Tecido"]
+MATERIALS = ["Madeira", "Tecido", "Pasta de modelar"]
+
+# Every piece is wood, except the ones named here. Manel e Maria is both: the
+# heart it stands on is cut from wood and the two figures are modelled — which is
+# the piece product_materials exists for.
+MIXED_MATERIALS = {"Manel e Maria": ["Madeira", "Pasta de modelar"]}
 
 COLORS = [
     ("Branco", "#F5F3EF"),
@@ -301,8 +306,6 @@ def seed():
 
         materials = MaterialRepository(cursor)
         material_ids = {name: materials.create(name) for name in MATERIALS}
-        # Every piece in this seed is wood; Tecido exists for the bastidores.
-        material_id = material_ids["Madeira"]
 
         color_ids = {name: colors.create(name=name, hex=hex_) for name, hex_ in COLORS}
 
@@ -332,12 +335,15 @@ def seed():
         for name, type_name, collection, description, set_names, size_names in PRODUCTS:
             product_id = products.create(
                 name=name,
-                material_id=material_id,
                 type_id=type_ids[type_name],
                 collection_id=collection_ids[collection] if collection else None,
                 description=description,
             )
             product_ids[name] = product_id
+            products.set_materials(
+                product_id,
+                [material_ids[m] for m in MIXED_MATERIALS.get(name, ["Madeira"])],
+            )
             for set_name in set_names:
                 variant_ids[(name, set_name)] = variants.create(
                     product_id=product_id, color_set_id=set_ids[set_name]

@@ -10,14 +10,27 @@ export function mountMaterials() {
     const form = document.getElementById("material-form");
 
     async function load() {
-        const materials = await list(API.materials.list, "materials",
-                                     { fallback: "Erro ao carregar os materiais." });
+        // The counts come from the products' facets, which count in SQL. A piece
+        // made of two materials counts under both, so these add up to more than
+        // the catalogue holds — the note under the panel says so.
+        const [materials, facets] = await Promise.all([
+            list(API.materials.list, "materials",
+                 { fallback: "Erro ao carregar os materiais." }),
+            request("/api/products/facets", { fallback: "Erro ao contar as peças." }),
+        ]);
+        const pieces = new Map(
+            (facets.materials ?? []).map((row) => [row.id, row.count])
+        );
 
         rows.innerHTML = materials.length
             ? `<ul class="list-group list-group-flush">${materials
                   .map((m) => `
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
                       <span data-material-name="${m.id}">${escapeHtml(m.name)}</span>
+                      <span class="d-flex align-items-center gap-2">
+                      ${pieces.get(m.id)
+                          ? `<span class="data text-body-secondary">${pieces.get(m.id)}</span>`
+                          : `<span class="badge rounded-pill chip is-quiet">Nenhuma peça</span>`}
                       <span class="dash-row-actions d-flex gap-1">
                         <button class="btn btn-sm btn-ghost" data-material-action="rename"
                                 data-material-id="${m.id}" title="Mudar o nome"
@@ -30,11 +43,15 @@ export function mountMaterials() {
                           <span class="icon"><i class="fa-solid fa-xmark"></i></span>
                         </button>
                       </span>
+                      </span>
                     </li>`)
                   .join("")}</ul>`
             : `<p class="text-body-secondary fs-7">Ainda não há materiais.</p>`;
 
-        count.textContent = String(materials.length);
+        const spare = materials.filter((m) => !pieces.get(m.id)).length;
+        count.textContent = spare
+            ? `${materials.length} · ${spare} sem peças`
+            : String(materials.length);
     }
 
     form.addEventListener("submit", (event) => {
@@ -80,7 +97,8 @@ export function mountMaterials() {
 
         if (action === "delete") {
             const ok = await Notify.confirm(`Apagar "${current}"?`, {
-                text: "As peças feitas deste material ficam sem material.",
+                text: "As peças feitas dele deixam de o ter. As que também sejam "
+                    + "feitas de outro material ficam com esse.",
                 danger: true,
                 confirmText: "Apagar",
             });

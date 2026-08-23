@@ -21,6 +21,26 @@ class ProductTypeRepository(NameTableRepository):
     TABLE = "product_types"
     COLUMNS = "id, name, description, icon"
 
+    def list(self, **kwargs) -> list[dict]:
+        return self._with_pieces(super().list(**kwargs))
+
+    def get(self, row_id: int) -> Optional[dict]:
+        row = super().get(row_id)
+        return self._with_pieces([row])[0] if row else None
+
+    def _with_pieces(self, types: list[dict]) -> list[dict]:
+        """A type reads as the family it is: how many pieces it holds, and one of
+        their photographs. Both come from the queries the landing page already
+        asks, so the dashboard does not have to fetch every product to count."""
+        ids = [t["id"] for t in types]
+        counts = self.product_counts(ids)
+        covers = self.cover_images(ids)
+
+        for row in types:
+            row["pieces"] = counts.get(row["id"], 0)
+            row["image"] = covers.get(row["id"])
+        return types
+
     def create(
         self,
         *,

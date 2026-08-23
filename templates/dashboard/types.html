@@ -15,9 +15,9 @@
                 <table class="table dash-table table-hover">
                     <thead>
                         <tr>
-                            <th class="dash-col-thumb"><span class="visually-hidden">Ícone</span></th>
+                            <th class="dash-col-thumb"><span class="visually-hidden">Foto</span></th>
                             <th class="dash-col-name">Tipo</th>
-                            <th>Descrição</th>
+                            <th>Sem fotografia mostra</th>
                             <th class="dash-col-photos">Peças</th>
                             <th class="dash-col-actions"><span class="visually-hidden">Acções</span></th>
                         </tr>
@@ -26,6 +26,11 @@
                 </table>
             </div>
         </div>
+
+        <p class="help mt-2 mb-0">A fotografia é emprestada de uma peça do tipo — é a
+            mesma que a loja mostra. O desenho é o que aparece no lugar da fotografia
+            enquanto a peça não tiver nenhuma. Um tipo com peças não se apaga: mude-as
+            de tipo primeiro.</p>
     </div>
 
     <div class="col-lg-4">
@@ -39,11 +44,13 @@
 
             <form id="material-form" class="input-group input-group-sm">
                 <input class="form-control" id="material-name" required
-                       placeholder="Cortiça" aria-label="Nome do material">
+                       placeholder="Pasta de modelar" aria-label="Nome do material">
                 <span class="input-group-text"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
                 <button class="btn btn-dark" type="submit">Adicionar</button>
             </form>
-            <p class="help mt-2 mb-0">De que são feitas as peças. Opcional em cada peça.</p>
+            <p class="help mt-2 mb-0" id="material-note">De que são feitas as peças.
+                Uma peça pode ser feita de mais do que um material, por isso a soma
+                pode passar do número de peças.</p>
         </div>
     </div>
 </div>
