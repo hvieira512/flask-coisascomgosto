@@ -2,9 +2,11 @@
  * The dashboard is a workbench, not a shop window.
  *
  * It shares the storefront's palette and its two faces, but not its rhythm: the
- * shop is read, this is operated. The chrome is pitch — a dark rail down the side
- * and a dark bar over the work — so the paper it frames is unmistakably the work,
- * and the gold is spent on the row you are on rather than on the furniture.
+ * shop is read, this is operated: the ground is white, the rail and the bar are
+ * white with a hairline, and the accent that does the work — navigation, the
+ * current page, the primary action, a row under the pointer — is the logo blue.
+ * Gold marks "this one" and rules a section heading, and neither is a job this
+ * half of the site has, so there is none of it here.
  *
  * Layout, spacing and borders are Bootstrap's utilities, in the markup. What is
  * here is only what Bootstrap has no vocabulary for: this palette on a dark
@@ -19,10 +21,6 @@
     --dash-sidebar-width: 14.5rem;
     --dash-navbar-height: 3.25rem;
 
-    --dash-pitch-lift: #211F26;
-    --dash-on-pitch: #FBF8F3;
-    --dash-on-pitch-soft: rgba(251, 248, 243, .62);
-    --dash-on-pitch-faint: rgba(251, 248, 243, .38);
 }
 
 /* Squarer than the shop, which is the difference between a page and a tool. Set
@@ -33,8 +31,6 @@
     --bs-border-radius-lg: 3px;
     --bs-heading-color: var(--ccg-ink);
     --bs-emphasis-color: var(--ccg-ink);
-    --bs-link-color: var(--ccg-gold);
-    --bs-link-hover-color: var(--ccg-ink);
     --radius: 2px;
     --radius-lg: 3px;
 
@@ -66,9 +62,8 @@
     color: var(--ccg-ink-faint);
 }
 
-.dash-sidebar .eyebrow,
 .dash-navbar .eyebrow {
-    color: var(--dash-on-pitch-faint);
+    color: var(--ccg-ink-faint);
 }
 
 /* A grid item's min-width is auto, so the bar's own content — the burger, the
@@ -79,22 +74,18 @@
 }
 
 /* ----------------------------------------------------------------
-   The pitch chrome: the rail and the bar over the work
+   The chrome: the rail down the side and the bar over the work
    ---------------------------------------------------------------- */
 
 /* !important because Bootstrap forces an .offcanvas-lg transparent above its
-   breakpoint, and the rail is the darkest surface in the application. */
+   breakpoint, and the rail is a white surface. */
 .dash-sidebar {
-    background: var(--ccg-pitch) !important;
-    color: var(--dash-on-pitch);
+    background: var(--ccg-surface) !important;
+    border-right: 1px solid var(--ccg-line);
 }
 
 .dash-sidebar .offcanvas-header {
-    border-bottom: 1px solid rgba(251, 248, 243, .14);
-}
-
-.dash-sidebar .offcanvas-header .btn-close {
-    filter: invert(1) grayscale(1) brightness(2);
+    border-bottom: 1px solid var(--ccg-line);
 }
 
 /* The rail runs the whole length of the page and the links stay put inside it.
@@ -109,41 +100,42 @@
     }
 }
 
-.dash-brand,
-.dash-on-pitch {
-    color: var(--dash-on-pitch);
+.dash-brand {
+    color: var(--ccg-blue-900);
 }
 
+/* The one flourish the wordmark gets, and the whole of the accent's budget on
+   the chrome. */
 .dash-brand span {
-    color: var(--ccg-gold-lift);
+    color: var(--ccg-blue-500);
 }
 
 .dash-rail-link {
-    color: var(--dash-on-pitch-soft);
+    color: var(--ccg-ink);
     border-left: 2px solid transparent;
     transition: color .16s ease, background-color .16s ease;
 }
 
 .dash-rail-link:hover {
-    color: var(--dash-on-pitch);
-    background: var(--dash-pitch-lift);
+    color: var(--ccg-blue-800);
+    background: var(--ccg-blue-50);
 }
 
-/* Gold and a rule rather than a filled pill: the rail is dark enough that a
-   two-pixel edge is louder than a wash, and it leaves the wash for the row being
-   worked on out on the paper. */
+/* A rule and a wash rather than a filled pill: the page you are on is stated
+   twice, quietly, in the colour that carries navigation everywhere else. */
 .dash-rail-link[aria-current] {
-    color: var(--dash-on-pitch);
-    background: var(--dash-pitch-lift);
-    border-left-color: var(--ccg-gold-lift);
+    color: var(--ccg-blue-800);
+    background: var(--ccg-blue-50);
+    border-left-color: var(--ccg-blue-500);
+    font-weight: 600;
 }
 
 .dash-rail-link .count {
-    color: var(--dash-on-pitch-faint);
+    color: var(--ccg-ink-faint);
 }
 
 .dash-rail-link[aria-current] .count {
-    color: var(--ccg-gold-lift);
+    color: var(--ccg-blue-600);
 }
 
 .dash-navbar {
@@ -152,21 +144,21 @@
     z-index: 1020;
     height: var(--dash-navbar-height);
     min-height: var(--dash-navbar-height);
-    background: var(--ccg-pitch);
-    border-bottom: 1px solid rgba(251, 248, 243, .14);
-}
-
-.dash-navbar .btn {
-    color: var(--dash-on-pitch-soft);
+    background: var(--ccg-surface);
+    border-bottom: 1px solid var(--ccg-line);
 }
 
 .dash-where b {
-    color: var(--dash-on-pitch);
-    font-weight: 500;
+    color: var(--ccg-ink);
+    font-weight: 600;
+}
+
+.dash-where a {
+    color: var(--ccg-ink-soft);
 }
 
 .dash-where a:hover {
-    color: var(--ccg-gold-lift);
+    color: var(--ccg-blue-600);
 }
 
 .dash-user-dot {
@@ -174,8 +166,8 @@
     height: 1.5rem;
     place-items: center;
     border-radius: 50%;
-    background: var(--ccg-gold);
-    color: var(--ccg-pitch);
+    background: var(--ccg-blue-500);
+    color: #FFFFFF;
     font-size: .6875rem;
     font-weight: 600;
 }
@@ -201,21 +193,14 @@
 /* Bootstrap has no colour for the accent, and a sparkline drawn in currentColor
    would otherwise be ink. The grid, the hairlines and the padding are utilities. */
 .dash-figure svg {
-    color: var(--ccg-gold);
+    color: var(--ccg-blue-700);
 }
 
-/* The one solid thing on the page is the action that changes the catalogue, and
-   it is pitch, not blue. Hovering hollows it out rather than lightening it —
-   the same move the shop's buttons make. */
-.dashboard-body .btn-dark {
-    --bs-btn-bg: var(--ccg-pitch);
-    --bs-btn-border-color: var(--ccg-pitch);
-    --bs-btn-color: var(--ccg-paper);
-    --bs-btn-hover-bg: transparent;
-    --bs-btn-hover-border-color: var(--ccg-pitch);
-    --bs-btn-hover-color: var(--ccg-pitch);
-    --bs-btn-active-bg: var(--ccg-pitch);
-    --bs-btn-active-color: var(--ccg-paper);
+/* The action that changes the catalogue is the one solid thing on the page, in
+   the accent that carries every other action: --bs-dark is already the navy, so
+   this only tightens the type and hollows the button out on hover. */
+.dashboard-body .btn-dark,
+.dashboard-body .btn-outline-secondary {
     font-size: .8125rem;
     font-weight: 600;
     letter-spacing: .02em;
@@ -225,11 +210,11 @@
     --bs-btn-color: var(--ccg-ink);
     --bs-btn-border-color: var(--ccg-line);
     --bs-btn-hover-bg: transparent;
-    --bs-btn-hover-color: var(--ccg-gold);
-    --bs-btn-hover-border-color: var(--ccg-gold);
+    --bs-btn-hover-color: var(--ccg-blue-700);
+    --bs-btn-hover-border-color: var(--ccg-blue-400);
     --bs-btn-active-bg: transparent;
-    --bs-btn-active-color: var(--ccg-gold);
-    font-size: .8125rem;
+    --bs-btn-active-color: var(--ccg-blue-700);
+    font-weight: 400;
 }
 
 /* Counts, dates and ids: a column of figures should line up, and should not be
@@ -316,9 +301,9 @@
 
 .color-chip.is-active,
 .pick-chip.is-active {
-    background-color: var(--ccg-gold-wash);
-    color: var(--ccg-gold);
-    box-shadow: inset 0 0 0 1px var(--ccg-gold);
+    background-color: var(--ccg-blue-50);
+    color: var(--ccg-blue-800);
+    box-shadow: inset 0 0 0 1px var(--ccg-blue-400);
 }
 
 /* ----------------------------------------------------------------
@@ -348,12 +333,12 @@
 .photo-slot:hover,
 .photo-slot:focus-within,
 .photo-slot.is-over {
-    border-color: var(--ccg-gold);
-    background: var(--ccg-gold-wash);
+    border-color: var(--ccg-blue-400);
+    background: var(--ccg-blue-50);
 }
 
 .photo-slot.is-over {
-    border-color: var(--ccg-gold);
+    border-color: var(--ccg-blue-400);
 }
 
 /* Hidden but still focusable. display: none would take it out of the tab order and
@@ -473,7 +458,7 @@
 }
 
 .variant-choice.is-active {
-    border-color: var(--ccg-gold);
+    border-color: var(--ccg-blue-400);
 }
 
 /* <input type="color"> only ever needs to be the swatch. Bootstrap's
@@ -499,7 +484,7 @@
 }
 
 .dash-table {
-    --bs-table-hover-bg: var(--ccg-gold-wash);
+    --bs-table-hover-bg: var(--ccg-blue-50);
     --bs-table-border-color: var(--ccg-line-soft);
     --bs-table-bg: transparent;
     font-size: .875rem;
@@ -519,7 +504,7 @@
 
 .dash-table tbody tr:hover .dash-col-name .fw-medium,
 .dash-table tbody tr:hover .dash-col-name > p:first-child {
-    color: var(--ccg-gold);
+    color: var(--ccg-blue-700);
 }
 
 .dash-table > :not(caption) > * > * {
@@ -833,7 +818,7 @@
    .eyebrow reads as a second heading. */
 .step-progress {
     height: .35rem;
-    --bs-progress-bar-bg: var(--ccg-gold);
+    --bs-progress-bar-bg: var(--ccg-blue-500);
 }
 
 /* The signed-in name at the head of its own menu. Bootstrap's dropdown-header is

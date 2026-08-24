@@ -225,14 +225,15 @@ a.card:hover {
 }
 
 .drag-rail:focus-visible {
-    outline: 2px solid var(--ccg-gold);
+    outline: 2px solid var(--ccg-blue-500);
     outline-offset: 4px;
 }
 
 /* The chosen collection, marked on the tile itself. Keyed off the state the
-   button already carries, so the markup needs no class for it. */
+   button already carries, so the markup needs no class for it. Blue, because
+   choosing a collection is navigating the catalogue. */
 .collection-rail [aria-pressed="true"] {
-    outline: 2px solid var(--ccg-gold);
+    outline: 2px solid var(--ccg-blue-500);
     outline-offset: -2px;
 }
 
@@ -357,8 +358,8 @@ a.card:hover {
 }
 
 .rail-arrow:hover {
-    border-color: var(--ccg-gold);
-    color: var(--ccg-gold);
+    border-color: var(--ccg-blue-400);
+    color: var(--ccg-blue-600);
 }
 
 .rail-arrow[hidden] {
