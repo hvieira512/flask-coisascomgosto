@@ -19,7 +19,6 @@ from pymysql.err import IntegrityError
 # rather than as nothing at all.
 EXPECTED_RULES = {
     ("products", "type_id"): "RESTRICT",
-    ("products", "collection_id"): "SET NULL",
     ("products", "default_size_id"): "SET NULL",
     # A colour set is shared, so where it appears is a join rather than a column;
     # deleting a collection unlinks it and the set survives.
@@ -166,21 +165,28 @@ class TestDeletingCascadesTheSameWayTheRepositoryWould:
         )
         assert cursor.fetchone()["n"] == 0
 
-    def test_deleting_a_collection_detaches_rather_than_deletes(
-        self, cursor, make_collection, make_product
+    def test_deleting_a_collection_leaves_the_piece_and_its_colour(
+        self, cursor, make_collection, make_product, put_in_collection
     ):
-        """The pieces survive their collection. Losing the catalogue because a
-        grouping was renamed away would be the worst possible reading of a
-        cascade."""
+        """The pieces survive their collection, and so do the colour sets it
+        gathered: the cascade falls on the join row, which is the only thing that
+        said the piece was in it. Losing a piece because a grouping was renamed
+        away would be the worst possible reading of a cascade."""
         collection = make_collection("Inverno")
-        product = make_product("Caixa de Inverno", collection_id=collection["id"])
+        product = make_product("Caixa de Inverno")
+        color_set = put_in_collection(product, collection)
 
         cursor.execute("DELETE FROM collections WHERE id = %s", (collection["id"],))
 
+        cursor.execute("SELECT 1 FROM products WHERE id = %s", (product["id"],))
+        assert cursor.fetchone() is not None, "the piece went with the collection"
+        cursor.execute("SELECT 1 FROM color_sets WHERE id = %s", (color_set["id"],))
+        assert cursor.fetchone() is not None, "the colour set went with it"
         cursor.execute(
-            "SELECT collection_id FROM products WHERE id = %s", (product["id"],)
+            "SELECT 1 FROM collection_color_sets WHERE collection_id = %s",
+            (collection["id"],),
         )
-        assert cursor.fetchone()["collection_id"] is None
+        assert cursor.fetchone() is None, "stale join row left behind"
 
     def test_deleting_a_material_detaches_rather_than_deletes(
         self, cursor, make_material, make_product

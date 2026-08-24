@@ -65,18 +65,15 @@ class CollectionRepository(NameTableRepository):
         )
 
     def delete(self, collection_id: int) -> None:
-        """Delete a collection. Its colour sets and its products survive it.
+        """Delete a collection. Its colour sets survive it, and so do the pieces.
 
         The sets are unlinked rather than emptied of anything: a set gathered here
         may be gathered elsewhere too, and it exists in its own right regardless.
-        The products lose the collection they named.
+        Unlinking them is also what takes the pieces out of the collection, since
+        that is the only way a piece was ever in one.
         """
         self._cursor.execute(
             "DELETE FROM collection_color_sets WHERE collection_id = %s",
-            (collection_id,),
-        )
-        self._cursor.execute(
-            "UPDATE products SET collection_id = NULL WHERE collection_id = %s",
             (collection_id,),
         )
         self._cursor.execute("DELETE FROM collections WHERE id = %s", (collection_id,))

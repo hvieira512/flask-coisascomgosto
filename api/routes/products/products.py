@@ -16,7 +16,6 @@ from api.routes.crud import CREATED
 from api.routes.products import ns
 from api.security import PROTECTED_DOC, auth_required
 from repositories import (
-    CollectionRepository,
     MaterialRepository,
     ProductRepository,
     ProductTypeRepository,
@@ -26,7 +25,10 @@ from flask_restx import Resource
 
 
 def _validate_refs(cursor, data):
-    """Reject an unknown type, material, collection or default size before writing."""
+    """Reject an unknown type, material or default size before writing.
+
+    No collection: a piece is in the collections that gather its colour sets, so
+    there is nothing about a collection in a piece's own payload."""
     type_id = data["type_id"]
     if not ProductTypeRepository(cursor).exists(type_id):
         ns.abort(404, f"The product type #{type_id} does not exist.")
@@ -34,11 +36,6 @@ def _validate_refs(cursor, data):
     missing = MaterialRepository(cursor).missing_ids(data.get("material_ids") or [])
     if missing:
         ns.abort(404, f"Unknown material IDs: {sorted(missing)}")
-
-    if (
-        collection_id := data.get("collection_id")
-    ) is not None and not CollectionRepository(cursor).exists(collection_id):
-        ns.abort(404, f"The collection #{collection_id} does not exist.")
 
     if (size_id := data.get("default_size_id")) is not None and not SizeRepository(
         cursor
@@ -55,7 +52,11 @@ class ProductList(Resource):
         "Only products made of this material. Repeatable — several values read "
         "as OR, while a different filter still narrows with AND.",
     )
-    @ns.param("collection_id", "Only products in this collection. Repeatable.")
+    @ns.param(
+        "collection_id",
+        "Only products in this collection — reached through the colour sets it "
+        "gathers. Repeatable.",
+    )
     @ns.param("type_id", "Only products of this type. Repeatable.")
     @ns.param("page", "Page number, 1-based (default 1)")
     @ns.param("limit", "Items per page, max 100 (default 10)")
@@ -102,7 +103,7 @@ class ProductList(Resource):
     @ns.marshal_with(product_model, code=CREATED)
     @ns.response(201, "Product created")
     @ns.response(400, "Missing or invalid fields")
-    @ns.response(404, "Referenced type, material, collection or size not found")
+    @ns.response(404, "Referenced type, material or size not found")
     @ns.response(409, "A product with that name already exists")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
@@ -122,7 +123,6 @@ class ProductList(Resource):
                 type_id=data["type_id"],
                 name=name,
                 description=data["description"],
-                collection_id=data.get("collection_id"),
                 default_size_id=data.get("default_size_id"),
             )
             products.set_materials(product_id, data.get("material_ids") or [])
@@ -162,7 +162,7 @@ class Product(Resource):
     @ns.marshal_with(product_model)
     @ns.response(200, "Product updated")
     @ns.response(400, "Missing or invalid fields")
-    @ns.response(404, "Product, type, material, collection or size not found")
+    @ns.response(404, "Product, type, material or size not found")
     @ns.response(409, "Another product already uses that name")
     @ns.doc(**PROTECTED_DOC)
     @auth_required
@@ -194,7 +194,6 @@ class Product(Resource):
                 type_id=data["type_id"],
                 name=name,
                 description=data["description"],
-                collection_id=data.get("collection_id"),
                 default_size_id=data.get("default_size_id"),
             )
             products.set_materials(product_id, data.get("material_ids") or [])

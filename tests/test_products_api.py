@@ -142,13 +142,15 @@ class TestListProducts:
         assert [p["name"] for p in body["products"]] == ["Caixa de Joias"]
 
     def test_different_filters_still_narrow_with_and(
-        self, client, make_product, make_product_type, make_collection
+        self, client, make_product, make_product_type, make_collection,
+        put_in_collection,
     ):
         """OR inside a filter, AND between them."""
         box = make_product_type("Caixa")
         frame = make_product_type("Moldura")
         filigrana = make_collection("Filigrana")
-        make_product("Caixa Filigrana", type_id=box["id"], collection_id=filigrana["id"])
+        piece = make_product("Caixa Filigrana", type_id=box["id"])
+        put_in_collection(piece, filigrana)
         make_product("Moldura sem colecção", type_id=frame["id"])
 
         body = client.get(
@@ -394,19 +396,23 @@ class TestDashboardFilterQueries:
             f"/api/products/?type_id={box['id']}&limit=100").get_json()
         assert [p["name"] for p in body["products"]] == ["Caixa Redonda Filigrana"]
 
-    def test_collection_filter_narrows(self, client, make_product, make_collection):
+    def test_collection_filter_narrows(
+        self, client, make_product, make_collection, put_in_collection
+    ):
         collection = make_collection("Bordados")
-        make_product("Bastidor", collection_id=collection["id"])
+        put_in_collection(make_product("Bastidor"), collection)
         make_product("Sem colecção")
 
         body = client.get(
             f"/api/products/?collection_id={collection['id']}&limit=100").get_json()
         assert [p["name"] for p in body["products"]] == ["Bastidor"]
 
-    def test_filters_combine(self, client, make_product, make_collection):
+    def test_filters_combine(
+        self, client, make_product, make_collection, put_in_collection
+    ):
         collection = make_collection("Bordados")
-        make_product("Bastidor Bordado", collection_id=collection["id"])
-        make_product("Bastidor Viana", collection_id=collection["id"])
+        put_in_collection(make_product("Bastidor Bordado"), collection)
+        put_in_collection(make_product("Bastidor Viana"), collection)
 
         body = client.get(
             f"/api/products/?collection_id={collection['id']}&q=viana&limit=100"
@@ -444,11 +450,13 @@ class TestProductFacets:
         assert spare["id"] not in {row["id"] for row in facets["types"]}
 
     def test_collections_and_materials_are_counted_too(
-        self, client, make_product, make_collection, make_material
+        self, client, make_product, make_collection, make_material, put_in_collection
     ):
         collection = make_collection("Filigrana")
         material = make_material("Madeira")
-        make_product("Caixa", collection_id=collection["id"], material_ids=[material["id"]])
+        put_in_collection(
+            make_product("Caixa", material_ids=[material["id"]]), collection
+        )
 
         facets = client.get("/api/products/facets").get_json()
         assert {row["id"]: row["count"] for row in facets["collections"]} == {

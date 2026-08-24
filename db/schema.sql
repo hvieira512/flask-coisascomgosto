@@ -8,7 +8,8 @@
 --                       owners maintain themselves, and a piece may be made of
 --                       several: a wooden base with a figure of modelling paste.
 --   collection          a themed grouping (e.g. "Barra da Saia"). It gathers
---                       colour sets rather than owning them
+--                       colour sets rather than owning them, and reaches a piece
+--                       only through the colour sets that piece is offered in
 --   colour              a single named colour, optionally with a hex swatch
 --   colour set          a named combination of two or more colours ("Preto e
 --                       Branco", "Preto Floral"). Shared: it may appear in
@@ -156,12 +157,13 @@ CREATE TABLE color_set_colors (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- type_id is required: what the object is, is the one fact every piece has.
--- What it is made of is not here at all: a piece may be made of several things,
--- so the materials are a join table (below), as of 0012.
+-- Neither what it is made of nor which collections it is in live here: a piece
+-- may be made of several materials (product_materials, 0012), and a collection
+-- reaches a piece through the piece's colour sets (0013), never through a column
+-- of its own.
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     type_id INT NOT NULL,
-    collection_id INT,
     default_size_id INT,
     name VARCHAR(180) NOT NULL,
     description TEXT,
@@ -171,7 +173,6 @@ CREATE TABLE products (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_products_created (created_at),
     KEY idx_products_type (type_id),
-    KEY idx_products_collection (collection_id),
     KEY idx_products_default_size (default_size_id),
     KEY idx_products_name (name),
     -- RESTRICT, not SET NULL: type_id is NOT NULL, so there is no unfiled state
@@ -179,8 +180,6 @@ CREATE TABLE products (
     -- pieces still using the type; this is the same refusal, one layer down.
     CONSTRAINT fk_products_type
         FOREIGN KEY (type_id) REFERENCES product_types (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_products_collection
-        FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE SET NULL,
     CONSTRAINT fk_products_default_size
         FOREIGN KEY (default_size_id) REFERENCES sizes (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

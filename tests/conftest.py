@@ -259,7 +259,6 @@ def make_product(client, product_type):
         description="Tinto",
         type_id=None,
         material_ids=None,
-        collection_id=None,
         default_size_id=None,
     ):
         # A product must have a type. Both this and the `product_type` fixture
@@ -275,7 +274,6 @@ def make_product(client, product_type):
         }
         for key, value in (
             ("material_ids", material_ids),
-            ("collection_id", collection_id),
             ("default_size_id", default_size_id),
         ):
             if value is not None:
@@ -286,6 +284,33 @@ def make_product(client, product_type):
         return response.get_json()
 
     return _make
+
+
+@pytest.fixture()
+def put_in_collection(client, make_color, make_color_set):
+    """Put a piece in a collection the only way there is.
+
+    A collection gathers colour sets and a piece is offered in colour sets, so a
+    piece is in a collection because one of its colourways is. There is no field
+    on the piece to set — this is what the old `make_product(collection_id=…)`
+    was pretending to be.
+    """
+
+    def _put(product, collection, set_name=None):
+        name = set_name or f"Cor de {product['name']}"
+        color_set = make_color_set(
+            name,
+            [make_color(f"{name} tom")["id"]],
+            collection_ids=[collection["id"]],
+        )
+        response = client.post(
+            f"/api/products/{product['id']}/variants",
+            json={"color_set_id": color_set["id"]},
+        )
+        assert response.status_code == 201, response.get_json()
+        return color_set
+
+    return _put
 
 
 @pytest.fixture()

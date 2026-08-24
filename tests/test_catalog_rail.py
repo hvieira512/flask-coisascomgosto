@@ -15,7 +15,8 @@ pytest.importorskip("playwright.sync_api")
 
 
 @pytest.fixture()
-def catalogue(browser, live_server, client, make_collection, make_product):
+def catalogue(browser, live_server, client, make_collection, make_product,
+              put_in_collection):
     """Three collections with pieces behind them, and one piece belonging to none.
 
     The orphan matters: it is the case a hard gate would have hidden for good.
@@ -24,9 +25,9 @@ def catalogue(browser, live_server, client, make_collection, make_product):
     bordados = make_collection("Bordados")
     make_collection("Vazia")  # no pieces, so the rail must not offer it
 
-    make_product("Caixa Redonda", collection_id=filigrana["id"])
-    make_product("Caixa Quadrada", collection_id=filigrana["id"])
-    make_product("Bastidor", collection_id=bordados["id"])
+    put_in_collection(make_product("Caixa Redonda"), filigrana)
+    put_in_collection(make_product("Caixa Quadrada"), filigrana)
+    put_in_collection(make_product("Bastidor"), bordados)
     make_product("Peça sem colecção")
 
     context = browser.new_context(viewport={"width": 1280, "height": 900})
@@ -304,10 +305,11 @@ class TestWhereTheAppliedFiltersLive:
 
 class TestOnAPhone:
     @pytest.fixture()
-    def phone(self, browser, live_server, client, make_collection, make_product):
+    def phone(self, browser, live_server, client, make_collection, make_product,
+              put_in_collection):
         for name in ("Filigrana", "Bordados", "Lenços"):
             collection = make_collection(name)
-            make_product(f"Peça {name}", collection_id=collection["id"])
+            put_in_collection(make_product(f"Peça {name}"), collection)
 
         context = browser.new_context(viewport={"width": 390, "height": 780})
         page = context.new_page()
@@ -386,10 +388,11 @@ class TestACrowdedRail:
              "Coração de Viana", "Presépios", "Natal", "Casamento"]
 
     @pytest.fixture()
-    def crowded(self, browser, live_server, client, make_collection, make_product):
+    def crowded(self, browser, live_server, client, make_collection, make_product,
+                put_in_collection):
         for name in self.NAMES:
             collection = make_collection(name)
-            make_product(f"Peça de {name}", collection_id=collection["id"])
+            put_in_collection(make_product(f"Peça de {name}"), collection)
 
         context = browser.new_context(viewport={"width": 1280, "height": 1000})
         page = context.new_page()
@@ -461,14 +464,15 @@ class TestWhenThereIsNothingToChoose:
         return context, page
 
     def test_a_single_collection_still_gets_a_rail(
-        self, browser, live_server, client, make_collection, make_product
+        self, browser, live_server, client, make_collection, make_product,
+        put_in_collection,
     ):
         """It used to hide below two collections, on the grounds that one cover
         beside "Ver tudo" is furniture rather than a decision. That reasoning died
         with the sidebar's Colecção group: the rail is now the only way to filter by
         collection, so hiding it removes the filter instead of tidying it away."""
         only = make_collection("Filigrana")
-        make_product("Caixa", collection_id=only["id"])
+        put_in_collection(make_product("Caixa"), only)
         make_product("Peça sem colecção")
 
         context, page = self._catalogue(browser, live_server)

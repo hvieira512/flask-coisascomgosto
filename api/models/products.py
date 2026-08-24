@@ -1,8 +1,9 @@
 """Marshalling models for products.
 
-A product joins several catalog layers: a required product type, an optional
-material, an optional collection, an optional default size,
-the sizes it is available in, and one variant per colour set it is sold in.
+A product joins several catalog layers: a required product type, the materials it
+is made of, an optional default size, the sizes it is available in, and one
+variant per colour set it is sold in. The collections it is in are read off those
+variants — a piece has no collection of its own.
 """
 
 from flask_restx import Model, fields
@@ -35,10 +36,11 @@ product_model = Model(
             "them — a wooden base with a figure of modelling paste. Empty means "
             "nobody has classified it.",
         ),
-        "collection": fields.Nested(
-            collection_ref_model,
-            allow_null=True,
-            description="Owning collection, if any",
+        "collections": fields.List(
+            fields.Nested(collection_ref_model),
+            description="The collections this piece is in. A collection gathers "
+            "colour sets, so a piece is in whichever collections gather the "
+            "colour sets it is offered in — it has no collection of its own.",
         ),
         "default_size": fields.Nested(
             size_model,
@@ -79,7 +81,6 @@ product_create_model = Model(
             "for a piece nobody has classified; send several for one that mixes "
             "materials. Replaces whatever it was made of before.",
         ),
-        "collection_id": fields.Integer(description="Optional collection ID"),
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },
 )
@@ -98,7 +99,6 @@ update_product_model = Model(
             "for a piece nobody has classified; send several for one that mixes "
             "materials. Replaces whatever it was made of before.",
         ),
-        "collection_id": fields.Integer(description="Optional collection ID"),
         "default_size_id": fields.Integer(description="Optional default size ID"),
     },
 )

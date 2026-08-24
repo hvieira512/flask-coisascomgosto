@@ -15,6 +15,12 @@ import { escapeHtml } from "../core/html.js";
         return variant ? variant.images || [] : [];
     }
 
+    // "Madeira e pasta de modelar", and with three "a, b e c" — a string of
+    // "e"s reads as a list nobody finished writing.
+    const list = (names) => names.length > 2
+        ? `${names.slice(0, -1).join(", ")} e ${names.at(-1)}`
+        : names.join(" e ");
+
     function renderMeta(product) {
         const meta = document.getElementById("product-meta");
         const rows = [];
@@ -23,15 +29,17 @@ import { escapeHtml } from "../core/html.js";
         if (materials.length) {
             rows.push([
                 materials.length === 1 ? "Material" : "Materiais",
-                // "Madeira e pasta de modelar", and with three "a, b e c" — a
-                // string of "e"s reads as a list nobody finished writing.
-                materials.length > 2
-                    ? `${materials.slice(0, -1).join(", ")} e ${materials.at(-1)}`
-                    : materials.join(" e "),
+                list(materials),
             ]);
         }
         if (product.type) rows.push(["Tipo", product.type.name]);
-        if (product.collection) rows.push(["Colecção", product.collection.name]);
+        const collections = (product.collections ?? []).map((c) => c.name);
+        if (collections.length) {
+            rows.push([
+                collections.length === 1 ? "Colecção" : "Colecções",
+                list(collections),
+            ]);
+        }
         if (product.default_size) rows.push(["Tamanho base", product.default_size.name]);
 
         meta.innerHTML = rows

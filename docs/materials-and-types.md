@@ -106,4 +106,5 @@ being about collections the moment a material wore it.
 
 - No parts or components level: two materials of one piece, not two objects.
 - No ordering of materials, no "primary" material.
-- `products.collection_id` stays as it is — it is the next thing, not this thing.
+- ~~`products.collection_id` stays as it is~~ — done next, in 0013: the column
+  is gone and a collection reaches a piece through the piece's colour sets.

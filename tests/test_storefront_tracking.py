@@ -341,21 +341,14 @@ class TestAFilter:
         no_more_than("filter", 1)
 
     def test_choosing_a_collection_from_the_rail_counts_too(
-        self, visitor, client, make_collection
+        self, visitor, client, make_collection, put_in_collection
     ):
         """The rail is the only way to filter by collection, so it is the most used
-        filter on the page."""
+        filter on the page. The piece gets there through a colourway the collection
+        gathers, which is the only way in."""
         page, _, catalogue, server = visitor
         collection = make_collection("Filigrana")
-        client.put(
-            f"/api/products/{catalogue['piece']['id']}",
-            json={
-                "name": catalogue["piece"]["name"],
-                "description": "",
-                "type_id": catalogue["piece"]["type"]["id"],
-                "collection_id": collection["id"],
-            },
-        )
+        put_in_collection(catalogue["piece"], collection)
 
         page.goto(f"{server}/products")
         page.wait_for_selector(".collection-card")

@@ -250,17 +250,20 @@ A product sits at the centre of several independent layers.
 ```
 product type ──┐                        (required: what the object IS)
 materials ─────┤                        (what it is made OF: none, one or several)
-collection ────┼──► product ──► variant ──► colour set ──► colours
-               │        │                     ▲
-default size ──┘        └──► sizes            └── gathered by any number
-                                                  of collections
+default size ──┴──► product ──► variant ──► colour set ──► colours
+                        │                     │
+                        └──► sizes            └──► collections
+                                                   (a set is gathered by any
+                                                    number of them, and that is
+                                                    the only way a piece is in
+                                                    one)
 ```
 
 | Layer | Meaning | Example |
 |---|---|---|
 | **Product type** | What the object *is*. Required. | `Caixa`, `Moldura`, `Coração`, `Presépio Minhoto` |
 | **Material** | What it is made *of*, and a piece may be made of several: Manel e Maria is a wooden base with figures of modelling paste. Maintained by the owners. | `Madeira`, `Pasta de modelar` |
-| **Collection** | A themed grouping. It gathers colour sets rather than owning them. | `Barra da Saia` |
+| **Collection** | A themed grouping. It gathers colour sets rather than owning them, and reaches a piece only through the colour sets that piece is offered in — there is no collection on a piece (0013). | `Barra da Saia` |
 | **Colour** | A single named swatch, optionally with a hex code. | `Branco`, `Dourado` |
 | **Colour set** | A named combination of **two or more** colours, shared: it may be gathered by several collections, or by none. | `Preto e Branco`, `Preto Floral` |
 | **Variant** | One product offered in one colour set. | A `Caixa Redonda` in `Red and White` |
@@ -299,7 +302,7 @@ matches the method beside it.
 | Deleting… | …does this, in `repositories/` | and the constraint |
 |---|---|---|
 | material | takes it off the pieces made of it; they survive, keeping any other material they are made of | `CASCADE` on the join |
-| collection | unlinks its colour sets (they survive, possibly in other collections) and clears `collection_id` on its products | `CASCADE` on the join, `SET NULL` on products |
+| collection | unlinks its colour sets — which survive, possibly in other collections, and is also what takes its pieces out of it, since that link was the only thing putting them in | `CASCADE` on the join |
 | colour | removes it from every colour set | `CASCADE` |
 | colour set | deletes variants using it, plus their images | `CASCADE` |
 | size | unlinks it from products, clears it as any default size | `CASCADE`, `SET NULL` |
@@ -331,9 +334,11 @@ the same thing happening behind the API's back.
   that both collections gather.
 - A product with **no listed sizes** is sold only in its default size. Sizes are
   replaced wholesale via `PUT`, never appended.
-- Deleting a **collection** or **product type** does not delete its products;
-  they survive with that field cleared. Deleting a **colour set** removes the
-  variants that used it. Deleting a **product** removes its variants and sizes.
+- Deleting a **collection** does not delete its pieces: the colour sets it
+  gathered are unlinked and the pieces are in one collection fewer. Deleting a
+  **product type** is refused while any piece uses it. Deleting a **colour set**
+  removes the variants that used it. Deleting a **product** removes its variants
+  and sizes.
 
 ---
 

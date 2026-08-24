@@ -60,15 +60,19 @@ class TestCollections:
         assert [c["name"] for c in body["collections"]] == ["Barra da Saia"]
 
     def test_deleting_a_collection_leaves_its_products(
-        self, client, make_collection, make_product
+        self, client, make_collection, make_product, put_in_collection
     ):
+        """The piece survives, keeps the colourway, and is simply in no collection:
+        the colour set it is offered in is unlinked, not deleted."""
         collection = make_collection("Barra da Saia")
-        product = make_product("Caixa", collection_id=collection["id"])
+        product = make_product("Caixa")
+        put_in_collection(product, collection)
 
         client.delete(f"/api/collections/{collection['id']}")
 
         body = client.get(f"/api/products/{product['id']}").get_json()
-        assert body["collection"] is None
+        assert body["collections"] == []
+        assert len(body["variants"]) == 1
 
 
 class TestWhichColourSetsACollectionGathers:

@@ -6,10 +6,29 @@ import { reference, typeOptions } from "./reference.js";
 const option = (value, label, selected) =>
     `<option value="${value}"${String(selected) === String(value) ? " selected" : ""}>${escapeHtml(label)}</option>`;
 
+/* A collection gathers colour sets, so a piece is in one because one of its
+   colourways is — never because this form said so. The field used to be here and
+   wrote a second, unsynchronised answer; now the form reports what the colours
+   already say and points at where it is decided. */
+const collectionsNote = (product) => {
+    const names = (product.collections ?? []).map((c) => c.name);
+
+    return `
+      <div class="mb-3">
+        <label class="form-label fs-7">Colecções</label>
+        <p class="mb-1">${names.length
+            ? names.map((name) => escapeHtml(name)).join(" · ")
+            : "<span class=\"text-body-secondary\">Em nenhuma</span>"}</p>
+        <p class="help mb-0">Vem das cores desta peça: uma colecção reúne
+          conjuntos de cor. Muda-se em <a href="/dashboard/colors">Cores</a>,
+          no conjunto.</p>
+      </div>`;
+};
+
 export const PRODUCT_STEPS = ["A peça", "Detalhes"];
 
 export async function productForm(product = null) {
-    const { materials, types, collections, sizes } = await reference();
+    const { materials, types, sizes } = await reference();
     const selectedSizes = new Set((product?.sizes ?? []).map((s) => s.id));
     const chosenMaterials = new Set((product?.materials ?? []).map((m) => m.id));
 
@@ -54,18 +73,7 @@ export async function productForm(product = null) {
             peça as junta — uma base de madeira com um boneco de pasta de modelar.</p>
         </div>
 
-        <div class="row g-3 mb-3">
-          <div class="col">
-            <label class="form-label fs-7" for="pf-collection">Colecção</label>
-            <div class="input-group">
-              <select class="form-select" id="pf-collection" name="collection_id">
-                <option value="">—</option>
-                ${collections.map((c) => option(c.id, c.name, product?.collection?.id)).join("")}
-              </select>
-              ${fieldIcon("fa-solid fa-layer-group")}
-            </div>
-          </div>
-        </div>
+        ${product ? collectionsNote(product) : ""}
 
         <div>
           <label class="form-label fs-7">Tamanhos</label>
@@ -113,7 +121,6 @@ export async function submitProductForm(root = document) {
         // "leave it alone".
         material_ids: picked(root.querySelector("#pf-materials")),
     };
-    if (value("collection_id")) payload.collection_id = Number(value("collection_id"));
 
     if (!payload.name) throw new Error("O nome é obrigatório.");
     if (!payload.type_id) throw new Error("O tipo é obrigatório.");

@@ -66,7 +66,9 @@ const row = (product) => {
           <p class="fw-medium mb-0">${escapeHtml(product.name)}</p>
           <p class="fs-7 text-body-secondary mb-0">
             ${escapeHtml(product.type.name)}
-            ${product.collection ? ` · ${escapeHtml(product.collection.name)}` : ""}
+            ${product.collections.length
+                ? ` · ${escapeHtml(product.collections.map((c) => c.name).join(", "))}`
+                : ""}
           </p>
         </td>
         <td>${colours}</td>

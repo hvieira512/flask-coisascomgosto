@@ -122,69 +122,70 @@ PRODUCT_TYPES = [
      "Abre-cápsulas de madeira com pega decorada."),
 ]
 
-# (name, type, collection, description, colour sets, sizes)
-# collection is the product's own; None exercises the nullable column.
+# (name, type, description, colour sets, sizes)
+# No collection: a piece is in whichever collections gather the colour sets it is
+# offered in, and COLOR_SETS above says which those are.
 PRODUCTS = [
-    ("Caixa Redonda Filigrana", "Caixa", "Filigrana",
+    ("Caixa Redonda Filigrana", "Caixa",
      "Caixa redonda com a filigrana desenhada a pincel na tampa.",
      ["Branco e Dourado", "Preto e Dourado", "Preto e Branco",
       "Vermelho e Branco", "Azul e Branco"],
      ["Pequeno", "Médio", "Grande"]),
 
-    ("Manel e Maria", "Presépio Minhoto", "Filigrana",
+    ("Manel e Maria", "Presépio Minhoto",
      "Presépio minhoto: Manel e Maria em traje sobre um coração dourado.",
      ["Vermelho e Branco", "Preto e Branco", "Dourado e Vermelho"], ["Médio"]),
 
-    ("Caixa de Joias", "Caixa", "Filigrana",
+    ("Caixa de Joias", "Caixa",
      "Caixa rectangular forrada, para joias e missangas.",
      ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco"],
      ["Pequeno", "Médio", "Grande"]),
 
-    ("Caixa Lenço dos Namorados", "Caixa", "Lenços",
+    ("Caixa Lenço dos Namorados", "Caixa",
      "Tampa com as flores do Lenço dos Namorados.",
      ["Preto Floral", "Vermelho Floral", "Branco Floral"], ["Médio"]),
 
-    ("Caixa de Garrafa", "Caixa", "Filigrana",
+    ("Caixa de Garrafa", "Caixa",
      "Caixa alta para uma garrafa, decorada nas quatro faces.",
      ["Preto e Dourado", "Azul e Branco"], []),
 
-    ("Coração de Viana", "Coração", "Filigrana",
+    ("Coração de Viana", "Coração",
      "Coração recortado em madeira, com fita para pendurar.",
      ["Branco e Dourado", "Preto e Dourado", "Azul e Branco",
       "Vermelho e Branco"], ["Pequeno", "Médio"]),
 
-    ("Coração de Mesa", "Coração", "Filigrana",
+    ("Coração de Mesa", "Coração",
      "Coração assente numa base, para ficar de pé.",
      ["Branco e Dourado", "Preto e Branco"], ["Médio"]),
 
-    ("Moldura Filigrana", "Moldura", "Filigrana",
+    ("Moldura Filigrana", "Moldura",
      "Moldura de fotografia com filigrana à volta da janela.",
      ["Branco e Dourado", "Preto e Dourado", "Vermelho e Branco",
       "Branco e Prateado"],
      ["Pequeno", "Médio", "Grande"]),
 
-    ("Moldura Oval", "Moldura", "Filigrana",
+    ("Moldura Oval", "Moldura",
      "Janela oval, com o motivo a subir pelos lados.",
      ["Branco e Dourado", "Preto e Dourado", "Branco e Rosa"], ["Médio"]),
 
-    ("Bastidor Viana é Amor", "Bastidor", "Bordados",
+    ("Bastidor Viana é Amor", "Bastidor",
      "Bastidor com letras desenhadas à mão e a filigrana à volta.",
      ["Branco e Dourado", "Azul e Branco"], ["Médio"]),
 
-    ("Bastidor Bordado", "Bastidor", "Bordados",
+    ("Bastidor Bordado", "Bastidor",
      "Bastidor com os motivos dos bordados de Viana.",
      ["Azul e Branco", "Verde e Dourado", "Rosa e Castanho"], ["Pequeno", "Médio"]),
 
-    ("Coração de Natal", "Enfeite de Natal", None,
+    ("Coração de Natal", "Enfeite de Natal",
      "Enfeite de árvore em coração, personalizado com o nome.",
      ["Vermelho e Branco", "Branco e Dourado"], ["Pequeno"]),
 
-    ("Bola de Natal", "Enfeite de Natal", None,
+    ("Bola de Natal", "Enfeite de Natal",
      "Enfeite de árvore em bola achatada, personalizado com o nome.",
      ["Vermelho e Branco", "Branco e Dourado", "Azul-marinho e Dourado"],
      ["Pequeno"]),
 
-    ("Abre-cápsulas Coração", "Abre-cápsulas", "Filigrana",
+    ("Abre-cápsulas Coração", "Abre-cápsulas",
      "Abre-cápsulas com pega em coração.",
      ["Preto e Dourado", "Preto e Branco"], []),
 ]
@@ -332,11 +333,10 @@ def seed():
 
         product_ids = {}
         variant_ids = {}
-        for name, type_name, collection, description, set_names, size_names in PRODUCTS:
+        for name, type_name, description, set_names, size_names in PRODUCTS:
             product_id = products.create(
                 name=name,
                 type_id=type_ids[type_name],
-                collection_id=collection_ids[collection] if collection else None,
                 description=description,
             )
             product_ids[name] = product_id

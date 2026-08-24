@@ -8,15 +8,14 @@ from pymysql.cursors import DictCursor
 
 from repositories.base import one_row
 
-# Every read resolves the type (required) plus the optional collection and default
-# size, so callers get one consistent product shape. The type join is inner
-# because type_id is NOT NULL; everything else is a LEFT JOIN. Materials are not
-# here: a piece may be made of several, so they arrive per page in
-# _attach_materials the way the sizes do.
+# Every read resolves the type (required) plus the optional default size, so
+# callers get one consistent product shape. The type join is inner because
+# type_id is NOT NULL. Neither the materials nor the collections are here: a piece
+# may be made of several materials, and it is in a collection only through the
+# colour sets it is offered in, so both arrive per page the way the sizes do.
 _FROM = """
     FROM products p
     JOIN product_types t ON p.type_id = t.id
-    LEFT JOIN collections col ON p.collection_id = col.id
     LEFT JOIN sizes s ON p.default_size_id = s.id
 """
 
@@ -25,8 +24,6 @@ _SELECT = f"""
         p.id AS id,
         p.name AS name,
         p.description AS description,
-        col.id AS collection_id,
-        col.name AS collection_name,
         s.id AS default_size_id,
         s.name AS default_size_name,
         s.position AS default_size_position,
@@ -80,6 +77,7 @@ class ProductRepository:
             params + [limit, offset],
         )
         products = [self._to_dict(row) for row in self._cursor.fetchall()]
+        self._attach_collections(products)
         self._attach_materials(products)
         self._attach_sizes(products)
         self._attach_variants(products)
@@ -106,6 +104,7 @@ class ProductRepository:
             return None
 
         product = self._to_dict(row)
+        self._attach_collections([product])
         self._attach_materials([product])
         self._attach_sizes([product])
         self._attach_variants([product])
@@ -133,16 +132,14 @@ class ProductRepository:
         type_id: int,
         name: str,
         description: str,
-        collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> int:
         self._cursor.execute(
             "INSERT INTO products "
-            "(type_id, collection_id, default_size_id, name, description) "
-            "VALUES (%s, %s, %s, %s, %s)",
+            "(type_id, default_size_id, name, description) "
+            "VALUES (%s, %s, %s, %s)",
             (
                 type_id,
-                collection_id,
                 default_size_id,
                 name,
                 description,
@@ -157,17 +154,15 @@ class ProductRepository:
         type_id: int,
         name: str,
         description: str,
-        collection_id: Optional[int] = None,
         default_size_id: Optional[int] = None,
     ) -> None:
-        """Overwrite a product's own fields (not its materials, sizes or
-        variants)."""
+        """Overwrite a product's own fields (not its materials, sizes, variants,
+        or the collections its colours put it in)."""
         self._cursor.execute(
-            "UPDATE products SET type_id = %s, collection_id = %s, "
+            "UPDATE products SET type_id = %s, "
             "default_size_id = %s, name = %s, description = %s WHERE id = %s",
             (
                 type_id,
-                collection_id,
                 default_size_id,
                 name,
                 description,
@@ -296,6 +291,42 @@ class ProductRepository:
         for product in products:
             product["materials"] = by_product[product["id"]]
 
+    # ----------------
+    # The collections a piece is in, which is a fact about its colours
+    # ----------------
+
+    def _attach_collections(self, products: list[dict]) -> None:
+        """Populate `collections` for a whole page in one query.
+
+        A collection gathers colour sets, and a piece is offered in colour sets, so
+        this is the only path there is: collection -> colour set -> variant ->
+        piece. DISTINCT because two of a piece's colourways may be gathered by the
+        same collection, and that is still one collection.
+        """
+        if not products:
+            return
+
+        ids = [p["id"] for p in products]
+        placeholders = ", ".join(["%s"] * len(ids))
+        self._cursor.execute(
+            "SELECT DISTINCT v.product_id, col.id, col.name "
+            "FROM product_variants v "
+            "JOIN collection_color_sets ccs ON ccs.color_set_id = v.color_set_id "
+            "JOIN collections col ON col.id = ccs.collection_id "
+            f"WHERE v.product_id IN ({placeholders}) "
+            "ORDER BY v.product_id, col.name",
+            ids,
+        )
+
+        by_product: dict[int, list] = {i: [] for i in ids}
+        for row in self._cursor.fetchall():
+            by_product[row["product_id"]].append(
+                {"id": row["id"], "name": row["name"]}
+            )
+
+        for product in products:
+            product["collections"] = by_product[product["id"]]
+
     def _attach_variants(self, products: list[dict]) -> None:
         """Populate `variants` (with nested colour sets) for a whole page."""
         if not products:
@@ -400,15 +431,24 @@ class ProductRepository:
             clauses.append("(p.name LIKE %s OR t.name LIKE %s)")
             params += [f"%{term}%", f"%{term}%"]
 
-        for column, value in (
-            ("p.collection_id", collection_id),
-            ("p.type_id", type_id),
-        ):
-            ids = _as_ids(value)
-            if not ids:
-                continue
+        ids = _as_ids(type_id)
+        if ids:
             placeholders = ", ".join(["%s"] * len(ids))
-            clauses.append(f"{column} IN ({placeholders})")
+            clauses.append(f"p.type_id IN ({placeholders})")
+            params += ids
+
+        # A collection reaches a piece through the piece's colour sets, so this is
+        # EXISTS down that path rather than a column on the product. Same reason as
+        # the materials below: a piece in a collection twice over — two of its
+        # colourways gathered by it — must still be one row.
+        if ids := _as_ids(collection_id):
+            placeholders = ", ".join(["%s"] * len(ids))
+            clauses.append(
+                "EXISTS (SELECT 1 FROM product_variants v "
+                "        JOIN collection_color_sets ccs"
+                "          ON ccs.color_set_id = v.color_set_id "
+                f"WHERE v.product_id = p.id AND ccs.collection_id IN ({placeholders}))"
+            )
             params += ids
 
         # Materials hang off a join, so this is EXISTS rather than IN: a piece
@@ -428,16 +468,21 @@ class ProductRepository:
         """How many pieces sit behind each filter option, so the sidebar can say
         so before it is clicked. Deliberately unfiltered: a count that moved
         every time another filter changed would be a different question."""
-        facets = {}
-        for key, column in (
-            ("types", "type_id"),
-            ("collections", "collection_id"),
-        ):
-            self._cursor.execute(
-                f"SELECT {column} AS id, COUNT(*) AS count FROM products "
-                f"WHERE {column} IS NOT NULL GROUP BY {column}"
-            )
-            facets[key] = [dict(row) for row in self._cursor.fetchall()]
+        self._cursor.execute(
+            "SELECT type_id AS id, COUNT(*) AS count FROM products "
+            "GROUP BY type_id"
+        )
+        facets = {"types": [dict(row) for row in self._cursor.fetchall()]}
+
+        # Counted down the same path the filter takes, and DISTINCT because a piece
+        # whose two colourways are both in a collection is one piece in it.
+        self._cursor.execute(
+            "SELECT ccs.collection_id AS id, COUNT(DISTINCT v.product_id) AS count "
+            "FROM collection_color_sets ccs "
+            "JOIN product_variants v ON v.color_set_id = ccs.color_set_id "
+            "GROUP BY ccs.collection_id"
+        )
+        facets["collections"] = [dict(row) for row in self._cursor.fetchall()]
 
         # A piece made of two materials counts under both, so these can add up to
         # more than the catalogue holds. That is the honest answer to "how many
@@ -464,11 +509,6 @@ class ProductRepository:
                 if row["type_id"] is not None
                 else None
             ),
-            "collection": (
-                {"id": row["collection_id"], "name": row["collection_name"]}
-                if row["collection_id"] is not None
-                else None
-            ),
             "default_size": (
                 {
                     "id": row["default_size_id"],
@@ -478,6 +518,7 @@ class ProductRepository:
                 if row["default_size_id"] is not None
                 else None
             ),
+            "collections": [],
             "materials": [],
             "sizes": [],
             "variants": [],

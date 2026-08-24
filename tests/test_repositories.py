@@ -101,7 +101,7 @@ class TestProductRepository:
             "description": "Tinto",
             "materials": [{"id": material_id, "name": "Madeira"}],
             "type": {"id": wood, "name": "Caixa", "icon": None},
-            "collection": None,
+            "collections": [],
             "default_size": None,
             "sizes": [],
             "variants": [],

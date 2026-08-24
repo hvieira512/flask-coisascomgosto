@@ -30,7 +30,7 @@ def round_box(client, make_collection, make_color, make_color_set, make_product)
         for name, members in pairs
     ]
 
-    product = make_product("Caixa Redonda", collection_id=collection["id"])
+    product = make_product("Caixa Redonda")
     for color_set in color_sets:
         response = client.post(
             f"/api/products/{product['id']}/variants",
@@ -364,25 +364,45 @@ class TestProductSizes:
 
 
 class TestProductCollection:
-    def test_product_carries_its_collection(self, client, round_box):
+    """A piece is in a collection because one of its colourways is. All four of the
+    round box's colour sets are gathered by Barra da Saia, and it is in it once."""
+
+    def test_product_carries_the_collections_its_colours_are_in(
+        self, client, round_box
+    ):
         product_id = round_box["product"]["id"]
 
         body = client.get(f"/api/products/{product_id}").get_json()
-        assert body["collection"]["name"] == "Barra da Saia"
+        assert [c["name"] for c in body["collections"]] == ["Barra da Saia"]
 
-    def test_unknown_collection_returns_404(self, client, product_type, make_material):
-        material = make_material("Madeira")
+    def test_a_piece_whose_colours_are_in_none_is_in_none(
+        self, client, make_product, make_color, make_color_set
+    ):
+        product = make_product("Sem colecção")
+        color_set = make_color_set("Cor solta", [make_color("Tom")["id"]])
+        client.post(
+            f"/api/products/{product['id']}/variants",
+            json={"color_set_id": color_set["id"]},
+        )
+
+        body = client.get(f"/api/products/{product['id']}").get_json()
+        assert body["collections"] == []
+
+    def test_a_collection_sent_with_a_piece_changes_nothing(
+        self, client, product_type, make_collection
+    ):
+        """flask-restx validates the fields a model declares and passes over the
+        rest, so an old client still sending collection_id is not refused — it is
+        simply not listened to, and the piece is in whatever its colours say. Worth
+        pinning: the alternative reading is that the field still works."""
+        collection = make_collection("Filigrana")
         response = client.post(
             "/api/products/",
-            json={
-                "name": "Ghost",
-                "description": "d",
-                "type_id": product_type["id"],
-                "material_ids": [material["id"]],
-                "collection_id": 9999,
-            },
+            json={"name": "Ghost", "description": "d",
+                  "type_id": product_type["id"], "collection_id": collection["id"]},
         )
-        assert response.status_code == 404
+        assert response.status_code == 201
+        assert response.get_json()["collections"] == []
 
     def test_filter_by_collection(self, client, round_box, make_product):
         make_product("Fora da coleccao")

@@ -13,6 +13,6 @@ export async function pieceCounts(idsOf) {
 }
 
 export const byCollection = () =>
-    pieceCounts((product) => (product.collection ? [product.collection.id] : []));
+    pieceCounts((product) => (product.collections ?? []).map((c) => c.id));
 export const byColorSet = () =>
     pieceCounts((product) => (product.variants ?? []).map((v) => v.color_set.id));
