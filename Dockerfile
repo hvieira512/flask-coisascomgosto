@@ -1,5 +1,5 @@
-# FrankenPHP: Caddy and PHP in one process, so one container serves the app the
-# way gunicorn did, with no separate nginx or PHP-FPM to configure.
+# FrankenPHP: Caddy and PHP in one process, so one container serves the app,
+# with no separate nginx or PHP-FPM to configure.
 FROM dunglas/frankenphp:1-php8.4
 
 # gd re-encodes uploaded photographs (which is what strips the EXIF a phone
