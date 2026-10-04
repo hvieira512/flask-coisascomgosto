@@ -43,7 +43,7 @@ class Format
 
     /**
      * The profile name out of a social URL: "coisascomgosto.vianadocastelo".
-     * static/js/dashboard/contacts.js mirrors this so its preview agrees.
+     * public/static/js/dashboard/contacts.js mirrors this so its preview agrees.
      */
     public static function socialHandle(?string $url): ?string
     {

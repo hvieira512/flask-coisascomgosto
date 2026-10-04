@@ -10,7 +10,7 @@ abstract class Controller
 {
     public const DEFAULT_LIMIT = 10;
 
-    // static/js/core/api.js asks for exactly this many and refuses a list that
+    // public/static/js/core/api.js asks for exactly this many and refuses a list that
     // came back short of its total, so the two have to agree.
     public const MAX_LIMIT = 100;
 

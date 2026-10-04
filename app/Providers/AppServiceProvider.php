@@ -36,8 +36,6 @@ class AppServiceProvider extends ServiceProvider
         Scramble::registerUiRoute('api/docs');
         Scramble::registerJsonSpecificationRoute('api/swagger.json');
 
-        // /auth/refresh takes the refresh token in the Authorization header, so
-        // it wears the padlock although no session can stand in for it.
         // A padlock on every operation behind AuthenticateApi, and on
         // /auth/refresh, which takes the refresh token in the same header.
         Scramble::configure()

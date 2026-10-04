@@ -12,7 +12,7 @@ only where Bootstrap has no answer, and every survivor is listed by name in
 
 ## Tokens
 
-`static/css/theme.css`, which is the only place colour is decided.
+`public/static/css/theme.css`, which is the only place colour is decided.
 
 | Token | Now | After | Why |
 |---|---|---|---|
@@ -71,7 +71,7 @@ first claimed and one different:**
 a control. `store.css` went from 1085 lines to 984 while gaining nine rules.
 
 **Generalised rather than duplicated:** the fairs rail's drag-and-arrows became
-`static/js/store/drag-rail.js` and `.drag-rail`, used by the collections rail
+`public/static/js/store/drag-rail.js` and `.drag-rail`, used by the collections rail
 too, and `.timeline-arrow*` became `.rail-arrow*`.
 
 ---

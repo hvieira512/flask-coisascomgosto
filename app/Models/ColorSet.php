@@ -44,14 +44,15 @@ class ColorSet extends Model
     }
 
     /**
-     * Deleting a set removes every variant offered in it, through
-     * ProductVariant::remove so their photographs go the same way as anywhere
-     * else.
+     * Deleting a set removes every variant offered in it and their photographs'
+     * rows; the files stay for the sweep.
      */
     public function remove(): void
     {
         DB::transaction(function () {
-            $this->variants()->get()->each->remove();
+            $variantIds = $this->variants()->pluck('id');
+            ProductImage::withTrashed()->whereIn('variant_id', $variantIds)->forceDelete();
+            ProductVariant::whereKey($variantIds)->delete();
             $this->colors()->detach();
             $this->collections()->detach();
             $this->delete();
