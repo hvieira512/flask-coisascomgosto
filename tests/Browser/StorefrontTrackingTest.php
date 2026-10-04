@@ -38,6 +38,17 @@ function trackingWaitUntil($page, string $js): void
 }
 
 /**
+ * The Caixa entry itself, and the loader gone from over it. Waiting for any
+ * entry let the click land while the types were still arriving, or on the
+ * loader, which under a full suite outlasted the click's five seconds.
+ */
+function trackingWaitForCaixa($page): void
+{
+    trackingWaitUntil($page, "!document.getElementById('page-loader')"
+        ." && [...document.querySelectorAll('.filter-entry')].some(e => e.textContent.includes('Caixa'))");
+}
+
+/**
  * Wait for the log to hold $expected rows of $kind. The beacons are fire and
  * forget, so there is nothing on the page to wait for. Waiting through the page
  * keeps the in-process server answering them.
@@ -266,7 +277,7 @@ describe('a search', function () {
 describe('a filter', function () {
     it('records the group and the label when ticked', function () {
         $page = visit('/products');
-        trackingWaitUntil($page, "document.querySelector('.filter-entry') !== null");
+        trackingWaitForCaixa($page);
 
         $page->click('.filter-entry:has-text("Caixa") >> nth=0');
 
@@ -279,7 +290,7 @@ describe('a filter', function () {
     // Turning a filter off is not a preference, and counting it would double whoever changes their mind.
     it('records nothing when unticked', function () {
         $page = visit('/products');
-        trackingWaitUntil($page, "document.querySelector('.filter-entry') !== null");
+        trackingWaitForCaixa($page);
 
         $page->click('.filter-entry:has-text("Caixa") >> nth=0');
         trackingEvents($page, 'filter');
