@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Only for the browser tests: Pest drives Chromium through Playwright. The app itself has no Node build.",
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

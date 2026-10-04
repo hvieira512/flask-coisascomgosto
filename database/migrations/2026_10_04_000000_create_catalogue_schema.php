@@ -1,5 +1,6 @@
 <?php
 
+use Database\Seeders\LookupSeeder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -236,20 +237,6 @@ return new class extends Migration
                 ->references('id')->on('sizes')->nullOnDelete();
         });
 
-        DB::table('sizes')->insert([
-            ['name' => 'Pequeno', 'position' => 1],
-            ['name' => 'Médio', 'position' => 2],
-            ['name' => 'Grande', 'position' => 3],
-        ]);
-
-        DB::table('contacts')->insert([
-            'id' => 1,
-            'address' => 'Viana do Castelo, Portugal',
-            'email' => 'geral@coisascomgosto.pt',
-            'whatsapp' => '939320334',
-            'maps_url' => 'https://maps.app.goo.gl/bAYkhcE3gvaKDw5W9',
-            'facebook_url' => 'https://www.facebook.com/coisascomgosto.vianadocastelo/',
-            'instagram_url' => 'https://www.instagram.com/coisascomgostovc/',
-        ]);
+        (new LookupSeeder)->run();
     }
 };

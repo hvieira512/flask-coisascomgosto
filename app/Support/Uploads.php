@@ -93,7 +93,7 @@ class Uploads
         $stem = mb_substr(pathinfo(self::secureName($file->getClientOriginalName()), PATHINFO_FILENAME), 0, 40) ?: 'foto';
         $name = $stem.'-'.bin2hex(random_bytes(4)).self::FORMATS[$header[2]];
 
-        $directory = public_path($folder);
+        $directory = self::root()."/{$folder}";
         if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
             throw new RuntimeException("Cannot create {$directory}");
         }
@@ -120,7 +120,7 @@ class Uploads
         $removed = [];
 
         foreach ([self::PRODUCTS, self::COLLECTIONS] as $folder) {
-            $directory = public_path($folder);
+            $directory = self::root()."/{$folder}";
             if (! is_dir($directory)) {
                 continue;
             }
@@ -141,6 +141,12 @@ class Uploads
         }
 
         return $removed;
+    }
+
+    /** public/, or wherever the tests point `uploads.root` so they leave the repository alone. */
+    private static function root(): string
+    {
+        return config('uploads.root') ?? public_path();
     }
 
     /** Werkzeug's secure_filename: ASCII, no path, nothing a shell would mind. */
