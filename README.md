@@ -135,6 +135,24 @@ rebuild is only needed when the Dockerfile or `docker/php.ini` changes:
 docker compose up -d --build web
 ```
 
+### Deploying
+
+The same image serves production; what changes is the environment and one
+volume.
+
+- `APP_ENV=production` and `APP_DEBUG=false`. The entrypoint then runs
+  `php artisan optimize`, so config, routes and views are compiled once.
+- `APP_KEY` and a `JWT_SECRET_KEY` of your own, 32 bytes or more. The app refuses
+  to serve on the placeholder.
+- **A persistent volume on `public/static/img/products` and
+  `public/static/img/collections`.** Uploaded photographs are written there; in a
+  container without one they are gone at the next deploy.
+- TLS in front (a load balancer or Caddy). The session cookie is `Secure` outside
+  debug, so plain HTTP will not keep anyone signed in. If that proxy forwards the
+  visitor's address, add `$middleware->trustProxies(at: '<proxy address>')` in
+  `bootstrap/app.php`: otherwise every visitor arrives from the proxy's address
+  and shares one storefront-events rate limit.
+
 ### Running outside Docker
 
 Only MySQL needs the container:
