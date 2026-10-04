@@ -142,7 +142,6 @@ export const API = {
     },
     auth: {
         login: "/api/auth/login",
-        register: "/api/auth/register",
     },
     analytics: {
         overview: "/api/analytics/overview",

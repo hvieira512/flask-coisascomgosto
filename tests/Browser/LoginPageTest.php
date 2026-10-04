@@ -1,9 +1,8 @@
 <?php
 
 /*
- * The login page asks for the username first and draws the next step from the
- * answer: a password for an account that exists, a registration for one that
- * does not.
+ * The login page asks for the username first, and asks for the password only
+ * when that account exists.
  */
 
 function loginPageAsk(string $username)
@@ -37,28 +36,22 @@ it('says so when the password is wrong', function () {
     $page->assertSee('Invalid login.')->assertPathIs('/auth');
 });
 
-it('offers an unknown name a registration, and signs the new account in', function () {
+// Accounts are made from the console; the page used to offer anyone one.
+it('tells an unknown name there is no such account, and offers nothing else', function () {
     $page = loginPageAsk('bea');
-    $page->assertPresent('#emailField')->assertPresent('#confirmPasswordField');
 
-    $page->fill('#emailField', 'bea@example.com');
-    $page->fill('#passwordField', 'Passw0rd!');
-    $page->fill('#confirmPasswordField', 'Passw0rd!');
-    $page->click('#submitBtn');
-
-    $page->assertPathIs('/dashboard/home')->assertSee('Olá, bea');
+    $page->assertSee('Não há nenhuma conta com esse nome.')
+        ->assertMissing('#passwordField')
+        ->assertMissing('#emailField')
+        ->assertPathIs('/auth')
+        ->assertNoJavaScriptErrors();
 });
 
-// The page read `error` from a refusal the API has always sent as `message`, so
-// every reason came out as a generic "Registo falhou."
-it('shows why a registration was refused', function () {
-    makeUser('alice', 'Passw0rd!', 'alice@example.com');
+// The name is written into the greeting, which is HTML.
+it('greets an account by name without running it as markup', function () {
+    makeUser('<b>alice</b>', 'Passw0rd!', 'alice@example.com');
 
-    $page = loginPageAsk('bea');
-    $page->fill('#emailField', 'alice@example.com');
-    $page->fill('#passwordField', 'Passw0rd!');
-    $page->fill('#confirmPasswordField', 'Passw0rd!');
-    $page->click('#submitBtn');
+    $page = loginPageAsk('<b>alice</b>');
 
-    $page->assertSee('This email is already taken')->assertPathIs('/auth');
+    $page->assertSee('Olá, <b>alice</b>!')->assertCount('#form-header b', 0);
 });

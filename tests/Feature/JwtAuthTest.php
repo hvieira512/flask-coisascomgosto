@@ -176,8 +176,8 @@ describe('the swagger document', function () {
         expect(jwtIsGuarded($spec, $spec['paths']['/products']['get']))->toBeFalse();
     });
 
-    // Every write anyone may reach without an account: registering, signing in
-    // and out, and a shopper recording that they opened a piece. /auth/refresh is
+    // Every write anyone may reach without an account: signing in and out, and a
+    // shopper recording that they opened a piece. /auth/refresh is
     // absent on purpose: it takes the refresh token and wears the padlock. A new
     // public write has to be added here deliberately, which is the point.
     it('guards every write except the ones meant to be public', function () {
@@ -193,7 +193,7 @@ describe('the swagger document', function () {
         }
 
         expect($public)->toEqualCanonicalizing([
-            'POST /auth/register', 'POST /auth/login', 'POST /auth/logout', 'POST /storefront-events',
+            'POST /auth/login', 'POST /auth/logout', 'POST /storefront-events',
         ]);
     });
 });

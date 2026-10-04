@@ -39,15 +39,27 @@ Artisan::command('app:sweep-uploads {--days=30 : How long a file must have been 
 })->purpose('Delete uploaded files no row points at any more');
 
 /*
- * There is one kind of account: everyone who can sign in can do everything.
- * The password is prompted for, so it stays out of the shell history.
+ * The only way an account is made: every account can rewrite the whole
+ * catalogue, so none comes from the open web. The password is prompted for, so
+ * it stays out of the shell history.
  */
 Artisan::command('app:create-user {username}', function (string $username) {
-    $email = $this->ask('E-mail (used for the account only; nothing is sent)');
-    $password = $this->secret('Password');
+    $email = (string) $this->ask('E-mail (used for the account only; nothing is sent)');
+    $password = (string) $this->secret('Password');
+    $repeat = (string) $this->secret('Repeat the password');
 
-    if ($password !== $this->secret('Repeat the password')) {
+    if ($password === '') {
+        $this->fail('The password is empty.');
+    }
+    if ($password !== $repeat) {
         $this->fail('The passwords do not match.');
+    }
+    if (mb_strlen($username) > 80) {
+        $this->fail('The username is longer than 80 characters.');
+    }
+    // Deliberately loose: it rejects typos, not exotic-but-valid addresses.
+    if (mb_strlen($email) > 190 || ! preg_match('/^([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$/', $email)) {
+        $this->fail("The e-mail {$email} is not valid.");
     }
     if (User::where('username', $username)->exists()) {
         $this->fail("The username {$username} is already taken.");

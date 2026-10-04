@@ -18,7 +18,6 @@ it('refuses text longer than its column with 400', function (string $uri, array 
     'type icon' => ['/api/product-types/', ['name' => 'Caixa', 'icon' => str_repeat('a', 61)]],
     'colour set name' => ['/api/color-sets/', ['name' => str_repeat('a', 121), 'color_ids' => []]],
     'event location' => ['/api/events/', ['name' => 'Feira', 'starts_on' => '2026-01-01', 'location' => str_repeat('a', 181)]],
-    'account e-mail' => ['/api/auth/register', ['username' => 'bea', 'email' => str_repeat('a', 180).'@example.com', 'password' => 'x']],
 ]);
 
 it('refuses a product name longer than its column', function () {

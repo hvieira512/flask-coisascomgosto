@@ -13,53 +13,47 @@ function authLogin(string $username = 'alice', ?string $password = 'Passw0rd!')
     return test()->postJson('/api/auth/login', array_filter(['username' => $username, 'password' => $password], fn ($v) => $v !== null));
 }
 
-describe('registering', function () {
-    it('creates and returns the user', function () {
-        $this->postJson('/api/auth/register', ['username' => 'alice', 'email' => 'alice@example.com', 'password' => 'pw'])
-            ->assertCreated()
-            ->assertJsonPath('username', 'alice')
-            ->assertJsonPath('email', 'alice@example.com');
+// Every account can rewrite the whole catalogue, so none is made from the open
+// web: the API used to register anyone who asked.
+describe('making an account', function () {
+    it('is not something the API offers', function () {
+        $this->postJson('/api/auth/register', ['username' => 'eve', 'email' => 'eve@example.com', 'password' => 'pw'])
+            ->assertClientError();
+
+        expect(\App\Models\User::where('username', 'eve')->exists())->toBeFalse();
     });
 
-    it('never returns the password', function () {
-        $body = $this->postJson('/api/auth/register', ['username' => 'alice', 'email' => 'alice@example.com', 'password' => 'pw'])->json();
+    it('is done from the console, with a hashed password', function () {
+        $this->artisan('app:create-user', ['username' => 'alice'])
+            ->expectsQuestion('E-mail (used for the account only; nothing is sent)', 'alice@example.com')
+            ->expectsQuestion('Password', 'Passw0rd!')
+            ->expectsQuestion('Repeat the password', 'Passw0rd!')
+            ->expectsOutput('Account created: alice')
+            ->assertSuccessful();
 
-        expect($body)->not->toHaveKey('password');
+        $user = \App\Models\User::firstWhere('username', 'alice');
+        expect($user->email)->toBe('alice@example.com')
+            ->and(Hash::check('Passw0rd!', $user->password))->toBeTrue();
+        authLogin()->assertOk();
     });
 
-    // The is_admin regression: the flag was read straight from the request body,
-    // so anyone could register themselves an administrator.
-    it('ignores anything it did not ask for', function () {
-        $body = $this->postJson('/api/auth/register', [
-            'username' => 'eve', 'email' => 'eve@example.com', 'password' => 'pw', 'is_admin' => true, 'id' => 999,
-        ])->assertCreated()->json();
+    it('refuses what the console is given wrong', function (string $username, string $email, string $password, string $repeat) {
+        makeUser('taken', email: 'taken@example.com');
 
-        expect(array_keys($body))->toEqualCanonicalizing(['id', 'username', 'email', 'created_at'])
-            ->and($body['id'])->not->toBe(999);
-    });
+        $this->artisan('app:create-user', ['username' => $username])
+            ->expectsQuestion('E-mail (used for the account only; nothing is sent)', $email)
+            ->expectsQuestion('Password', $password)
+            ->expectsQuestion('Repeat the password', $repeat)
+            ->assertFailed();
 
-    it('refuses a username already taken with 409', function () {
-        makeUser('alice', email: 'alice@example.com');
-
-        $this->postJson('/api/auth/register', ['username' => 'alice', 'email' => 'other@example.com', 'password' => 'pw'])->assertStatus(409);
-    });
-
-    it('refuses an email already taken with 409', function () {
-        makeUser('alice', email: 'alice@example.com');
-
-        $this->postJson('/api/auth/register', ['username' => 'bob', 'email' => 'alice@example.com', 'password' => 'pw'])->assertStatus(409);
-    });
-
-    it('refuses an invalid email with 400', function (string $email) {
-        $this->postJson('/api/auth/register', ['username' => 'alice', 'email' => $email, 'password' => 'pw'])->assertStatus(400);
-    })->with(['not-an-email', 'no@tld', '@example.com']);
-
-    it('refuses a missing field with 400', function (array $payload) {
-        $this->postJson('/api/auth/register', $payload)->assertStatus(400);
+        expect(\App\Models\User::count())->toBe(1);
     })->with([
-        'no username' => [['email' => 'a@example.com', 'password' => 'pw']],
-        'no email' => [['username' => 'alice', 'password' => 'pw']],
-        'no password' => [['username' => 'alice', 'email' => 'a@example.com']],
+        'passwords that differ' => ['bea', 'bea@example.com', 'Passw0rd!', 'outra'],
+        'an empty password' => ['bea', 'bea@example.com', '', ''],
+        'an invalid e-mail' => ['bea', 'no@tld', 'Passw0rd!', 'Passw0rd!'],
+        'a taken username' => ['taken', 'bea@example.com', 'Passw0rd!', 'Passw0rd!'],
+        'a taken e-mail' => ['bea', 'taken@example.com', 'Passw0rd!', 'Passw0rd!'],
+        'a username too long' => [str_repeat('b', 81), 'bea@example.com', 'Passw0rd!', 'Passw0rd!'],
     ]);
 });
 

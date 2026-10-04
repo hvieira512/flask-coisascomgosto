@@ -75,7 +75,6 @@ Route::middleware('auth.api')->group(function () {
     Route::get('analytics/overview', [AnalyticsController::class, 'overview']);
 });
 
-Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/refresh', [AuthController::class, 'refresh']);
 Route::post('auth/logout', [AuthController::class, 'logout']);

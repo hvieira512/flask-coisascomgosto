@@ -28,7 +28,8 @@ catalogue with:
 docker compose exec web php artisan db:seed
 ```
 
-Create the first account from the login page, or from the console:
+Accounts are made only from the console — every account can rewrite the whole
+catalogue, so none comes from the open web:
 
 ```bash
 docker compose exec web php artisan app:create-user hugo
@@ -303,7 +304,6 @@ All routes are prefixed with `/api`. A trailing slash is accepted and ignored.
 The API uses **JWT bearer tokens**.
 
 ```
-POST /auth/register  { username, email, password }  -> the new account
 POST /auth/login     { username, password }         -> { access_token, refresh_token, user }
 POST /auth/refresh   (REFRESH token in header)      -> { access_token }
 GET  /auth/me        (access token in header)       -> the caller's account
@@ -357,9 +357,10 @@ with bcrypt.
 >
 > **Why login answers 404 and 401 differently.** The login page asks for the
 > username first and the password on a second screen, and decides which screen to
-> draw from the status: 404 offers to create the account, 401 asks for the
-> password. That first step sends no password, and is not counted as a failed
-> attempt.
+> draw from the status: 404 says there is no such account, 401 asks for the
+> password. That tells anyone which names have accounts, which is the price of
+> the two-step page. The first step sends no password, and is not counted as a
+> failed attempt.
 >
 > **Wrong guesses are counted.** Five failures against one username inside
 > fifteen minutes and the next attempt answers `429`, right password included. A

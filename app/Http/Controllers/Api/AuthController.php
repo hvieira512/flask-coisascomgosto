@@ -9,11 +9,11 @@ use App\Support\Jwt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
- * Accounts and credentials.
+ * Signing in. Accounts are made with `php artisan app:create-user`, never
+ * through the API: every account can rewrite the whole catalogue.
  *
  * Login answers with a token pair for API clients and also signs the browser in,
  * because the rendered dashboard pages cannot carry a token from localStorage.
@@ -25,44 +25,14 @@ class AuthController extends Controller
 
     public const WINDOW_SECONDS = 15 * 60;
 
-    // Deliberately loose: it rejects typos, not exotic-but-valid addresses.
-    private const EMAIL = '/^([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$/';
-
-    public function register(Request $request): JsonResponse
-    {
-        $data = $this->payload($request, [
-            'username' => ['present', 'string', 'max:80'],
-            'email' => ['present', 'string', 'max:190'],
-            'password' => ['present', 'string'],
-        ]);
-
-        if (! preg_match(self::EMAIL, $data['email'])) {
-            $this->fail(400, 'This email is not valid');
-        }
-        if (User::where('username', $data['username'])->exists()) {
-            $this->fail(409, 'This username is already taken');
-        }
-        if (User::where('email', $data['email'])->exists()) {
-            $this->fail(409, 'This email is already taken');
-        }
-
-        $user = User::create([
-            'username' => $data['username'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
-
-        return (new UserResource($user->refresh()))->response()->setStatusCode(201);
-    }
-
     /**
      * Exchange a username and password for a token pair.
      *
      * 404 and 401 mean different things on purpose: the login page asks for the
-     * username first, and draws the password form on 401 or the registration
-     * form on 404. Who has an account here is not a secret on a two-person
-     * dashboard that offers registration. A username with no password is that
-     * first question, and is not counted as a failed attempt.
+     * username first, and draws the password field on 401. That tells whoever
+     * asks which names have accounts — two, the owners' own — and it is the
+     * price of the two-step page. A username with no password is that first
+     * question, and is not counted as a failed attempt.
      */
     public function login(Request $request): JsonResponse
     {
