@@ -67,15 +67,18 @@ export async function requestOr(url, fallbackValue, options = {}) {
     }
 }
 
+/** The whole list, however many pages the API cuts it into. */
 export async function list(url, key, { fallback, orEmpty = false, limit = 100 } = {}) {
-    const options = { params: { limit }, fallback };
-
-    if (!orEmpty) return (await request(url, options))[key] ?? [];
+    const page = (n) => request(url, { params: { page: n, limit }, fallback });
 
     try {
-        return (await request(url, options))[key] ?? [];
+        const first = await page(1);
+        const rest = await Promise.all(
+            Array.from({ length: (first.pagination?.pages ?? 1) - 1 }, (_, i) => page(i + 2)),
+        );
+        return [first, ...rest].flatMap((payload) => payload[key] ?? []);
     } catch (error) {
-        if (error.truncated) throw error;
+        if (!orEmpty) throw error;
         return [];
     }
 }

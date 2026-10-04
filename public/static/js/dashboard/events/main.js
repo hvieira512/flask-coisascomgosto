@@ -1,4 +1,4 @@
-import { API, request } from "../../core/api.js";
+import { API, list, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { stepDialog } from "../../core/steps.js";
@@ -8,8 +8,7 @@ import { eventDates, stateChip } from "./dates.js";
 async function loadEvents() {
     let events;
     try {
-        ({ events } = await request(`${API.events.list}?limit=100`,
-                                   { fallback: "Erro ao buscar eventos." }));
+        events = await list(API.events.list, "events", { fallback: "Erro ao buscar eventos." });
     } catch (error) {
         Notify.error(error.message);
         return;

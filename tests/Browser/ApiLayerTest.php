@@ -7,10 +7,9 @@ use App\Http\Controllers\Controller;
  * window.fetch replaced, so these are the shipped functions answering an
  * envelope of our choosing.
  *
- * What is pinned down is the ceiling. Every dashboard screen works out its
- * counts from a list it believes is complete, and the API caps `limit` at 100:
- * at 101 products those numbers quietly shrink. These tests make that arrive as
- * a failure instead.
+ * What is pinned down is the ceiling. The API caps `limit` at 100, so list()
+ * walks every page, and a bare request for a list that comes back short fails
+ * instead of quietly rendering part of it.
  */
 
 function apiLayerEnvelope(int $count, int $total, int $page = 1, int $limit = 100): array
@@ -66,24 +65,28 @@ describe('a truncated list is refused', function () {
         expect($result['error'])->toContain('pagination');
     });
 
-    it('throws from list too', function () {
-        expect(apiLayerRun("return await api.list(api.API.products.list, 'products');", $this->overTheCeiling))
-            ->toHaveKey('error');
-    });
-
-    // orEmpty is for a lookup that failed to arrive. A truncated list is a wrong
-    // answer, not a missing one, and swallowing it is what kept this invisible.
-    it('is not swallowed by orEmpty', function () {
-        $result = apiLayerRun("return await api.list(api.API.products.list, 'products', { orEmpty: true });", $this->overTheCeiling);
-
-        expect($result)->toHaveKey('error')
-            ->and($result['truncated'])->toBeTrue();
-    });
-
     it('is not swallowed by requestOr either', function () {
         expect(apiLayerRun("return await api.requestOr('/api/products/', { products: [] });", $this->overTheCeiling))
             ->toHaveKey('error');
     });
+});
+
+// Page n answers ids 100(n-1)..; 250 records come back as three pages.
+it('gathers every page into list', function () {
+    $result = apiLayerRun(<<<'JS'
+        window.fetch = async (url) => {
+            const page = Number(new URL(url).searchParams.get("page"));
+            const count = page < 3 ? 100 : 50;
+            return new Response(JSON.stringify({
+                products: Array.from({ length: count }, (_, i) => ({ id: (page - 1) * 100 + i })),
+                pagination: { total: 250, page, limit: 100, pages: 3 },
+            }));
+        };
+        const ids = (await api.list(api.API.products.list, 'products')).map((p) => p.id);
+        return [ids.length, new Set(ids).size, ids.at(-1)];
+        JS, []);
+
+    expect($result)->toBe(['value' => [250, 250, 249]]);
 });
 
 describe('what must keep working', function () {
