@@ -149,9 +149,8 @@ volume.
   `public/static/img/collections`.** Uploaded photographs are written there; in a
   container without one they are gone at the next deploy.
 - TLS in front (a load balancer or Caddy). The session cookie is `Secure` outside
-  debug, so plain HTTP will not keep anyone signed in. If that proxy forwards the
-  visitor's address, add `$middleware->trustProxies(at: '<proxy address>')` in
-  `bootstrap/app.php`: otherwise every visitor arrives from the proxy's address
+  debug, so plain HTTP will not keep anyone signed in. Set `TRUSTED_PROXIES` to
+  that proxy's address: otherwise every visitor arrives from the proxy's address
   and shares one storefront-events rate limit.
 
 ### Running outside Docker

@@ -177,6 +177,19 @@ describe('the flood', function () {
         storefrontEventsSend($body)->assertNoContent();
     });
 
+    // Behind a proxy every visitor shares its address; X-Forwarded-For tells
+    // them apart, but only when it comes from the proxy named in TRUSTED_PROXIES.
+    it('counts each visitor behind a trusted proxy apart', function (?string $proxies, string $counted) {
+        config(['trustedproxy.proxies' => $proxies]);
+        $this->postJson(STOREFRONT_EVENTS_URL, ['kind' => 'view', 'product_id' => storefrontEventsPiece()['product']],
+            ['X-Requested-With' => 'fetch', 'X-Forwarded-For' => '203.0.113.7'])->assertNoContent();
+
+        expect(RateLimiter::attempts("storefront-events:{$counted}"))->toBe(1);
+    })->with([
+        'trusted' => ['127.0.0.1', '203.0.113.7'],
+        'not trusted: the header is ignored' => [null, '127.0.0.1'],
+    ]);
+
     it('does not record a refused event', function () {
         $body = ['kind' => 'view', 'product_id' => storefrontEventsPiece()['product']];
         foreach (range(1, StorefrontEventController::PER_MINUTE + 3) as $_) {
