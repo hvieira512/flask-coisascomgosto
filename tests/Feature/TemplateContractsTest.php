@@ -79,7 +79,7 @@ describe('the dashboard chrome', function () {
 
     it('wires no chrome by hand', function () {
         $this->get('/dashboard/products')->assertDontSee('js/dashboard/menus.js', false);
-        expect(file_exists(base_path('static/js/dashboard/menus.js')))->toBeFalse();
+        expect(file_exists(base_path('public/static/js/dashboard/menus.js')))->toBeFalse();
     });
 
     it('gives the close control an accessible name', function () {
@@ -103,7 +103,7 @@ describe('the dashboard chrome', function () {
             ->assertSee('class="navbar dash-navbar', false)
             ->assertDontSee('fixed-top', false);
 
-        $css = templateContractsRead('static/css/dashboard.css');
+        $css = templateContractsRead('public/static/css/dashboard.css');
         expect($css)->toContain('--dash-navbar-height:')
             ->not->toContain('padding-top: var(--dash-navbar-height)');
     });
@@ -162,12 +162,12 @@ describe('notifications (js/core/notify.js wraps SweetAlert2)', function () {
 
     it('imports notify.js rather than loading it', function () {
         $this->get('/auth')->assertDontSee('js/core/notify.js', false);
-        expect(templateContractsRead('static/js/auth/auth.js'))->toContain('import { Notify }');
+        expect(templateContractsRead('public/static/js/auth/auth.js'))->toContain('import { Notify }');
     });
 
     it('reads Swal lazily', function () {
         // A module may run before the classic vendor script has been parsed.
-        expect(templateContractsRead('static/js/core/notify.js'))->toContain('typeof Swal === "undefined"');
+        expect(templateContractsRead('public/static/js/core/notify.js'))->toContain('typeof Swal === "undefined"');
     });
 
     it('keeps the 77KB library off the storefront', function (string $path) {
@@ -197,7 +197,7 @@ describe('the light colour scheme', function () {
 describe('colour set badges (js/store/color-set.js)', function () {
     it('is imported by every script that draws one', function () {
         $users = $importers = [];
-        foreach (templateContractsSources('static/js') as $path) {
+        foreach (templateContractsSources('public/static/js') as $path) {
             $source = file_get_contents($path);
             if (str_contains($source, 'ColorSet.')) {
                 $users[] = $path;
@@ -222,8 +222,8 @@ describe('colour set badges (js/store/color-set.js)', function () {
 
     it('keeps its base rule in the shared stylesheet', function () {
         // The dashboard loads only theme.css; a storefront-only override is allowed.
-        expect(templateContractsRead('static/css/theme.css'))->toMatch('/^\.swatch\s*\{/m')
-            ->and(templateContractsRead('static/css/store.css'))->not->toMatch('/^\.swatch\s*\{/m');
+        expect(templateContractsRead('public/static/css/theme.css'))->toMatch('/^\.swatch\s*\{/m')
+            ->and(templateContractsRead('public/static/css/store.css'))->not->toMatch('/^\.swatch\s*\{/m');
     });
 
     it('gives the catalogue the name and the swatches it renders', function () {
@@ -289,15 +289,15 @@ describe('dashboard pages', function () {
 
 describe('the stepped create forms', function () {
     it('declare their groups', function () {
-        expect(templateContractsRead('static/js/dashboard/products/form.js'))
+        expect(templateContractsRead('public/static/js/dashboard/products/form.js'))
             ->toContain('data-step="identity"')->toContain('data-step="details"')
-            ->and(templateContractsRead('static/js/dashboard/events/main.js'))
+            ->and(templateContractsRead('public/static/js/dashboard/events/main.js'))
             ->toContain('data-step="when"')->toContain('data-step="details"');
     });
 
     it('step through creating but not editing', function () {
-        $products = templateContractsRead('static/js/dashboard/products/main.js');
-        $events = templateContractsRead('static/js/dashboard/events/main.js');
+        $products = templateContractsRead('public/static/js/dashboard/products/main.js');
+        $events = templateContractsRead('public/static/js/dashboard/events/main.js');
 
         expect($products)->toContain('id: "newProductModal"')->toContain('#edit-tabs')
             ->and(substr_count($products, 'stepDialog({'))->toBe(1)
@@ -306,17 +306,17 @@ describe('the stepped create forms', function () {
     });
 
     it('write nothing before the last step', function () {
-        expect(templateContractsRead('static/js/core/steps.js'))
+        expect(templateContractsRead('public/static/js/core/steps.js'))
             ->toContain('if (!last())')->toContain('onFinish(root)');
     });
 
     it('hide Back with the attribute, which Bootstrap honours', function () {
-        expect(templateContractsRead('static/js/core/steps.js'))->toContain('back.hidden = index === 0')
-            ->and(templateContractsRead('static/bootstrap/bootstrap.min.css'))->toContain('[hidden]{display:none!important}');
+        expect(templateContractsRead('public/static/js/core/steps.js'))->toContain('back.hidden = index === 0')
+            ->and(templateContractsRead('public/static/bootstrap/bootstrap.min.css'))->toContain('[hidden]{display:none!important}');
     });
 
     it('slide with a reduced-motion escape', function () {
-        $css = templateContractsRead('static/css/dashboard.css');
+        $css = templateContractsRead('public/static/css/dashboard.css');
         expect($css)->toContain('@keyframes step-in')->toContain('[data-step] {');
 
         $reduced = array_slice(explode('prefers-reduced-motion: reduce', $css), 1);
@@ -328,14 +328,14 @@ describe('the stepped create forms', function () {
 // DOM, so reading a field by id alone found the create form.
 describe('modal form scoping', function () {
     it('scopes the event form to its modal', function () {
-        expect(templateContractsRead('static/js/dashboard/events/main.js'))
+        expect(templateContractsRead('public/static/js/dashboard/events/main.js'))
             ->toContain('submitEventForm(modalId)')
             ->toContain('modal(modalId).querySelector("#event-form")')
             ->not->toContain('document.getElementById("event-form")');
     });
 
     it('scopes the product form to its modal', function () {
-        expect(templateContractsRead('static/js/dashboard/products/form.js'))
+        expect(templateContractsRead('public/static/js/dashboard/products/form.js'))
             ->toContain('root.querySelector("#product-form")')
             ->not->toContain('document.getElementById("product-form")');
     });
@@ -360,7 +360,7 @@ describe('the product gallery', function () {
     });
 
     it('imports the lightbox', function () {
-        expect(templateContractsRead('static/js/store/gallery.js'))
+        expect(templateContractsRead('public/static/js/store/gallery.js'))
             ->toContain('import { StoreLightbox } from "./lightbox.js"')
             ->not->toContain('window.StoreLightbox');
     });
@@ -369,7 +369,7 @@ describe('the product gallery', function () {
 describe('one module system', function () {
     it('publishes nothing on window', function () {
         $offenders = [];
-        foreach (templateContractsSources('static/js') as $path) {
+        foreach (templateContractsSources('public/static/js') as $path) {
             foreach (file($path) as $line) {
                 // window.Swal is SweetAlert2's own global, read, not written.
                 if (preg_match('/^\s*window\.[A-Z]\w*\s*=/', $line)) {
@@ -404,7 +404,7 @@ describe('one module system', function () {
 it('carries no template syntax from another language in the markup builders', function () {
     // A Jinja or JSX comment inside a template literal is just text, and renders.
     $offenders = [];
-    foreach (templateContractsSources('static/js') as $path) {
+    foreach (templateContractsSources('public/static/js') as $path) {
         $source = file_get_contents($path);
         foreach (['{#', '{/*'] as $opener) {
             if (str_contains($source, $opener)) {
@@ -418,7 +418,7 @@ it('carries no template syntax from another language in the markup builders', fu
 
 it('reveals row actions on any row, not only a table', function () {
     // Scoped to .dash-table, the materials list kept its buttons at opacity 0.
-    expect(templateContractsRead('static/css/dashboard.css'))
+    expect(templateContractsRead('public/static/css/dashboard.css'))
         ->toContain(':is(tr, li):hover .dash-row-actions')
         ->not->toContain('.dash-table tbody tr:hover .dash-row-actions');
 });
@@ -435,21 +435,21 @@ it('offers the full materials panel on the types page', function () {
 // the stylesheet still served with a 200.
 describe('the stylesheets parse', function () {
     it('closes every comment exactly once', function () {
-        foreach (glob(base_path('static/css/*.css')) as $sheet) {
+        foreach (glob(base_path('public/static/css/*.css')) as $sheet) {
             $text = file_get_contents($sheet);
             expect(substr_count($text, '/*'))->toBe(substr_count($text, '*/'), $sheet);
         }
     });
 
     it('balances the braces', function () {
-        foreach (glob(base_path('static/css/*.css')) as $sheet) {
+        foreach (glob(base_path('public/static/css/*.css')) as $sheet) {
             $text = preg_replace('#/\*.*?\*/#s', '', file_get_contents($sheet));
             expect(substr_count($text, '{'))->toBe(substr_count($text, '}'), $sheet);
         }
     });
 
     it('keeps the padding on the storefront bands', function () {
-        $css = templateContractsRead('static/css/theme.css');
+        $css = templateContractsRead('public/static/css/theme.css');
         expect(substr($css, strpos($css, '.section {'), 120))->toContain('padding: 3rem 1.5rem');
 
         $this->get('/')->assertSee('class="section', false);

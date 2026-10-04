@@ -1,33 +1,33 @@
-# Slim rather than alpine: PyMySQL is pure Python, but Werkzeug's scrypt
-# hashing wants a real libssl, and musl builds of cryptography are a fight.
-FROM python:3.12-slim
+# FrankenPHP: Caddy and PHP in one process, so one container serves the app the
+# way gunicorn did, with no separate nginx or PHP-FPM to configure.
+FROM dunglas/frankenphp:1-php8.4
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+# gd re-encodes uploaded photographs (which is what strips the EXIF a phone
+# writes into them); pdo_mysql is the database; zip is how Composer unpacks.
+RUN install-php-extensions gd pdo_mysql opcache zip
+
+COPY docker/php.ini /usr/local/etc/php/conf.d/app.ini
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Dependencies first: this layer is cached until the requirements change.
-COPY requirements.txt requirements-dev.txt ./
-
-# The runtime image ships without pytest and friends. The test service in
-# docker-compose.yml builds with INSTALL_DEV=true to get them.
-ARG INSTALL_DEV=false
-RUN if [ "$INSTALL_DEV" = "true" ]; then \
-        pip install --no-cache-dir -r requirements-dev.txt; \
-    else \
-        pip install --no-cache-dir -r requirements.txt; \
-    fi
+# Dependencies first: this layer is cached until composer.lock changes.
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 
 COPY . .
+RUN composer dump-autoload --optimize --no-dev \
+    && chmod +x docker/entrypoint.sh
 
-RUN chmod +x docker-entrypoint.sh
-
-# Runs as a non-root user. Nothing in the image needs to be written at runtime.
-RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
+# Runs as a non-root user. Only storage/, bootstrap/cache and the photograph
+# folders are written at runtime.
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app/storage /app/bootstrap/cache /app/public/static/img /data /config
 USER app
 
-EXPOSE 5000
+# Plain HTTP on 8000; TLS, when there is any, belongs to whatever sits in front.
+ENV SERVER_NAME=:8000
+EXPOSE 8000
 
-# The entrypoint picks the dev server or gunicorn from FLASK_DEBUG.
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["docker/entrypoint.sh"]
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]

@@ -65,7 +65,8 @@ describe('on an empty database', function () {
         migrationsRun();
 
         expect(migrationsTables())->toBe(MIGRATIONS_TABLES)
-            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())->toBe([MIGRATIONS_FILE]);
+            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())
+            ->toBe([MIGRATIONS_FILE, '2026_10_04_000001_drop_the_flask_migration_ledger']);
     });
 
     it('seeds the sizes, accents intact', function () {
@@ -99,13 +100,15 @@ describe('on an empty database', function () {
 });
 
 describe('on a database the Flask app built', function () {
+    // And then drops the Flask ledger, which nothing reads once it is adopted.
     it('adopts one at 0013 without building over it', function () {
         migrationsFlaskDatabase(['0012_earlier.sql', '0013_a_collection_reaches_a_piece_through_its_colours.sql']);
 
         migrationsRun();
 
-        expect(migrationsTables())->toBe(['migrations', 'products', 'schema_migrations'])
-            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())->toBe([MIGRATIONS_FILE]);
+        expect(migrationsTables())->toBe(['migrations', 'products'])
+            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())
+            ->toBe([MIGRATIONS_FILE, '2026_10_04_000001_drop_the_flask_migration_ledger']);
     });
 
     // Anything older is a schema the models do not match. A failed migration is

@@ -78,7 +78,7 @@ too, and `.timeline-arrow*` became `.rail-arrow*`.
 
 ## The landing page
 
-`templates/store/home.html`
+`resources/views/store/home.blade.php` (`templates/store/home.html` when this was written)
 
 **1 · Hero** — unchanged in structure, which is the point: Hugo's centred hero
 stays. `min-vh-100` less the navbar, `d-flex align-items-center text-center`, the
@@ -118,7 +118,7 @@ each row. Replaces five cards and five icon discs. The footer joins the same ban
 
 ## The catalogue
 
-`templates/store/products.html`
+`resources/views/store/products.blade.php`
 
 - **Header** — `Catálogo` at `display-6`, the count on the right, and the
   "preços sob consulta" line on **one** line: no `.measure`, `fs-6`.
@@ -143,7 +143,7 @@ each row. Replaces five cards and five icon discs. The footer joins the same ban
 
 ## A piece
 
-`templates/store/product.html`
+`resources/views/store/product.blade.php`
 
 The layout Hugo asked for: the photograph and the facts the same height, the
 photograph never stretched.
@@ -191,7 +191,8 @@ Nothing has a horizontal scrollbar at 390px; the rail scrolls inside itself.
 
 ## Order of work
 
-One commit per step. `pytest` and `env/bin/pyright` green at each, and each step
+One commit per step. The test suite green at each (then `pytest` and
+`env/bin/pyright`, now `vendor/bin/pest`), and each step
 looked at in the browser at 1280 and 390 before it is committed.
 
 1. Tokens, the dark-theme block, the grain, and the six new rules.
@@ -227,10 +228,10 @@ implicit rows, so a two-line name made every photograph in its row taller.
 
 ## Verification
 
-- `pytest` — 893 green now. The browser tests assert on ids and behaviour rather
-  than classes, so most should survive; anything that asserts on a deleted class
-  is updated with its reason stated in the commit.
-- `env/bin/pyright` — 0 errors.
+- The suite (`pytest` then, `vendor/bin/pest` now) green. The browser tests
+  assert on ids and behaviour rather than classes, so most should survive;
+  anything that asserts on a deleted class is updated with its reason stated in
+  the commit.
 - Every page at 1280 and 390, in the running app, against the prototype.
 - `SCREENSHOTS=update` then `SCREENSHOTS=1` on the appearance suite, last.
 - The tracking still records: a view, an enquiry with its colour, a search, a

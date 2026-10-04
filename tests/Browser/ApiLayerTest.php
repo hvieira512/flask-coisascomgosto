@@ -121,7 +121,7 @@ describe('what must keep working', function () {
 // If the client's page size and the server's cap drift, the guard above never
 // fires and the truncation is silent again.
 it('asks for a page the size of the API cap', function () {
-    $source = file_get_contents(base_path('static/js/core/api.js'));
+    $source = file_get_contents(base_path('public/static/js/core/api.js'));
 
     expect($source)->toContain('limit = '.Controller::MAX_LIMIT);
 });

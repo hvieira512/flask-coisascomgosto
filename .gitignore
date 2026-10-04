@@ -1,20 +1,7 @@
-# Python
-**/__pycache__/
-*.py[cod]
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Virtualenvs
-env/
-venv/
-.venv/
-
 # Laravel
 /vendor/
 /node_modules/
 /.phpunit.cache
-/public/static
 /storage/*.key
 /tests/Browser/Screenshots
 

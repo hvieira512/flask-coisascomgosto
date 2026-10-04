@@ -11,7 +11,7 @@ function query(path, params) {
 }
 
 export async function request(url, { method = "GET", body, params, fallback, partial = false } = {}) {
-    // The header is what proves to api/security.py that a write came from our
+    // The header is what proves to AuthenticateApi that a write came from our
     // own code and not from a cross-site form using the session cookie.
     const options = { method, headers: { "X-Requested-With": "fetch" } };
     if (params) url = query(url, params);
@@ -80,8 +80,7 @@ export async function list(url, key, { fallback, orEmpty = false, limit = 100 } 
     }
 }
 
-// Collection paths keep their trailing slash: flask-restx registers them that
-// way, so "/api/materials" answers 308 and every list paid for two round trips.
+// Collection paths carry a trailing slash, which the API ignores.
 export const API = {
     materials: {
         list: "/api/materials/",

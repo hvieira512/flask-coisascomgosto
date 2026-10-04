@@ -1,13 +1,14 @@
-# The virtualenv is host-specific; the image installs its own.
-env/
-__pycache__/
-*.pyc
-.pytest_cache/
-.git/
-.gitignore
-# Local database files have no business inside the image.
-db/*.db
-*.md
+# Installed inside the image instead.
+vendor/
+node_modules/
 # Secrets never enter the image; compose injects them at runtime.
 .env
+.git/
 .DS_Store
+*.md
+tests/
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/
+storage/framework/views/*

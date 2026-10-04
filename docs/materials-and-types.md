@@ -36,7 +36,8 @@ nobody reads is a column somebody later has to explain. Both sides CASCADE —
 deleting a material takes it off the pieces, which is what the dashboard already
 warns it does.
 
-Both halves as always: `db/schema.sql` **and** the migration file.
+Both halves, as the Flask app needed them then: `db/schema.sql` **and** the
+migration file. (The Laravel app has one migration and no separate schema.)
 
 ### 2. Reads and writes
 
@@ -92,15 +93,16 @@ being about collections the moment a material wore it.
 
 ## Verification
 
-- Migration against the dev database, then `flask migrate --status`.
+- Migration against the dev database, then `flask migrate --status` (now
+  `php artisan migrate:status`).
 - Tests: the join replaces the column (create, update, replace, none), the facet
   counts both materials of a piece, the filter finds a piece under either, an
   unknown material is 404, and a deleted material leaves the piece.
 - Browser: Manel e Maria saved with two materials shows both in the shop's spec
   block and appears under both filters; the Tipos page shows seven photographs,
   the counts, and the empty-material state.
-- `pytest`, `pyright`, and the appearance suite; recapture what the new pages
-  change.
+- The test suite (then `pytest` and `pyright`, now `vendor/bin/pest`) and the
+  appearance suite; recapture what the new pages change.
 
 ## Not doing
 

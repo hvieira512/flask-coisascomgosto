@@ -102,9 +102,9 @@ describe('the placeholder module', function () {
     it('is imported by everything that draws a tile', function (string $path) {
         expect(file_get_contents(base_path($path)))->toContain('import { ProductPlaceholder }');
     })->with([
-        'static/js/store/catalogue/cards.js',
-        'static/js/store/gallery.js',
-        'static/js/dashboard/products/fetch.js',
+        'public/static/js/store/catalogue/cards.js',
+        'public/static/js/store/gallery.js',
+        'public/static/js/dashboard/products/fetch.js',
     ]);
 
     it('is no longer a script tag', function (string $page) {
@@ -116,7 +116,7 @@ describe('the placeholder module', function () {
 it('keeps the load-bearing rules of the tile', function () {
     // Without these the icon sits top-left, or the circle's cqw width resolves
     // against the viewport. A comment-stripping regex deleted this block once.
-    $css = file_get_contents(base_path('static/css/theme.css'));
+    $css = file_get_contents(base_path('public/static/css/theme.css'));
     $block = explode('}', explode('.product-placeholder {', $css)[1])[0];
 
     expect($block)->toContain('display: flex')
@@ -129,7 +129,7 @@ it('styles the tile where both halves of the product load it', function () {
     // The dashboard draws this tile too, and does not load store.css.
     $this->get('/dashboard/products')->assertDontSee('css/store.css', false);
 
-    $store = file_get_contents(base_path('static/css/store.css'));
+    $store = file_get_contents(base_path('public/static/css/store.css'));
     expect($store)->not->toMatch('/^\.product-placeholder \{/m')
         ->not->toMatch('/^\.product-placeholder-circle \{/m');
 });
