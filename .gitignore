@@ -10,6 +10,14 @@ env/
 venv/
 .venv/
 
+# Laravel
+/vendor/
+/node_modules/
+/.phpunit.cache
+/public/static
+/storage/*.key
+/tests/Browser/Screenshots
+
 # Secrets and local config
 .env
 
