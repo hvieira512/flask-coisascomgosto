@@ -1,3 +1,4 @@
+import { escapeHtml } from "../../core/html.js";
 import { reference, typeOptions } from "./reference.js";
 
 const state = { q: "", type_id: "", collection_id: "", photos: "" };
@@ -38,12 +39,12 @@ export async function mountFilters(handler) {
     control("filter-type").insertAdjacentHTML(
         "beforeend",
         typeOptions(types)
-            .map((t) => `<option value="${t.id}">${t.label}</option>`)
+            .map((t) => `<option value="${t.id}">${escapeHtml(t.label)}</option>`)
             .join("")
     );
     control("filter-collection").insertAdjacentHTML(
         "beforeend",
-        collections.map((c) => `<option value="${c.id}">${c.name}</option>`).join("")
+        collections.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
     );
 
     let timer;

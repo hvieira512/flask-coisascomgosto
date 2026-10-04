@@ -67,6 +67,14 @@ it('moves between pages', function () {
     $page->assertSeeIn('#pager-label', 'Página 1 de 2')->assertSee('Peça 01');
 });
 
+it('shows a collection name in the filter as text, not markup', function () {
+    makeCollection('<b>Negrito</b>');
+    $page = productsPageOpen();
+
+    expect($page->script("() => [...document.querySelectorAll('#filter-collection option')].map((o) => o.textContent)"))
+        ->toContain('<b>Negrito</b>');
+});
+
 it('filters by photograph on the server, back on the first page', function () {
     $page = productsPageOpen();
     $page->click('#pager-next');
