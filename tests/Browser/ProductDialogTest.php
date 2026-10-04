@@ -678,6 +678,25 @@ describe('colours and photographs are one panel', function () {
             ->and(productDialogJs($page, "document.querySelector('{$panel}').innerText"))->toContain('Sem cores associadas');
     });
 
+    // Adding a colour re-renders the dialog while it is up. Saving afterwards used
+    // to wait for a "shown" event that never came, and the spinner never stopped.
+    it('still closes on save after a colour was added in it', function () {
+        $page = productDialogOpenColours(colours: false);
+        // Fully up, as it is by the time a person reaches for the button. While
+        // it is still sliding in, the shown event is yet to come and hides the bug.
+        productDialogWaitFor($page, "document.getElementById('editProductModal').classList.contains('show') && !document.querySelector('.modal.fade:not(.show)[style*=\"display: block\"]')");
+        $page->wait(0.5);
+
+        $page->click('#editProductModal #add-variant');
+        productDialogWaitFor($page, "document.querySelectorAll('#editProductModal [data-variant-block]').length === 1");
+
+        $page->click('#editProductModal #edit-tabs [data-bs-target="#edit-pane-details"]');
+        $page->click('#editProductModal #edit-submit');
+        productDialogWaitFor($page, "!document.getElementById('editProductModal').classList.contains('show')");
+
+        $page->assertNoJavaScriptErrors();
+    });
+
     it('refuses to upload a photograph with no colour', function () {
         // Belt as well as braces: the function behind the panel will not do it either.
         $page = productDialogOpenColours();

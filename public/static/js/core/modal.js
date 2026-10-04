@@ -12,6 +12,14 @@ export const open = (id) => {
     const element = modal(id);
     if (!element) return;
 
+    // Re-rendering a dialog that is already up (the product editor does, after
+    // every colour or photograph) fires no second shown.bs.modal, and a close()
+    // waiting for one would wait forever.
+    if (element.classList.contains("show")) {
+        opened.set(element, Promise.resolve());
+        return;
+    }
+
     opened.set(element, new Promise((resolve) => {
         element.addEventListener("shown.bs.modal", resolve, { once: true });
     }));
