@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Size;
 use App\Models\StorefrontEvent;
+use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,6 +28,9 @@ class StorefrontEventController extends Controller
     // one view and maybe an enquiry; sixty is a flood.
     public const PER_MINUTE = 60;
 
+    #[ApiResponse(400, 'Unknown kind, or a malformed body')]
+    #[ApiResponse(403, 'Missing the X-Requested-With header')]
+    #[ApiResponse(429, 'Too many events from this address')]
     public function store(Request $request): Response
     {
         // First, before any work. The address is used here and never stored.
@@ -51,7 +55,7 @@ class StorefrontEventController extends Controller
             'facet_label' => ['sometimes', 'string'],
             'term' => ['sometimes', 'string'],
             'results' => ['sometimes', 'integer:strict'],
-        ]);
+        ], ['kind.in' => 'kind must be one of: '.implode(', ', StorefrontEvent::KINDS).'.']);
 
         $productId = $data['product_id'] ?? null;
         if ($productId !== null && ! Product::whereKey($productId)->exists()) {

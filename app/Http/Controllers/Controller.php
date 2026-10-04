@@ -19,9 +19,9 @@ abstract class Controller
      * unless the rule says `present`; a field that is present must be the right
      * type, null included — the old API's schema refused an explicit null too.
      */
-    protected function payload(Request $request, array $rules): array
+    protected function payload(Request $request, array $rules, array $messages = []): array
     {
-        return Validator::make($request->json()->all(), $rules)->validate();
+        return Validator::make($request->json()->all(), $rules, $messages)->validate();
     }
 
     /** [page, limit, offset] from the query string, 400 on nonsense. */
