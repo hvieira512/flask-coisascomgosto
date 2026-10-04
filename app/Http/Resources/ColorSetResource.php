@@ -16,6 +16,7 @@ class ColorSetResource extends JsonResource
             'name' => $this->name,
             'collections' => $this->collections->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->all(),
             'colors' => ColorResource::collection($this->colors),
+            'pieces' => (int) $this->pieces,
         ];
     }
 }

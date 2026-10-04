@@ -24,26 +24,34 @@ class Collection extends Model
     }
 
     /**
+     * What a response shows beside the row itself.
+     *
+     * pieces: how many pieces its colour sets reach, each once.
+     *
      * borrowed_image_url: a photograph of a piece in the collection, so one with
      * no cover of its own still shows something. A colour set shared with fewer
      * collections wins first — Filigrana and Bordados both reach Branco e
      * Dourado, and ordering by recency alone gave the two of them the same
      * photograph side by side. Then the most recent piece.
      */
-    public function scopeWithBorrowedImage(Builder $query): void
+    public function scopeWithDetail(Builder $query): void
     {
-        $query->addSelect(['collections.*', 'borrowed_image_url' => DB::table('collection_color_sets as cs')
+        $query->addSelect(['collections.*', 'pieces' => DB::table('collection_color_sets as cs')
             ->join('product_variants as v', 'v.color_set_id', '=', 'cs.color_set_id')
-            ->join('products as p', 'p.id', '=', 'v.product_id')
-            ->join('product_images as i', 'i.variant_id', '=', 'v.id')
             ->whereColumn('cs.collection_id', 'collections.id')
-            ->whereNull('i.deleted_at')
-            ->orderByRaw('(SELECT COUNT(*) FROM collection_color_sets shared WHERE shared.color_set_id = cs.color_set_id)')
-            ->orderByDesc('p.created_at')
-            ->orderBy('i.position')
-            ->orderBy('i.id')
-            ->limit(1)
-            ->select('i.url'),
+            ->selectRaw('COUNT(DISTINCT v.product_id)'),
+            'borrowed_image_url' => DB::table('collection_color_sets as cs')
+                ->join('product_variants as v', 'v.color_set_id', '=', 'cs.color_set_id')
+                ->join('products as p', 'p.id', '=', 'v.product_id')
+                ->join('product_images as i', 'i.variant_id', '=', 'v.id')
+                ->whereColumn('cs.collection_id', 'collections.id')
+                ->whereNull('i.deleted_at')
+                ->orderByRaw('(SELECT COUNT(*) FROM collection_color_sets shared WHERE shared.color_set_id = cs.color_set_id)')
+                ->orderByDesc('p.created_at')
+                ->orderBy('i.position')
+                ->orderBy('i.id')
+                ->limit(1)
+                ->select('i.url'),
         ]);
     }
 

@@ -92,6 +92,15 @@ class Product extends Model
         }
     }
 
+    /** Only pieces with a live photograph, or with none ($has = false). */
+    public function scopePhotographed(Builder $query, bool $has = true): void
+    {
+        $exists = fn ($q) => $q->select(DB::raw(1))->from('product_images as i')
+            ->whereColumn('i.product_id', 'products.id')->whereNull('i.deleted_at');
+
+        $has ? $query->whereExists($exists) : $query->whereNotExists($exists);
+    }
+
     /**
      * The storefront's order: a shopper scanning a grid should not page past
      * pieces with nothing to look at. The dashboard keeps insertion order,

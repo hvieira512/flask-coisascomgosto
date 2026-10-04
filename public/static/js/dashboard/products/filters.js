@@ -6,12 +6,15 @@ let mounted = false;
 
 const control = (id) => document.getElementById(id);
 
-export function query() {
-    const params = new URLSearchParams({ limit: "100" });
-    if (state.q) params.set("q", state.q);
-    if (state.type_id) params.set("type_id", state.type_id);
-    if (state.collection_id) params.set("collection_id", state.collection_id);
-    return params.toString();
+// The filters as API parameters. `photos` overrides the photograph filter, so the
+// count of pieces without one can be asked under the same other filters.
+export function filterParams({ photos = state.photos } = {}) {
+    const params = {};
+    if (state.q) params.q = state.q;
+    if (state.type_id) params.type_id = state.type_id;
+    if (state.collection_id) params.collection_id = state.collection_id;
+    if (photos) params.has_photos = photos === "some" ? 1 : 0;
+    return params;
 }
 
 export const photoFilter = () => state.photos;
@@ -48,7 +51,7 @@ export async function mountFilters(handler) {
         clearTimeout(timer);
         state.q = event.target.value.trim();
         syncClearButton();
-        timer = setTimeout(onChange, 250);
+        timer = setTimeout(() => onChange(1), 250);
     });
 
     [["filter-type", "type_id"], ["filter-collection", "collection_id"],
@@ -56,7 +59,7 @@ export async function mountFilters(handler) {
         control(id).addEventListener("change", (event) => {
             state[key] = event.target.value;
             syncClearButton();
-            onChange();
+            onChange(1);
         });
     });
 
@@ -67,7 +70,7 @@ export async function mountFilters(handler) {
             control(id).value = "";
         });
         syncClearButton();
-        onChange();
+        onChange(1);
     });
 
     applyUrlFilters();

@@ -28,7 +28,7 @@ class ColorSetController extends Controller
     /** List colour sets, searched by name with ?q=, or only one collection's with ?collection_id=. */
     public function index(Request $request): array
     {
-        $query = ColorSet::with(['colors', 'collections'])->orderBy('color_sets.id');
+        $query = ColorSet::withDetail()->orderBy('color_sets.id');
 
         $collectionId = filter_var($request->query('collection_id'), FILTER_VALIDATE_INT, ['flags' => FILTER_NULL_ON_FAILURE]);
         if ($collectionId !== null) {
@@ -104,6 +104,6 @@ class ColorSetController extends Controller
 
     private function find(int $id): ColorSet
     {
-        return ColorSet::with(['colors', 'collections'])->find($id) ?? $this->fail(404, "Colour set #{$id} not found");
+        return ColorSet::withDetail()->find($id) ?? $this->fail(404, "Colour set #{$id} not found");
     }
 }

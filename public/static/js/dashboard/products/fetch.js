@@ -3,7 +3,7 @@ import { ColorSet } from "../../store/color-set.js";
 import { Notify } from "../../core/notify.js";
 import { ProductPlaceholder } from "../../store/placeholder.js";
 import { escapeHtml } from "../../core/html.js";
-import { isFiltered, photoFilter, query } from "./filters.js";
+import { filterParams, isFiltered, photoFilter } from "./filters.js";
 
 const productList = document.getElementById("product-list");
 const COLUMNS = 5;
@@ -89,25 +89,26 @@ const row = (product) => {
     return tr;
 };
 
-const renderProducts = (products) => {
-    productList.innerHTML = "";
-
-    const count = document.getElementById("product-count");
-    const total = products?.length ?? 0;
+const renderCount = (total, missing) => {
     const pieces = `${total} ${total === 1 ? "peça" : "peças"}`;
-
-    if (!total) {
-        count.textContent = pieces;
-        return renderEmptyMessage();
-    }
-
-    products.forEach((product) => productList.appendChild(row(product)));
-
-    const missing = products.filter((p) => photoCount(p) === 0).length;
-    count.innerHTML = missing
+    document.getElementById("product-count").innerHTML = missing
         ? `${pieces} · <span class="fw-medium"
              style="color: var(--ccg-attention)">${missing} sem fotografia</span>`
         : pieces;
+};
+
+const renderPager = ({ page, pages }) => {
+    document.getElementById("product-pager").hidden = pages <= 1;
+    document.getElementById("pager-label").textContent = `Página ${page} de ${pages}`;
+    document.getElementById("pager-prev").disabled = page <= 1;
+    document.getElementById("pager-next").disabled = page >= pages;
+};
+
+const renderProducts = (products) => {
+    productList.innerHTML = "";
+    if (!products.length) return renderEmptyMessage();
+
+    products.forEach((product) => productList.appendChild(row(product)));
 };
 
 const renderSkeleton = () => {
@@ -119,21 +120,44 @@ const renderSkeleton = () => {
         </tr>`.repeat(6);
 };
 
-export const fetchProducts = async () => {
+// Pages rather than the whole catalogue: a list of every piece stopped being
+// possible at the API's hundred-row limit.
+const PAGE_SIZE = 50;
+let currentPage = 1;
+
+/** How many of the filtered pieces have no photograph, asked of the server. */
+const countMissing = async (total) => {
+    if (photoFilter() === "none") return total;
+    if (photoFilter() === "some") return 0;
+
+    const { pagination } = await request(API.products.list, {
+        params: { ...filterParams({ photos: "none" }), limit: 1 },
+        partial: true,
+    });
+    return pagination.total;
+};
+
+/** Page `page` of the filtered pieces; a filter change asks for page 1, a save for the same page. */
+export const fetchProducts = async (page = currentPage) => {
+    currentPage = page;
     renderSkeleton();
     try {
-        const { products } = await request(`${API.products.list}?${query()}`,
-                                          { fallback: "Erro ao buscar produtos." });
+        const { products, pagination } = await request(API.products.list, {
+            params: { ...filterParams(), page, limit: PAGE_SIZE },
+            fallback: "Erro ao buscar produtos.",
+        });
 
-        const wanted = photoFilter();
-        const visible = wanted
-            ? products.filter((p) =>
-                  wanted === "none" ? photoCount(p) === 0 : photoCount(p) > 0)
-            : products;
+        // The last piece of the last page was deleted: show the page before.
+        if (!products.length && page > 1) return fetchProducts(Math.max(1, pagination.pages));
 
-        renderProducts(visible);
+        renderProducts(products);
+        renderPager(pagination);
+        renderCount(pagination.total, await countMissing(pagination.total));
     } catch (error) {
         Notify.error("Erro ao buscar produtos");
         console.error("Error fetching products:", error);
     }
 };
+
+document.getElementById("pager-prev")?.addEventListener("click", () => fetchProducts(currentPage - 1));
+document.getElementById("pager-next")?.addEventListener("click", () => fetchProducts(currentPage + 1));

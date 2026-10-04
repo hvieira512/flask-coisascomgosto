@@ -41,6 +41,19 @@
             <tbody id="product-list"></tbody>
         </table>
     </div>
+
+    {{-- d-flex on the inner element: on the nav itself it outranks [hidden]. --}}
+    <nav id="product-pager" class="mt-3" aria-label="Páginas" hidden>
+        <div class="d-flex align-items-center justify-content-end gap-2">
+            <button class="btn btn-sm btn-ghost" id="pager-prev" type="button" aria-label="Página anterior">
+                <span class="icon"><i class="fa-solid fa-chevron-left"></i></span>
+            </button>
+            <span class="fs-7 text-body-secondary data" id="pager-label"></span>
+            <button class="btn btn-sm btn-ghost" id="pager-next" type="button" aria-label="Página seguinte">
+                <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+        </div>
+    </nav>
 </div>
 
 @include('dashboard.components.modal', ['id' => 'newProductModal', 'title' => 'Novo produto'])

@@ -27,7 +27,7 @@ class CollectionController extends Controller
     /** List collections, searched by name with ?q=. */
     public function index(Request $request): array
     {
-        return $this->pageOf($request, Collection::withBorrowedImage()->orderBy('id'), 'collections', CollectionResource::class);
+        return $this->pageOf($request, Collection::withDetail()->orderBy('id'), 'collections', CollectionResource::class);
     }
 
     public function store(Request $request): JsonResponse
@@ -74,7 +74,7 @@ class CollectionController extends Controller
     {
         $row = $this->find($collection);
 
-        return ColorSetResource::collection($row->colorSets()->with(['colors', 'collections'])->limit(100)->get())->resolve();
+        return ColorSetResource::collection($row->colorSets()->withDetail()->limit(100)->get())->resolve();
     }
 
     /**
@@ -118,6 +118,6 @@ class CollectionController extends Controller
 
     private function find(int $id): Collection
     {
-        return Collection::withBorrowedImage()->find($id) ?? $this->fail(404, "Collection #{$id} not found");
+        return Collection::withDetail()->find($id) ?? $this->fail(404, "Collection #{$id} not found");
     }
 }

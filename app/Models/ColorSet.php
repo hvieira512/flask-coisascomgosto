@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,6 +32,16 @@ class ColorSet extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * What a response shows: the colours, the collections, and how many pieces
+     * are offered in it — one variant per piece, so counting variants is
+     * counting pieces.
+     */
+    public function scopeWithDetail(Builder $query): void
+    {
+        $query->with(['colors', 'collections'])->withCount('variants as pieces');
     }
 
     /** Exactly these colours, in this order. Duplicates keep their first place. */

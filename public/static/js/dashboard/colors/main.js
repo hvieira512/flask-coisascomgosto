@@ -1,6 +1,5 @@
 import { API, list, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
-import { byColorSet } from "../counts.js";
 import { colorList, openColorForm, openDeleteColor } from "./palette.js";
 import { nameTaken } from "../errors.js";
 import { openDeleteSet, openSetForm, setRow } from "./sets.js";
@@ -9,22 +8,17 @@ import { submitting } from "../../core/modal.js";
 let sets = [];
 let colors = [];
 let collections = [];
-let pieceCounts = new Map();
 
 const findSet = (id) => sets.find((s) => s.id === Number(id)) ?? null;
 const findColor = (id) => colors.find((c) => c.id === Number(id)) ?? null;
 
 async function loadSets() {
-    const [all, counts] = await Promise.all([
-        list(API.colorSets.list, "color_sets",
-             { fallback: "Erro ao carregar os conjuntos." }),
-        byColorSet(),
-    ]);
-    pieceCounts = counts;
+    const all = await list(API.colorSets.list, "color_sets",
+                           { fallback: "Erro ao carregar os conjuntos." });
     sets = all;
 
     document.getElementById("set-rows").innerHTML = all.length
-        ? all.map((set) => setRow(set, counts.get(set.id) ?? 0)).join("")
+        ? all.map((set) => setRow(set, set.pieces)).join("")
         : `<tr><td colspan="5" class="text-center text-body-secondary py-5">
              Ainda não há conjuntos. Cada peça é oferecida num deles.</td></tr>`;
 
@@ -93,7 +87,7 @@ document.getElementById("set-rows").addEventListener("click", (event) => {
         if (action === "edit") editing(findSet(id));
         if (action === "delete") {
             const set = findSet(id);
-            if (set) openDeleteSet({ set, pieces: pieceCounts.get(set.id) ?? 0, after: loadSets });
+            if (set) openDeleteSet({ set, pieces: set.pieces, after: loadSets });
         }
         return;
     }

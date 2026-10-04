@@ -1,13 +1,11 @@
 import { API, list, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
-import { byCollection } from "../counts.js";
 import { confirmDialog } from "../../core/modal.js";
 import { escapeHtml } from "../../core/html.js";
 import { openCollectionForm } from "./form.js";
 
 let collections = [];
 let colorSets = [];
-let pieceCounts = new Map();
 
 const findCollection = (id) =>
     collections.find((collection) => collection.id === Number(id)) ?? null;
@@ -46,19 +44,17 @@ function collectionRow(collection, pieces) {
 }
 
 async function loadCollections() {
-    const [all, counts, sets] = await Promise.all([
+    const [all, sets] = await Promise.all([
         list(API.collections.list, "collections",
              { fallback: "Erro ao carregar as colecções." }),
-        byCollection(),
         list(API.colorSets.list, "color_sets",
              { fallback: "Erro ao carregar os conjuntos de cores." }),
     ]);
-    pieceCounts = counts;
     collections = all;
     colorSets = sets;
 
     document.getElementById("collection-rows").innerHTML = all.length
-        ? all.map((c) => collectionRow(c, counts.get(c.id) ?? 0)).join("")
+        ? all.map((c) => collectionRow(c, c.pieces)).join("")
         : `<tr><td colspan="5" class="text-center text-body-secondary py-5">
              Ainda não há colecções.</td></tr>`;
 
@@ -78,7 +74,7 @@ function openDelete(id) {
     const collection = findCollection(id);
     if (!collection) return;
 
-    const pieces = pieceCounts.get(collection.id) ?? 0;
+    const { pieces } = collection;
 
     const detail = pieces
         ? `<p class="text-body-secondary fs-7 mt-2">

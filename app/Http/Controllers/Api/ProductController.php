@@ -37,6 +37,7 @@ class ProductController extends Controller
     #[QueryParameter('type_id', 'Only products of this type. Repeatable.', type: 'int')]
     #[QueryParameter('collection_id', 'Only products in this collection, reached through the colour sets it gathers. Repeatable.', type: 'int')]
     #[QueryParameter('material_id', 'Only products made of this material. Repeatable.', type: 'int')]
+    #[QueryParameter('has_photos', 'Only products with a photograph (1), or with none (0).', type: 'bool')]
     #[QueryParameter('page', 'Page number, 1-based (default 1)', type: 'int')]
     #[QueryParameter('limit', 'Items per page, max 100 (default 10)', type: 'int')]
     public function index(Request $request): array
@@ -49,6 +50,10 @@ class ProductController extends Controller
             $this->idList($request, 'collection_id'),
             $this->idList($request, 'material_id'),
         );
+        // filter_var reads an absent value as false, so absence is checked first.
+        if ($request->query('has_photos') !== null) {
+            $query->photographed((bool) filter_var($request->query('has_photos'), FILTER_VALIDATE_BOOL));
+        }
         $total = (clone $query)->count();
 
         if (filter_var($request->query('photographed_first'), FILTER_VALIDATE_INT)) {

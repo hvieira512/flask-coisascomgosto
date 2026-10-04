@@ -18,6 +18,7 @@ class CollectionResource extends JsonResource
             'image_url' => $this->image_url,
             // A photograph of one of its pieces, standing in while image_url is null.
             'borrowed_image_url' => $this->borrowed_image_url,
+            'pieces' => (int) $this->pieces,
         ];
     }
 }

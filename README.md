@@ -377,9 +377,12 @@ with bcrypt.
 { "pagination": { "total": 42, "page": 2, "pages": 5, "limit": 10 } }
 ```
 
-Non-numeric or non-positive values return `400`. `core/api.js` compares
-`pagination.total` against what arrived and throws rather than rendering a count
-that is quietly short; the cap is `Controller::MAX_LIMIT`.
+Non-numeric or non-positive values return `400`. The dashboard's product list
+pages with `page`; the other screens still load whole lists, so `core/api.js`
+compares `pagination.total` against what arrived and throws rather than
+rendering a count that is quietly short; the cap is `Controller::MAX_LIMIT`.
+Counts those screens show (`pieces` on collections and colour sets, products
+without photographs via `has_photos=0`) come from the server, not from the list.
 
 **Search** — list endpoints accept `q` for a case-insensitive substring match on
 name.
