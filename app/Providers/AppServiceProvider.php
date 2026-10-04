@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Contact;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Response as ApiResponse;
 use Dedoc\Scramble\Support\Generator\SecurityRequirement;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Database\QueryException;
@@ -39,6 +40,13 @@ class AppServiceProvider extends ServiceProvider
         Scramble::configure()->withOperationTransformers(function (Operation $operation, RouteInfo $route) {
             if ($route->route->uri() === 'api/auth/refresh') {
                 $operation->addSecurity(new SecurityRequirement('Bearer'));
+            }
+
+            if (in_array('auth.api', $route->route->gatherMiddleware(), true)) {
+                $operation->addResponse(ApiResponse::make(401)->setDescription('Missing, malformed or expired access token, and no session'));
+                if (! in_array('GET', $route->route->methods(), true)) {
+                    $operation->addResponse(ApiResponse::make(403)->setDescription('Session-authenticated write without the X-Requested-With header'));
+                }
             }
         });
 
