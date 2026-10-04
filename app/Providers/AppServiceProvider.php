@@ -4,9 +4,10 @@ namespace App\Providers;
 
 use App\Models\Contact;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Response as ApiResponse;
-use Dedoc\Scramble\Support\Generator\SecurityRequirement;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -37,18 +38,20 @@ class AppServiceProvider extends ServiceProvider
 
         // /auth/refresh takes the refresh token in the Authorization header, so
         // it wears the padlock although no session can stand in for it.
-        Scramble::configure()->withOperationTransformers(function (Operation $operation, RouteInfo $route) {
-            if ($route->route->uri() === 'api/auth/refresh') {
-                $operation->addSecurity(new SecurityRequirement('Bearer'));
-            }
-
-            if (in_array('auth.api', $route->route->gatherMiddleware(), true)) {
-                $operation->addResponse(ApiResponse::make(401)->setDescription('Missing, malformed or expired access token, and no session'));
-                if (! in_array('GET', $route->route->methods(), true)) {
-                    $operation->addResponse(ApiResponse::make(403)->setDescription('Session-authenticated write without the X-Requested-With header'));
+        // A padlock on every operation behind AuthenticateApi, and on
+        // /auth/refresh, which takes the refresh token in the same header.
+        Scramble::configure()
+            ->withDocumentTransformers(fn (OpenApi $openApi) => $openApi->secure(SecurityScheme::http('bearer', 'JWT')->as('Bearer')))
+            ->withOperationTransformers(function (Operation $operation, RouteInfo $route) {
+                if (in_array('auth.api', $route->route->gatherMiddleware(), true)) {
+                    $operation->addResponse(ApiResponse::make(401)->setDescription('Missing, malformed or expired access token, and no session'));
+                    if (! in_array('GET', $route->route->methods(), true)) {
+                        $operation->addResponse(ApiResponse::make(403)->setDescription('Session-authenticated write without the X-Requested-With header'));
+                    }
+                } elseif ($route->route->uri() !== 'api/auth/refresh') {
+                    $operation->security = [];
                 }
-            }
-        });
+            });
 
         JsonResource::withoutWrapping();
 

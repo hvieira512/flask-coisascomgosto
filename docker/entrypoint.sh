@@ -11,4 +11,10 @@ set -e
 
 php artisan migrate --force --isolated
 
+# Config, routes and views compiled once rather than on every request. Not in
+# development, where the bind mount would serve a stale copy of what you edit.
+if [ "$APP_ENV" = "production" ]; then
+    php artisan optimize
+fi
+
 exec "$@"

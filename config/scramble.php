@@ -1,8 +1,5 @@
 <?php
 
-use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
-use Dedoc\Scramble\Support\Generator\SecurityScheme;
-
 return [
     'api_path' => 'api',
 
@@ -25,12 +22,7 @@ return [
     // storefront already calls in the open.
     'middleware' => ['web'],
 
-    // A padlock on every operation behind AuthenticateApi, and none elsewhere.
-    'security_strategy' => [
-        MiddlewareAuthSecurityStrategy::class,
-        [
-            'middleware' => ['auth.api'],
-            'scheme' => SecurityScheme::http('bearer', 'JWT')->as('Bearer'),
-        ],
-    ],
+    // The padlocks are set in AppServiceProvider: a scheme object here would
+    // make the configuration impossible to cache.
+    'security_strategy' => null,
 ];

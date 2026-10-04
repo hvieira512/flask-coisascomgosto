@@ -98,3 +98,17 @@ describe('the session cookie is treated as a credential', function () {
             ->and(json_decode($development->output()))->toBeFalsy();
     });
 });
+
+// The container runs `php artisan optimize` in production, and config:cache
+// refuses a configuration holding objects — Scramble's security scheme was one.
+it('keeps the configuration cacheable', function () {
+    $config = config()->all();
+    $objects = [];
+    array_walk_recursive($config, function ($value, $key) use (&$objects) {
+        if (is_object($value)) {
+            $objects[] = $key;
+        }
+    });
+
+    expect($objects)->toBe([]);
+});
