@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ProductType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * offer "Adivinhar pelo nome" while it can tell a guess from a choice. `image`
  * is the cover ProductType::attachCovers set.
  *
- * @mixin \App\Models\ProductType
+ * @mixin ProductType
  */
 class ProductTypeResource extends JsonResource
 {

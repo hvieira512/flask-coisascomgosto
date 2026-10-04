@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
@@ -80,7 +81,7 @@ class Uploads
         }
 
         try {
-            $image = ImageManager::usingDriver(\Intervention\Image\Drivers\Gd\Driver::class)->decodePath($file->getRealPath());
+            $image = ImageManager::usingDriver(Driver::class)->decodePath($file->getRealPath());
             $encoded = $image->encode(match ($header[2]) {
                 IMAGETYPE_JPEG => new JpegEncoder(quality: 92),
                 IMAGETYPE_PNG => new PngEncoder,

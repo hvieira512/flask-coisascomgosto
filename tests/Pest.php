@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\ProductType;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -86,7 +88,7 @@ function makeProductType(string $name = 'Coracao', ?string $description = null, 
  */
 function productType(): array
 {
-    $type = \App\Models\ProductType::firstWhere('name', 'Tipo de teste');
+    $type = ProductType::firstWhere('name', 'Tipo de teste');
 
     return $type ? test()->getJson("/api/product-types/{$type->id}")->json() : makeProductType('Tipo de teste');
 }
@@ -130,7 +132,7 @@ function sizes(): array
 }
 
 /** A real, decodable image of the given format, as an uploadable file. */
-function photo(string $name = 'caixa.jpg', string $format = 'jpeg', int $width = 8, int $height = 8): \Illuminate\Http\UploadedFile
+function photo(string $name = 'caixa.jpg', string $format = 'jpeg', int $width = 8, int $height = 8): UploadedFile
 {
     $image = imagecreatetruecolor($width, $height);
     imagefill($image, 0, 0, imagecolorallocate($image, 200, 120, 40));
@@ -141,5 +143,5 @@ function photo(string $name = 'caixa.jpg', string $format = 'jpeg', int $width =
         default => imagejpeg($image),
     };
 
-    return \Illuminate\Http\UploadedFile::fake()->createWithContent($name, ob_get_clean());
+    return UploadedFile::fake()->createWithContent($name, ob_get_clean());
 }

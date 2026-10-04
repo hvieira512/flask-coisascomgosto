@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * No collections on the nested colour set: nothing reading a variant uses them,
  * and a field that is always empty would read as "this set is in none".
  *
- * @mixin \App\Models\ProductVariant
+ * @mixin ProductVariant
  */
 class VariantResource extends JsonResource
 {

@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Size;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Size */
+/** @mixin Size */
 class SizeResource extends JsonResource
 {
     public function toArray(Request $request): array

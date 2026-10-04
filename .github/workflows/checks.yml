@@ -50,6 +50,9 @@ jobs:
 
       - run: composer install --no-interaction --prefer-dist
 
+      # Laravel's own formatter, so a style change never hides inside a diff.
+      - run: vendor/bin/pint --test
+
       - run: mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE coisascomgosto_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
 
       # Without the browser the browser tests cannot run at all, which is the

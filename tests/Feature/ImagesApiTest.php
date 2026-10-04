@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Testing\TestResponse;
+
 /*
  * Every photograph belongs to one of the product's colour sets. It used to be
  * able to belong to the product as a whole, standing in for any colour that had
@@ -18,7 +20,7 @@ function imagesPiece(): array
     return ['product' => $product, 'variant' => makeVariant($product, $set)];
 }
 
-function imagesAdd(array $piece, string $url, array $extra = []): \Illuminate\Testing\TestResponse
+function imagesAdd(array $piece, string $url, array $extra = []): TestResponse
 {
     return test()->postJson("/api/products/{$piece['product']['id']}/images", [
         'url' => $url, 'variant_id' => $piece['variant']['id'], ...$extra,
