@@ -937,12 +937,6 @@ a.card:hover {
     min-height: 2.75rem;
 }
 
-@media screen and (max-width: 1023px) {
-    .media-photo {
-        height: 16rem;
-    }
-}
-
 @media screen and (max-width: 768px) {
     /* The strip is a row at every width now, so nothing has to be rearranged here:
        the rules that turned the vertical rail into one are gone with it. */
@@ -972,10 +966,8 @@ a.card:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-    .hero-scroll-icon,
-    .card,
-    .type-card-icon {
+    .cue-disc,
+    .card {
         animation: none;
         transition: none;
     }

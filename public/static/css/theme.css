@@ -259,10 +259,6 @@ html {
 
 /* Shared primitives live here, not in store.css: theme.css is the only
    stylesheet both the storefront and the dashboard load. */
-/* 11.5px uppercase at .16em tracking is the hardest combination to read there
-   is, and this is the most-repeated element in both halves of the product — so
-   it gets the darker blue (4.12:1 against paper failed AA) and a size that does
-   not need perfect eyesight. */
 /* The display serif on something that is not a heading — the shop's wordmark and
    addresses, the dashboard's page titles and the names in its ledgers. Shared,
    because both halves of the site set type in it. */
@@ -270,6 +266,10 @@ html {
     font-family: var(--font-display);
 }
 
+/* 11.5px uppercase at .16em tracking is the hardest combination to read there
+   is, and this is the most-repeated element in both halves of the product — so
+   it gets the darker blue (4.12:1 against paper failed AA) and a size that does
+   not need perfect eyesight. */
 .eyebrow {
     font-size: .78rem;
     font-weight: 600;
