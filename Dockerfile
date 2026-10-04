@@ -27,6 +27,13 @@ USER app
 
 # Plain HTTP on 8000; TLS, when there is any, belongs to whatever sits in front.
 ENV SERVER_NAME=:8000
+
+# The scripts are ES modules importing each other by plain path, so nothing
+# busts their cache: without this a browser kept running last deploy's JS.
+# no-cache still caches, it just asks first — a 304 when nothing changed.
+# ponytail: photographs revalidate too though their names never repeat; give
+# /static/img its own immutable rule if those 304s ever show up.
+ENV CADDY_SERVER_EXTRA_DIRECTIVES='header /static/* Cache-Control "no-cache"'
 EXPOSE 8000
 
 ENTRYPOINT ["docker/entrypoint.sh"]
