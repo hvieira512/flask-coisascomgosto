@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -20,7 +21,7 @@ describe('making an account', function () {
         $this->postJson('/api/auth/register', ['username' => 'eve', 'email' => 'eve@example.com', 'password' => 'pw'])
             ->assertClientError();
 
-        expect(\App\Models\User::where('username', 'eve')->exists())->toBeFalse();
+        expect(User::where('username', 'eve')->exists())->toBeFalse();
     });
 
     it('is done from the console, with a hashed password', function () {
@@ -31,7 +32,7 @@ describe('making an account', function () {
             ->expectsOutput('Account created: alice')
             ->assertSuccessful();
 
-        $user = \App\Models\User::firstWhere('username', 'alice');
+        $user = User::firstWhere('username', 'alice');
         expect($user->email)->toBe('alice@example.com')
             ->and(Hash::check('Passw0rd!', $user->password))->toBeTrue();
         authLogin()->assertOk();
@@ -46,7 +47,7 @@ describe('making an account', function () {
             ->expectsQuestion('Repeat the password', $repeat)
             ->assertFailed();
 
-        expect(\App\Models\User::count())->toBe(1);
+        expect(User::count())->toBe(1);
     })->with([
         'passwords that differ' => ['bea', 'bea@example.com', 'Passw0rd!', 'outra'],
         'an empty password' => ['bea', 'bea@example.com', '', ''],
