@@ -8,6 +8,7 @@ use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\Size;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,11 @@ class ProductController extends Controller
      * (several values read as OR); `photographed_first=1` is the storefront's
      * order.
      */
+    #[QueryParameter('type_id', 'Only products of this type. Repeatable.', type: 'int')]
+    #[QueryParameter('collection_id', 'Only products in this collection, reached through the colour sets it gathers. Repeatable.', type: 'int')]
+    #[QueryParameter('material_id', 'Only products made of this material. Repeatable.', type: 'int')]
+    #[QueryParameter('page', 'Page number, 1-based (default 1)', type: 'int')]
+    #[QueryParameter('limit', 'Items per page, max 100 (default 10)', type: 'int')]
     public function index(Request $request): array
     {
         [$page, $limit, $offset] = $this->paging($request);

@@ -16,7 +16,6 @@ use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\SizeController;
 use App\Http\Controllers\Api\StorefrontEventController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Middleware\AuthenticateApi;
 use Illuminate\Support\Facades\Route;
 
 // Catalogue reads are public. Every write, plus /users and /contacts, needs a
@@ -26,7 +25,7 @@ $lookup = function (string $path, string $controller) {
     Route::get($path, [$controller, 'index']);
     Route::get("{$path}/{id}", [$controller, 'show'])->whereNumber('id');
 
-    Route::middleware(AuthenticateApi::class)->group(function () use ($path, $controller) {
+    Route::middleware('auth.api')->group(function () use ($path, $controller) {
         Route::post($path, [$controller, 'store']);
         Route::put("{$path}/{id}", [$controller, 'update'])->whereNumber('id');
         Route::delete("{$path}/{id}", [$controller, 'destroy'])->whereNumber('id');
@@ -49,7 +48,7 @@ Route::get('products/{id}/variants', [ProductVariantController::class, 'index'])
 Route::get('products/{id}/images', [ProductImageController::class, 'index'])->whereNumber('id');
 Route::get('products/{id}/sizes', [ProductSizeController::class, 'index'])->whereNumber('id');
 
-Route::middleware(AuthenticateApi::class)->group(function () {
+Route::middleware('auth.api')->group(function () {
     Route::put('collections/{id}/color-sets', [CollectionController::class, 'replaceColorSets'])->whereNumber('id');
     Route::post('collections/{id}/cover', [CollectionController::class, 'storeCover'])->whereNumber('id');
     Route::delete('collections/{id}/cover', [CollectionController::class, 'destroyCover'])->whereNumber('id');

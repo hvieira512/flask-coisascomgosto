@@ -1,0 +1,79 @@
+@extends('layouts.store')
+
+@section('page_title', 'Catálogo')
+
+@section('content')
+<section class="section">
+    <div class="container">
+        <header class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-4">
+            <div>
+                <p class="eyebrow rule-above text-gold">Catálogo</p>
+                <h1 class="display-6 mb-2">Tudo o que fazemos</h1>
+                <p class="text-body-secondary mb-0">
+                    Peças feitas à mão por encomenda. Preços sob consulta — fale connosco e dizemos-lhe tudo.
+                </p>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-1">
+                <div id="active-filters" class="d-flex flex-wrap gap-1" hidden></div>
+                <span id="result-count" class="fs-7 font-monospace text-body-tertiary"></span>
+            </div>
+        </header>
+
+        <nav id="collection-rail" class="rail-shell mb-5" aria-label="Colecções" hidden>
+            <button class="disc rail-arrow rail-arrow-start" data-rail-prev type="button" aria-label="Colecções anteriores" hidden>
+                <span class="icon"><i class="fa-solid fa-chevron-left"></i></span>
+            </button>
+
+            <ul id="collection-strip" class="drag-rail collection-rail gap-2 mb-0 ps-0" tabindex="0" aria-label="Colecções, arraste para o lado"></ul>
+
+            <button class="disc rail-arrow rail-arrow-end" data-rail-next type="button" aria-label="Colecções seguintes" hidden>
+                <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+        </nav>
+
+        <div class="row g-4 g-lg-5">
+
+            <aside class="col-lg-3 filters">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h2 class="fs-7 text-uppercase font-monospace text-body-tertiary mb-0">Filtros</h2>
+                    <button id="clear-filters" class="btn btn-sm btn-link p-0 fs-7 text-decoration-none" type="button" hidden>
+                        Limpar tudo
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="visually-hidden" for="filter-search">Pesquisar</label>
+                    <input id="filter-search"
+                           class="form-control form-control-sm border-0 border-bottom rounded-0 px-0 bg-transparent"
+                           type="search" placeholder="Procurar uma peça" autocomplete="off">
+                </div>
+
+                <nav id="filter-groups">
+                    <p class="filter-group-label">Tipo</p>
+                    <ul class="nav flex-column" data-filter-group="type_id" data-endpoint="/api/product-types/" data-collection-key="product_types" data-facet="types"></ul>
+
+                    <p class="filter-group-label">Material</p>
+                    <ul class="nav flex-column" data-filter-group="material_id" data-endpoint="/api/materials/" data-collection-key="materials" data-facet="materials"></ul>
+                </nav>
+            </aside>
+
+            <section class="col-lg-9 catalogue-main">
+                <div id="product-grid" class="row row-cols-2 row-cols-lg-3 g-4"></div>
+
+                <div id="grid-empty" class="alert alert-light text-center" hidden>
+                    Nenhum produto corresponde aos filtros escolhidos.
+                </div>
+
+                <nav id="pagination" class="mt-4 d-flex justify-content-center" aria-label="Paginação" hidden>
+                    <ul class="pagination mb-0" id="page-list"></ul>
+                </nav>
+            </section>
+        </div>
+    </div>
+</section>
+@endsection
+
+@section('page_scripts')
+<script type="module" src="/static/js/store/products.js"></script>
+@endsection

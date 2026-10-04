@@ -1,0 +1,53 @@
+@extends('layouts.dashboard')
+
+@section('page_title', 'Produtos')
+
+@section('content')
+@include('dashboard.components.page-head', ['eyebrow' => 'Catálogo', 'title' => 'Produtos',
+    'countId' => 'product-count', 'buttonId' => 'new-product', 'buttonLabel' => 'Novo produto'])
+
+<div class="card dash-panel p-3 mb-3">
+    <div class="row row-cols-2 row-cols-lg-5 g-2 align-items-end">
+        @include('dashboard.components.filter-field', ['id' => 'filter-q', 'label' => 'Pesquisar',
+            'placeholder' => 'Nome do produto…', 'icon' => 'fa-solid fa-magnifying-glass'])
+        @include('dashboard.components.filter-field', ['id' => 'filter-type', 'label' => 'Tipo',
+            'options' => [['', 'Todos']], 'icon' => 'fa-solid fa-shapes'])
+        @include('dashboard.components.filter-field', ['id' => 'filter-collection', 'label' => 'Colecção',
+            'options' => [['', 'Todas']], 'icon' => 'fa-solid fa-layer-group'])
+        @include('dashboard.components.filter-field', ['id' => 'filter-photos', 'label' => 'Fotografias',
+            'options' => [['', 'Todas'], ['none', 'Sem fotografia'], ['some', 'Com fotografia']], 'icon' => 'fa-solid fa-image'])
+
+        <div class="col d-flex align-items-end">
+            <button class="btn btn-sm btn-ghost" id="filter-clear" hidden>
+                <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+                <span>Limpar</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div>
+    <div class="dash-table-wrap">
+        <table class="table dash-table is-wide table-hover">
+            <thead>
+                <tr>
+                    <th class="dash-col-thumb"><span class="visually-hidden">Fotografia</span></th>
+                    <th class="dash-col-name">Peça</th>
+                    <th>Cores</th>
+                    <th class="dash-col-photos">Fotografias</th>
+                    <th class="dash-col-actions"><span class="visually-hidden">Acções</span></th>
+                </tr>
+            </thead>
+            <tbody id="product-list"></tbody>
+        </table>
+    </div>
+</div>
+
+@include('dashboard.components.modal', ['id' => 'newProductModal', 'title' => 'Novo produto'])
+@include('dashboard.components.modal', ['id' => 'editProductModal', 'title' => 'Editar produto'])
+@include('dashboard.components.modal', ['id' => 'deleteProductModal', 'title' => 'Apagar produto'])
+@endsection
+
+@section('page_scripts')
+<script type="module" src="/static/js/dashboard/products/main.js"></script>
+@endsection

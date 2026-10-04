@@ -1,0 +1,147 @@
+@extends('layouts.store')
+
+@section('page_title', 'Início')
+
+@section('content')
+
+<header class="hero-wash d-flex align-items-center text-center position-relative">
+    <div class="container py-5">
+        <p class="eyebrow text-gold">Viana do Castelo · desde sempre à mão</p>
+
+        <h1 class="display-5 store-display mb-4">
+            Peças que guardam<br>a nossa terra.
+        </h1>
+
+        <p class="fs-5 text-body-secondary mx-auto measure-narrow mb-0">
+        Madeira e tecido trabalhados um a um, com os motivos que
+        atravessam gerações no Alto Minho.
+        </p>
+    </div>
+
+    <a class="position-absolute bottom-0 start-50 translate-middle-x mb-4 pb-2 d-flex flex-column align-items-center gap-2 text-decoration-none text-body-tertiary"
+       href="#origem">
+        <span class="fs-7 text-uppercase">Conheça a nossa história</span>
+        <span class="disc cue-disc" aria-hidden="true">
+            <i class="fa-solid fa-chevron-down"></i>
+        </span>
+    </a>
+</header>
+
+<section class="photo-band position-relative d-flex align-items-end" id="origem" data-bs-theme="dark" style="background-image: url('/static/img/hero.webp')">
+    <span class="position-absolute top-0 start-0 w-100 h-100 tile-scrim" style="--scrim-mid: 58%; --scrim-end: 100%" aria-hidden="true"></span>
+
+    <div class="container position-relative py-5">
+        <div class="col-lg-7">
+            <p class="eyebrow rule-above text-gold">Origem</p>
+            <h2 class="h1 mb-3">Começou numa bancada pequena</h2>
+            <p class="text-body-secondary">
+            A Coisas com Gosto nasceu do gosto por trabalhar madeira em
+            casa, ao fim do dia, em Viana do Castelo. Primeiro foram
+            lembranças para a família. Depois pediram-nos uma, e outra,
+            e a bancada deixou de chegar.
+            </p>
+            <p class="text-body-secondary mb-0">
+            Continuamos a fazer tudo aqui, à mão, no mesmo sítio. Nada
+            sai da oficina sem passar por nós.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section bg-body-secondary" id="oficio">
+    <div class="container">
+        <header class="mb-5">
+            <p class="eyebrow rule-above text-gold">O ofício</p>
+            <h2 class="h1 measure mb-0">Cada peça passa por três mãos-cheias de tempo</h2>
+        </header>
+
+        <ol class="row row-cols-1 row-cols-md-3 g-4 list-unstyled mb-0">
+            <li class="col border-top pt-3">
+                <p class="display-4 font-display text-body-tertiary lh-1 mb-2">01</p>
+                <h3 class="h4">Desenhar</h3>
+                <p class="text-body-secondary mb-0">
+                Começa tudo no desenho. Pensamos a peça a partir do que
+                ela vai servir, e é o uso que decide a forma que vai ter.
+                </p>
+            </li>
+            <li class="col border-top pt-3">
+                <p class="display-4 font-display text-body-tertiary lh-1 mb-2">02</p>
+                <h3 class="h4">Pintar</h3>
+                <p class="text-body-secondary mb-0">
+                As cores são dadas à mão, camada sobre camada, seguindo
+                os padrões que herdámos dos trajes da região.
+                </p>
+            </li>
+            <li class="col border-top pt-3">
+                <p class="display-4 font-display text-body-tertiary lh-1 mb-2">03</p>
+                <h3 class="h4">Acabar</h3>
+                <p class="text-body-secondary mb-0">
+                Lixar, selar e montar. É aqui que se decide se leva fio
+                para pendurar ou se fica de pé, à espera de companhia.
+                </p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+@if ($productTypes->isNotEmpty())
+<section class="section">
+    <div class="container">
+        <header class="mb-4">
+            <p class="eyebrow rule-above text-gold">As peças</p>
+            <h2 class="h1 mb-3">O que sai da oficina</h2>
+            <p class="text-body-secondary measure mb-0">
+            Escolha uma família de peças para ver tudo o que temos dela.
+            </p>
+        </header>
+
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2">
+            @foreach ($productTypes as $type)
+            @php($cover = $type->getRelation('cover'))
+            <div class="col">
+                <a class="d-block position-relative overflow-hidden text-decoration-none h-100"
+                   href="{{ route('store.products', ['type_id' => $type->id], false) }}">
+                    <div class="ratio" style="--bs-aspect-ratio: 125%">
+                        @if ($cover)
+                        <img class="object-fit-cover" src="{{ $cover['url'] }}" alt="{{ $cover['alt'] }}" loading="lazy">
+                        @else
+                        <span class="d-flex flex-column align-items-center justify-content-center text-center bg-body-secondary border p-3">
+                            <span class="font-display fs-4 text-body-secondary">{{ $type->name }}</span>
+                            <span class="fs-7 text-uppercase text-body-tertiary">fotografia a caminho</span>
+                        </span>
+                        @endif
+                    </div>
+
+                    @if ($cover)
+                    <span class="position-absolute top-0 start-0 w-100 h-100 tile-scrim" aria-hidden="true"></span>
+                    <span class="position-absolute bottom-0 start-0 p-3 text-white">
+                        <span class="d-block font-display fs-5 lh-sm">{{ $type->name }}</span>
+                        <span class="fs-7 text-uppercase opacity-75">
+                            {{ $type->pieces }} {{ $type->pieces === 1 ? 'peça' : 'peças' }}
+                        </span>
+                    </span>
+                    @endif
+                </a>
+            </div>
+            @endforeach
+
+            <div class="col">
+                <a class="d-flex flex-column align-items-center justify-content-center text-center
+                          h-100 p-3 border bg-body text-decoration-none link-body-emphasis"
+                   href="{{ route('store.products', absolute: false) }}">
+                    <span class="d-block font-display fs-5">Ver tudo</span>
+                    <span class="fs-7 text-uppercase link-primary">o catálogo</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+@endif
+
+@if ($events->isNotEmpty())
+@include('store.components.timeline')
+@endif
+
+@include('store.components.contacts')
+
+@endsection

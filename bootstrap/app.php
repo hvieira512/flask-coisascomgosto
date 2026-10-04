@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticateApi;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Stored as sent: an empty description stays "", and a password with a
         // space at either end keeps it.
         $middleware->remove([ConvertEmptyStringsToNull::class, TrimStrings::class]);
+
+        $middleware->redirectUsersTo('/dashboard/home');
+
+        $middleware->alias(['auth.api' => AuthenticateApi::class]);
 
         // The API reads the session, because the dashboard's own fetch() calls
         // authenticate with its cookie. No CSRF token: AuthenticateApi demands
