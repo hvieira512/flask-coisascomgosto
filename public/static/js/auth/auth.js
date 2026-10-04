@@ -87,7 +87,7 @@ form.addEventListener("submit", async (e) => {
 
         if (!res.ok) {
             const data = await res.json();
-            Notify.error(data.error || "Registo falhou.");
+            Notify.error(data.message || "Registo falhou.");
             return;
         }
 
