@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
 {
     // The values .env.example ships. They are public, so a deployment signing
     // with one could have its sessions and tokens forged.
-    private const PLACEHOLDER_SECRETS = ['dev-jwt-secret-change-me'];
+    private const PLACEHOLDER_SECRETS = ['dev-jwt-secret-change-me-it-is-in-the-repository'];
 
     // MySQL's ER_NO_SUCH_TABLE.
     private const NO_SUCH_TABLE = 1146;
@@ -84,9 +84,18 @@ class AppServiceProvider extends ServiceProvider
         // Loud rather than convenient: a deployment that serves normally with a
         // known key looks exactly like one that is safe. Not in the console, so
         // the image can be built and migrations run without the secret.
-        if (! $this->app->runningInConsole() && ! config('app.debug')
-            && in_array(config('jwt.secret'), [...self::PLACEHOLDER_SECRETS, null, ''], true)) {
-            throw new RuntimeException('JWT_SECRET_KEY is unset or still the development value from .env.example, so tokens would be signed with a public key. Set a real secret before serving with APP_DEBUG off.');
+        if (! $this->app->runningInConsole()) {
+            $secret = (string) config('jwt.secret');
+
+            if (! config('app.debug') && in_array($secret, self::PLACEHOLDER_SECRETS, true)) {
+                throw new RuntimeException('JWT_SECRET_KEY is still the development value from .env.example, so tokens would be signed with a public key. Set a real secret before serving with APP_DEBUG off.');
+            }
+
+            // HS256 wants a key at least as long as its hash; php-jwt refuses a
+            // shorter one at the first sign-in, which would surface as a 500 there.
+            if (strlen($secret) < 32) {
+                throw new RuntimeException('JWT_SECRET_KEY must be at least 32 bytes. Generate one with: php -r "echo bin2hex(random_bytes(32));"');
+            }
         }
     }
 }
