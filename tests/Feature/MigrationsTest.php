@@ -11,7 +11,11 @@ use Illuminate\Support\Facades\DB;
 
 const MIGRATIONS_SCRATCH = 'ccg_c_migrations_test';
 
-const MIGRATIONS_FILE = '2026_10_04_000000_create_catalogue_schema';
+/** Every migration in the repository, in the order Laravel runs them. */
+function migrationsAll(): array
+{
+    return collect(glob(database_path('migrations/*.php')))->map(fn ($f) => basename($f, '.php'))->sort()->values()->all();
+}
 
 const MIGRATIONS_TABLES = [
     'collection_color_sets', 'collections', 'color_set_colors', 'color_sets', 'colors', 'contacts', 'events',
@@ -33,6 +37,7 @@ function migrationsRun(): void
 function migrationsFlaskDatabase(array $applied): void
 {
     migrationsScratch()->statement('CREATE TABLE products (id INT PRIMARY KEY)');
+    migrationsScratch()->statement('CREATE TABLE storefront_events (id BIGINT PRIMARY KEY, created_at DATETIME NOT NULL)');
     migrationsScratch()->statement('CREATE TABLE schema_migrations (filename VARCHAR(255) PRIMARY KEY)');
     foreach ($applied as $filename) {
         migrationsScratch()->table('schema_migrations')->insert(['filename' => $filename]);
@@ -65,8 +70,7 @@ describe('on an empty database', function () {
         migrationsRun();
 
         expect(migrationsTables())->toBe(MIGRATIONS_TABLES)
-            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())
-            ->toBe([MIGRATIONS_FILE, '2026_10_04_000001_drop_the_flask_migration_ledger']);
+            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())->toBe(migrationsAll());
     });
 
     it('seeds the sizes, accents intact', function () {
@@ -106,9 +110,8 @@ describe('on a database the Flask app built', function () {
 
         migrationsRun();
 
-        expect(migrationsTables())->toBe(['migrations', 'products'])
-            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())
-            ->toBe([MIGRATIONS_FILE, '2026_10_04_000001_drop_the_flask_migration_ledger']);
+        expect(migrationsTables())->toBe(['migrations', 'products', 'storefront_events'])
+            ->and(migrationsScratch()->table('migrations')->pluck('migration')->all())->toBe(migrationsAll());
     });
 
     // Anything older is a schema the models do not match. A failed migration is
@@ -120,7 +123,7 @@ describe('on a database the Flask app built', function () {
             ->toThrow(RuntimeException::class, '0013');
 
         expect(migrationsScratch()->table('migrations')->count())->toBe(0)
-            ->and(migrationsTables())->toBe(['migrations', 'products', 'schema_migrations']);
+            ->and(migrationsTables())->toBe(['migrations', 'products', 'schema_migrations', 'storefront_events']);
     });
 });
 
