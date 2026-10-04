@@ -18,8 +18,8 @@ use Illuminate\Http\Request;
 class ProductImageController extends Controller
 {
     private const RULES = [
-        'url' => ['present', 'string'],
-        'alt' => ['sometimes', 'string'],
+        'url' => ['present', 'string', 'max:500'],
+        'alt' => ['sometimes', 'string', 'max:255'],
         'position' => ['sometimes', 'integer:strict'],
         'variant_id' => ['present', 'integer:strict'],
     ];
@@ -64,6 +64,9 @@ class ProductImageController extends Controller
         }
         if (! $request->hasFile('file')) {
             $this->fail(400, 'file: Photograph: jpg, png or webp, up to 5 MB');
+        }
+        if (mb_strlen((string) $request->input('alt')) > 255) {
+            $this->fail(400, 'alt: At most 255 characters.');
         }
 
         $this->findOr404(Product::class, $product, 'Product');

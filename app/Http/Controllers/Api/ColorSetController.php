@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class ColorSetController extends Controller
 {
     private const RULES = [
-        'name' => ['present', 'string'],
+        'name' => ['present', 'string', 'max:120'],
         'collection_ids' => ['sometimes', 'list'],
         'collection_ids.*' => ['integer:strict'],
         'color_ids' => ['present', 'list'],

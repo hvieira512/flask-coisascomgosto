@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  */
 class SizeController extends Controller
 {
-    private const RULES = ['name' => ['present', 'string'], 'position' => ['sometimes', 'integer:strict']];
+    private const RULES = ['name' => ['present', 'string', 'max:40'], 'position' => ['sometimes', 'integer:strict']];
 
     /** List sizes in display order, searched by name with ?q=. */
     public function index(Request $request): array

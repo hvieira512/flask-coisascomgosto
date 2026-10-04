@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 /** The single colours colour sets are built from. */
 class ColorController extends Controller
 {
-    private const RULES = ['name' => ['present', 'string'], 'hex' => ['sometimes', 'string']];
+    private const RULES = ['name' => ['present', 'string', 'max:80'], 'hex' => ['sometimes', 'string', 'max:9']];
 
     /** List colours, searched by name with ?q=. */
     public function index(Request $request): array

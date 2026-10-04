@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 /** What a piece is made of. A lookup the owners maintain themselves. */
 class MaterialController extends Controller
 {
-    private const RULES = ['name' => ['present', 'string']];
+    private const RULES = ['name' => ['present', 'string', 'max:100']];
 
     /** List materials, searched by name with ?q=. */
     public function index(Request $request): array

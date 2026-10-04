@@ -19,9 +19,9 @@ use Illuminate\Http\Request;
 class CollectionController extends Controller
 {
     private const RULES = [
-        'name' => ['present', 'string'],
+        'name' => ['present', 'string', 'max:120'],
         'description' => ['sometimes', 'string'],
-        'image_url' => ['sometimes', 'string'],
+        'image_url' => ['sometimes', 'string', 'max:500'],
     ];
 
     /** List collections, searched by name with ?q=. */

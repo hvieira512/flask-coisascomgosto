@@ -13,7 +13,8 @@ use Illuminate\Http\Request;
  */
 class ContactController extends Controller
 {
-    private const FIELDS = ['address', 'email', 'whatsapp', 'maps_url', 'facebook_url', 'instagram_url'];
+    // Each field and the length of its column.
+    private const FIELDS = ['address' => 255, 'email' => 190, 'whatsapp' => 40, 'maps_url' => 500, 'facebook_url' => 500, 'instagram_url' => 500];
 
     public function show(): ContactResource
     {
@@ -23,10 +24,10 @@ class ContactController extends Controller
     /** Replace them. Every field is optional, and omitting one clears it. */
     public function update(Request $request): ContactResource
     {
-        $data = $this->payload($request, array_fill_keys(self::FIELDS, ['sometimes', 'string']));
+        $data = $this->payload($request, array_map(fn ($length) => ['sometimes', 'string', "max:{$length}"], self::FIELDS));
 
         // An upsert, so the row exists even if the schema's seed was skipped.
-        Contact::updateOrCreate(['id' => 1], array_merge(array_fill_keys(self::FIELDS, null), $data));
+        Contact::updateOrCreate(['id' => 1], array_merge(array_fill_keys(array_keys(self::FIELDS), null), $data));
 
         return new ContactResource(Contact::shop());
     }

@@ -51,7 +51,7 @@ class StorefrontEventController extends Controller
             'product_id' => ['sometimes', 'integer:strict'],
             'variant_id' => ['sometimes', 'integer:strict'],
             'size_id' => ['sometimes', 'integer:strict'],
-            'facet' => ['sometimes', 'string'],
+            'facet' => ['sometimes', 'string', 'max:20'],
             'facet_label' => ['sometimes', 'string'],
             'term' => ['sometimes', 'string'],
             'results' => ['sometimes', 'integer:strict'],

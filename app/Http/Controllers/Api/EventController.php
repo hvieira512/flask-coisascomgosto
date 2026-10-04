@@ -12,12 +12,12 @@ use Illuminate\Http\Request;
 class EventController extends Controller
 {
     private const RULES = [
-        'name' => ['present', 'string'],
-        'location' => ['sometimes', 'string'],
+        'name' => ['present', 'string', 'max:180'],
+        'location' => ['sometimes', 'string', 'max:180'],
         'description' => ['sometimes', 'string'],
-        'starts_on' => ['present', 'string'],
-        'ends_on' => ['sometimes', 'string'],
-        'url' => ['sometimes', 'string'],
+        'starts_on' => ['present', 'string', 'date_format:Y-m-d'],
+        'ends_on' => ['sometimes', 'string', 'date_format:Y-m-d'],
+        'url' => ['sometimes', 'string', 'max:500'],
     ];
 
     /** List events, most recent first, searched by name or location with ?q=. */

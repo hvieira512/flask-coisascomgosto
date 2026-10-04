@@ -16,9 +16,9 @@ use Illuminate\Http\Request;
 class ProductTypeController extends Controller
 {
     private const RULES = [
-        'name' => ['present', 'string'],
+        'name' => ['present', 'string', 'max:120'],
         'description' => ['sometimes', 'string'],
-        'icon' => ['sometimes', 'string'],
+        'icon' => ['sometimes', 'string', 'max:60'],
     ];
 
     /** List product types, searched by name with ?q=. */

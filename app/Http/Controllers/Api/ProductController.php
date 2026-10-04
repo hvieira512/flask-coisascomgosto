@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 class ProductController extends Controller
 {
     private const RULES = [
-        'name' => ['present', 'string'],
+        'name' => ['present', 'string', 'max:180'],
         'description' => ['present', 'string'],
         'type_id' => ['present', 'integer:strict'],
         'material_ids' => ['sometimes', 'list'],
