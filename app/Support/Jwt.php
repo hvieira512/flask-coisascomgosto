@@ -47,12 +47,6 @@ class Jwt
         return ($claims->type ?? null) === $type ? $claims : null;
     }
 
-    /** The token from "Authorization: Bearer <token>", or null. */
-    public static function fromHeader(?string $header): ?string
-    {
-        return preg_match('/^Bearer\s+(\S+)$/', (string) $header, $m) ? $m[1] : null;
-    }
-
     private static function key(): string
     {
         return (string) config('jwt.secret');

@@ -85,8 +85,6 @@ class ProductTypeController extends Controller
 
     private function rejectTaken(string $name, ?int $except = null): void
     {
-        if (ProductType::where('name', $name)->when($except, fn ($q) => $q->where('id', '<>', $except))->exists()) {
-            $this->fail(409, "The product type '{$name}' already exists.");
-        }
+        $this->rejectTakenName(ProductType::class, 'Product type', $name, $except, "The product type '{$name}' already exists.");
     }
 }

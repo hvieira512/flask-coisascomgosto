@@ -94,18 +94,12 @@ class ColorSetController extends Controller
             }
         }
 
-        $missing = array_values(array_diff($data['color_ids'], Color::whereIn('id', $data['color_ids'])->pluck('id')->all()));
-        if ($missing) {
-            sort($missing);
-            $this->fail(404, 'Unknown colour IDs: ['.implode(', ', $missing).']');
-        }
+        $this->rejectUnknownIds(Color::class, $data['color_ids'], 'colour');
     }
 
     private function rejectTaken(string $name, ?int $except = null): void
     {
-        if (ColorSet::where('name', $name)->when($except, fn ($q) => $q->where('id', '<>', $except))->exists()) {
-            $this->fail(409, "The colour set '{$name}' already exists.");
-        }
+        $this->rejectTakenName(ColorSet::class, 'Colour set', $name, $except, "The colour set '{$name}' already exists.");
     }
 
     private function find(int $id): ColorSet

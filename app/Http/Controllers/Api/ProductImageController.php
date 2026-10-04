@@ -7,7 +7,6 @@ use App\Http\Resources\ImageResource;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
-use App\Support\UploadError;
 use App\Support\Uploads;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +27,7 @@ class ProductImageController extends Controller
     /** A piece's photographs in display order, or one colour's with ?variant_id=. */
     public function index(Request $request, int $product): array
     {
-        $this->product($product);
+        $this->findOr404(Product::class, $product, 'Product');
 
         $variantId = filter_var($request->query('variant_id'), FILTER_VALIDATE_INT, ['flags' => FILTER_NULL_ON_FAILURE]);
         $images = ProductImage::where('product_id', $product)
@@ -42,7 +41,7 @@ class ProductImageController extends Controller
     public function store(Request $request, int $product): JsonResponse
     {
         $data = $this->payload($request, self::RULES);
-        $this->product($product);
+        $this->findOr404(Product::class, $product, 'Product');
         $this->variantOf($data['variant_id'], $product);
 
         $image = ProductImage::create([
@@ -67,14 +66,9 @@ class ProductImageController extends Controller
             $this->fail(400, 'file: Photograph: jpg, png or webp, up to 5 MB');
         }
 
-        $this->product($product);
+        $this->findOr404(Product::class, $product, 'Product');
         $this->variantOf($variantId, $product);
-
-        try {
-            $url = Uploads::save($request->file('file'));
-        } catch (UploadError $error) {
-            $this->fail(400, $error->getMessage());
-        }
+        $url = Uploads::save($request->file('file'));
 
         $image = ProductImage::create([
             'product_id' => $product,
@@ -110,13 +104,6 @@ class ProductImageController extends Controller
         $row->delete();
 
         return new ImageResource($row);
-    }
-
-    private function product(int $id): void
-    {
-        if (! Product::whereKey($id)->exists()) {
-            $this->fail(404, "Product #{$id} not found");
-        }
     }
 
     private function variantOf(int $variantId, int $productId): void

@@ -114,7 +114,7 @@ class AuthController extends Controller
      */
     public function refresh(Request $request): JsonResponse
     {
-        $token = Jwt::fromHeader($request->header('Authorization'));
+        $token = $request->bearerToken();
         if ($token === null) {
             $this->fail(401, 'Missing Authorization Header');
         }

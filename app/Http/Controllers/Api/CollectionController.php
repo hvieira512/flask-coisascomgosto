@@ -7,7 +7,6 @@ use App\Http\Resources\CollectionResource;
 use App\Http\Resources\ColorSetResource;
 use App\Models\Collection;
 use App\Models\ColorSet;
-use App\Support\UploadError;
 use App\Support\Uploads;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -89,12 +88,7 @@ class CollectionController extends Controller
             'color_set_ids.*' => ['integer:strict'],
         ]);
         $row = $this->find($collection);
-
-        $missing = array_values(array_diff($data['color_set_ids'], ColorSet::whereIn('id', $data['color_set_ids'])->pluck('id')->all()));
-        if ($missing) {
-            sort($missing);
-            $this->fail(404, 'Unknown colour set IDs: ['.implode(', ', $missing).']');
-        }
+        $this->rejectUnknownIds(ColorSet::class, $data['color_set_ids'], 'colour set');
 
         $row->colorSets()->sync(array_unique($data['color_set_ids']));
 
@@ -105,12 +99,7 @@ class CollectionController extends Controller
     public function storeCover(Request $request, int $collection): JsonResponse
     {
         $row = $this->find($collection);
-
-        try {
-            $url = Uploads::save($request->file('file'), Uploads::COLLECTIONS);
-        } catch (UploadError $error) {
-            $this->fail(400, $error->getMessage());
-        }
+        $url = Uploads::save($request->file('file'), Uploads::COLLECTIONS);
 
         // The file it replaces is left for the sweep. A cover pointed at one of
         // the pieces' own photographs cannot take that photograph with it.

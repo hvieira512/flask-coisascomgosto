@@ -79,13 +79,25 @@ abstract class Controller
     }
 
     /** 409 when the name is taken; $except lets a rename keep its own name. */
-    protected function rejectTakenName(string $model, string $label, string $name, ?int $except = null): void
+    protected function rejectTakenName(string $model, string $label, string $name, ?int $except = null, ?string $message = null): void
     {
         $taken = $model::where('name', $name)->when($except, fn ($q) => $q->where('id', '<>', $except))->exists();
 
         if ($taken) {
             $lower = strtolower($label);
-            $this->fail(409, $except ? "{$label} name '{$name}' is already used by another {$lower}." : "The {$lower} '{$name}' already exists.");
+            $this->fail(409, $message ?? ($except
+                ? "{$label} name '{$name}' is already used by another {$lower}."
+                : "The {$lower} '{$name}' already exists."));
+        }
+    }
+
+    /** 404 naming every id in $ids that $model has no row for, in one message. */
+    protected function rejectUnknownIds(string $model, array $ids, string $label): void
+    {
+        $missing = array_values(array_diff($ids, $model::whereIn('id', $ids)->pluck('id')->all()));
+        if ($missing) {
+            sort($missing);
+            $this->fail(404, "Unknown {$label} IDs: [".implode(', ', $missing).']');
         }
     }
 

@@ -15,7 +15,7 @@ class ProductVariantController extends Controller
 {
     public function index(int $product): array
     {
-        $this->product($product);
+        $this->findOr404(Product::class, $product, 'Product');
 
         $variants = ProductVariant::where('product_id', $product)->orderBy('id')
             ->with(['colorSet.colors', 'images'])->get();
@@ -27,7 +27,7 @@ class ProductVariantController extends Controller
     public function store(Request $request, int $product): JsonResponse
     {
         $data = $this->payload($request, ['color_set_id' => ['present', 'integer:strict']]);
-        $this->product($product);
+        $this->findOr404(Product::class, $product, 'Product');
         $setId = $data['color_set_id'];
 
         if (! ColorSet::whereKey($setId)->exists()) {
@@ -48,7 +48,7 @@ class ProductVariantController extends Controller
      */
     public function destroy(int $product, int $variant): VariantResource
     {
-        $this->product($product);
+        $this->findOr404(Product::class, $product, 'Product');
 
         $row = ProductVariant::where(['id' => $variant, 'product_id' => $product])->first()
             ?? $this->fail(404, "Variant #{$variant} does not belong to product #{$product}");
@@ -56,12 +56,5 @@ class ProductVariantController extends Controller
         $row->remove();
 
         return new VariantResource($row);
-    }
-
-    private function product(int $id): void
-    {
-        if (! Product::whereKey($id)->exists()) {
-            $this->fail(404, "Product #{$id} not found");
-        }
     }
 }

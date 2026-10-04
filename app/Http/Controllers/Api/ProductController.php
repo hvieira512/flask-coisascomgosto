@@ -68,9 +68,7 @@ class ProductController extends Controller
         $data = $this->payload($request, self::RULES);
         $this->checkReferences($data);
 
-        if (Product::where('name', $data['name'])->exists()) {
-            $this->fail(409, "The product {$data['name']} already exists.");
-        }
+        $this->rejectTakenName(Product::class, 'Product', $data['name'], message: "The product {$data['name']} already exists.");
 
         $product = DB::transaction(function () use ($data) {
             $product = Product::create($data);
@@ -99,9 +97,7 @@ class ProductController extends Controller
         $row = Product::find($product) ?? $this->fail(404, "Product #{$product} not found");
         $this->checkReferences($data);
 
-        if (Product::where('name', $data['name'])->where('id', '<>', $row->id)->exists()) {
-            $this->fail(409, "Product name '{$data['name']}' is already used by another product");
-        }
+        $this->rejectTakenName(Product::class, 'Product', $data['name'], $row->id, "Product name '{$data['name']}' is already used by another product");
 
         DB::transaction(function () use ($row, $data) {
             $row->update([
@@ -135,12 +131,7 @@ class ProductController extends Controller
             $this->fail(404, "The product type #{$data['type_id']} does not exist.");
         }
 
-        $materialIds = $data['material_ids'] ?? [];
-        $missing = array_values(array_diff($materialIds, Material::whereIn('id', $materialIds)->pluck('id')->all()));
-        if ($missing) {
-            sort($missing);
-            $this->fail(404, 'Unknown material IDs: ['.implode(', ', $missing).']');
-        }
+        $this->rejectUnknownIds(Material::class, $data['material_ids'] ?? [], 'material');
 
         $sizeId = $data['default_size_id'] ?? null;
         if ($sizeId !== null && ! Size::whereKey($sizeId)->exists()) {

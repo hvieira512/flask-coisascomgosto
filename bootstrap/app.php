@@ -3,6 +3,7 @@
 use App\Http\Middleware\AuthenticateApi;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -47,6 +48,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // answered, rather than Laravel's 422.
         $exceptions->render(fn (ValidationException $e, Request $request) => $request->is('api/*')
             ? response()->json(['message' => 'Input payload validation failed', 'errors' => $e->errors()], 400)
+            : null);
+
+        // Two requests can both find a name free and both insert it; the unique
+        // index stops the second, and that is a conflict, not a server error.
+        $exceptions->render(fn (UniqueConstraintViolationException $e, Request $request) => $request->is('api/*')
+            ? response()->json(['message' => 'That is already taken.'], 409)
             : null);
 
         $exceptions->render(function (HttpExceptionInterface $e, Request $request) {

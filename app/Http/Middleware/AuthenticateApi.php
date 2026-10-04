@@ -42,7 +42,7 @@ class AuthenticateApi
             return response()->json(['message' => self::REQUIRED_HEADER.' header required for session-authenticated writes'], 403);
         }
 
-        $token = Jwt::fromHeader($request->header('Authorization'));
+        $token = $request->bearerToken();
         if ($token === null) {
             return response()->json(['message' => 'Missing Authorization Header'], 401);
         }
