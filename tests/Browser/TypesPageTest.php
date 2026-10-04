@@ -75,6 +75,28 @@ describe('the types ledger', function () {
     });
 });
 
+describe('a type that still has pieces', function () {
+    // The refusal offers to show them, so it has to show those and no others.
+    it('opens the products list filtered to its pieces', function () {
+        $box = makeProductType('Caixa');
+        $frame = makeProductType('Moldura');
+        makeProduct('Caixa Redonda', typeId: $box['id']);
+        makeProduct('Moldura Oval', typeId: $frame['id']);
+
+        $row = "#type-rows tr[data-type-id=\"{$box['id']}\"]";
+        $page = typesPageOpen(ready: $row);
+        $page->hover($row)->click("{$row} [data-type-action=\"delete\"]");
+        $page->click('#deleteTypeModal a.btn-dark');
+
+        $page->assertPathIs('/dashboard/products')
+            ->assertPresent('#product-list tr[data-product-id]')
+            ->assertValue('#filter-type', (string) $box['id'])
+            ->assertSee('Caixa Redonda')
+            ->assertDontSee('Moldura Oval')
+            ->assertNoJavaScriptErrors();
+    });
+});
+
 describe('the materials panel', function () {
     it('counts the pieces made of each', function () {
         $wood = makeMaterial('Madeira');

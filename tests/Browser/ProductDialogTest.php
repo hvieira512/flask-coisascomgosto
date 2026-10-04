@@ -697,6 +697,20 @@ describe('colours and photographs are one panel', function () {
         $page->assertNoJavaScriptErrors();
     });
 
+    // Every save remounted the filter bar, appending each type and collection
+    // again, until the Tipo menu listed every family several times over.
+    it('keeps one filter option per type after saving', function () {
+        $page = productDialogOpenColours(colours: false);
+        productDialogWaitFor($page, "document.getElementById('editProductModal').classList.contains('show')");
+
+        $page->click('#editProductModal #edit-tabs [data-bs-target="#edit-pane-details"]');
+        $page->click('#editProductModal #edit-submit');
+        productDialogWaitFor($page, "!document.getElementById('editProductModal').classList.contains('show')");
+
+        $values = productDialogJs($page, "[...document.querySelectorAll('#filter-type option')].map(o => o.value)");
+        expect($values)->toBe(array_values(array_unique($values)));
+    });
+
     it('refuses to upload a photograph with no colour', function () {
         // Belt as well as braces: the function behind the panel will not do it either.
         $page = productDialogOpenColours();

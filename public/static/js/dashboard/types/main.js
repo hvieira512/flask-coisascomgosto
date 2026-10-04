@@ -186,7 +186,7 @@ async function openDeleteType(id) {
             </p>`;
         footOf("deleteTypeModal").innerHTML = `
             <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
-            <a class="btn btn-dark" href="/dashboard/products">Ver as peças</a>`;
+            <a class="btn btn-dark" href="/dashboard/products?tipo=${type.id}">Ver as peças</a>`;
         open("deleteTypeModal");
         return;
     }

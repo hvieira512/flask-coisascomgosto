@@ -2,6 +2,7 @@ import { reference, typeOptions } from "./reference.js";
 
 const state = { q: "", type_id: "", collection_id: "", photos: "" };
 let onChange = () => {};
+let mounted = false;
 
 const control = (id) => document.getElementById(id);
 
@@ -23,6 +24,11 @@ function syncClearButton() {
 
 export async function mountFilters(handler) {
     onChange = handler;
+
+    // Called again after every save; a second mount appended every option and
+    // every listener again, so one change fetched the list several times.
+    if (mounted) return;
+    mounted = true;
 
     const { types, collections } = await reference();
 
@@ -80,6 +86,12 @@ function applyUrlFilters() {
     if (q) {
         state.q = q;
         control("filter-q").value = q;
+    }
+
+    const type = params.get("tipo");
+    if (type && control("filter-type").querySelector(`option[value="${CSS.escape(type)}"]`)) {
+        state.type_id = type;
+        control("filter-type").value = type;
     }
 
     syncClearButton();
