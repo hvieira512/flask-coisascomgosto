@@ -4,6 +4,7 @@ use App\Models\ProductImage;
 use App\Support\Uploads;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Testing\TestResponse;
 
 beforeEach(fn () => signIn());
@@ -105,6 +106,13 @@ describe('the upload endpoint', function () {
 
     it('refuses a non-image', function () {
         expect(uploadsPost(uploadsProduct(), uploadsFile('notas.txt', 'olá'))->assertStatus(400)->json('message'))->toContain('suportado');
+    });
+
+    it('keeps a refused file out of the error log', function () {
+        Log::spy();
+        uploadsPost(uploadsProduct(), uploadsFile('notas.txt', 'olá'))->assertStatus(400);
+
+        Log::shouldNotHaveReceived('error');
     });
 
     it('refuses an oversized file', function () {
