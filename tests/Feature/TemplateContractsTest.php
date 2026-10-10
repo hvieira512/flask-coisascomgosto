@@ -279,6 +279,7 @@ describe('dashboard pages', function () {
             'js/dashboard/events/main.js', 'Feiras'],
         'colours' => ['/dashboard/colors',
             ['set-rows', 'set-count', 'new-set', 'color-rows', 'color-count', 'color-form', 'color-name', 'color-hex',
+                'set-filter-q', 'set-filter-collection', 'set-filter-pieces', 'set-filter-clear',
                 'newSetModal', 'editSetModal', 'deleteSetModal', 'editColorModal', 'deleteColorModal'],
             'js/dashboard/colors/main.js', '>Cores<'],
         'collections' => ['/dashboard/collections',

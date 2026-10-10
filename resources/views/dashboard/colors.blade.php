@@ -8,6 +8,22 @@
 
 <div class="row g-4">
     <div class="col-lg-8">
+        <div class="row row-cols-2 row-cols-lg-4 g-2 align-items-end mb-3" role="search">
+            @include('dashboard.components.filter-field', ['id' => 'set-filter-q', 'label' => 'Pesquisar',
+                'placeholder' => 'Nome do conjunto'])
+            @include('dashboard.components.filter-field', ['id' => 'set-filter-collection', 'label' => 'Colecção',
+                'options' => [['', 'Todas']]])
+            @include('dashboard.components.filter-field', ['id' => 'set-filter-pieces', 'label' => 'Peças',
+                'options' => [['', 'Todos'], ['none', 'Sem peças'], ['some', 'Com peças']]])
+
+            <div class="col d-flex align-items-end">
+                <button class="btn btn-sm btn-ghost" id="set-filter-clear" hidden>
+                    <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+                    <span>Limpar</span>
+                </button>
+            </div>
+        </div>
+
         <div>
             <div class="dash-table-wrap">
                 <table class="table dash-table table-hover">
