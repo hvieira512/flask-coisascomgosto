@@ -1,7 +1,8 @@
-/* The round box on the landing page, in WebGL: a squat painted drum with a
-   domed lid carrying the owners' lid photograph. It turns slowly, the pointer
-   drags it round, and the lid lifts off with the page's scroll or the button.
-   Without WebGL the photograph stays as a still. */
+/* The round box on the landing page, in WebGL: the guarda-jóias redondo as
+   the shop photographs it — a flattened sphere in white paint, the seam at the
+   equator, the lid a shallow dome carrying the owners' painting in relief. It
+   turns slowly, the pointer drags it round, and the lid lifts off with the
+   page's scroll or the button. Without WebGL the photograph stays as a still. */
 
 const stage = document.querySelector("[data-hero-box]");
 if (stage) mount(stage).catch(console.error);
@@ -20,8 +21,8 @@ async function mount(stage) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-    camera.position.set(0, 1.9, 5.2);
-    camera.lookAt(0, .15, 0);
+    camera.position.set(0, 2.7, 4.5);
+    camera.lookAt(0, 0, 0);
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d3e3, .85));
     const key = new THREE.DirectionalLight(0xffffff, 1.5);
@@ -35,18 +36,21 @@ async function mount(stage) {
     fill.position.set(-3, 1.5, -2);
     scene.add(fill);
 
-    // Proportions read off the photographs: a drum a little under half as tall
-    // as it is wide, a lens-shaped lid overhanging it slightly.
+    /* Proportions read off the shop's photographs. Radius 1 at the seam; the
+       base curves in to a smaller flat bottom, the lid overhangs the base by a
+       hair, rises almost vertically off a rounded rim and flattens on top. Both
+       halves are hollow, with the wall a real box has. */
     const R = 1;
-    const BASE = .42;
-    const DOME = .4;
-    const SKIRT = .08;
-    const CENTRE = (BASE + SKIRT + DOME) / 2;
+    const BASE = .46;
+    const DOME = .6;
+    const WALL = .08;
+    const LIP = .07;
+    const CENTRE = (BASE + DOME) / 2;
+    const SEGMENTS = 128;
 
     const paint = new THREE.MeshPhysicalMaterial({
-        color: 0xf4f1ea, roughness: .38, clearcoat: .6, clearcoatRoughness: .25, side: THREE.DoubleSide,
+        color: 0xf5f2ec, roughness: .42, clearcoat: .5, clearcoatRoughness: .35, side: THREE.DoubleSide,
     });
-    const wood = new THREE.MeshStandardMaterial({ color: 0xe3d2b4, roughness: .85, side: THREE.DoubleSide });
 
     const ground = new THREE.Mesh(new THREE.CircleGeometry(3, 64), new THREE.ShadowMaterial({ opacity: .22 }));
     ground.rotation.x = -Math.PI / 2;
@@ -57,53 +61,124 @@ async function mount(stage) {
     const box = new THREE.Group();
     scene.add(box);
 
-    // The drum, hollow, as one lathe: up the outside, over the rim, down inside.
-    const drum = new THREE.Mesh(new THREE.LatheGeometry([
-        [0, 0], [.9, 0], [.95, .02], [.97, .07], [.97, BASE], [.89, BASE], [.89, .06], [0, .06],
-    ].map(([r, y]) => new THREE.Vector2(r, y)), 96), paint);
-    drum.castShadow = true;
-    drum.position.y = -CENTRE;
-    box.add(drum);
+    const v2 = (r, y) => new THREE.Vector2(r, y);
+    const lathe = (points, material) => {
+        const mesh = new THREE.Mesh(new THREE.LatheGeometry(points, SEGMENTS), material);
+        mesh.castShadow = true;
+        return mesh;
+    };
 
-    // The lid: a short skirt, a dome, and a wooden underside seen when it lifts.
+    // A quarter ellipse from a flat bottom out to the seam: the base's bulge.
+    const bulge = (r0, r1, y0, y1, steps = 24) => {
+        const out = [];
+        for (let i = 0; i <= steps; i += 1) {
+            const a = (i / steps) * (Math.PI / 2);
+            out.push(v2(r0 + (r1 - r0) * Math.sin(a), y1 - (y1 - y0) * Math.cos(a)));
+        }
+        return out;
+    };
+
+    // The base carries a few gold sprigs on its side, as the real one does:
+    // a curl of dots with a tail, painted in relief. A lathe's texture runs
+    // round in u and along the profile in v, with v counted from the bottom of
+    // the canvas: the outside of the base is the canvas's lower half, so the
+    // sprigs go there and the inside stays white.
+    const GOLD = ["#c9a24e", "#b8903f", "#d9b561"];
+    const sideCanvas = document.createElement("canvas");
+    sideCanvas.width = 2048;
+    sideCanvas.height = 512;
+    const side = sideCanvas.getContext("2d");
+    side.fillStyle = "#f5f2ec";
+    side.fillRect(0, 0, 2048, 512);
+    const dot = (x, y, r) => {
+        side.fillStyle = GOLD[Math.floor(Math.random() * GOLD.length)];
+        side.beginPath();
+        side.arc(x, y, r, 0, Math.PI * 2);
+        side.fill();
+    };
+    const sprig = (cx, cy, scale, flip) => {
+        for (let t = 0; t < Math.PI * 3.2; t += .28) {
+            const r = (3 + t * 3.2) * scale;
+            dot(cx + flip * r * Math.cos(t), cy + r * Math.sin(t), (2.2 + t * .25) * scale);
+        }
+        for (let i = 1; i <= 7; i += 1) {
+            const x = cx - flip * (34 + i * 13) * scale;
+            const y = cy + 12 * scale + Math.sin(i * .9) * 4 * scale;
+            dot(x, y, 2.4 * scale);
+            if (i % 2) {
+                dot(x - 4 * scale, y - 9 * scale, 2 * scale);
+                dot(x + 2 * scale, y + 9 * scale, 2 * scale);
+            }
+        }
+    };
+    [[.12, 1], [.37, -1], [.62, 1], [.87, -1]].forEach(([u, flip], i) =>
+        sprig(u * 2048, 340 + (i % 2) * 18, 1.15, flip));
+    const sideTexture = new THREE.CanvasTexture(sideCanvas);
+    sideTexture.colorSpace = THREE.SRGBColorSpace;
+    sideTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const sideRelief = new THREE.CanvasTexture(sideCanvas);
+    const basePaint = new THREE.MeshPhysicalMaterial({
+        map: sideTexture, bumpMap: sideRelief, bumpScale: -.02,
+        roughness: .42, clearcoat: .5, clearcoatRoughness: .35, side: THREE.DoubleSide,
+    });
+
+    // Base: centre of the bottom, out and up the bulge, over the rim, down the
+    // inside wall (the same bulge, one wall in), across the floor.
+    const base = lathe([
+        v2(0, 0),
+        ...bulge(.72, R - .04, 0, BASE),
+        ...bulge(.72 - WALL, R - .04 - WALL, WALL, BASE).reverse(),
+        v2(0, WALL),
+    ], basePaint);
+    base.position.y = -CENTRE;
+    box.add(base);
+
     const lid = new THREE.Group();
     lid.position.y = BASE - CENTRE;
     box.add(lid);
 
-    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(R, R, SKIRT, 96, 1, true), paint);
-    skirt.position.y = SKIRT / 2;
-    skirt.castShadow = true;
-    lid.add(skirt);
+    // The lid's dome: a squircle quadrant, fuller at the shoulder, flat on top.
+    const dome = (radius, height, steps = 40) => {
+        const out = [];
+        for (let i = 0; i <= steps; i += 1) {
+            const y = (i / steps) * height;
+            out.push(v2(radius * (1 - (y / height) ** 2.5) ** (1 / 2.5), y));
+        }
+        return out;
+    };
 
-    const under = new THREE.Mesh(new THREE.CircleGeometry(R, 96), wood);
-    under.rotation.x = Math.PI / 2;
-    under.position.y = .005;
-    lid.add(under);
+    // Outside of the lid: up from the inner edge, round the rim, then the dome.
+    const rim = [];
+    for (let i = 0; i <= 8; i += 1) {
+        const a = -Math.PI / 2 + (i / 8) * (Math.PI / 2);
+        rim.push(v2(R - .03 + .03 * Math.cos(a), -LIP + .03 + .03 * Math.sin(a)));
+    }
+    const shell = [v2(R - WALL, -LIP), ...rim, v2(R, 0), ...dome(R, DOME).slice(1)];
 
     // The photograph is of the lid from above, in its setting. Only the painted
     // lid is wanted: it is composited onto white paint behind a feathered circle,
-    // then projected straight down onto the dome.
+    // projected straight down onto the dome, and used again as a bump map so the
+    // gold strokes stand up the way the real puffy paint does.
     const lidCanvas = document.createElement("canvas");
     lidCanvas.width = lidCanvas.height = 1024;
     const lidContext = lidCanvas.getContext("2d");
-    lidContext.fillStyle = "#f4f1ea";
+    lidContext.fillStyle = "#f5f2ec";
     lidContext.fillRect(0, 0, 1024, 1024);
     const lidPhoto = new THREE.CanvasTexture(lidCanvas);
     lidPhoto.colorSpace = THREE.SRGBColorSpace;
     lidPhoto.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const lidRelief = new THREE.CanvasTexture(lidCanvas);
 
     const photo = new Image();
     photo.src = stage.dataset.lid;
     photo.decode().then(() => {
-        // In the photograph the lid sits a little low and spans four fifths of
-        // the frame; it lands centred, with its rim just inside the dome's.
         const size = 1024;
         const drawn = size * 1.06;
         const mask = document.createElement("canvas");
         mask.width = mask.height = size;
         const m = mask.getContext("2d");
         m.drawImage(photo, size / 2 - drawn / 2, size / 2 - drawn * .52, drawn, drawn);
-        const edge = m.createRadialGradient(size / 2, size / 2, size * .31, size / 2, size / 2, size * .37);
+        const edge = m.createRadialGradient(size / 2, size / 2, size * .29, size / 2, size / 2, size * .35);
         edge.addColorStop(0, "rgba(0,0,0,1)");
         edge.addColorStop(1, "rgba(0,0,0,0)");
         m.globalCompositeOperation = "destination-in";
@@ -111,26 +186,26 @@ async function mount(stage) {
         m.fillRect(0, 0, size, size);
         lidContext.drawImage(mask, 0, 0);
         lidPhoto.needsUpdate = true;
+        lidRelief.needsUpdate = true;
     }).catch(() => {});
 
-    const steps = 24;
-    const profile = [];
-    for (let i = 0; i <= steps; i += 1) {
-        const t = (i / steps) * (Math.PI / 2);
-        profile.push(new THREE.Vector2(R * Math.sin(t), DOME * Math.cos(t)));
-    }
-    const domeGeometry = new THREE.LatheGeometry(profile.reverse(), 96);
-    const position = domeGeometry.attributes.position;
-    const uv = domeGeometry.attributes.uv;
+    const painted = new THREE.MeshPhysicalMaterial({
+        map: lidPhoto, bumpMap: lidRelief, bumpScale: -.012,
+        roughness: .38, clearcoat: .5, clearcoatRoughness: .3,
+    });
+    const outside = lathe(shell, painted);
+    // Planar projection: the painting lands flat on the top, white runs down the sides.
+    const position = outside.geometry.attributes.position;
+    const uv = outside.geometry.attributes.uv;
     for (let i = 0; i < position.count; i += 1) {
         uv.setXY(i, .5 + (position.getX(i) / R) * .5, .5 - (position.getZ(i) / R) * .5);
     }
-    const dome = new THREE.Mesh(domeGeometry, new THREE.MeshPhysicalMaterial({
-        map: lidPhoto, roughness: .35, clearcoat: .7, clearcoatRoughness: .2,
-    }));
-    dome.position.y = SKIRT;
-    dome.castShadow = true;
-    lid.add(dome);
+    lid.add(outside);
+
+    // Inside of the lid: the same dome one wall in, seen when the lid lifts.
+    const hollow = lathe([v2(R - WALL, -LIP), ...dome(R - WALL, DOME - WALL).map((p) => v2(p.x, p.y + .01))], paint);
+    hollow.castShadow = false;
+    lid.add(hollow);
 
     // State: where the box is turned to, how far the lid is open and why.
     let yaw = .35;
@@ -204,9 +279,9 @@ async function mount(stage) {
         if (!dragging && !reduced) yaw += dt * .25;
         open += (target() - open) * (reduced ? 1 : Math.min(1, dt * 5));
         // Lifted off and tipped back, the way a hand takes a lid.
-        lid.position.y = BASE - CENTRE + open * .6;
+        lid.position.y = BASE - CENTRE + open * .7;
         lid.position.z = -open * .3;
-        lid.rotation.x = -open * .5;
+        lid.rotation.x = -open * .55;
         box.rotation.set(pitch, yaw, 0);
         renderer.render(scene, camera);
     };
