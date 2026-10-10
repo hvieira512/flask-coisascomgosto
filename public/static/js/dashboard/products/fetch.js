@@ -105,13 +105,20 @@ const renderPager = ({ page, pages }) => {
 };
 
 const renderProducts = (products) => {
+    productList.classList.remove("is-loading");
     productList.innerHTML = "";
     if (!products.length) return renderEmptyMessage();
 
     products.forEach((product) => productList.appendChild(row(product)));
 };
 
+// While a request is out, the rows already on screen stay and dim; only an
+// empty table gets placeholder rows, so a filter never flashes a bare grid.
 const renderSkeleton = () => {
+    if (productList.children.length) {
+        productList.classList.add("is-loading");
+        return;
+    }
     productList.innerHTML = `
         <tr>
           <td colspan="${COLUMNS}" class="placeholder-glow">
@@ -154,6 +161,7 @@ export const fetchProducts = async (page = currentPage) => {
         renderPager(pagination);
         renderCount(pagination.total, await countMissing(pagination.total));
     } catch (error) {
+        productList.classList.remove("is-loading");
         Notify.error("Erro ao buscar peças");
         console.error("Error fetching products:", error);
     }

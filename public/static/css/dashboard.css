@@ -531,6 +531,17 @@
     cursor: pointer;
 }
 
+/* Rows waiting on a request: still there, a little quieter. */
+.dash-table tbody.is-loading {
+    opacity: .5;
+    transition: opacity .15s ease;
+}
+
+/* The placeholder rows of a first load, in the hairline's colour rather than ink. */
+.dash-table .placeholder {
+    color: var(--ccg-line);
+}
+
 .dash-table td {
     vertical-align: middle;
 }
