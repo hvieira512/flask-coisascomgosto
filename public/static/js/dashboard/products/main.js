@@ -16,7 +16,7 @@ import {
 import { stepDialog } from "../../core/steps.js";
 
 const getProduct = (id) =>
-    request(API.products.get(id), { fallback: "Produto não encontrado." });
+    request(API.products.get(id), { fallback: "Peça não encontrada." });
 
 const showVariantsTab = () =>
     bootstrap.Tab.getOrCreateInstance(
@@ -65,7 +65,7 @@ async function openCreate() {
         body: (await productForm()) + variantChoiceStep(colorSets),
         titles: [...PRODUCT_STEPS, "Cores"],
         validate: [validateIdentity, validateIdentity, validateIdentity],
-        finishLabel: "Criar produto",
+        finishLabel: "Criar peça",
         afterRender: (root) => {
             wireProductForm(root);
             chosenColorSets = wireVariantChoice(root);
@@ -77,7 +77,7 @@ async function openCreate() {
             await uploadChosenPhotos(id, picks);
             return id;
         },
-        success: "Produto criado.",
+        success: "Peça criada.",
         after: async (id) => {
             await mountFilters(fetchProducts).then(fetchProducts);
             await openEdit(id);
@@ -122,7 +122,7 @@ async function openEdit(id) {
         submitting(event.currentTarget, async () => {
             await submitProductForm(modal("editProductModal"));
             await close("editProductModal");
-            Notify.success("Produto actualizado.");
+            Notify.success("Peça actualizada.");
             await mountFilters(fetchProducts).then(fetchProducts);
         });
 }
@@ -223,7 +223,7 @@ async function openDelete(id) {
             </p>`,
         onConfirm: () => request(API.products.delete(id),
                                { method: "DELETE", fallback: "Não foi possível apagar." }),
-        success: "Produto apagado.",
+        success: "Peça apagada.",
         after: () => mountFilters(fetchProducts).then(fetchProducts),
     });
 }

@@ -1,5 +1,5 @@
 import { API, request } from "../../core/api.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { picked, pickChip, wirePicks } from "../picks.js";
 import { reference, typeOptions } from "./reference.js";
 
@@ -40,7 +40,6 @@ export async function productForm(product = null) {
           <div class="input-group">
             <input class="form-control" id="pf-name" name="name" required
                    value="${escapeHtml(product?.name ?? "")}" placeholder="Caixa Redonda Filigrana">
-            ${fieldIcon("fa-solid fa-tag")}
           </div>
         </div>
 
@@ -51,7 +50,6 @@ export async function productForm(product = null) {
               <option value="">Escolher…</option>
               ${typeOptions(types).map((t) => option(t.id, t.label, product?.type?.id)).join("")}
             </select>
-            ${fieldIcon("fa-solid fa-shapes")}
           </div>
           <p class="help mb-0">A família da peça — Caixa, Moldura, Coração.</p>
         </div>

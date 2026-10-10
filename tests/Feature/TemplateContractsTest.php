@@ -276,7 +276,7 @@ describe('dashboard pages', function () {
             'js/dashboard/types/main.js', '>Tipos<'],
         'events' => ['/dashboard/events',
             ['event-rows', 'event-count', 'new-event', 'newEventModal', 'editEventModal', 'deleteEventModal'],
-            'js/dashboard/events/main.js', 'Eventos'],
+            'js/dashboard/events/main.js', 'Feiras'],
         'colours' => ['/dashboard/colors',
             ['set-rows', 'set-count', 'new-set', 'color-rows', 'color-count', 'color-form', 'color-name', 'color-hex',
                 'newSetModal', 'editSetModal', 'deleteSetModal', 'editColorModal', 'deleteColorModal'],

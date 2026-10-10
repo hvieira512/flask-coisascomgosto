@@ -1,6 +1,6 @@
 import { API } from "../core/api.js";
 import { Notify } from "../core/notify.js";
-import { escapeHtml, fieldIcon } from "../core/html.js";
+import { escapeHtml } from "../core/html.js";
 
 const submitBtn = document.querySelector("#submitBtn");
 const usernameField = document.querySelector("#usernameField");
@@ -66,31 +66,24 @@ form.addEventListener("submit", async (e) => {
 
 function renderLoginForm(username) {
     formHeader.innerHTML = `
-        <h1 class="h4 mb-1">Olá, ${escapeHtml(username)}!</h1>
-        <p class="text-body-secondary">Introduz a tua password para entrar.</p>
+        <p class="eyebrow">Área reservada</p>
+        <h1 class="h2 font-display mb-2">Olá, ${escapeHtml(username)}!</h1>
+        <p class="text-body-secondary mb-0">Introduza a sua palavra-passe para entrar.</p>
     `;
-    appendInput({
-        icon: "fa-lock",
-        type: "password",
-        id: "passwordField",
-        name: "password",
-        placeholder: "Password",
-    });
+    appendPasswordField();
+    submitBtn.querySelector("span").textContent = "Entrar";
     document.querySelector("#passwordField").focus();
 }
 
-function appendInput({ icon, type, id, name, placeholder }) {
-    if (document.querySelector(`#${id}`)) return;
+function appendPasswordField() {
+    if (document.querySelector("#passwordField")) return;
 
     const field = document.createElement("div");
     field.className = "mb-3";
-
     field.innerHTML = `
-        <div class="input-group input-group-lg">
-            <input type="${type}" class="form-control form-control-lg" placeholder="${placeholder}"
-                   name="${name}" id="${id}" required>
-            ${fieldIcon(`fa-solid ${icon}`)}
-        </div>
+        <label class="form-label" for="passwordField">Palavra-passe</label>
+        <input type="password" class="form-control form-control-lg" name="password"
+               id="passwordField" autocomplete="current-password" required>
     `;
 
     const anchor = submitBtn.parentElement;

@@ -20,24 +20,30 @@
     --dash-border: var(--ccg-line);
     --dash-sidebar-width: 14.5rem;
     --dash-navbar-height: 3.25rem;
+}
 
+/* From lg the bar is gone: the account menu lives in the rail. */
+@media screen and (min-width: 992px) {
+    .dashboard-body {
+        --dash-navbar-height: 0px;
+    }
 }
 
 /* Squarer than the shop, which is the difference between a page and a tool. Set
    as Bootstrap's own radius so every card, button, badge and modal follows. */
 .dashboard-body {
-    --bs-border-radius: 2px;
-    --bs-border-radius-sm: 2px;
-    --bs-border-radius-lg: 3px;
+    --bs-border-radius: 4px;
+    --bs-border-radius-sm: 4px;
+    --bs-border-radius-lg: 8px;
     --bs-heading-color: var(--ccg-ink);
     --bs-emphasis-color: var(--ccg-ink);
-    --radius: 2px;
-    --radius-lg: 3px;
+    --radius: 4px;
+    --radius-lg: 8px;
 
     display: grid;
     grid-template-columns: var(--dash-sidebar-width) 1fr;
     min-height: 100vh;
-    background: var(--ccg-paper);
+    background: var(--ccg-white);
 }
 
 @media screen and (max-width: 991.98px) {
@@ -51,19 +57,6 @@
 .dash-title {
     font-size: clamp(1.625rem, 3vw, 2.25rem);
     letter-spacing: -.015em;
-}
-
-/* The shop's eyebrow is a blue heading over prose; here it is a machine label
-   over a figure, so it is the workshop's mono and steps back to let the figure
-   read. Only the three declarations that differ. */
-.dashboard-body .eyebrow {
-    font-family: var(--font-data);
-    font-weight: 400;
-    color: var(--ccg-ink-faint);
-}
-
-.dash-navbar .eyebrow {
-    color: var(--ccg-ink-faint);
 }
 
 /* A grid item's min-width is auto, so the bar's own content — the burger, the
@@ -80,7 +73,7 @@
 /* !important because Bootstrap forces an .offcanvas-lg transparent above its
    breakpoint, and the rail is a white surface. */
 .dash-sidebar {
-    background: var(--ccg-surface) !important;
+    background: var(--ccg-white) !important;
     border-right: 1px solid var(--ccg-line);
 }
 
@@ -144,7 +137,7 @@
     z-index: 1020;
     height: var(--dash-navbar-height);
     min-height: var(--dash-navbar-height);
-    background: var(--ccg-surface);
+    background: var(--ccg-white);
     border-bottom: 1px solid var(--ccg-line);
 }
 
@@ -183,11 +176,12 @@
    Work surfaces
    ---------------------------------------------------------------- */
 
-/* A panel is paper with a hairline, not a card with a shadow: nothing on this
-   surface is floating above anything. */
+/* A panel is a hairline, not a card with a shadow: nothing on this surface is
+   floating above anything. */
 .dash-panel {
     border: 1px solid var(--ccg-line);
-    background: var(--ccg-paper);
+    background: var(--ccg-white);
+    border-radius: 6px;
 }
 
 /* Bootstrap has no colour for the accent, and a sparkline drawn in currentColor
@@ -231,7 +225,7 @@
    supplies the pill; these supply the meaning, from the semantic tokens in
    theme.css. */
 .chip {
-    font-size: .6875rem;
+    font-size: .75rem;
     font-weight: 600;
     letter-spacing: .02em;
 }
@@ -247,7 +241,7 @@
 }
 
 .chip.is-quiet {
-    background-color: var(--ccg-paper-deep);
+    background-color: var(--ccg-mist);
     color: var(--ccg-ink-soft);
 }
 
@@ -283,7 +277,7 @@
     gap: .35rem;
     padding: .35rem .6rem;
     border: 0;
-    background-color: var(--ccg-paper-deep);
+    background-color: var(--ccg-mist);
     color: var(--ccg-ink);
     font-size: .75rem;
     cursor: pointer;
@@ -320,7 +314,7 @@
     padding: .4rem;
     border: 1px dashed var(--ccg-line);
     border-radius: var(--radius);
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
     cursor: pointer;
     overflow: hidden;
     text-align: center;
@@ -382,7 +376,7 @@
     padding: 0;
     border-style: solid;
     border-color: var(--ccg-line);
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
 }
 
 .photo-slot.is-filled img {
@@ -526,12 +520,9 @@
     position: sticky;
     top: var(--dash-navbar-height);
     z-index: 2;
-    background: var(--ccg-paper);
-    font-family: var(--font-data);
-    font-size: .6875rem;
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: .1em;
+    background: var(--ccg-white);
+    font-size: .75rem;
+    font-weight: 600;
     color: var(--ccg-ink-faint);
     white-space: nowrap;
 }
@@ -552,9 +543,9 @@
     height: 52px;
     object-fit: cover;
     flex: none;
-    border-radius: 0;
+    border-radius: 4px;
     border: 0;
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
 }
 
 /* The tile's glyph is sized in cqw with a 1rem floor, which a 42px thumbnail has
@@ -705,10 +696,10 @@
     }
 }
 
-/* Revealed on hover, so a row of icons does not compete with the names. Always
-   visible to the keyboard, and on touch, where there is no hover. */
+/* Quiet at rest, so a row of icons does not compete with the names; full on
+   hover, to the keyboard, and on touch, where there is no hover. */
 .dash-row-actions {
-    opacity: 0;
+    opacity: .6;
     transition: opacity .12s ease;
 }
 
@@ -743,13 +734,13 @@
    and the palette. */
 .dash-modal {
     --bs-modal-color: var(--ccg-ink);
-    --bs-modal-bg: var(--ccg-surface);
+    --bs-modal-bg: var(--ccg-white);
     --bs-modal-border-width: 0;
     --bs-modal-border-radius: var(--radius-lg);
     --bs-modal-inner-border-radius: var(--radius-lg);
     --bs-modal-header-border-color: var(--dash-border);
     --bs-modal-footer-border-color: var(--dash-border);
-    --bs-modal-footer-bg: var(--ccg-paper);
+    --bs-modal-footer-bg: var(--ccg-mist);
     --bs-modal-footer-gap: .5rem;
     /* Compact head and foot: on a form the words "Editar produto" should not have
        more room than the fields under them. */
@@ -801,7 +792,7 @@
 .dash-type-icon {
     width: 34px;
     height: 34px;
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
     color: var(--ccg-ink-soft);
     font-size: .8rem;
 }

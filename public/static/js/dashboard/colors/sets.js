@@ -1,7 +1,7 @@
 import { API, request } from "../../core/api.js";
 import { ColorSet } from "../../store/color-set.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { nameTaken } from "../errors.js";
 import { picked, pickChip, wirePicks } from "../picks.js";
 
@@ -53,7 +53,6 @@ function setForm(set, colors, collections) {
         <div class="input-group">
           <input class="form-control" id="sf-name" name="name" required
                  value="${escapeHtml(set?.name ?? "")}" placeholder="Branco e Dourado">
-          ${fieldIcon("fa-solid fa-tag")}
         </div>
       </div>
 

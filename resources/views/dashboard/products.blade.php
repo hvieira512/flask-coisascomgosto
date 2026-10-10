@@ -1,28 +1,26 @@
 @extends('layouts.dashboard')
 
-@section('page_title', 'Produtos')
+@section('page_title', 'Peças')
 
 @section('content')
-@include('dashboard.components.page-head', ['eyebrow' => 'Catálogo', 'title' => 'Produtos',
-    'countId' => 'product-count', 'buttonId' => 'new-product', 'buttonLabel' => 'Novo produto'])
+@include('dashboard.components.page-head', ['eyebrow' => 'Catálogo', 'title' => 'Peças',
+    'countId' => 'product-count', 'buttonId' => 'new-product', 'buttonLabel' => 'Nova peça'])
 
-<div class="card dash-panel p-3 mb-3">
-    <div class="row row-cols-2 row-cols-lg-5 g-2 align-items-end">
-        @include('dashboard.components.filter-field', ['id' => 'filter-q', 'label' => 'Pesquisar',
-            'placeholder' => 'Nome do produto…', 'icon' => 'fa-solid fa-magnifying-glass'])
-        @include('dashboard.components.filter-field', ['id' => 'filter-type', 'label' => 'Tipo',
-            'options' => [['', 'Todos']], 'icon' => 'fa-solid fa-shapes'])
-        @include('dashboard.components.filter-field', ['id' => 'filter-collection', 'label' => 'Colecção',
-            'options' => [['', 'Todas']], 'icon' => 'fa-solid fa-layer-group'])
-        @include('dashboard.components.filter-field', ['id' => 'filter-photos', 'label' => 'Fotografias',
-            'options' => [['', 'Todas'], ['none', 'Sem fotografia'], ['some', 'Com fotografia']], 'icon' => 'fa-solid fa-image'])
+<div class="row row-cols-2 row-cols-lg-5 g-2 align-items-end mb-4" role="search">
+    @include('dashboard.components.filter-field', ['id' => 'filter-q', 'label' => 'Pesquisar',
+        'placeholder' => 'Nome da peça'])
+    @include('dashboard.components.filter-field', ['id' => 'filter-type', 'label' => 'Tipo',
+        'options' => [['', 'Todos']]])
+    @include('dashboard.components.filter-field', ['id' => 'filter-collection', 'label' => 'Colecção',
+        'options' => [['', 'Todas']]])
+    @include('dashboard.components.filter-field', ['id' => 'filter-photos', 'label' => 'Fotografias',
+        'options' => [['', 'Todas'], ['none', 'Sem fotografia'], ['some', 'Com fotografia']]])
 
-        <div class="col d-flex align-items-end">
-            <button class="btn btn-sm btn-ghost" id="filter-clear" hidden>
-                <span class="icon"><i class="fa-solid fa-xmark"></i></span>
-                <span>Limpar</span>
-            </button>
-        </div>
+    <div class="col d-flex align-items-end">
+        <button class="btn btn-sm btn-ghost" id="filter-clear" hidden>
+            <span class="icon"><i class="fa-solid fa-xmark"></i></span>
+            <span>Limpar</span>
+        </button>
     </div>
 </div>
 
@@ -56,9 +54,9 @@
     </nav>
 </div>
 
-@include('dashboard.components.modal', ['id' => 'newProductModal', 'title' => 'Novo produto'])
-@include('dashboard.components.modal', ['id' => 'editProductModal', 'title' => 'Editar produto'])
-@include('dashboard.components.modal', ['id' => 'deleteProductModal', 'title' => 'Apagar produto'])
+@include('dashboard.components.modal', ['id' => 'newProductModal', 'title' => 'Nova peça'])
+@include('dashboard.components.modal', ['id' => 'editProductModal', 'title' => 'Editar peça'])
+@include('dashboard.components.modal', ['id' => 'deleteProductModal', 'title' => 'Apagar peça'])
 @endsection
 
 @section('page_scripts')

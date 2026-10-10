@@ -144,7 +144,7 @@ export const fetchProducts = async (page = currentPage) => {
     try {
         const { products, pagination } = await request(API.products.list, {
             params: { ...filterParams(), page, limit: PAGE_SIZE },
-            fallback: "Erro ao buscar produtos.",
+            fallback: "Erro ao buscar peças.",
         });
 
         // The last piece of the last page was deleted: show the page before.
@@ -154,7 +154,7 @@ export const fetchProducts = async (page = currentPage) => {
         renderPager(pagination);
         renderCount(pagination.total, await countMissing(pagination.total));
     } catch (error) {
-        Notify.error("Erro ao buscar produtos");
+        Notify.error("Erro ao buscar peças");
         console.error("Error fetching products:", error);
     }
 };

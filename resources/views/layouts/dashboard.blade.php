@@ -1,6 +1,6 @@
 @extends('layouts.base')
 
-@section('title', $__env->yieldContent('page_title', 'Painel').' · Dashboard')
+@section('title', $__env->yieldContent('page_title', 'Painel').' · Painel')
 
 @section('body_class', 'dashboard-body')
 

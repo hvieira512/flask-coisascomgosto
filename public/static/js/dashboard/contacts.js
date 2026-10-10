@@ -22,23 +22,25 @@ const socialHandle = (url) => {
 };
 
 function renderPreview() {
-    const cards = [
-        { label: "Morada", value: field("address").value, icon: "fa-solid fa-location-dot" },
-        { label: "E-mail", value: field("email").value, icon: "fa-solid fa-envelope" },
-        { label: "WhatsApp", value: field("whatsapp").value, icon: "fa-brands fa-whatsapp" },
-        { label: "Facebook", value: socialHandle(field("facebook_url").value), icon: "fa-brands fa-facebook-f" },
-        { label: "Instagram", value: socialHandle(field("instagram_url").value), icon: "fa-brands fa-instagram" },
-    ].filter((card) => card.value.trim());
+    const address = field("address").value.trim();
+    const rows = [
+        ["WhatsApp", field("whatsapp").value],
+        ["E-mail", field("email").value],
+        ["Instagram", socialHandle(field("instagram_url").value)],
+        ["Facebook", socialHandle(field("facebook_url").value)],
+    ].filter(([, value]) => String(value ?? "").trim());
 
-    document.getElementById("contact-preview").innerHTML = cards.length
-        ? `<ul class="list-group list-group-flush">${cards.map((card) => `
-             <li class="list-group-item d-flex align-items-center px-0">
-               <span class="disc contact-icon me-3"><i class="${card.icon}"></i></span>
-               <span class="contact-body">
-                 <span class="eyebrow mb-0">${escapeHtml(card.label)}</span>
-                 <span class="contact-value">${escapeHtml(card.value.trim())}</span>
-               </span>
-             </li>`).join("")}</ul>`
+    document.getElementById("contact-preview").innerHTML = address || rows.length
+        ? `<div class="bg-body text-body rounded-3 p-4" data-bs-theme="dark">
+             <p class="eyebrow">Contactos</p>
+             <p class="font-display fs-4 fw-semibold mb-2">Onde nos encontra</p>
+             ${address ? `<p class="font-display fs-6 mb-3">${escapeHtml(address)}</p>` : ""}
+             <dl class="mb-0 fs-7">${rows.map(([label, value]) => `
+               <div class="row gx-2 border-top py-2">
+                 <dt class="col-4 fw-semibold text-uppercase text-body-secondary">${escapeHtml(label)}</dt>
+                 <dd class="col-8 mb-0">${escapeHtml(String(value).trim())}</dd>
+               </div>`).join("")}</dl>
+           </div>`
         : `<p class="text-body-secondary fs-7">Sem contactos preenchidos.</p>`;
 
     const number = field("whatsapp").value;

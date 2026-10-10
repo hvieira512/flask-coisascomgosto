@@ -90,16 +90,16 @@ describe('the landing page', function () {
         $this->get('/')->assertOk()->assertSee('Coisas com Gosto', false);
     });
 
-    it('tells the story in order', function () {
+    it('leads with the pieces, then tells the story', function () {
         makeProductType('Caixa');
         $html = $this->get('/')->getContent();
 
         // Each section's own heading, not the navbar links or the hero's CTA,
         // which share the same words.
         $positions = array_map(fn ($h) => strpos($html, $h), [
+            'O que sai da oficina',
             'Começou numa bancada pequena',
             'três mãos-cheias de tempo',
-            'O que sai da oficina',
             'Onde nos encontra</h2>',
         ]);
         expect($positions)->not->toContain(false);
@@ -108,11 +108,11 @@ describe('the landing page', function () {
         expect($positions)->toBe($sorted);
     });
 
-    it('introduces the workshop before the range', function () {
+    it('shows the range before the workshop story', function () {
         makeProductType('Caixa');
         $html = $this->get('/')->getContent();
 
-        expect(strpos($html, 'id="origem"'))->toBeLessThan(strpos($html, 'O que sai da oficina'));
+        expect(strpos($html, 'O que sai da oficina'))->toBeLessThan(strpos($html, 'id="origem"'));
     });
 
     it('keeps the contacts in a section, not the navbar', function () {
@@ -132,10 +132,10 @@ describe('the landing page', function () {
             ->toContain('font-display');
     });
 
-    it('closes on the dark band', function () {
+    it('closes on the one dark band, the contacts', function () {
         $html = $this->get('/')->getContent();
 
-        expect(substr_count($html, 'data-bs-theme="dark"'))->toBeGreaterThanOrEqual(2)
+        expect(substr_count($html, 'data-bs-theme="dark"'))->toBe(1)
             ->and(strpos($html, 'id="contacts"'))->toBeLessThan(strpos($html, '<footer'));
     });
 

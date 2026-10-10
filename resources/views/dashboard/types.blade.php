@@ -43,8 +43,7 @@
             <form id="material-form" class="input-group input-group-sm">
                 <input class="form-control" id="material-name" required
                        placeholder="Pasta de modelar" aria-label="Nome do material">
-                <span class="input-group-text"><i class="fa-solid fa-cube" aria-hidden="true"></i></span>
-                <button class="btn btn-dark" type="submit">Adicionar</button>
+                <button class="btn btn-outline-secondary" type="submit">Adicionar</button>
             </form>
             <p class="help mt-2 mb-0" id="material-note">De que são feitas as peças.
                 Uma peça pode ser feita de mais do que um material, por isso a soma

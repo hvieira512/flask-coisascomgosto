@@ -1,5 +1,5 @@
 import { API, list, request } from "../../core/api.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { bodyOf, confirmDialog, footOf, formDialog, modal, open } from "../../core/modal.js";
 import { Notify } from "../../core/notify.js";
 import { mountMaterials } from "./materials.js";
@@ -98,7 +98,6 @@ function typeForm(type = null) {
         <div class="input-group">
           <input class="form-control" id="tf-name" name="name" required
                  value="${escapeHtml(type?.name ?? "")}" placeholder="Caixa">
-          ${fieldIcon("fa-solid fa-tag")}
         </div>
         <p class="help mb-0">
           A família da peça. A forma vai no nome da peça — "Caixa rectangular".
@@ -119,7 +118,6 @@ function typeForm(type = null) {
             <option value="">Adivinhar pelo nome</option>
             ${iconOptions}
           </select>
-          ${fieldIcon("fa-solid fa-icons")}
         </div>
         <p class="help mb-0">
           Desenhado nas peças sem fotografia. <span id="tf-icon-preview"></span>

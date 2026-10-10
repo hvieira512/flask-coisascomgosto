@@ -1,70 +1,14 @@
-/*
- * Login page: a two-panel layout with the form on the left and a photo panel
- * on the right that collapses away on small screens.
- */
-
-.auth-shell {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    padding: 1.5rem;
-}
-
-/* The columns themselves are Bootstrap's; this only bounds the pair. */
-.auth-wrapper {
-    width: 100%;
-    max-width: 1200px;
-}
+/* Login page: the form beside a photograph of a piece. Bootstrap lays it out;
+   only the two column widths are ours. */
 
 .auth-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    padding: 2.5rem 2rem;
-    background: #fff;
-    border: 1px solid #ededed;
-    border-radius: 14px;
-}
-
-.auth-logo img {
-    max-height: 90px;
-    width: auto;
+    flex: 1 1 24rem;
 }
 
 .auth-form {
-    width: 100%;
+    max-width: 24rem;
 }
 
 .auth-aside {
-    position: relative;
-    border-radius: 14px;
-    overflow: hidden;
-    background-image: url("../img/auth-bg.jpg");
-    background-size: cover;
-    background-position: center;
-    min-height: 520px;
-}
-
-/* Frosted panel so the headline stays readable over the photo. */
-.auth-glass {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 2.5rem;
-    color: #fff;
-    background: linear-gradient(180deg, rgba(0, 0, 0, .15) 0%, rgba(0, 0, 0, .55) 100%);
-}
-
-@media screen and (max-width: 767.98px) {
-    .auth-panel {
-        border: none;
-        padding: 1.5rem 0;
-    }
+    flex: 1 1 28rem;
 }

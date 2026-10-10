@@ -41,8 +41,7 @@
                            type="color" id="color-hex" value="#4472C4" aria-label="Cor">
                     <input class="form-control" id="color-name" required
                            placeholder="Dourado" aria-label="Nome da cor">
-                    <span class="input-group-text"><i class="fa-solid fa-tag" aria-hidden="true"></i></span>
-                    <button class="btn btn-dark" type="submit">Adicionar</button>
+                    <button class="btn btn-outline-secondary" type="submit">Adicionar</button>
                 </div>
             </form>
             <p class="help mt-2 mb-0">Cada cor pode entrar em vários conjuntos.</p>

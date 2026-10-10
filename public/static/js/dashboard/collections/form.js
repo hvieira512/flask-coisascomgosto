@@ -2,7 +2,7 @@ import { API, request } from "../../core/api.js";
 import { ColorSet } from "../../store/color-set.js";
 import { Notify } from "../../core/notify.js";
 import { PhotoPicker } from "../../core/photo-picker.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { formDialog, modal } from "../../core/modal.js";
 import { nameTaken } from "../errors.js";
 
@@ -16,7 +16,6 @@ function markup(collection) {
             <div class="input-group">
               <input class="form-control" id="cof-name" name="name" required
                      value="${escapeHtml(collection?.name ?? "")}" placeholder="Filigrana">
-              ${fieldIcon("fa-solid fa-tag")}
             </div>
           </div>
 

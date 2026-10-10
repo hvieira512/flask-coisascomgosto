@@ -1,7 +1,7 @@
 import { API, request } from "../../core/api.js";
 import { ColorSet } from "../../store/color-set.js";
 import { PhotoPicker } from "../../core/photo-picker.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { reference } from "./reference.js";
 
 export function variantChoiceStep(colorSets) {
@@ -148,7 +148,6 @@ export async function variantsPanel(product) {
               ? available.map((cs) => `<option value="${cs.id}">${escapeHtml(cs.name)}</option>`).join("")
               : `<option>Todos os conjuntos já estão associados</option>`}
         </select>
-        ${fieldIcon("fa-solid fa-palette")}
         <button class="btn btn-dark" id="add-variant"${available.length ? "" : " disabled"}>
           Adicionar
         </button>

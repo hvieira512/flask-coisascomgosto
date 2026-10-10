@@ -1,6 +1,6 @@
 import { API, request } from "../../core/api.js";
 import { confirmDialog, formDialog } from "../../core/modal.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { nameTaken } from "../errors.js";
 
 export const colorList = (colors) =>
@@ -37,7 +37,6 @@ export function openColorForm({ color, after }) {
               <label class="form-label fs-7" for="cf-name">Nome</label>
               <div class="input-group">
                 <input class="form-control" id="cf-name" required value="${escapeHtml(color.name)}">
-                ${fieldIcon("fa-solid fa-tag")}
               </div>
             </div>
             <div>

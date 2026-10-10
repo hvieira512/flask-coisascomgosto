@@ -1,4 +1,4 @@
-<nav class="navbar dash-navbar d-flex flex-nowrap align-items-center justify-content-between gap-3 px-3 px-xl-5"
+<nav class="navbar dash-navbar d-lg-none d-flex flex-nowrap align-items-center justify-content-between gap-3 px-3 px-xl-5"
      aria-label="navegação do painel">
     <button class="btn btn-ghost flex-shrink-0 d-lg-none" id="sidebarToggle"
             data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"

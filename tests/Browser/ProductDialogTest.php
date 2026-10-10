@@ -127,7 +127,7 @@ function productDialogToColourStep(Webpage $page): Webpage
 /** From the last step: write, and wait for the hand-over to the edit dialog. */
 function productDialogFinish(Webpage $page): Webpage
 {
-    expect(productDialogNextLabel($page))->toBe('Criar produto');
+    expect(productDialogNextLabel($page))->toBe('Criar peça');
     $page->click('#newProductModal [data-step-next]');
 
     return productDialogWaitFor($page, "visible('#editProductModal')");
@@ -333,7 +333,7 @@ describe('choosing colours while creating', function () {
         productDialogToColourStep($page);
 
         expect(productDialogCount($page, '#newProductModal .variant-choice'))->toBe(2)
-            ->and(productDialogNextLabel($page))->toBe('Criar produto');
+            ->and(productDialogNextLabel($page))->toBe('Criar peça');
         $page->assertNoJavaScriptErrors();
     });
 

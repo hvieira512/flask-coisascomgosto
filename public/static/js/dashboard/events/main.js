@@ -2,13 +2,13 @@ import { API, list, request } from "../../core/api.js";
 import { Notify } from "../../core/notify.js";
 import { confirmDialog, formDialog, modal } from "../../core/modal.js";
 import { stepDialog } from "../../core/steps.js";
-import { escapeHtml, fieldIcon } from "../../core/html.js";
+import { escapeHtml } from "../../core/html.js";
 import { eventDates, stateChip } from "./dates.js";
 
 async function loadEvents() {
     let events;
     try {
-        events = await list(API.events.list, "events", { fallback: "Erro ao buscar eventos." });
+        events = await list(API.events.list, "events", { fallback: "Erro ao buscar feiras." });
     } catch (error) {
         Notify.error(error.message);
         return;
@@ -46,10 +46,10 @@ async function loadEvents() {
               </td>
             </tr>`).join("")
         : `<tr><td colspan="4" class="text-center text-body-secondary py-5">
-             Ainda não há eventos.</td></tr>`;
+             Ainda não há feiras.</td></tr>`;
 
     document.getElementById("event-count").textContent =
-        `${events.length} ${events.length === 1 ? "evento" : "eventos"}`;
+        `${events.length} ${events.length === 1 ? "feira" : "feiras"}`;
 }
 
 const EVENT_STEPS = ["Quando", "Detalhes"];
@@ -64,7 +64,6 @@ function eventForm(event = null) {
             <input class="form-control" id="ef-name" name="name" required
                    value="${escapeHtml(event?.name ?? "")}"
                    placeholder="Feira de Artesanato da Romaria d'Agonia">
-            ${fieldIcon("fa-solid fa-tag")}
           </div>
         </div>
 
@@ -74,7 +73,6 @@ function eventForm(event = null) {
             <div class="input-group">
               <input class="form-control" id="ef-starts" name="starts_on" type="date" required
                      value="${escapeHtml(event?.starts_on ?? "")}">
-              ${fieldIcon("fa-solid fa-calendar-day")}
             </div>
           </div>
           <div class="col">
@@ -82,7 +80,6 @@ function eventForm(event = null) {
             <div class="input-group">
               <input class="form-control" id="ef-ends" name="ends_on" type="date"
                      value="${escapeHtml(event?.ends_on ?? "")}">
-              ${fieldIcon("fa-solid fa-calendar-check")}
             </div>
             <p class="help mb-0">Deixe vazio se for de um só dia.</p>
           </div>
@@ -96,7 +93,6 @@ function eventForm(event = null) {
             <input class="form-control" id="ef-location" name="location"
                    value="${escapeHtml(event?.location ?? "")}"
                    placeholder="Jardim Público, Viana do Castelo">
-            ${fieldIcon("fa-solid fa-location-dot")}
           </div>
         </div>
 
@@ -111,7 +107,6 @@ function eventForm(event = null) {
           <div class="input-group">
             <input class="form-control" id="ef-url" name="url" value="${escapeHtml(event?.url ?? "")}"
                    placeholder="https://...">
-            ${fieldIcon("fa-solid fa-link")}
           </div>
         </div>
       </div>
@@ -158,7 +153,7 @@ function openEdit({ id, event }) {
         body: eventForm(event),
         submitLabel: "Guardar alterações",
         onSubmit: () => submitEventForm(id),
-        success: "Evento actualizado.",
+        success: "Feira actualizada.",
         after: loadEvents,
     });
 }
@@ -169,15 +164,15 @@ function openCreate(id) {
         body: eventForm(),
         titles: EVENT_STEPS,
         validate: [validateWhen, validateWhen],
-        finishLabel: "Criar evento",
+        finishLabel: "Criar feira",
         onFinish: () => submitEventForm(id),
-        success: "Evento criado.",
+        success: "Feira criada.",
         after: loadEvents,
     });
 }
 
 const getEvent = (id) =>
-    request(API.events.get(id), { fallback: "Evento não encontrado." });
+    request(API.events.get(id), { fallback: "Feira não encontrada." });
 
 async function openDelete(id) {
     const event = await getEvent(id);
@@ -189,7 +184,7 @@ async function openDelete(id) {
                  Deixa de aparecer no percurso da página inicial.</p>`,
         onConfirm: () => request(API.events.delete(id),
                                 { method: "DELETE", fallback: "Não foi possível apagar." }),
-        success: "Evento apagado.",
+        success: "Feira apagada.",
         after: loadEvents,
     });
 }

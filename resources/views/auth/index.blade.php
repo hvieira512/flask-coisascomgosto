@@ -7,57 +7,55 @@
 @endsection
 
 @section('body')
-<main class="auth-shell">
-    <div class="auth-wrapper row g-4">
+<main class="d-flex flex-column flex-md-row min-vh-100">
 
-        <div class="auth-panel col-12 col-md-5 col-lg-4" id="auth-container">
-            <a href="{{ route('login', absolute: false) }}" class="auth-logo">
-                <img src="/static/img/logo.png" alt="Coisas com Gosto">
-            </a>
+    <section class="auth-panel d-flex flex-column justify-content-between p-4 p-md-5" id="auth-container">
+        <a class="d-inline-flex align-items-center gap-2 text-body align-self-start"
+           href="{{ route('store.home', absolute: false) }}">
+            <img src="/static/img/logo.png" alt="" width="32" height="32" class="rounded-circle">
+            <span class="font-display fs-5 fw-semibold">Coisas com Gosto</span>
+        </a>
 
-            <form id="auth-form" class="auth-form">
-                <div id="form-header" class="text-center mb-4">
-                    <h1 class="h4 mb-1">Seja bem-vindo!</h1>
-                    <p class="text-body-secondary">Qual é o teu nome?</p>
-                </div>
-
-                <div class="mb-3">
-                    <div class="input-group input-group-lg">
-                        <input type="text" class="form-control form-control-lg" placeholder="Utilizador"
-                                                                                name="username" id="usernameField" aria-label="Utilizador" required autofocus>
-                        <span class="input-group-text"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
-                    </div>
-                    <p id="usernameErrorField" class="help text-danger mb-0"></p>
-                </div>
-
-                <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" id="submitBtn" class="btn btn-dark">
-                        <span>Entrar</span>
-                        <span class="icon"><i class="fa-solid fa-arrow-right"></i></span>
-                    </button>
-                </div>
-            </form>
-
-            <a class="fs-7 fw-semibold" role="button">
-                Esqueceu-se da sua palavra-passe?
-            </a>
-        </div>
-
-        <aside class="auth-aside col d-none d-md-block">
-            <div class="auth-glass">
-                <p class="text-uppercase fs-7">Coisas com Gosto</p>
-                <div class="text-end">
-                    <h2 class="h1 text-white">
-                        Tradição em Madeira<br>Inspirada na Filigrana<br>Portuguesa
-                    </h2>
-                    <p class="mt-3">
-                    Descubra peças únicas que celebram a arte e a cultura de
-                    Viana do Castelo, feitas com dedicação e paixão.
-                    </p>
-                </div>
+        <form id="auth-form" class="auth-form w-100 mx-auto py-5">
+            <div id="form-header" class="mb-4">
+                <p class="eyebrow">Área reservada</p>
+                <h1 class="h2 font-display mb-2">Entrar no painel</h1>
+                <p class="text-body-secondary mb-0">Primeiro o nome de utilizador, depois a palavra-passe.</p>
             </div>
-        </aside>
-    </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="usernameField">Utilizador</label>
+                <input type="text" class="form-control form-control-lg" name="username" id="usernameField"
+                       autocomplete="username" required autofocus>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" id="submitBtn" class="btn btn-dark btn-lg">
+                    <span>Continuar</span>
+                    <span class="icon"><i class="fa-solid fa-arrow-right"></i></span>
+                </button>
+            </div>
+
+            <p class="help mt-3 mb-0">
+                As contas são criadas pela oficina. Se se esqueceu da palavra-passe, peça
+                uma nova a quem gere o painel.
+            </p>
+        </form>
+
+        <p class="fs-7 mb-0">
+            <a href="{{ route('store.home', absolute: false) }}">← Voltar à loja</a>
+        </p>
+    </section>
+
+    <aside class="auth-aside d-none d-md-block p-3" aria-hidden="true">
+        <div class="position-relative h-100 overflow-hidden rounded-4 bg-body-secondary">
+            <img class="w-100 h-100 object-fit-cover" src="/static/img/hero-lid.jpg" alt="">
+            <span class="position-absolute bottom-0 start-0 m-4 badge rounded-pill bg-body text-body-secondary fw-normal fs-7 px-3 py-2">
+                Caixa Redonda Filigrana · Branco e Dourado
+            </span>
+        </div>
+    </aside>
+
 </main>
 @endsection
 
