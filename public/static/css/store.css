@@ -94,6 +94,13 @@ h3 {
     object-position: 50% 52%;
 }
 
+/* The butterfly on the error pages. */
+.error-mark {
+    width: 6rem;
+    height: 6rem;
+    color: var(--ccg-blue-500);
+}
+
 /* Makes a name legible over a photograph. card-img-overlay positions it and
    nothing in Bootstrap tints it. */
 .tile-scrim {

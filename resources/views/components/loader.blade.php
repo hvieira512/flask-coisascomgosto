@@ -4,12 +4,15 @@
         inset: 0;
         z-index: 9999;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        /* Literal value, not a var(): theme.css has not loaded yet. */
+        gap: 1.5rem;
+        /* Literal values, not var(): theme.css has not loaded yet. */
         background: #FFFFFF;
+        color: #4472C4;
         opacity: 1;
-        transition: opacity .45s ease;
+        transition: opacity .35s ease;
         /* Safety net if loader.js never runs. */
         animation: ccg-loader-failsafe 0s linear 6s forwards;
     }
@@ -26,105 +29,79 @@
         }
     }
 
+    /* The butterfly draws itself: body first, then the wings, the curls, the
+       antennae, and the dots at their tips. */
     .ccg-butterfly {
-        width: 112px;
-        height: 112px;
-        /* The whole mark breathes: a slow swell, like a resting butterfly. */
-        animation: ccg-breathe 2.6s ease-in-out infinite;
+        width: 104px;
+        height: 104px;
     }
 
-    @keyframes ccg-breathe {
-
-        0%,
-        100% {
-            transform: scale(.92);
-            opacity: .75;
-        }
-
-        50% {
-            transform: scale(1.04);
-            opacity: 1;
-        }
+    .ccg-butterfly path {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: ccg-draw .7s cubic-bezier(.4, 0, .2, 1) forwards;
     }
 
-    /* Wings fold towards the body on the same cycle, a beat behind the swell
-       so the movement reads as breathing rather than flapping. */
     .ccg-butterfly .wing {
-        transform-origin: 60px 60px;
-        animation: ccg-wing 2.6s ease-in-out infinite;
+        animation-delay: .15s;
+        animation-duration: .8s;
     }
 
-    @keyframes ccg-wing {
-
-        0%,
-        100% {
-            transform: scaleX(.78);
-        }
-
-        50% {
-            transform: scaleX(1);
-        }
+    .ccg-butterfly .wing-lower {
+        animation-delay: .4s;
     }
 
-    .ccg-loader-word {
-        position: absolute;
-        bottom: 18%;
-        font-family: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
-        font-size: .7rem;
-        letter-spacing: .22em;
-        text-transform: uppercase;
-        color: #6B7684;
+    .ccg-butterfly .curl {
+        animation-delay: .75s;
+        animation-duration: .4s;
+    }
+
+    .ccg-butterfly .antenna {
+        animation-delay: .85s;
+        animation-duration: .4s;
+    }
+
+    .ccg-butterfly .tip {
         opacity: 0;
-        animation: ccg-word-in .6s ease .35s forwards;
+        animation: ccg-appear .25s ease 1.2s forwards;
     }
 
-    @keyframes ccg-word-in {
+    @keyframes ccg-draw {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    @keyframes ccg-appear {
         to {
             opacity: 1;
         }
     }
 
-    @media (prefers-reduced-motion: reduce) {
+    .ccg-loader-word {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #294A83;
+        opacity: 0;
+        animation: ccg-appear .5s ease .9s forwards;
+    }
 
-        .ccg-butterfly,
-        .ccg-butterfly .wing,
+    @media (prefers-reduced-motion: reduce) {
+        .ccg-butterfly path,
+        .ccg-butterfly .tip,
         .ccg-loader-word {
             animation: none;
-        }
-
-        .ccg-butterfly {
+            stroke-dashoffset: 0;
             opacity: 1;
-            transform: none;
         }
     }
 </style>
 
 <div id="page-loader" role="status" aria-label="A carregar">
-    <svg class="ccg-butterfly" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-        <g class="wing" fill="#4472C4">
-            <path
-                d="M58 54C48 28 27 7 15 18 3 29 10 52 30 60c12 5 24 3 28-6z"
-                opacity=".92" />
-            <path
-                d="M58 66c-6 14-18 24-26 34-7 9 7 12 15 0 6-9 10-22 11-34z"
-                opacity=".72" />
-            <g transform="translate(120,0) scale(-1,1)">
-                <path
-                    d="M58 54C48 28 27 7 15 18 3 29 10 52 30 60c12 5 24 3 28-6z"
-                    opacity=".92" />
-                <path
-                    d="M58 66c-6 14-18 24-26 34-7 9 7 12 15 0 6-9 10-22 11-34z"
-                    opacity=".72" />
-            </g>
-        </g>
-
-        <ellipse cx="60" cy="62" rx="3.2" ry="17" fill="#1F3864" />
-        <path d="M59 46c-3-7-9-11-14-12M61 46c3-7 9-11 14-12" stroke="#1F3864"
-            stroke-width="2.2" stroke-linecap="round" />
-        <circle cx="44.5" cy="33.5" r="2.4" fill="#1F3864" />
-        <circle cx="75.5" cy="33.5" r="2.4" fill="#1F3864" />
-    </svg>
-
+    @include('components.butterfly', ['class' => 'ccg-butterfly'])
     <span class="ccg-loader-word">Coisas com Gosto</span>
 </div>
 <script>
