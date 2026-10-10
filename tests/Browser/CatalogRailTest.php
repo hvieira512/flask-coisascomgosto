@@ -318,12 +318,17 @@ describe('on a phone', function () {
     });
 
     // One badge fits beside the title at 390px; two must drop onto their own line rather than crush it.
+    // On a phone the filters are a drawer, opened from the Filtros button.
     it('wraps several filters instead of squeezing the heading', function () {
         $page = railOpen(390, 780, 3);
         $page->click(railCard('Filigrana'));
         railWaitUntil($page, "document.querySelector('#active-filters .filter-badge') !== null");
+        $page->click('[data-bs-toggle="offcanvas"][data-bs-target="#catalogue-filters"]');
+        railWaitUntil($page, "document.querySelector('#catalogue-filters.show') !== null");
         $page->click('[data-facet="types"] .filter-entry >> nth=0');
         railWaitUntil($page, "document.querySelectorAll('.filter-badge').length === 2");
+        $page->keys(':focus', 'Escape');
+        railWaitUntil($page, "document.querySelector('#catalogue-filters.show') === null");
 
         $title = railBox($page, 'h1');
         expect(railBox($page, '#active-filters')['y'])
