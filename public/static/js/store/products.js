@@ -2,7 +2,6 @@ import { API, request } from "../core/api.js";
 import { StoreFilters } from "./filters.js";
 import { mountBadges } from "./catalogue/badges.js";
 import { mountPagination } from "./catalogue/pagination.js";
-import { mountRail } from "./catalogue/rail.js";
 import { mountSidebar } from "./catalogue/sidebar.js";
 import { productCard } from "./catalogue/cards.js";
 import { Track } from "./track.js";
@@ -83,14 +82,10 @@ import { Track } from "./track.js";
         searchInput.value = StoreFilters.get("q") || "";
 
         const facets = await loadFacets();
-        const [sidebar, rail] = await Promise.all([
-            mountSidebar(facets),
-            mountRail(facets),
-        ]);
+        const sidebar = await mountSidebar(facets);
 
         const draw = () => {
             sidebar.sync();
-            rail.render();
             badges.render();
             loadProducts();
         };

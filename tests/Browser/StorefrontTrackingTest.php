@@ -298,16 +298,4 @@ describe('a filter', function () {
 
         trackingNoMoreThan($page, 'filter', 1);
     });
-
-    // The rail is the only way to filter by collection; the piece gets there through a colourway.
-    it('counts choosing a collection from the rail', function () {
-        putInCollection($this->piece, makeCollection('Filigrana'));
-
-        $page = visit('/products');
-        trackingWaitUntil($page, "document.querySelector('.collection-card') !== null");
-        $page->click('.collection-card:has-text("Filigrana") >> nth=0');
-
-        $row = trackingOnly($page, 'filter');
-        expect([$row->facet, $row->facet_label])->toBe(['Colecção', 'Filigrana']);
-    });
 });

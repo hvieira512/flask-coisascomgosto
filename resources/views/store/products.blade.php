@@ -26,18 +26,6 @@
             </div>
         </header>
 
-        <nav id="collection-rail" class="rail-shell mb-5" aria-label="Colecções" hidden>
-            <button class="disc rail-arrow rail-arrow-start" data-rail-prev type="button" aria-label="Colecções anteriores" hidden>
-                <span class="icon"><i class="fa-solid fa-chevron-left"></i></span>
-            </button>
-
-            <ul id="collection-strip" class="drag-rail collection-rail gap-2 mb-0 ps-0" tabindex="0" aria-label="Colecções, arraste para o lado"></ul>
-
-            <button class="disc rail-arrow rail-arrow-end" data-rail-next type="button" aria-label="Colecções seguintes" hidden>
-                <span class="icon"><i class="fa-solid fa-chevron-right"></i></span>
-            </button>
-        </nav>
-
         <div class="row g-4 g-lg-5">
 
             <aside class="col-lg-3 filters">

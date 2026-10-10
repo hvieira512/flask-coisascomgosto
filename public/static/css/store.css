@@ -135,10 +135,6 @@ a.card:hover {
    with the arrows drag-rail.js shows when there is somewhere to go.
    ------------------------------------------------------------------ */
 
-.rail-shell {
-    position: relative;
-}
-
 .drag-rail {
     display: flex;
     overflow-x: auto;
@@ -168,33 +164,6 @@ a.card:hover {
     cursor: grabbing;
     scroll-snap-type: none;
     user-select: none;
-}
-
-/* The chosen collection, marked on the tile itself. */
-.collection-rail [aria-pressed="true"] {
-    outline: 2px solid var(--ccg-blue-500);
-    outline-offset: -2px;
-}
-
-.collection-rail {
-    scroll-snap-type: x proximity;
-}
-
-/* Grow to fill a nearly full row and no further; past that the rail scrolls. */
-.collection-rail > li {
-    flex: 1 0 13rem;
-    max-width: 16rem;
-    list-style: none;
-    scroll-snap-align: start;
-}
-
-.collection-card {
-    border-radius: var(--radius);
-}
-
-.collection-card.is-empty {
-    cursor: default;
-    opacity: .72;
 }
 
 /* Timeline. The connecting line is each entry's top border. */
@@ -287,7 +256,6 @@ a.card:hover {
     display: none;
 }
 
-.rail-shell:hover .rail-arrow,
 .timeline-shell:hover .rail-arrow,
 .rail-arrow:focus-visible {
     opacity: 1;
@@ -463,10 +431,6 @@ a.card:hover {
    and scroll the whole catalogue sideways. */
 .catalogue-main {
     min-width: 0;
-}
-
-.collection-cover {
-    background: var(--ccg-mist);
 }
 
 /* An applied filter, as a navy pill with its own dismiss button. */
