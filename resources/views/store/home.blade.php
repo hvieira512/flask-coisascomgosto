@@ -3,24 +3,22 @@
 @section('page_title', 'Início')
 
 @section('content')
-@php($heroCover = $productTypes->map(fn ($type) => $type->getRelation('cover'))->filter()->first())
-
 <header class="hero">
     <div class="container py-5">
         <div class="row align-items-center gy-5 gx-lg-5 py-lg-4">
-            <div class="{{ $heroCover ? 'col-lg-6' : 'col-lg-8 mx-auto text-center' }}">
+            <div class="col-lg-6">
                 <p class="eyebrow">Viana do Castelo · feito à mão</p>
 
                 <h1 class="store-display mb-4">
                     Peças que guardam<br>a nossa terra.
                 </h1>
 
-                <p class="fs-5 text-body-secondary measure-narrow mb-4 {{ $heroCover ? '' : 'mx-auto' }}">
+                <p class="fs-5 text-body-secondary measure-narrow mb-4">
                 Madeira e tecido trabalhados um a um, com os motivos que
                 atravessam gerações no Alto Minho.
                 </p>
 
-                <div class="d-flex flex-wrap gap-2 {{ $heroCover ? '' : 'justify-content-center' }}">
+                <div class="d-flex flex-wrap gap-2">
                     <a class="btn btn-dark btn-lg" href="{{ route('store.products', absolute: false) }}">
                         <span>Ver as peças</span>
                         <span class="icon"><i class="fa-solid fa-arrow-right"></i></span>
@@ -29,18 +27,18 @@
                 </div>
             </div>
 
-            @if ($heroCover)
-            <div class="col-lg-6 hero-scene d-flex justify-content-center py-4">
-                <div class="hero-stage position-relative">
+            <div class="col-lg-6 d-flex flex-column align-items-center py-4">
+                <div class="hero-stage position-relative" data-hero-box data-lid="/static/img/hero-lid.jpg">
                     <span class="hero-halo position-absolute" aria-hidden="true"></span>
                     <span class="hero-ring position-absolute" aria-hidden="true"></span>
-                    <span class="hero-shadow position-absolute" aria-hidden="true"></span>
-                    <figure class="hero-disc position-absolute m-0 overflow-hidden">
-                        <img src="{{ $heroCover['url'] }}" alt="{{ $heroCover['alt'] }}">
-                    </figure>
+                    <img class="hero-fallback" src="/static/img/hero-lid.jpg"
+                         alt="Caixa redonda em madeira branca, a tampa pintada com a filigrana de Viana a dourado">
                 </div>
+                <p class="d-flex flex-wrap align-items-center justify-content-center gap-3 fs-7 text-body-secondary mt-4 mb-0">
+                    <span>Arraste para rodar a caixa</span>
+                    <button class="btn btn-sm btn-light" type="button" data-hero-lid aria-pressed="false">Abrir a tampa</button>
+                </p>
             </div>
-            @endif
         </div>
     </div>
 </header>
@@ -167,4 +165,8 @@
 
 @include('store.components.contacts')
 
+@endsection
+
+@section('page_scripts')
+<script type="module" src="/static/js/store/hero-box.js"></script>
 @endsection

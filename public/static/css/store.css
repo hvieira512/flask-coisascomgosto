@@ -45,31 +45,32 @@ h3 {
 }
 
 /* ------------------------------------------------------------------
-   The hero: the lid of the round box as a disc, lying on the table in
-   perspective and standing up into the logo's blue ring as the page scrolls.
-   Pure CSS; a browser without scroll timelines shows the resting pose.
+   The hero: the round box in WebGL (js/store/hero-box.js), in front of the
+   logo's blue ring. The photograph underneath is what shows without WebGL.
    ------------------------------------------------------------------ */
 
 .hero {
     overflow-x: clip;
 }
 
-.hero-scene {
-    perspective: 1500px;
-    perspective-origin: 50% 20%;
-}
-
 .hero-stage {
     width: min(100%, 26rem);
     aspect-ratio: 1 / 1;
-    transform-style: preserve-3d;
+    /* Sideways drags turn the box; vertical ones still scroll the page. */
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none;
+}
+
+.hero-stage.is-dragging {
+    cursor: grabbing;
 }
 
 .hero-ring {
-    inset: 0;
+    inset: 4%;
     border-radius: 50%;
     border: 2px solid var(--ccg-blue-500);
-    opacity: .55;
+    opacity: .6;
 }
 
 .hero-halo {
@@ -78,97 +79,19 @@ h3 {
     border: 1px solid var(--ccg-line);
 }
 
-.hero-shadow {
-    left: 8%;
-    right: 8%;
-    bottom: -1.6rem;
-    height: 2.75rem;
-    border-radius: 50%;
-    background: rgba(31, 56, 100, .32);
-    filter: blur(20px);
-}
-
-.hero-disc {
-    inset: 0;
-    border-radius: 50%;
-    background: var(--ccg-mist);
-    box-shadow: 0 40px 70px -24px rgba(31, 56, 100, .5), inset 0 0 0 1px rgba(255, 255, 255, .7);
-}
-
-/* The photograph is of the box in its setting; the circle wants the lid, so it
-   is enlarged a little to push the background out past the rim. */
-.hero-disc img {
+.hero-canvas,
+.hero-fallback {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 128%;
-    height: 128%;
-    transform: translate(-50%, -48%);
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.hero-fallback {
+    border-radius: 50%;
     object-fit: cover;
-}
-
-.hero-disc {
-    transform: rotateX(58deg) rotateZ(-18deg) translateY(2.25rem);
-}
-
-.hero-ring {
-    transform: rotateX(58deg) rotateZ(-18deg) translateY(2.25rem) scale(1.06);
-}
-
-@supports (animation-timeline: scroll()) {
-    .hero-disc,
-    .hero-ring,
-    .hero-shadow {
-        animation: linear both;
-        animation-timeline: scroll(root);
-        animation-range: 0 40rem;
-    }
-
-    .hero-disc {
-        animation-name: hero-stand;
-    }
-
-    .hero-ring {
-        animation-name: hero-ring-settle;
-    }
-
-    .hero-shadow {
-        animation-name: hero-shadow-tuck;
-    }
-}
-
-@keyframes hero-stand {
-    to {
-        transform: none;
-    }
-}
-
-@keyframes hero-ring-settle {
-    to {
-        transform: scale(1.06);
-        opacity: 1;
-    }
-}
-
-@keyframes hero-shadow-tuck {
-    to {
-        transform: scaleX(.62) translateY(1rem);
-        opacity: .45;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .hero-disc,
-    .hero-ring,
-    .hero-shadow {
-        animation: none;
-        transform: none;
-        opacity: 1;
-    }
-
-    .hero-ring {
-        transform: scale(1.06);
-    }
+    object-position: 50% 52%;
 }
 
 /* Makes a name legible over a photograph. card-img-overlay positions it and
