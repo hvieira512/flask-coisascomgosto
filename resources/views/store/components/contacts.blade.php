@@ -9,7 +9,7 @@
 
 <section class="section pb-4 bg-body text-body" id="contacts" data-bs-theme="dark">
     <div class="container">
-        <p class="eyebrow rule-above text-gold">Contactos</p>
+        <p class="eyebrow">Contactos</p>
         <h2 class="h1 mb-4">Onde nos encontra</h2>
 
         <div class="row g-5">
@@ -18,7 +18,7 @@
                 <p class="font-display fs-4 lh-sm mb-2">{{ $contact->address }}</p>
                 @endif
                 @if ($contact->maps_url)
-                <a class="fs-7 text-uppercase" href="{{ $contact->maps_url }}"
+                <a class="fs-7 fw-semibold border-bottom" href="{{ $contact->maps_url }}"
                    target="_blank" rel="noopener">Ver no mapa</a>
                 @endif
             </div>
@@ -28,7 +28,7 @@
                     @foreach ($reach as [$label, $value, $href, $external])
                     @if ($href)
                     <div class="row gx-2 align-items-center border-top py-2">
-                        <dt class="col-4 col-sm-3 fs-7 text-uppercase font-monospace text-body-tertiary mb-0">{{ $label }}</dt>
+                        <dt class="col-4 col-sm-3 fs-7 fw-semibold text-uppercase text-body-secondary mb-0">{{ $label }}</dt>
                         <dd class="col-8 col-sm-9 mb-0">
                             <a href="{{ $href }}"@if ($external) target="_blank" rel="noopener"@endif>{{ $value }}</a>
                         </dd>

@@ -3,7 +3,7 @@ import { escapeHtml } from "../core/html.js";
 export const ColorSet = (function () {
     const FALLBACK = "#4472C4";
     const MIN_CONTRAST = 4.5;
-    const PAPER = [250, 248, 245];
+    const GROUND = [255, 255, 255];
     const WASH_ALPHA = 0.14;
 
     function rgb(hex) {
@@ -52,7 +52,7 @@ export const ColorSet = (function () {
 
         const [r, g, b] = identity;
         const [br, bg, bb] = ink;
-        const wash = over(identity, WASH_ALPHA, PAPER);
+        const wash = over(identity, WASH_ALPHA, GROUND);
         const [tr, tg, tb] = readable(ink, wash);
 
         return `--cs-bg:rgba(${r},${g},${b},.14);` +

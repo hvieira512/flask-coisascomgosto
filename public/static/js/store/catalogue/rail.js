@@ -26,14 +26,14 @@ export async function mountRail(facets) {
             : `<span class="d-flex flex-column align-items-center justify-content-center
                            text-center bg-body-secondary border p-3">
                  <span class="collection-card-name font-display fs-5 text-body-secondary">${escapeHtml(name)}</span>
-                 <span class="collection-card-detail fs-7 text-uppercase text-body-tertiary">${escapeHtml(detail)}</span>
+                 <span class="collection-card-detail fs-7 text-body-secondary">${escapeHtml(detail)}</span>
                </span>`;
 
         const label = photo
             ? `<span class="position-absolute top-0 start-0 w-100 h-100 tile-scrim"></span>
                <span class="position-absolute bottom-0 start-0 p-3 text-white">
                  <span class="collection-card-name d-block font-display fs-5 lh-sm">${escapeHtml(name)}</span>
-                 <span class="collection-card-detail fs-7 text-uppercase opacity-75">${escapeHtml(detail)}</span>
+                 <span class="collection-card-detail fs-7 opacity-75">${escapeHtml(detail)}</span>
                </span>`
             : "";
 

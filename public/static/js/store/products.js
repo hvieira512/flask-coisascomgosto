@@ -58,7 +58,7 @@ import { Track } from "./track.js";
         } catch (error) {
             grid.innerHTML = "";
             emptyNotice.hidden = false;
-            emptyNotice.textContent = "Não foi possível carregar os produtos.";
+            emptyNotice.textContent = "Não foi possível carregar as peças.";
             return;
         }
 
@@ -66,10 +66,10 @@ import { Track } from "./track.js";
         grid.innerHTML = products.map(productCard).join("");
 
         emptyNotice.hidden = products.length > 0;
-        emptyNotice.textContent = "Nenhum produto corresponde aos filtros escolhidos.";
+        emptyNotice.textContent = "Nenhuma peça corresponde aos filtros escolhidos.";
 
         const { total, pages } = payload.pagination;
-        resultCount.textContent = total === 1 ? "1 produto" : `${total} produtos`;
+        resultCount.textContent = total === 1 ? "1 peça" : `${total} peças`;
         pagination.render(page, pages || 1);
 
         const term = StoreFilters.get("q");

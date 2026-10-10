@@ -1,6 +1,6 @@
 @extends('layouts.store')
 
-@section('page_title', 'Produto')
+@section('page_title', 'Peça')
 
 @section('content')
 <section class="section">
@@ -8,7 +8,7 @@
 
         <nav class="mb-4" aria-label="breadcrumbs">
             <ol class="breadcrumb fs-7 mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('store.products', absolute: false) }}">Catálogo</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('store.products', absolute: false) }}">Peças</a></li>
                 <li class="breadcrumb-item active" aria-current="page" id="crumb-name">…</li>
             </ol>
         </nav>
@@ -39,7 +39,7 @@
                 </div>
 
                 <p id="gallery-empty" class="alert alert-light text-center mt-3" hidden>
-                Este produto ainda não tem imagens.
+                Esta peça ainda não tem imagens.
                 </p>
             </div>
 
@@ -65,7 +65,7 @@
 
                 @if ($contact->whatsappUrl())
                 <div class="mt-4">
-                    <a class="btn btn-pitch btn-lg w-100" id="enquiry-link"
+                    <a class="btn btn-dark btn-lg w-100" id="enquiry-link"
                                                           href="{{ $contact->whatsappUrl() }}" target="_blank" rel="noopener">
                         <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
                         <span>Pedir informações</span>
@@ -81,7 +81,7 @@
         </div>
 
         <div id="detail-error" class="alert alert-danger" hidden>
-            Produto não encontrado.
+            Peça não encontrada.
         </div>
 
     </div>

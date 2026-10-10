@@ -11,79 +11,173 @@ main {
     flex: 1 0 auto;
 }
 
-/* A trace of grain over the shop. #FAF8F4 is a warm off-white chosen well and it
-   still renders as a perfectly flat digital surface, which is the specific thing
-   that reads as lifeless on a craft site. An inline SVG, so it costs no request,
-   and 3.5%, so you never see it — you only stop seeing the flatness.
+/* Headings carry the display serif down to h3 — the families, the pieces and
+   the fairs are all h3. h4 and below stay on the UI sans, beside badges and
+   buttons. */
+h1,
+h2,
+h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+}
 
-   Storefront only: the dashboard is a tool, not paper. */
-body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    pointer-events: none;
-    mix-blend-mode: multiply;
-    opacity: .035;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+.store-display {
+    font-size: clamp(2.5rem, 4.6vw, 3.75rem);
+    letter-spacing: -.025em;
+    line-height: 1.05;
+}
+
+.measure-narrow {
+    max-width: 30rem;
+}
+
+.navbar .nav-link {
+    font-size: .9375rem;
+    font-weight: 500;
+}
+
+.navbar .nav-link[aria-current] {
+    color: var(--ccg-ink);
+    font-weight: 600;
+    border-bottom-color: var(--ccg-blue-500);
 }
 
 /* ------------------------------------------------------------------
-   The six rules the design needs and Bootstrap has no answer for.
-   Everything else on these pages is a Bootstrap class.
+   The hero: the lid of the round box as a disc, lying on the table in
+   perspective and standing up into the logo's blue ring as the page scrolls.
+   Pure CSS; a browser without scroll timelines shows the resting pose.
    ------------------------------------------------------------------ */
 
-/* Gold. text-* is a closed set in Bootstrap and this colour is not in it. */
-.text-gold {
-    color: var(--ccg-gold);
+.hero {
+    overflow-x: clip;
 }
 
-[data-bs-theme="dark"] .text-gold {
-    color: var(--ccg-gold-lift);
+.hero-scene {
+    perspective: 1500px;
+    perspective-origin: 50% 20%;
 }
 
-/* The light in the hero: a radial wash of the gold the pieces are painted with.
-   Bootstrap's bg-gradient is a fixed white overlay and nothing else comes close. */
-.hero-wash {
-    /* The first screen, less the navbar. min-vh-100 would leave a scrollbar with
-       nothing under it. */
-    min-height: calc(100vh - 5.25rem);
-    background:
-        radial-gradient(58rem 32rem at 50% -6%,
-            rgba(201, 162, 78, .26) 0%, rgba(201, 162, 78, .05) 46%, transparent 72%),
-        var(--ccg-paper);
+.hero-stage {
+    width: min(100%, 26rem);
+    aspect-ratio: 1 / 1;
+    transform-style: preserve-3d;
 }
 
-/* A short gold rule above a heading. One device, used on every section, which is
-   what makes it read as a signature rather than as decoration on one of them.
-
-   Not called .mark: that is Bootstrap's highlighter — `.mark, mark { padding:
-   .1875em; background-color: var(--bs-highlight-bg) }` — and every eyebrow came
-   out sitting in a yellow band. */
-.rule-above::before {
-    content: "";
-    display: block;
-    width: 2.5rem;
-    height: 2px;
-    background: var(--ccg-gold);
-    margin-bottom: 1.25rem;
+.hero-ring {
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--ccg-blue-500);
+    opacity: .55;
 }
 
-[data-bs-theme="dark"] .rule-above::before {
-    background: var(--ccg-gold-lift);
+.hero-halo {
+    inset: -2.75rem;
+    border-radius: 50%;
+    border: 1px solid var(--ccg-line);
+}
+
+.hero-shadow {
+    left: 8%;
+    right: 8%;
+    bottom: -1.6rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: rgba(31, 56, 100, .32);
+    filter: blur(20px);
+}
+
+.hero-disc {
+    inset: 0;
+    border-radius: 50%;
+    background: var(--ccg-mist);
+    box-shadow: 0 40px 70px -24px rgba(31, 56, 100, .5), inset 0 0 0 1px rgba(255, 255, 255, .7);
+}
+
+/* The photograph is of the box in its setting; the circle wants the lid, so it
+   is enlarged a little to push the background out past the rim. */
+.hero-disc img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 128%;
+    height: 128%;
+    transform: translate(-50%, -48%);
+    object-fit: cover;
+}
+
+.hero-disc {
+    transform: rotateX(58deg) rotateZ(-18deg) translateY(2.25rem);
+}
+
+.hero-ring {
+    transform: rotateX(58deg) rotateZ(-18deg) translateY(2.25rem) scale(1.06);
+}
+
+@supports (animation-timeline: scroll()) {
+    .hero-disc,
+    .hero-ring,
+    .hero-shadow {
+        animation: linear both;
+        animation-timeline: scroll(root);
+        animation-range: 0 40rem;
+    }
+
+    .hero-disc {
+        animation-name: hero-stand;
+    }
+
+    .hero-ring {
+        animation-name: hero-ring-settle;
+    }
+
+    .hero-shadow {
+        animation-name: hero-shadow-tuck;
+    }
+}
+
+@keyframes hero-stand {
+    to {
+        transform: none;
+    }
+}
+
+@keyframes hero-ring-settle {
+    to {
+        transform: scale(1.06);
+        opacity: 1;
+    }
+}
+
+@keyframes hero-shadow-tuck {
+    to {
+        transform: scaleX(.62) translateY(1rem);
+        opacity: .45;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-disc,
+    .hero-ring,
+    .hero-shadow {
+        animation: none;
+        transform: none;
+        opacity: 1;
+    }
+
+    .hero-ring {
+        transform: scale(1.06);
+    }
 }
 
 /* Makes a name legible over a photograph. card-img-overlay positions it and
-   nothing in Bootstrap tints it. Reaching .88 at the foot because half these
-   pieces are painted on white. */
+   nothing in Bootstrap tints it. */
 .tile-scrim {
-    /* The stops are variables so the same rule serves a 4:5 tile and a band the
-       height of the viewport, where the text block is much taller and the fade
-       has to start much higher. */
     background: linear-gradient(to top,
-        rgba(23, 22, 26, .88) 0%,
-        rgba(23, 22, 26, .3) var(--scrim-mid, 44%),
-        transparent var(--scrim-end, 74%));
+        rgba(28, 36, 48, .86) 0%,
+        rgba(28, 36, 48, .25) var(--scrim-mid, 45%),
+        transparent var(--scrim-end, 70%));
     transition: opacity .35s ease;
 }
 
@@ -91,87 +185,14 @@ a:hover > .tile-scrim {
     opacity: .8;
 }
 
-/* A full-bleed photographic band with text on it. Bootstrap's height utilities
-   stop at min-vh-100, and this needs a height that answers the viewport without
-   filling it. The scrim comes from .tile-scrim, whose stops are variables. */
-.photo-band {
-    min-height: 22rem;
-    background-size: cover;
-    background-position: center 22%;
-    background-repeat: no-repeat;
-}
-
-@media screen and (min-width: 768px) {
-    .photo-band {
-        min-height: min(86vh, 46rem);
-    }
-}
-
-/* The scroll cue's disc. Geometry comes from .disc in theme.css. */
-.cue-disc {
-    width: 2.625rem;
-    height: 2.625rem;
-    border: 1px solid var(--ccg-gold);
-    background: var(--ccg-surface);
-    color: var(--ccg-gold);
-    animation: hero-nudge 2.6s ease-in-out infinite;
-}
-
-@keyframes hero-nudge {
-    0%, 100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(5px);
-    }
-}
-
-/* Unbounded body copy is unreadable, and Bootstrap has no max-width helper.
-   Narrower here than theme.css's shared value: these are display lines. */
-.measure-narrow {
-    max-width: 30rem;
-}
-
-/* Headings carry the display serif down to h3 — the names of the families, of
-   the pieces and of the fairs are all h3, and they are display lines now rather
-   than the card labels they used to be. h4 and below stay on the UI sans, where
-   they sit beside badges and buttons. */
-h1,
-h2,
-h3 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -.01em;
-    /* Otherwise a heading breaks mid-hyphenate — "três mãos-" / "cheias". */
-    text-wrap: balance;
-}
-
-/* Tracking that suits a heading is loose on a display line. */
-.store-display {
-    letter-spacing: -.025em;
-    line-height: 1.1;
-}
-
-/* The pitch button, made the way Bootstrap makes button variants: its own
-   custom properties, not a rule that overrides its colours. Only the one
-   call to action wears it. */
-.btn-pitch {
-    --bs-btn-color: #FBF8F3;
-    --bs-btn-bg: var(--ccg-pitch);
-    --bs-btn-border-color: var(--ccg-pitch);
-    --bs-btn-hover-color: var(--ccg-pitch);
-    --bs-btn-hover-bg: transparent;
-    --bs-btn-hover-border-color: var(--ccg-pitch);
-    --bs-btn-active-color: #FBF8F3;
-    --bs-btn-active-bg: var(--ccg-ink);
-    --bs-btn-active-border-color: var(--ccg-ink);
+/* The owners' portrait beside the Origem copy: faces sit high in the frame. */
+.origin-photo {
+    object-position: center 18%;
 }
 
 /* Cards lift slightly on hover, which Bootstrap does not do on its own. */
 .card {
     transition: border-color .2s ease, transform .2s ease;
-    border: 1px solid var(--ccg-line);
 }
 
 a.card:hover {
@@ -181,9 +202,7 @@ a.card:hover {
 
 /* ------------------------------------------------------------------
    A rail: a row that scrolls sideways, dragged with the mouse or walked
-   with the arrows drag-rail.js shows when there is somewhere to go. Two
-   of them — the fairs and the collections — so the behaviour and the
-   look are shared rather than written twice.
+   with the arrows drag-rail.js shows when there is somewhere to go.
    ------------------------------------------------------------------ */
 
 .rail-shell {
@@ -194,7 +213,6 @@ a.card:hover {
     display: flex;
     overflow-x: auto;
     cursor: grab;
-    /* The drag and the arrows are the affordances; the bar only adds noise. */
     scrollbar-width: none;
 }
 
@@ -202,8 +220,6 @@ a.card:hover {
     display: none;
 }
 
-/* Fades the edge that has content past it, so entering content dissolves and
-   the arrow never sits on legible text. */
 .drag-rail.has-fade-start {
     mask-image: linear-gradient(to right, transparent 0, #000 3rem);
 }
@@ -224,50 +240,34 @@ a.card:hover {
     user-select: none;
 }
 
-.drag-rail:focus-visible {
-    outline: 2px solid var(--ccg-blue-500);
-    outline-offset: 4px;
-}
-
-/* The chosen collection, marked on the tile itself. Keyed off the state the
-   button already carries, so the markup needs no class for it. Blue, because
-   choosing a collection is navigating the catalogue. */
+/* The chosen collection, marked on the tile itself. */
 .collection-rail [aria-pressed="true"] {
     outline: 2px solid var(--ccg-blue-500);
     outline-offset: -2px;
 }
 
-/* Few collections grow to fill the row; many keep their width and the rail
-   scrolls. flex-shrink 0 is what turns "too many" into a scroll rather than a
-   squeeze. */
 .collection-rail {
     scroll-snap-type: x proximity;
 }
 
-/* A ceiling as well as a floor. With flex-grow alone three collections shared the
-   whole 1136px row and came out 367px wide each — half again what the design
-   asks for. They grow to fill a row that is nearly full and no further; past
-   that the rail scrolls. */
+/* Grow to fill a nearly full row and no further; past that the rail scrolls. */
 .collection-rail > li {
-    /* Grow, never shrink, and stop at 16rem. Shrink is what turned six tiles into
-       46px slivers on a phone instead of a rail that scrolls; grow alone let three
-       share the whole 1136px row at 367px each, half again what the design asks
-       for. Between the two, a tile is 13-16rem and the rail scrolls past five. */
     flex: 1 0 13rem;
     max-width: 16rem;
     list-style: none;
     scroll-snap-align: start;
 }
 
-/* A collection with no pieces yet: shown, because it is part of the workshop's
-   vocabulary, and not offered, because choosing it could only empty the grid. */
+.collection-card {
+    border-radius: var(--radius);
+}
+
 .collection-card.is-empty {
     cursor: default;
     opacity: .72;
 }
 
-/* Timeline. The connecting line is each entry's top border, so the entries
-   draw a continuous rule across the row. */
+/* Timeline. The connecting line is each entry's top border. */
 
 .timeline-shell {
     position: relative;
@@ -276,11 +276,7 @@ a.card:hover {
 .timeline {
     list-style: none;
     margin: 0;
-    /* overflow-x: auto forces overflow-y too, so the scrollport clips the
-       markers above the rule. 12px = 7px of overhang + the 4px halo. */
     padding: 12px 0 0;
-    /* Mandatory, not proximity: after a drag an entry always lands flush with
-       the edge, so its marker is never left half-clipped. */
     scroll-snap-type: x mandatory;
 }
 
@@ -292,13 +288,10 @@ a.card:hover {
     scroll-snap-align: start;
 }
 
-/* Entry starts are otherwise the only snap points, so a rail overflowing by
-   less than one entry snaps back to 0 and the last entry is unreachable. */
 .timeline-entry:last-child {
     scroll-snap-align: end;
 }
 
-/* Sits centred on the rule that runs along the top of each entry. */
 .timeline-marker {
     position: absolute;
     top: -5px;
@@ -307,10 +300,9 @@ a.card:hover {
     height: 9px;
     border-radius: 50%;
     background: var(--ccg-blue-500);
-    box-shadow: 0 0 0 4px var(--ccg-paper);
+    box-shadow: 0 0 0 4px var(--ccg-white);
 }
 
-/* The most recent event leads, so it gets the emphasis. */
 .timeline-entry:first-child .timeline-marker {
     width: 13px;
     height: 13px;
@@ -319,10 +311,11 @@ a.card:hover {
 }
 
 .timeline-date {
-    font-size: .72rem;
+    font-size: .75rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--ccg-blue-500);
+    letter-spacing: .06em;
+    color: var(--ccg-blue-600);
     margin-bottom: .35rem;
 }
 
@@ -336,10 +329,8 @@ a.card:hover {
     border-bottom-color: currentColor;
 }
 
-/* Arrow buttons for visitors who would rather not drag. Same circular
-   treatment as the product gallery's arrows, but always visible: here they
-   are a primary control, not a hover affordance. Hidden by the script when
-   the rail cannot scroll, or at either end. */
+/* Arrow buttons for visitors who would rather not drag. Shown on hover; always
+   reachable by keyboard. */
 .rail-arrow {
     position: absolute;
     top: 50%;
@@ -348,13 +339,13 @@ a.card:hover {
     width: 40px;
     height: 40px;
     border: 1px solid var(--ccg-line);
-    background: var(--ccg-surface);
+    background: var(--ccg-white);
     color: var(--ccg-ink);
-    /* Sized for a Font Awesome chevron, not a text glyph. */
     font-size: .95rem;
     line-height: 1;
     cursor: pointer;
-    transition: background-color .15s ease, border-color .15s ease;
+    opacity: 0;
+    transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
 }
 
 .rail-arrow:hover {
@@ -364,12 +355,6 @@ a.card:hover {
 
 .rail-arrow[hidden] {
     display: none;
-}
-
-/* Shown on hover, not always: a rail that fits needs no controls, and drag-rail.js
-   already hides them when there is nowhere to go. */
-.rail-arrow {
-    opacity: 0;
 }
 
 .rail-shell:hover .rail-arrow,
@@ -386,15 +371,12 @@ a.card:hover {
     right: -1.25rem;
 }
 
-/* Vertical and centred on mobile: no dragging, no arrows, one entry per row.
-   The rule becomes a line down the middle, masked behind each body so it does
-   not run through the text. */
+/* Vertical and centred on mobile: one entry per row, the rule down the middle. */
 @media screen and (max-width: 768px) {
     .timeline {
         position: relative;
         flex-direction: column;
         align-items: center;
-        /* Nothing overflows vertically here, so the desktop reserve is dropped. */
         padding-top: 0;
         overflow-x: visible;
         scroll-snap-type: none;
@@ -436,10 +418,9 @@ a.card:hover {
         top: auto;
     }
 
-    /* Masks the centre line behind the text. */
     .timeline-body {
         position: relative;
-        background: var(--ccg-paper);
+        background: var(--ccg-white);
         padding: .25rem .75rem;
     }
 
@@ -448,16 +429,22 @@ a.card:hover {
     }
 }
 
-/* The filters follow the grid down. */
-.filters {
-    position: sticky;
-    top: 1.5rem;
+/* ------------------------------------------------------------------
+   The catalogue
+   ------------------------------------------------------------------ */
+
+/* The filters follow the grid down. Below lg they are an offcanvas drawer,
+   which Bootstrap positions itself. */
+@media screen and (min-width: 992px) {
+    .filters {
+        position: sticky;
+        top: 1.5rem;
+    }
 }
 
 .filter-group-label {
     font-size: .75rem;
-    text-transform: uppercase;
-    letter-spacing: .1em;
+    font-weight: 600;
     color: var(--ccg-ink-faint);
     padding: 0 .35rem;
     margin: 1.25rem 0 .5rem;
@@ -475,9 +462,7 @@ a.card:hover {
     background: var(--ccg-blue-50);
 }
 
-/* Filters are cumulative, so a selected entry is marked by its ticked box, not
-   by inverting the whole row: five inverted rows read as one giant selection and
-   left no room for the colour badges to be legible. */
+/* Filters are cumulative, so a selected entry is marked by its ticked box. */
 .filters .nav-link.is-active {
     background: var(--ccg-blue-50);
     color: var(--ccg-blue-900);
@@ -489,16 +474,13 @@ a.card:hover {
     gap: .55rem;
 }
 
-/* An <a> with no href gets no focus ring of its own, and these are reached by
-   keyboard now. Bootstrap's own variables, so it matches every other control. */
+/* An <a> with no href gets no focus ring of its own. */
 .filters .nav-link.filter-entry:focus-visible {
     outline: 0;
     border-radius: var(--bs-border-radius-sm);
     box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), .3);
 }
 
-/* Nothing behind it: still listed, because it is part of the vocabulary, but
-   ticking it could only empty the grid. */
 .filters .nav-link.is-empty {
     color: var(--ccg-ink-faint);
     cursor: default;
@@ -515,7 +497,7 @@ a.card:hover {
     height: 1.05rem;
     border: 1px solid var(--ccg-line);
     border-radius: 4px;
-    background: var(--ccg-surface);
+    background: var(--ccg-white);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -535,34 +517,26 @@ a.card:hover {
     min-width: 0;
 }
 
-/* Tabular figures so the column of counts lines up down the sidebar. */
 .filter-count {
     flex: none;
     font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
-    font-size: .72rem;
-    color: var(--ccg-ink-faint);
+    font-size: .75rem;
+    color: var(--ccg-ink-soft);
 }
 
 .is-active .filter-count {
     color: var(--ccg-blue-700);
 }
 
-/* A grid column's min-width is auto — it refuses to be narrower than its content.
-   So the collection rail, which is meant to scroll inside this column, grew the
-   column to 1320px instead and the whole catalogue scrolled sideways. Any wide
-   scrolling child would do the same, which is why this sits on the column rather
-   than on the rail. */
+/* A grid column's min-width is auto, so a wide scrolling child would grow it
+   and scroll the whole catalogue sideways. */
 .catalogue-main {
     min-width: 0;
 }
 
-/* The tile keeps its shape whatever is inside it — a photograph, or the name set
-   in the display serif when there is none — because Bootstrap's .ratio positions
-   both absolutely. All this adds is the ground behind a photograph that has not
-   arrived yet. */
 .collection-cover {
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
 }
 
 /* An applied filter, as a navy pill with its own dismiss button. */
@@ -574,16 +548,11 @@ a.card:hover {
     background: var(--ccg-blue-800);
     color: #fff;
     font-size: .75rem;
-    /* Not the body's 1.7: at that height the pill came out 30px in a 28.8px line
-       box and pushed the whole grid down 1px the moment a filter was chosen. 1.25
-       is as tight as it goes and still clears a 24px tap target. */
     line-height: 1.25;
     border-radius: 999px;
     cursor: pointer;
 }
 
-/* btn-close is a dark glyph, which on the navy pill reads as a hole punched
-   through it; btn-close-white is the inverted one, dimmed until hovered. */
 .filter-badge .btn-close {
     --bs-btn-close-opacity: .65;
     --bs-btn-close-hover-opacity: 1;
@@ -592,8 +561,6 @@ a.card:hover {
     padding: .25em;
 }
 
-/* The gallery stage is not square, so let the placeholder fill it. The rest of
-   the placeholder lives in theme.css, which the dashboard loads too. */
 .product-placeholder--stage {
     height: 100%;
     aspect-ratio: auto;
@@ -604,34 +571,16 @@ a.card:hover {
     max-width: 160px;
 }
 
-/* Catalog tiles: uniform squares whatever the source image. */
-.product-card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    box-shadow: none;
-}
-
-/* A square image took 73% of the card and dwarfed the name. 4:3 gives the
-   text room to matter. */
-.product-card .card-img-top {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    display: block;
-}
-
-/* The placeholder matches that ratio but must stay flex — display:block here
-   would strip its centring and shove the icon into the top-left corner. */
+.product-card .ratio,
 .product-card .product-placeholder {
-    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    overflow: hidden;
 }
 
-.product-card .card-body {
-    flex: 1 0 auto;
-}
+/* ------------------------------------------------------------------
+   The piece
+   ------------------------------------------------------------------ */
 
-/* A definition list of the piece's facts: label left, value right. */
 .spec-list {
     border-top: 1px solid var(--ccg-line);
 }
@@ -642,7 +591,7 @@ a.card:hover {
     gap: 1rem;
     padding: .7rem 0;
     border-bottom: 1px solid var(--ccg-line);
-    font-size: .9rem;
+    font-size: .9375rem;
 }
 
 .spec-row dt {
@@ -655,30 +604,15 @@ a.card:hover {
     text-align: right;
 }
 
-/* The stage is square, because product photographs are shot square: a wide stage
-   letterboxed every one of them, painting a 438px picture between two 160px bands of
-   paper. Its size is its column's width now that nothing shares the row — the
-   --gallery-height cap went with the rail that made it necessary. */
-
-/* Stage above, thumbnails below. It was a two-column grid with a 72px rail beside
-   the stage, which cost the photograph that width at every screen size and gave a
-   phone a layout it had no room for.
-
-   Full height of its column, so the gallery ends where the information panel beside
-   it ends. The stage was square, which made the left side of the page taller than the
-   right by however much the photograph exceeded the panel — 714px of gallery against
-   600px of panel, and a column of dead space under the enquiry button. */
+/* Stage above, thumbnails below; from lg the thumbnails run down the left of
+   the stage. row-reverse rather than reordering the markup — the stage stays
+   first in the DOM, where the gallery script and the keyboard expect it. */
 .gallery {
     display: flex;
     flex-direction: column;
     gap: .75rem;
 }
 
-/* From lg the other views run down the left of the stage instead of along the
-   bottom of it: a column costs width, which this layout has, and the strip cost
-   height, which is what forced the photograph to be cropped.
-   row-reverse rather than reordering the markup — the stage stays first in the
-   DOM, where the gallery script and the keyboard expect it. */
 @media screen and (min-width: 992px) {
     .gallery {
         flex-direction: row-reverse;
@@ -701,9 +635,6 @@ a.card:hover {
     }
 }
 
-/* One row, scrolling sideways when there are more thumbnails than fit. The groups
-   sit side by side — the chosen colour's photographs, then the piece's own — so a
-   mixed set reads as two labelled runs rather than one undifferentiated row. */
 .thumb-strip {
     display: flex;
     align-items: flex-end;
@@ -711,7 +642,6 @@ a.card:hover {
     overflow-x: auto;
     scroll-behavior: smooth;
     scrollbar-width: none;
-    /* Room for the focus ring, which a clipping scrollport would cut off. */
     padding-bottom: .2rem;
 }
 
@@ -732,8 +662,6 @@ a.card:hover {
 .strip-track {
     display: flex;
     gap: .5rem;
-    /* A <ul>'s own indent would push the first thumbnail 32px off the stage's
-       left edge. */
     margin: 0;
     padding: 0;
     list-style: none;
@@ -749,7 +677,7 @@ a.card:hover {
     padding: 0;
     border: 2px solid var(--ccg-line);
     border-radius: var(--radius);
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
     cursor: pointer;
     overflow: hidden;
     display: block;
@@ -768,59 +696,33 @@ a.card:hover {
     opacity: 1;
 }
 
-/* 2px in both states, so the active one does not resize its neighbours. */
 .strip-thumb.is-active {
     border-color: var(--ccg-blue-500);
     opacity: 1;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .strip-thumb {
-        transition: none;
-    }
-}
-
-/* Takes the height that is left rather than deciding it. The photographs are shot
-   square and drawn with object-fit: contain, so a stage that is not square letterboxes
-   them a little — which costs less than a page whose two halves end in different
-   places. min-height keeps it from collapsing beside a short panel. */
+/* Its own shape, not the panel's: a 4:5 stage and the facts beside it come out
+   the same height on their own. */
 .gallery-stage {
     position: relative;
     flex: 1 1 auto;
     min-width: 0;
-    /* Its own shape, not the panel's. The stage used to take its height from the
-       column of facts beside it, and at this width that turned a 4:5 photograph
-       into a letterbox — the piece became a fragment of itself. The proportions
-       of the two columns are chosen so that a 4:5 stage and the facts come out
-       the same height on their own. */
     aspect-ratio: 4 / 5;
-    background: var(--ccg-paper-deep);
+    background: var(--ccg-mist);
     border: 1px solid var(--ccg-line);
     border-radius: var(--radius-lg);
     overflow: hidden;
 }
 
-/* Absolute, so the photograph is not what decides how tall the stage is. In flow, an
-   <img> with height: 100% falls back to its own aspect ratio while the height is being
-   worked out — 640px for a square photograph in a 640px column — which is how the
-   gallery went on setting the row's height after the aspect-ratio rule was removed,
-   and the left side stayed taller than the right. */
 .gallery-stage img,
 .gallery-stage .product-placeholder {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    /* cover, not contain. The stage takes its height from the panel beside it and is
-       therefore not quite square, so a square photograph under `contain` left a 10px
-       band of paper down each side. Cropping 3% of a square photograph in a
-       97%-square frame is not visible; the bands were. */
     object-fit: cover;
 }
 
-/* gallery.js hides the photograph with the attribute when a colour has none, and an
-   explicit `display` in a rule like the one above outranks [hidden]'s display: none —
-   so the previous colour's photograph stayed on the stage, behind the placeholder. */
 .gallery-stage img[hidden] {
     display: none;
 }
@@ -830,13 +732,11 @@ a.card:hover {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border: 1px solid var(--ccg-line);
     background: rgba(255, 255, 255, .94);
     color: var(--ccg-blue-800);
-    /* The chevrons are icons now, not ‹ and ›, which needed 1.4rem to read as
-       arrows at all. */
     font-size: .9rem;
     line-height: 1;
     cursor: pointer;
@@ -870,27 +770,24 @@ a.card:hover {
 .stage-zoom {
     position: absolute;
     bottom: .75rem;
-    background: rgba(255, 255, 255, .92);
+    background: rgba(255, 255, 255, .94);
     border-radius: 999px;
-    padding: .1rem .6rem;
-    font-size: .7rem;
+    padding: .15rem .6rem;
+    font-size: .75rem;
     color: var(--ccg-ink-soft);
 }
 
 .stage-counter {
     right: .75rem;
+    font-family: var(--font-data);
 }
 
-/* Opposite the counter. The stage opens the photograph full screen on a tap or a
-   click, which nothing said: the arrows step between photographs and there is no
-   pointer cue on a touch screen at all. */
+/* Part of the photograph's furniture, not a control: the whole stage is the target. */
 .stage-zoom {
     left: .75rem;
     display: inline-flex;
     align-items: center;
     gap: .3rem;
-    /* Part of the photograph's furniture, not a control of its own — the whole
-       stage is the target. */
     pointer-events: none;
 }
 
@@ -898,9 +795,8 @@ a.card:hover {
     display: none;
 }
 
-/* A colourway is a control here, not a label: it holds the same overlapping
-   circles the badges use, inside the 44px hit area a fingertip needs. Bootstrap
-   has no such utility pair. */
+/* A colourway is a control here: the overlapping circles inside the 44px hit
+   area a fingertip needs. */
 .variant-option {
     display: inline-flex;
     align-items: center;
@@ -910,7 +806,7 @@ a.card:hover {
     padding: 0;
     border: 1px solid var(--ccg-line);
     border-radius: 50%;
-    background: none;
+    background: var(--ccg-white);
     cursor: pointer;
     transition: transform .18s ease;
 }
@@ -925,7 +821,6 @@ a.card:hover {
     outline-offset: 2px;
 }
 
-/* Colour and size are one decision made twice, so the rows match. */
 #size-options {
     display: flex;
     flex-wrap: wrap;
@@ -938,11 +833,6 @@ a.card:hover {
 }
 
 @media screen and (max-width: 768px) {
-    /* The strip is a row at every width now, so nothing has to be rearranged here:
-       the rules that turned the vertical rail into one are gone with it. */
-
-    /* Stacked columns have no height to share, so the stage goes back to sizing
-       itself: flexing against an auto height would collapse it to nothing. */
     .gallery {
         height: auto;
     }
@@ -952,24 +842,21 @@ a.card:hover {
         aspect-ratio: 1 / 1;
     }
 
-    /* A wide gutter is implemented as a negative margin on the row — more than the
-       container's padding can absorb, which scrolled the product page sideways. The
-       columns are stacked at this width, so the horizontal gap buys nothing. */
     #product-detail {
         --bs-gutter-x: 1.5rem;
     }
 
-    /* No hover on touch, so the arrows stay visible. */
     .stage-arrow {
         opacity: 1;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .cue-disc,
-    .card {
+    .card,
+    .strip-thumb,
+    .variant-option,
+    .tile-scrim {
         animation: none;
         transition: none;
     }
 }
-

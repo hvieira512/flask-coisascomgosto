@@ -7,7 +7,7 @@
         align-items: center;
         justify-content: center;
         /* Literal value, not a var(): theme.css has not loaded yet. */
-        background: #FAF8F5;
+        background: #FFFFFF;
         opacity: 1;
         transition: opacity .45s ease;
         /* Safety net if loader.js never runs. */
@@ -73,7 +73,7 @@
         font-size: .7rem;
         letter-spacing: .22em;
         text-transform: uppercase;
-        color: #9C9489;
+        color: #6B7684;
         opacity: 0;
         animation: ccg-word-in .6s ease .35s forwards;
     }
@@ -127,3 +127,10 @@
 
     <span class="ccg-loader-word">Coisas com Gosto</span>
 </div>
+<script>
+    // Once per visit: the butterfly greets the first page, not every page.
+    try {
+        if (sessionStorage.getItem("ccg-greeted")) document.getElementById("page-loader").remove();
+        else sessionStorage.setItem("ccg-greeted", "1");
+    } catch (error) {}
+</script>

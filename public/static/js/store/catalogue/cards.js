@@ -37,7 +37,7 @@ export function productCard(product) {
                        border-top pt-2 product-card-line">
             <span class="h6 font-display mb-0">${escapeHtml(product.name)}</span>
             ${product.type?.name
-                ? `<span class="fs-7 text-uppercase font-monospace text-body-tertiary text-nowrap">${escapeHtml(product.type.name)}</span>`
+                ? `<span class="fs-7 fw-semibold text-body-tertiary text-nowrap">${escapeHtml(product.type.name)}</span>`
                 : ""}
           </span>
 
