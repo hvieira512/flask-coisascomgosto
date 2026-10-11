@@ -381,6 +381,43 @@ describe('facets', function () {
         expect(productsFacetCounts('materials'))->toBe([$wood['id'] => 1, $paste['id'] => 1]);
     });
 
+    it('counts the whole catalogue with no filter', function () {
+        makeProduct('Caixa');
+        makeProduct('Moldura');
+
+        expect($this->getJson('/api/products/facets')->json('total'))->toBe(2);
+    });
+
+    // The storefront's collection tiles count under the filters already ticked.
+    it('narrows the counts to the pieces the filters leave', function () {
+        $box = makeProductType('Caixa');
+        $frame = makeProductType('Moldura');
+        $filigree = makeCollection('Filigrana');
+        $embroidery = makeCollection('Bordados');
+        putInCollection(makeProduct('Caixa Redonda', typeId: $box['id']), $filigree);
+        putInCollection(makeProduct('Moldura Oval', typeId: $frame['id']), $embroidery);
+        makeProduct('Caixa sem colecção', typeId: $box['id']);
+
+        $facets = $this->getJson("/api/products/facets?type_id={$box['id']}")->assertOk()->json();
+
+        expect($facets['total'])->toBe(2)
+            ->and(collect($facets['collections'])->pluck('count', 'id')->all())->toBe([$filigree['id'] => 1]);
+    });
+
+    // Inside a collection, the sidebar counts only what the collection holds.
+    it('scopes the counts to a collection', function () {
+        $box = makeProductType('Caixa');
+        $frame = makeProductType('Moldura');
+        $filigree = makeCollection('Filigrana');
+        putInCollection(makeProduct('Caixa Redonda', typeId: $box['id']), $filigree);
+        makeProduct('Moldura Oval', typeId: $frame['id']);
+
+        $facets = $this->getJson("/api/products/facets?collection_id={$filigree['id']}")->assertOk()->json();
+
+        expect($facets['total'])->toBe(1)
+            ->and(collect($facets['types'])->pluck('count', 'id')->all())->toBe([$box['id'] => 1]);
+    });
+
     it('is public', function () {
         $this->app['auth']->forgetGuards();
         $this->flushHeaders();

@@ -85,10 +85,23 @@ class ProductController extends Controller
         return (new ProductResource($this->find($product->id)))->response()->setStatusCode(201);
     }
 
-    /** How many products sit behind each filter option, for the catalogue's sidebar. */
-    public function facets(): array
+    /**
+     * How many products sit behind each filter option, for the catalogue's
+     * sidebar and its collection tiles. Takes the list's filters, so the counts
+     * can answer for one collection or for the filters already ticked.
+     */
+    #[QueryParameter('q', 'Only products whose name or type contains this.')]
+    #[QueryParameter('type_id', 'Only products of this type. Repeatable.', type: 'int')]
+    #[QueryParameter('collection_id', 'Only products in this collection. Repeatable.', type: 'int')]
+    #[QueryParameter('material_id', 'Only products made of this material. Repeatable.', type: 'int')]
+    public function facets(Request $request): array
     {
-        return Product::facets();
+        return Product::facets(
+            $request->query('q'),
+            $this->idList($request, 'type_id'),
+            $this->idList($request, 'collection_id'),
+            $this->idList($request, 'material_id'),
+        );
     }
 
     public function show(int $product): ProductResource

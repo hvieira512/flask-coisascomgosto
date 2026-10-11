@@ -147,17 +147,23 @@ class Product extends Model
      * moved whenever another filter changed would be a different question. A
      * piece made of two materials counts under both.
      */
-    public static function facets(): array
+    public static function facets(?string $search = null, array $typeIds = [], array $collectionIds = [], array $materialIds = []): array
     {
+        // The same filters as the list, so the counts answer for what is on screen.
+        $matching = self::query()->filtered($search, $typeIds, $collectionIds, $materialIds)->select('products.id')->toBase();
         $rows = fn ($query) => $query->get()->map(fn ($row) => ['id' => $row->id, 'count' => (int) $row->count])->all();
 
         return [
-            'types' => $rows(DB::table('products')->groupBy('type_id')->select('type_id as id', DB::raw('COUNT(*) AS count'))),
+            'total' => (clone $matching)->count(),
+            'types' => $rows(DB::table('products')->whereIn('id', clone $matching)
+                ->groupBy('type_id')->select('type_id as id', DB::raw('COUNT(*) AS count'))),
             'collections' => $rows(DB::table('collection_color_sets as ccs')
                 ->join('product_variants as v', 'v.color_set_id', '=', 'ccs.color_set_id')
+                ->whereIn('v.product_id', clone $matching)
                 ->groupBy('ccs.collection_id')
                 ->select('ccs.collection_id as id', DB::raw('COUNT(DISTINCT v.product_id) AS count'))),
-            'materials' => $rows(DB::table('product_materials')->groupBy('material_id')->select('material_id as id', DB::raw('COUNT(*) AS count'))),
+            'materials' => $rows(DB::table('product_materials')->whereIn('product_id', clone $matching)
+                ->groupBy('material_id')->select('material_id as id', DB::raw('COUNT(*) AS count'))),
         ];
     }
 
