@@ -64,6 +64,19 @@
             </aside>
 
             <section class="col-lg-9 catalogue-main">
+                <nav id="grid-crumbs" class="mb-3" aria-label="Onde está" hidden>
+                    <ol class="breadcrumb fs-7 mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('store.products', absolute: false) }}" data-crumb-collections>
+                                <i class="fa-solid fa-chevron-left fa-xs me-1" aria-hidden="true"></i>Colecções
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page" data-crumb-here></li>
+                    </ol>
+                </nav>
+
+                <div id="collection-grid" class="row row-cols-2 row-cols-lg-3 g-4" hidden></div>
+
                 <div id="product-grid" class="row row-cols-2 row-cols-lg-3 g-4"></div>
 
                 <div id="grid-empty" class="alert alert-light text-center" hidden>

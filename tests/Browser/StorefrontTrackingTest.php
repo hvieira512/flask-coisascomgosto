@@ -298,4 +298,16 @@ describe('a filter', function () {
 
         trackingNoMoreThan($page, 'filter', 1);
     });
+
+    // Opening a collection is choosing one; the piece gets there through a colourway.
+    it('counts opening a collection', function () {
+        putInCollection($this->piece, makeCollection('Filigrana'));
+
+        $page = visit('/products');
+        trackingWaitUntil($page, "document.querySelector('.collection-tile') !== null");
+        $page->click('.collection-tile:has-text("Filigrana") >> nth=0');
+
+        $row = trackingOnly($page, 'filter');
+        expect([$row->facet, $row->facet_label])->toBe(['Colecção', 'Filigrana']);
+    });
 });

@@ -1,9 +1,12 @@
 export const StoreFilters = (function () {
+    // A `view` group says where the catalogue is open, not what it is narrowed
+    // to: it gets no badge, and "Limpar tudo" leaves it alone.
     const GROUPS = {
         q: { label: "Pesquisa", multiple: false },
         material_id: { label: "Material", multiple: true },
         type_id: { label: "Tipo", multiple: true },
-        collection_id: { label: "Colecção", multiple: true },
+        collection_id: { label: "Colecção", multiple: false, view: true },
+        all: { label: "Todas as peças", multiple: false, view: true },
     };
 
     const state = {};
@@ -11,8 +14,11 @@ export const StoreFilters = (function () {
     const listeners = [];
 
     const isMultiple = (group) => Boolean(GROUPS[group]?.multiple);
+    const isView = (group) => Boolean(GROUPS[group]?.view);
 
     function readFromUrl() {
+        Object.keys(state).forEach((key) => delete state[key]);
+
         const params = new URLSearchParams(window.location.search);
         Object.keys(GROUPS).forEach((key) => {
             if (isMultiple(key)) {
@@ -25,7 +31,7 @@ export const StoreFilters = (function () {
         });
     }
 
-    function writeToUrl() {
+    function writeToUrl(push) {
         const params = new URLSearchParams();
         Object.entries(state).forEach(([key, value]) => {
             if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
@@ -33,15 +39,15 @@ export const StoreFilters = (function () {
         });
 
         const query = params.toString();
-        window.history.replaceState(
-            null,
-            "",
-            query ? `${window.location.pathname}?${query}` : window.location.pathname
-        );
+        const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        if (push) window.history.pushState(null, "", url);
+        else window.history.replaceState(null, "", url);
     }
 
-    function notify() {
-        writeToUrl();
+    // Opening a collection is a step the browser's Back should undo, so it is
+    // pushed; a filter changing in place is not.
+    function notify({ push = false } = {}) {
+        writeToUrl(push);
         listeners.forEach((fn) => fn(active()));
     }
 
@@ -54,7 +60,7 @@ export const StoreFilters = (function () {
     }
 
     function selections() {
-        return Object.keys(GROUPS).flatMap((group) => {
+        return Object.keys(GROUPS).filter((group) => !isView(group)).flatMap((group) => {
             const value = state[group];
             if (!value) return [];
             return (Array.isArray(value) ? value : [value]).map((v) => ({
@@ -72,7 +78,7 @@ export const StoreFilters = (function () {
             : current === String(value);
     }
 
-    function set(group, value, label) {
+    function set(group, value, label, { push = false } = {}) {
         if (!(group in GROUPS)) return;
 
         if (value === null || value === undefined || value === "") {
@@ -81,7 +87,7 @@ export const StoreFilters = (function () {
             state[group] = isMultiple(group) ? [String(value)] : String(value);
             if (label) labels[`${group}:${value}`] = label;
         }
-        notify();
+        notify({ push });
     }
 
     function toggle(group, value, label) {
@@ -119,8 +125,20 @@ export const StoreFilters = (function () {
     }
 
     function clearAll() {
-        Object.keys(state).forEach((key) => delete state[key]);
+        Object.keys(state).filter((key) => !isView(key)).forEach((key) => delete state[key]);
         notify();
+    }
+
+    // Back to the collections: the place goes, the filters stay ticked.
+    function leave() {
+        Object.keys(state).filter((key) => isView(key) || key === "q").forEach((key) => delete state[key]);
+        notify({ push: true });
+    }
+
+    // The browser moved through history on its own; the URL is now the truth.
+    function reload() {
+        readFromUrl();
+        listeners.forEach((fn) => fn(active()));
     }
 
     function labelFor(group, value) {
@@ -151,6 +169,8 @@ export const StoreFilters = (function () {
         toggle,
         clear,
         clearAll,
+        leave,
+        reload,
         get,
         labelFor,
         registerLabel,

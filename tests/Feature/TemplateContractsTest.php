@@ -112,7 +112,7 @@ describe('the dashboard chrome', function () {
 describe('the storefront (js/store/*.js)', function () {
     it('has the catalogue hooks', function () {
         $response = $this->get('/products');
-        foreach (['product-grid', 'active-filters', 'filter-groups', 'filter-search', 'clear-filters', 'pagination'] as $id) {
+        foreach (['product-grid', 'collection-grid', 'grid-crumbs', 'active-filters', 'filter-groups', 'filter-search', 'clear-filters', 'pagination'] as $id) {
             $response->assertSee("id=\"{$id}\"", false);
         }
     });

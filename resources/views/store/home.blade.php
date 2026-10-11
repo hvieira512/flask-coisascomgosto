@@ -59,7 +59,7 @@
             @php($cover = $type->getRelation('cover'))
             <div class="col">
                 <a class="d-block position-relative overflow-hidden rounded-3 text-decoration-none h-100"
-                   href="{{ route('store.products', ['type_id' => $type->id], false) }}">
+                   href="{{ route('store.products', ['type_id' => $type->id, 'all' => 1], false) }}">
                     <div class="ratio" style="--bs-aspect-ratio: 125%">
                         @if ($cover)
                         <img class="object-fit-cover" src="{{ $cover['url'] }}" alt="{{ $cover['alt'] }}" loading="lazy">

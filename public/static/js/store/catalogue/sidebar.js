@@ -95,5 +95,27 @@ export async function mountSidebar(facets) {
                 entry.setAttribute("aria-checked", String(on));
             });
         },
+
+        // The counts follow the collection that is open. A ticked entry stays
+        // live even at zero, or it could never be unticked.
+        updateCounts(facets) {
+            root.querySelectorAll("a[data-filter-group]").forEach((entry) => {
+                const { filterGroup, filterValue } = entry.dataset;
+                const facet = entry.closest("[data-facet]")?.dataset.facet;
+                const count = facets[facet]?.get(Number(filterValue)) ?? 0;
+                const empty = count === 0 && !StoreFilters.isSelected(filterGroup, filterValue);
+
+                entry.querySelector(".filter-count").textContent = count;
+                entry.classList.toggle("is-empty", empty);
+                entry.tabIndex = empty ? -1 : 0;
+                if (empty) {
+                    entry.setAttribute("aria-disabled", "true");
+                    entry.title = "Sem peças";
+                } else {
+                    entry.removeAttribute("aria-disabled");
+                    entry.removeAttribute("title");
+                }
+            });
+        },
     };
 }

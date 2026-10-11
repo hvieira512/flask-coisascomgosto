@@ -433,6 +433,28 @@ a.card:hover {
     min-width: 0;
 }
 
+/* While the next grid is on its way, the one on screen dims rather than vanishes. */
+.catalogue-main .is-loading {
+    opacity: .5;
+    transition: opacity .15s ease;
+}
+
+.breadcrumb {
+    --bs-breadcrumb-divider: '›';
+}
+
+.collection-tile img {
+    transition: transform .2s ease;
+}
+
+.collection-tile:hover img {
+    transform: scale(1.03);
+}
+
+#collection-grid .placeholder {
+    color: var(--ccg-line);
+}
+
 /* An applied filter, as a navy pill with its own dismiss button. */
 .filter-badge {
     display: inline-flex;
@@ -749,6 +771,7 @@ a.card:hover {
     .card,
     .strip-thumb,
     .variant-option,
+    .collection-tile img,
     .tile-scrim {
         animation: none;
         transition: none;
