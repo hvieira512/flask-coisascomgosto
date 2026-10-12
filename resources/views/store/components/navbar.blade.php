@@ -26,8 +26,7 @@
                        @if (request()->routeIs('store.products', 'store.product')) aria-current="page" @endif>Peças</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       href="{{ route('store.home', absolute: false) }}#contacts">Contactos</a>
+                    <a class="nav-link" href="#contacts">Contactos</a>
                 </li>
             </ul>
         </div>

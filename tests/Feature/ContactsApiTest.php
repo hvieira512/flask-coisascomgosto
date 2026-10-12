@@ -6,12 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 beforeEach(fn () => signIn());
 
-function contactsSection(): string
+/** The footer, which is where the contacts live, on the page at $path. */
+function contactsSection(string $path = '/'): string
 {
-    $html = test()->get('/')->getContent();
-    $start = strpos($html, 'id="contacts"');
+    $html = test()->get($path)->getContent();
+    $start = strpos($html, '<footer');
 
-    return substr($html, $start, strpos($html, '</section>', $start) - $start);
+    return substr($html, $start, strpos($html, '</footer>', $start) - $start);
 }
 
 /** Drop screen-reader-only spans, then all tags, leaving what is seen. */
@@ -95,12 +96,12 @@ describe('the landing page', function () {
         $html = $this->get('/')->getContent();
 
         // Each section's own heading, not the navbar links or the hero's CTA,
-        // which share the same words.
+        // which share the same words; the contacts close the page, in the footer.
         $positions = array_map(fn ($h) => strpos($html, $h), [
             'O que sai da oficina',
             'Começou numa bancada pequena',
             'três mãos-cheias de tempo',
-            'Onde nos encontra</h2>',
+            'id="contacts"',
         ]);
         expect($positions)->not->toContain(false);
         $sorted = $positions;
@@ -115,14 +116,19 @@ describe('the landing page', function () {
         expect(strpos($html, 'O que sai da oficina'))->toBeLessThan(strpos($html, 'id="origem"'));
     });
 
-    it('keeps the contacts in a section, not the navbar', function () {
+    it('keeps the contacts in the footer, not the navbar', function () {
         $html = $this->get('/')->getContent();
         $navStart = strpos($html, '<nav');
         $navbar = substr($html, $navStart, strpos($html, '</nav>') - $navStart);
 
         expect($navbar)->not->toContain('wa.me')
-            ->and($html)->toContain('id="contacts"');
+            ->and(contactsSection())->toContain('id="contacts"')->toContain('wa.me');
     });
+
+    // The footer is in the layout, so the contacts are one scroll away anywhere.
+    it('carries the contacts on every page of the shop', function (string $path) {
+        expect(contactsSection($path))->toContain('id="contacts"')->toContain('wa.me/939320334');
+    })->with(['/', '/products', '/not-found']);
 
     it('sets the contacts as type, not cards', function () {
         $contacts = contactsSection();
@@ -132,11 +138,12 @@ describe('the landing page', function () {
             ->toContain('font-display');
     });
 
-    it('closes on the one dark band, the contacts', function () {
+    it('closes on the one dark band, the footer', function () {
         $html = $this->get('/')->getContent();
+        preg_match('/<footer[^>]*>/', $html, $tag);
 
         expect(substr_count($html, 'data-bs-theme="dark"'))->toBe(1)
-            ->and(strpos($html, 'id="contacts"'))->toBeLessThan(strpos($html, '<footer'));
+            ->and($tag[0])->toContain('data-bs-theme="dark"');
     });
 
     it('keeps every family tile on one baseline', function () {
@@ -158,13 +165,14 @@ describe('the landing page', function () {
             ->not->toContain('https://www.instagram.com');
     });
 
-    // The address carries no label: it is the display line the block opens with.
-    it('keeps the labels visible', function () {
-        $visible = contactsVisibleText(contactsSection());
+    // The icons carry the labels for the eye; the spans carry them for a screen reader.
+    it('names every way to reach the shop', function () {
+        $footer = contactsSection();
 
-        foreach (['E-mail', 'WhatsApp', 'Facebook', 'Instagram', 'Viana do Castelo'] as $text) {
-            expect($visible)->toContain($text);
+        foreach (['E-mail', 'WhatsApp', 'Facebook', 'Instagram'] as $label) {
+            expect($footer)->toContain("<span class=\"visually-hidden\">{$label}:</span>");
         }
+        expect(contactsVisibleText($footer))->toContain('Fale connosco')->toContain('Siga-nos')->toContain('Viana do Castelo');
     });
 
     it('links the address to the map', function () {

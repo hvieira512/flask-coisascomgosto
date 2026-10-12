@@ -158,8 +158,6 @@
 @include('store.components.timeline')
 @endif
 
-@include('store.components.contacts')
-
 @endsection
 
 @section('page_scripts')

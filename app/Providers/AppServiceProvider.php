@@ -60,12 +60,12 @@ class AppServiceProvider extends ServiceProvider
             .'(SELECT COUNT(*) FROM collections) AS collections, (SELECT COUNT(*) FROM events) AS events'
         )));
 
-        // The shop's own details, for the contact cards and the enquiry button.
+        // The shop's own details, for the footer and the enquiry button.
         // The one failure swallowed is the table not existing yet, between a clone
         // and the first migration: the person setting the project up should see a
         // shop, not a stack trace. Anything else propagates — a shop quietly
         // serving no contact details is worse than an error that says so.
-        View::composer(['store.components.contacts', 'store.product'], function ($view) {
+        View::composer(['store.components.footer', 'store.product'], function ($view) {
             try {
                 $contact = Contact::shop();
             } catch (QueryException $error) {
