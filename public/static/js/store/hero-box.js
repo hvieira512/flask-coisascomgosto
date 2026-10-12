@@ -261,8 +261,9 @@ async function mount(stage) {
     window.addEventListener("scroll", readScroll, { passive: true });
     readScroll();
 
+    // The canvas is wider than the stage (see store.css); the stylesheet sizes it.
     const resize = () => {
-        const { width, height } = stage.getBoundingClientRect();
+        const { width, height } = renderer.domElement.getBoundingClientRect();
         renderer.setSize(width, height, false);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();

@@ -103,6 +103,14 @@ h3 {
     display: block;
 }
 
+/* Wider than the stage, so the shadow the lid throws has somewhere to fall.
+   The stage stays the thing to grab; the overflow lets pointers through. */
+.hero-canvas {
+    left: -20%;
+    width: 140%;
+    pointer-events: none;
+}
+
 .hero-fallback {
     border-radius: 50%;
     object-fit: cover;
