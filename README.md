@@ -143,10 +143,11 @@ through `compose.prod.yml`. Everything below is done once. After that, every
 push to `main` that passes the checks goes live on its own, through the
 `deploy` job in `.github/workflows/checks.yml`.
 
-1. **A server.** Any Ubuntu 24.04 machine with 2 GB of memory or more; a Hetzner
-   CX23 does. Create it with your SSH public key (`~/.ssh/id_ed25519.pub`), and
-   turn on the provider's backups: they cover the database and the photographs
-   together. In its firewall allow inbound TCP 22, 80 and 443, and UDP 443.
+1. **A server.** Any Ubuntu 24.04 machine with 2 GB of memory or more; an OVH
+   VPS-1 or a Hetzner CX23 does. Create it with your SSH public key
+   (`~/.ssh/id_ed25519.pub`), and have backups on: they cover the database and
+   the photographs together. In its firewall allow inbound TCP 22, 80 and 443,
+   and UDP 443.
 2. **DNS.** At the registrar, an `A` record for the domain and one for `www`,
    both pointing at the server's address.
 3. **Set it up**, from your own machine, in the project folder:
@@ -155,6 +156,8 @@ push to `main` that passes the checks goes live on its own, through the
    ssh root@ADDRESS sh -s coisascomgosto.pt < deploy/setup-server.sh
    ```
 
+   On OVH, whose images log you in as `ubuntu`, it is
+   `ssh ubuntu@ADDRESS sudo sh -s coisascomgosto.pt < deploy/setup-server.sh`.
    The script installs Docker, makes a `deploy` user, clones `main` to
    `/srv/coisascomgosto`, writes a `.env` with freshly generated secrets, starts
    the stack and prints a key. The site answers over HTTPS within a minute of

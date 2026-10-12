@@ -4,6 +4,11 @@
 #
 #     ssh root@SERVER sh -s coisascomgosto.pt < deploy/setup-server.sh
 #
+# or, on a provider whose images log you in as a sudo user instead of root
+# (OVH's Ubuntu images: `ubuntu`):
+#
+#     ssh ubuntu@SERVER sudo sh -s coisascomgosto.pt < deploy/setup-server.sh
+#
 # Installs Docker, makes a `deploy` user for the site and for the deploy job,
 # clones main under /srv, writes a .env with freshly generated secrets, starts
 # the stack, and prints the one key to put in GitHub. Safe to run again: every
@@ -20,11 +25,13 @@ command -v git >/dev/null || { apt-get update -q && apt-get install -y -q git; }
 command -v docker >/dev/null || curl -fsSL https://get.docker.com | sh
 
 # The site runs as `deploy`, which may use Docker but has no password and no
-# sudo. It gets root's SSH keys, so the key that opened root opens it too.
+# sudo. It gets the SSH keys of whoever is running this, so the key that
+# opened the server opens it too.
+KEYS=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)/.ssh/authorized_keys
 id deploy >/dev/null 2>&1 || useradd --create-home --shell /bin/bash --groups docker deploy
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
 [ -f /home/deploy/.ssh/authorized_keys ] \
-    || install -m 600 -o deploy -g deploy /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+    || install -m 600 -o deploy -g deploy "$KEYS" /home/deploy/.ssh/authorized_keys
 
 [ -d "$DIR" ] || { install -d -o deploy -g deploy "$DIR" && su deploy -c "git clone -q $REPO $DIR"; }
 
