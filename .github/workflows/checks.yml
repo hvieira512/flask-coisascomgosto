@@ -7,7 +7,7 @@ name: checks
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, ci-probe]
   pull_request:
 
 jobs:
@@ -69,7 +69,7 @@ jobs:
 
       # ponytail: the browser tests share the runner's two cores with Chromium and
       # time out now and then; one rerun, failed tests first, until the cause is found.
-      - run: vendor/bin/pest || vendor/bin/pest --retry
+      - run: vendor/bin/pest tests/Browser/CatalogCollectionsTest.php tests/Browser/StorefrontTrackingTest.php tests/Browser/CatalogKeyboardTest.php tests/Browser/ProductsPageTest.php
 
       # The plugin screenshots the page a browser test fails on; keep them, they
       # are the only view of what a runner's Chromium was looking at.
