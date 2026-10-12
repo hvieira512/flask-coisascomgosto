@@ -1,4 +1,4 @@
-<section class="section pb-5" id="events">
+<section class="section pb-5 bg-body-secondary" id="events">
     <div class="container">
         <header class="mb-4">
             <p class="eyebrow">Percurso</p>

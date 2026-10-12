@@ -222,7 +222,8 @@ a.card:hover {
     height: 9px;
     border-radius: 50%;
     background: var(--ccg-blue-500);
-    box-shadow: 0 0 0 4px var(--ccg-white);
+    /* The ring cuts the line around the dot; the section sits on mist. */
+    box-shadow: 0 0 0 4px var(--ccg-mist);
 }
 
 .timeline-entry:first-child .timeline-marker {
