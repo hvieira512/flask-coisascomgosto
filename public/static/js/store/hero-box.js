@@ -2,7 +2,7 @@
    the shop photographs it — a flattened sphere in white paint, the seam at the
    equator, the lid a shallow dome carrying the owners' painting in relief. It
    turns slowly, the pointer drags it round, and the lid lifts off with the
-   page's scroll or the button. Without WebGL the photograph stays as a still. */
+   page's scroll or a tap. Without WebGL the photograph stays as a still. */
 
 const stage = document.querySelector("[data-hero-box]");
 if (stage) mount(stage).catch(console.error);
@@ -217,19 +217,10 @@ async function mount(stage) {
     let moved = false;
     let last = { x: 0, y: 0 };
 
-    const button = document.querySelector("[data-hero-lid]");
     const target = () => manual ?? scrollOpen;
-    const say = () => {
-        if (!button) return;
-        const isOpen = target() > .5;
-        button.textContent = isOpen ? "Fechar a tampa" : "Abrir a tampa";
-        button.setAttribute("aria-pressed", String(isOpen));
-    };
     const toggle = () => {
         manual = target() > .5 ? 0 : 1;
-        say();
     };
-    button?.addEventListener("click", toggle);
 
     // A drag that started on the box keeps turning it wherever the pointer goes.
     stage.addEventListener("pointerdown", (event) => {
@@ -243,7 +234,11 @@ async function mount(stage) {
         const dx = event.clientX - last.x;
         const dy = event.clientY - last.y;
         last = { x: event.clientX, y: event.clientY };
-        if (Math.abs(dx) + Math.abs(dy) > 2) moved = true;
+        if (Math.abs(dx) + Math.abs(dy) > 2) {
+            moved = true;
+            // The arrow has done its job.
+            stage.classList.add("is-turned");
+        }
         yaw += dx * .008;
         pitch = Math.min(.4, Math.max(-.2, pitch + dy * .005));
     });
@@ -260,7 +255,6 @@ async function mount(stage) {
 
     const readScroll = () => {
         scrollOpen = Math.min(1, Math.max(0, window.scrollY / Math.max(240, innerHeight * .6)));
-        say();
     };
     window.addEventListener("scroll", readScroll, { passive: true });
     readScroll();

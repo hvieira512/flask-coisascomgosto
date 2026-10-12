@@ -45,8 +45,9 @@ h3 {
 }
 
 /* ------------------------------------------------------------------
-   The hero: the round box in WebGL (js/store/hero-box.js), in front of the
-   logo's blue ring. The photograph underneath is what shows without WebGL.
+   The hero: the round box in WebGL (js/store/hero-box.js), over a word
+   hidden in the paper, with an arrow under it until somebody turns it by
+   hand. The photograph underneath is what shows without WebGL.
    ------------------------------------------------------------------ */
 
 .hero {
@@ -66,17 +67,37 @@ h3 {
     cursor: grabbing;
 }
 
-.hero-ring {
-    inset: 4%;
-    border-radius: 50%;
-    border: 2px solid var(--ccg-blue-500);
-    opacity: .6;
+/* Behind the box, which covers its middle: the box sits in front of the sign. */
+.hero-word {
+    top: 30%;
+    left: 50%;
+    translate: -50% -50%;
+    font-size: clamp(5rem, 26vw, 7.5rem);
+    font-style: italic;
+    letter-spacing: -.02em;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--ccg-blue-100);
+    pointer-events: none;
 }
 
-.hero-halo {
-    inset: -2.75rem;
-    border-radius: 50%;
-    border: 1px solid var(--ccg-line);
+.hero-turn {
+    bottom: 2%;
+    left: 50%;
+    width: 38%;
+    translate: -50% 0;
+    color: var(--ccg-blue-400);
+    animation: hero-sway 1.8s ease-in-out infinite alternate;
+    transition: opacity .4s ease;
+}
+
+.hero-stage.is-turned .hero-turn {
+    opacity: 0;
+}
+
+@keyframes hero-sway {
+    from { transform: translateX(-6px); }
+    to { transform: translateX(6px); }
 }
 
 .hero-canvas,
@@ -772,7 +793,8 @@ a.card:hover {
     .strip-thumb,
     .variant-option,
     .collection-tile img,
-    .tile-scrim {
+    .tile-scrim,
+    .hero-turn {
         animation: none;
         transition: none;
     }
