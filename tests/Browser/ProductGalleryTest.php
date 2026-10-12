@@ -7,17 +7,6 @@
 
 beforeEach(fn () => signIn());
 
-function galleryWaitUntil($page, string $js): void
-{
-    for ($i = 0; $i < 100; $i++) {
-        if ($page->script($js)) {
-            return;
-        }
-        $page->wait(0.05);
-    }
-    expect($page->script($js))->toBeTrue("timed out waiting for: {$js}");
-}
-
 function galleryUpload(array $product, array $variant, string $name = 'foto.jpg'): void
 {
     test()->post("/api/products/{$product['id']}/images/upload", ['file' => photo($name), 'variant_id' => (string) $variant['id']])
@@ -55,7 +44,8 @@ function galleryPiece(): array
 function galleryOpen(array $product, int $width = 1280, int $height = 1000)
 {
     $page = visit("/products/{$product['id']}")->resize($width, $height);
-    galleryWaitUntil($page, "document.querySelector('#thumb-strip .strip-thumb') !== null");
+    // The loader too: a test that samples what is under a point would find it.
+    waitUntil($page, "document.querySelector('#thumb-strip .strip-thumb') !== null && !document.getElementById('page-loader')");
 
     return $page;
 }
@@ -64,7 +54,7 @@ function galleryOpen(array $product, int $width = 1280, int $height = 1000)
 function galleryOpenSpread(array $product)
 {
     $page = visit("/products/{$product['id']}")->resize(1280, 1000);
-    galleryWaitUntil($page, "document.querySelector('.variant-option[aria-pressed=\"true\"]') !== null");
+    waitUntil($page, "document.querySelector('.variant-option[aria-pressed=\"true\"]') !== null");
 
     return $page;
 }
@@ -111,7 +101,7 @@ describe('a piece photographed twice in one colour', function () {
             $before = $page->attribute('#stage-image', 'src');
 
             $page->click('.strip-thumb >> nth=1');
-            galleryWaitUntil($page, 'document.getElementById("stage-image").getAttribute("src") !== '.json_encode($before));
+            waitUntil($page, 'document.getElementById("stage-image").getAttribute("src") !== '.json_encode($before));
 
             $page->assertSeeIn('#stage-counter', '2 / 2');
         });
@@ -167,7 +157,7 @@ describe('a piece photographed twice in one colour', function () {
         it('is hidden when there is nothing to enlarge', function () {
             $page = galleryOpen($this->piece);
             $page->click(galleryOption('Preto e Branco'));
-            galleryWaitUntil($page, "document.querySelector('#gallery-stage .product-placeholder') !== null");
+            waitUntil($page, "document.querySelector('#gallery-stage .product-placeholder') !== null");
 
             $page->assertMissing('#stage-zoom');
         });
@@ -176,7 +166,7 @@ describe('a piece photographed twice in one colour', function () {
         it('still shows the cue for one photograph', function () {
             $page = galleryOpen($this->piece);
             $page->click(galleryOption('Branco e Dourado'));
-            galleryWaitUntil($page, "document.querySelector('#stage-zoom:not([hidden])') !== null");
+            waitUntil($page, "document.querySelector('#stage-zoom:not([hidden])') !== null");
 
             $page->assertVisible('#stage-zoom');
         });
@@ -189,7 +179,7 @@ describe('a piece photographed twice in one colour', function () {
             $photographed = $page->attribute('#stage-image', 'src');
 
             $page->click(galleryOption('Preto e Branco'));
-            galleryWaitUntil($page, "document.querySelectorAll('#gallery-stage .product-placeholder').length === 1");
+            waitUntil($page, "document.querySelectorAll('#gallery-stage .product-placeholder').length === 1");
 
             $page->assertMissing('#stage-image')->assertNoJavaScriptErrors();
             expect($photographed)->not->toBeEmpty('the photographed colour had nothing to show either');
@@ -199,10 +189,10 @@ describe('a piece photographed twice in one colour', function () {
         it('brings the photograph back for the photographed colour', function () {
             $page = galleryOpen($this->piece);
             $page->click(galleryOption('Preto e Branco'));
-            galleryWaitUntil($page, "document.querySelector('#gallery-stage .product-placeholder') !== null");
+            waitUntil($page, "document.querySelector('#gallery-stage .product-placeholder') !== null");
 
             $page->click(galleryOption('Branco e Dourado'));
-            galleryWaitUntil($page, "document.querySelectorAll('#gallery-stage .product-placeholder').length === 0");
+            waitUntil($page, "document.querySelectorAll('#gallery-stage .product-placeholder').length === 0");
 
             $page->assertVisible('#stage-image')->assertCount('.strip-thumb', 2);
         });
@@ -318,7 +308,7 @@ describe('a piece photographed once per colour', function () {
     it('shows the placeholder for a colour nobody has photographed', function () {
         $page = galleryOpenSpread($this->product);
         $page->click(galleryOption('Verde e Dourado'));
-        galleryWaitUntil($page, "document.querySelector('#gallery-stage .product-placeholder') !== null");
+        waitUntil($page, "document.querySelector('#gallery-stage .product-placeholder') !== null");
 
         $page->assertMissing('#stage-image');
         expect(galleryBox($page, '#stage-image'))->toBeNull();
@@ -341,7 +331,7 @@ describe('a piece photographed once per colour', function () {
         $before = $page->attribute('#stage-image', 'src');
 
         $page->click(galleryOption($this->names[2]));
-        galleryWaitUntil($page, 'document.getElementById("stage-image").getAttribute("src") !== '.json_encode($before));
+        waitUntil($page, 'document.getElementById("stage-image").getAttribute("src") !== '.json_encode($before));
 
         // It is this colour's own photograph, so nothing to disclaim.
         $page->assertMissing('#stage-note');

@@ -36,13 +36,6 @@ function homeOpen(?int $days = null, int $width = 1280, int $height = 1000)
     return $page;
 }
 
-// Page::waitForURL builds the request but never sends it, so poll here.
-function homeWaitUntil($page, string $condition): void
-{
-    $met = $page->script("new Promise(resolve => { const end = Date.now() + 5000; (function poll() { if ({$condition}) return resolve(true); if (Date.now() > end) return resolve(false); setTimeout(poll, 50); })(); })");
-    expect($met)->toBeTrue("timed out waiting for: {$condition}");
-}
-
 function homeText($page, string $selector): string
 {
     return $page->script('document.querySelector('.json_encode($selector).').innerText');
@@ -180,7 +173,7 @@ describe('with something recorded', function () {
         // The name is percent-encoded, so assert on what the products page made
         // of it rather than on the query string.
         $page->page()->waitForSelector('#product-list tr[data-product-id] >> nth=0');
-        homeWaitUntil($page, "location.pathname === '/dashboard/products' && location.search.startsWith('?q=')");
+        waitUntil($page, "location.pathname === '/dashboard/products' && location.search.startsWith('?q=')");
         expect($page->value('#filter-q'))->toBe('Caixa Redonda');
     });
 
@@ -314,7 +307,7 @@ describe('the window selector', function () {
 
         $page->click("[data-days='30']");
 
-        homeWaitUntil($page, "location.href.endsWith('dias=30')");
+        waitUntil($page, "location.href.endsWith('dias=30')");
         expect(homeText($page, '[data-days][aria-pressed=true]'))->toBe('30 dias');
     });
 

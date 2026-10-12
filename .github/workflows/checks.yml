@@ -62,6 +62,10 @@ jobs:
           node-version: "22"
       - run: npm ci && npx playwright install --with-deps chromium
 
+      # The settings above come from the environment; the file is only so that
+      # Laravel's debug page, which reads it, stops warning on every rendered error.
+      - run: cp .env.example .env
+
       - run: vendor/bin/pest
 
   # Every push to main that passes goes live: the server pulls main and

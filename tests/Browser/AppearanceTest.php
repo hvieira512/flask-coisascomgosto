@@ -131,11 +131,7 @@ it('looks the way it did', function (string $name, string $label) {
         .' && [...document.images].every((image) => image.complete)'
         .' && [...document.fonts].some((face) => /Font Awesome/.test(face.family))'
         ." && document.fonts.status === 'loaded'";
-    // Up to fifteen seconds: the icon font comes from Font Awesome's CDN.
-    for ($i = 0; $i < 300 && ! $page->script($settled); $i++) {
-        $page->wait(0.05);
-    }
-    expect($page->script($settled))->toBeTrue("{$name} did not settle");
+    waitUntil($page, $settled);
     $page->wait(0.5);
 
     $file = "appearance-{$name}-{$label}";

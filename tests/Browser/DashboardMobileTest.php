@@ -29,13 +29,6 @@ function mobilePhone()
     return $page;
 }
 
-// Page::waitForFunction builds the request but never sends it, so poll here.
-function mobileWaitUntil($page, string $condition): void
-{
-    $met = $page->script("new Promise(resolve => { const end = Date.now() + 5000; (function poll() { if ({$condition}) return resolve(true); if (Date.now() > end) return resolve(false); setTimeout(poll, 50); })(); })");
-    expect($met)->toBeTrue("timed out waiting for: {$condition}");
-}
-
 function mobileOpenEditor($page): void
 {
     $page->script("document.querySelector('#product-list tr[data-product-id]').click()");
@@ -172,7 +165,7 @@ describe('the navbar', function () {
         $page->click('#sidebarToggle');
         $page->page()->waitForSelector('#sidebar.show');
         // The class lands before the slide-in runs, so the box is still off-screen.
-        mobileWaitUntil($page, "document.getElementById('sidebar').getBoundingClientRect().x >= -1");
+        waitUntil($page, "document.getElementById('sidebar').getBoundingClientRect().x >= -1");
 
         $page->assertCount('.offcanvas-backdrop', 1)
             ->assertCount('#sidebar [aria-current]', 1);
@@ -299,11 +292,11 @@ describe('the modal scrolls its own body', function () {
         $page = mobilePhone();
         mobileOpenEditor($page);
         // Escape is handled on the modal element, so it has to hold focus first.
-        mobileWaitUntil($page, "document.getElementById('editProductModal').contains(document.activeElement)");
+        waitUntil($page, "document.getElementById('editProductModal').contains(document.activeElement)");
         $page->keys(':focus', 'Escape');
         $page->page()->waitForSelector('#editProductModal', ['state' => 'hidden']);
         // The lock lifts once the backdrop has faded, after the modal is hidden.
-        mobileWaitUntil($page, "!document.body.classList.contains('modal-open')");
+        waitUntil($page, "!document.body.classList.contains('modal-open')");
 
         expect($page->script('getComputedStyle(document.body).overflow'))->not->toBe('hidden');
         $page->assertCount('.modal-backdrop', 0);

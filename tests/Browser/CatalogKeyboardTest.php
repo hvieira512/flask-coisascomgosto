@@ -9,21 +9,10 @@
 
 beforeEach(fn () => signIn());
 
-function keyboardWaitUntil($page, string $js): void
-{
-    for ($i = 0; $i < 100; $i++) {
-        if ($page->script($js)) {
-            return;
-        }
-        $page->wait(0.05);
-    }
-    expect($page->script($js))->toBeTrue("timed out waiting for: {$js}");
-}
-
 /** The grid is refetched when a filter changes, so counting straight after a keypress counts the old grid. */
 function keyboardWaitForCards($page, int $count): void
 {
-    keyboardWaitUntil($page, "document.querySelectorAll('#product-grid .product-card').length === {$count}");
+    waitUntil($page, "document.querySelectorAll('#product-grid .product-card').length === {$count}");
 }
 
 function keyboardEntry(string $name): string
@@ -41,7 +30,7 @@ function keyboardCatalogue()
     makeProduct('Moldura Oval', typeId: $frame['id']);
 
     $page = visit('/products')->resize(1280, 900);
-    keyboardWaitUntil($page, "document.querySelector('.filter-entry') !== null");
+    waitUntil($page, "document.querySelector('.filter-entry') !== null");
 
     return $page;
 }
@@ -76,7 +65,7 @@ describe('the entries are reachable', function () {
         makeProduct('Uma peça');
 
         $page = visit('/products');
-        keyboardWaitUntil($page, "document.querySelector('.filter-entry') !== null");
+        waitUntil($page, "document.querySelector('.filter-entry') !== null");
 
         $page->assertAttribute('.filter-entry.is-empty >> nth=0', 'tabindex', '-1')
             ->assertAttribute('.filter-entry.is-empty >> nth=0', 'aria-disabled', 'true');
@@ -102,7 +91,7 @@ describe('it announces itself as a checkbox', function () {
         $page = keyboardCatalogue();
 
         $page->click(keyboardEntry('Caixa'));
-        keyboardWaitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
+        waitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
 
         $page->assertAttribute(keyboardEntry('Caixa'), 'aria-checked', 'true');
     });
@@ -128,7 +117,7 @@ describe('the keyboard does what the mouse does', function () {
     it('unticks it with Space again', function () {
         $page = keyboardCatalogue();
         $page->keys(keyboardEntry('Caixa'), 'Space');
-        keyboardWaitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
+        waitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
 
         $page->keys(':focus', 'Space');
         keyboardWaitForCards($page, 3);
@@ -151,7 +140,7 @@ describe('the keyboard does what the mouse does', function () {
         $page = keyboardCatalogue();
 
         $page->keys(keyboardEntry('Caixa'), 'Space');
-        keyboardWaitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
+        waitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
 
         expect($page->script('window.scrollY'))->toBe(0);
     });
@@ -160,9 +149,9 @@ describe('the keyboard does what the mouse does', function () {
         $page = keyboardCatalogue();
 
         $page->keys(keyboardEntry('Caixa'), 'Space');
-        keyboardWaitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
+        waitUntil($page, "document.querySelector('.filter-entry.is-active') !== null");
         $page->keys(keyboardEntry('Moldura'), 'Space');
-        keyboardWaitUntil($page, "document.querySelectorAll('.filter-entry.is-active').length === 2");
+        waitUntil($page, "document.querySelectorAll('.filter-entry.is-active').length === 2");
         keyboardWaitForCards($page, 3);
 
         $page->assertAttribute(keyboardEntry('Caixa'), 'aria-checked', 'true')

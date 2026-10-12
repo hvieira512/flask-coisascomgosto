@@ -22,10 +22,11 @@ function typeDialogRaw(Webpage $page): Page
 function typeDialogWaitFor(Webpage $page, string $condition): Webpage
 {
     $label = json_encode($condition);
+    $budget = BROWSER_WAIT_SECONDS * 1000;
     $page->script(<<<JS
         () => new Promise((resolve, reject) => {
             const visible = (selector) => !!document.querySelector(selector)?.checkVisibility({ visibilityProperty: true });
-            const until = Date.now() + 5000;
+            const until = Date.now() + {$budget};
             const tick = async () => {
                 let ok = false;
                 try { ok = await (async () => ($condition))(); } catch (e) {}

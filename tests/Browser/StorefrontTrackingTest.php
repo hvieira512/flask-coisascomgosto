@@ -26,17 +26,6 @@ beforeEach(function () {
     $this->putJson("/api/products/{$this->piece['id']}/sizes", ['size_ids' => [$this->size['id']]])->assertOk();
 });
 
-function trackingWaitUntil($page, string $js): void
-{
-    for ($i = 0; $i < 100; $i++) {
-        if ($page->script($js)) {
-            return;
-        }
-        $page->wait(0.05);
-    }
-    expect($page->script($js))->toBeTrue("timed out waiting for: {$js}");
-}
-
 /**
  * The Caixa entry itself, and the loader gone from over it. Waiting for any
  * entry let the click land while the types were still arriving, or on the
@@ -44,7 +33,7 @@ function trackingWaitUntil($page, string $js): void
  */
 function trackingWaitForCaixa($page): void
 {
-    trackingWaitUntil($page, "!document.getElementById('page-loader')"
+    waitUntil($page, "!document.getElementById('page-loader')"
         ." && [...document.querySelectorAll('.filter-entry')].some(e => e.textContent.includes('Caixa'))");
 }
 
@@ -92,7 +81,7 @@ function trackingAsk($page): void
 function trackingCatalogue()
 {
     $page = visit('/products')->resize(1280, 900);
-    trackingWaitUntil($page, "document.querySelector('#product-grid .product-card') !== null");
+    waitUntil($page, "document.querySelector('#product-grid .product-card') !== null");
 
     return $page;
 }
@@ -174,7 +163,7 @@ describe('a view', function () {
 
     it('records nothing for a piece that does not exist', function () {
         $page = visit('/products/9999');
-        trackingWaitUntil($page, "(() => { const el = document.getElementById('detail-error'); return el && el.getClientRects().length > 0; })()");
+        waitUntil($page, "(() => { const el = document.getElementById('detail-error'); return el && el.getClientRects().length > 0; })()");
 
         trackingNoMoreThan($page, 'view', 0);
     });
@@ -184,7 +173,7 @@ describe('an enquiry', function () {
     // The colour says which colourway to make next, not merely that somebody asked.
     it('carries the colour on screen', function () {
         $page = visit("/products/{$this->piece['id']}");
-        trackingWaitUntil($page, "document.querySelector('.variant-option') !== null");
+        waitUntil($page, "document.querySelector('.variant-option') !== null");
 
         $page->click('.variant-option[title="Branco e Dourado"]');
         trackingAsk($page);
@@ -196,7 +185,7 @@ describe('an enquiry', function () {
 
     it('carries the size too', function () {
         $page = visit("/products/{$this->piece['id']}");
-        trackingWaitUntil($page, "document.querySelector('#size-options button') !== null");
+        waitUntil($page, "document.querySelector('#size-options button') !== null");
 
         $page->click('#size-options button >> nth=0');
         trackingAsk($page);
@@ -208,7 +197,7 @@ describe('an enquiry', function () {
     // Unlike a view: asking again is asking again.
     it('counts twice when asked twice', function () {
         $page = visit("/products/{$this->piece['id']}");
-        trackingWaitUntil($page, "document.getElementById('enquiry-link') !== null");
+        waitUntil($page, "document.getElementById('enquiry-link') !== null");
 
         trackingAsk($page);
         trackingAsk($page);
@@ -219,7 +208,7 @@ describe('an enquiry', function () {
     // The tracking rides along with the enquiry; it must not replace what the button is for.
     it('leaves the choice in the WhatsApp message', function () {
         $page = visit("/products/{$this->piece['id']}");
-        trackingWaitUntil($page, "document.querySelector('.variant-option') !== null");
+        waitUntil($page, "document.querySelector('.variant-option') !== null");
 
         $page->click('.variant-option[title="Branco e Dourado"]');
         $page->click('#size-options button >> nth=0');
@@ -304,7 +293,7 @@ describe('a filter', function () {
         putInCollection($this->piece, makeCollection('Filigrana'));
 
         $page = visit('/products');
-        trackingWaitUntil($page, "document.querySelector('.collection-tile') !== null");
+        waitUntil($page, "document.querySelector('.collection-tile') !== null");
         $page->click('.collection-tile:has-text("Filigrana") >> nth=0');
 
         $row = trackingOnly($page, 'filter');

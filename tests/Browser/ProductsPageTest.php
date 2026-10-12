@@ -30,10 +30,7 @@ function productsPageRows($page): int
 /** The list re-renders after a fetch; Pest's assertions read once and do not wait. */
 function productsPageWaitFor($page, string $js): void
 {
-    for ($i = 0; $i < 100 && ! $page->script("() => {$js}"); $i++) {
-        $page->wait(0.05);
-    }
-    expect($page->script("() => {$js}"))->toBeTrue("timed out waiting for: {$js}");
+    waitUntil($page, "(() => {$js})()");
 }
 
 function productsPageOpen()

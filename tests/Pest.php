@@ -4,9 +4,32 @@ use App\Models\ProductType;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Pest\Browser\Playwright\Playwright;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)->in('Feature', 'Browser');
+
+/*
+ * How long a browser test waits for the page to do something. Five seconds
+ * is plenty on a laptop and not on a CI runner, where the server, MySQL and
+ * Chromium share two cores: there, pages that render from the API took longer
+ * than that and whole files failed on timeouts.
+ */
+const BROWSER_WAIT_SECONDS = 20;
+Playwright::setTimeout(BROWSER_WAIT_SECONDS * 1000);
+
+/**
+ * Poll a JavaScript expression on the page until it is truthy. The plugin's
+ * own waitFor* helpers build the request but never send it, so this polls.
+ */
+function waitUntil($page, string $js): void
+{
+    $until = microtime(true) + BROWSER_WAIT_SECONDS;
+    while (! $page->script($js) && microtime(true) < $until) {
+        $page->wait(0.05);
+    }
+    expect($page->script($js))->toBeTrue("timed out waiting for: {$js}");
+}
 
 /*
  * Builders that go through the API, as the dashboard does, so a test reads as

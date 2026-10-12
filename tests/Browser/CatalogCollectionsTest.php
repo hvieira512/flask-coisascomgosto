@@ -12,20 +12,9 @@
 
 beforeEach(fn () => signIn());
 
-function collectionsWaitUntil($page, string $js): void
-{
-    for ($i = 0; $i < 100; $i++) {
-        if ($page->script($js)) {
-            return;
-        }
-        $page->wait(0.05);
-    }
-    expect($page->script($js))->toBeTrue("timed out waiting for: {$js}");
-}
-
 function collectionsWaitForCards($page, int $count): void
 {
-    collectionsWaitUntil($page, "document.querySelectorAll('#product-grid .product-card').length === {$count}");
+    waitUntil($page, "document.querySelectorAll('#product-grid .product-card').length === {$count}");
 }
 
 /** Two collections with pieces, one without, and a piece filed under none. */
@@ -48,7 +37,7 @@ function collectionsSeed(): array
 function collectionsOpen(string $path = '/products', int $width = 1280, int $height = 900)
 {
     $page = visit($path)->resize($width, $height);
-    collectionsWaitUntil($page, "document.querySelector('#collection-grid .collection-tile, #product-grid .product-card') !== null");
+    waitUntil($page, "document.querySelector('#collection-grid .collection-tile, #product-grid .product-card') !== null");
 
     return $page;
 }
@@ -115,7 +104,7 @@ describe('the collections come first', function () {
         collectionsWaitForCards($page, 2);
 
         $page->click('#grid-crumbs [data-crumb-collections]');
-        collectionsWaitUntil($page, "!document.getElementById('collection-grid').hidden && document.querySelectorAll('.collection-tile').length === 3");
+        waitUntil($page, "!document.getElementById('collection-grid').hidden && document.querySelectorAll('.collection-tile').length === 3");
 
         expect($page->url())->not->toContain('collection_id');
     });
@@ -126,7 +115,7 @@ describe('the collections come first', function () {
         collectionsWaitForCards($page, 2);
 
         $page->script('history.back()');
-        collectionsWaitUntil($page, "!document.getElementById('collection-grid').hidden && document.querySelectorAll('.collection-tile').length === 3");
+        waitUntil($page, "!document.getElementById('collection-grid').hidden && document.querySelectorAll('.collection-tile').length === 3");
 
         expect($page->url())->not->toContain('collection_id');
     });
@@ -144,7 +133,7 @@ describe('the collections come first', function () {
     it('narrows the collections when a filter is ticked, and carries it inside and back out', function () {
         $page = collectionsOpen();
         $page->click('.filter-entry:has-text("Moldura") >> nth=0');
-        collectionsWaitUntil($page, "[...document.querySelectorAll('.collection-tile-name')].map(e => e.textContent.trim()).join() === 'Bordados,Todas as peças'");
+        waitUntil($page, "[...document.querySelectorAll('.collection-tile-name')].map(e => e.textContent.trim()).join() === 'Bordados,Todas as peças'");
         $page->assertSeeIn('#result-count', '1 peça');
 
         $page->click(collectionTile('Bordados'));
@@ -153,7 +142,7 @@ describe('the collections come first', function () {
             ->assertSeeIn('#active-filters', 'Moldura');
 
         $page->click('#grid-crumbs [data-crumb-collections]');
-        collectionsWaitUntil($page, "!document.getElementById('collection-grid').hidden");
+        waitUntil($page, "!document.getElementById('collection-grid').hidden");
         $page->assertAttribute('.filter-entry:has-text("Moldura") >> nth=0', 'aria-checked', 'true');
     });
 
@@ -161,7 +150,7 @@ describe('the collections come first', function () {
         $page = collectionsOpen();
         $page->click(collectionTile('Bordados'));
         collectionsWaitForCards($page, 1);
-        collectionsWaitUntil($page, "[...document.querySelectorAll('.filter-entry')].find(e => e.textContent.includes('Caixa'))?.classList.contains('is-empty') === true");
+        waitUntil($page, "[...document.querySelectorAll('.filter-entry')].find(e => e.textContent.includes('Caixa'))?.classList.contains('is-empty') === true");
 
         expect($page->script("[...document.querySelectorAll('.filter-entry')].find(e => e.textContent.includes('Moldura')).querySelector('.filter-count').textContent"))->toBe('1');
     });
