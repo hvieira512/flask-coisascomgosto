@@ -28,7 +28,13 @@ function waitUntil($page, string $js): void
     while (! $page->script($js) && microtime(true) < $until) {
         $page->wait(0.05);
     }
-    expect($page->script($js))->toBeTrue("timed out waiting for: {$js}");
+    if ($page->script($js)) {
+        return;
+    }
+
+    // What the page had to say for itself: a script that failed is the usual reason.
+    $said = array_map(fn (array $entry) => $entry['message'], [...$page->page()->javaScriptErrors(), ...$page->page()->consoleLogs()]);
+    expect(false)->toBeTrue("timed out waiting for: {$js}\nconsole: ".(implode("\n", $said) ?: '(quiet)'));
 }
 
 /*
