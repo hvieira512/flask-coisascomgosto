@@ -148,7 +148,7 @@ push to `main` that passes the checks goes live on its own, through the
    (`~/.ssh/id_ed25519.pub`), and have backups on: they cover the database and
    the photographs together. In its firewall allow inbound TCP 22, 80 and 443,
    and UDP 443.
-2. **DNS.** At the registrar, an `A` record for the domain and one for `www`,
+2. **DNS.** At the registrar, an `A` record for each domain and one for its `www`,
    both pointing at the server's address.
 3. **Set it up**, from your own machine, in the project folder:
 
