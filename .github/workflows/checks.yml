@@ -13,6 +13,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
 
     services:
       db:
@@ -66,7 +67,18 @@ jobs:
       # Laravel's debug page, which reads it, stops warning on every rendered error.
       - run: cp .env.example .env
 
-      - run: vendor/bin/pest
+      # ponytail: the browser tests share the runner's two cores with Chromium and
+      # time out now and then; one rerun, failed tests first, until the cause is found.
+      - run: vendor/bin/pest || vendor/bin/pest --retry
+
+      # The plugin screenshots the page a browser test fails on; keep them, they
+      # are the only view of what a runner's Chromium was looking at.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failures
+          path: tests/Browser/Screenshots
+          if-no-files-found: ignore
 
   # Every push to main that passes goes live: the server pulls main and
   # rebuilds, so nothing is built or stored here and the only secret is the SSH
