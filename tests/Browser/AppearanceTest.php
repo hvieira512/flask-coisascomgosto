@@ -121,8 +121,22 @@ it('looks the way it did', function (string $name, string $label) {
         'deviceScaleFactor' => 1,
         'reducedMotion' => 'reduce',
     ]);
-    // The pages render their content from the API; the pause is for the fades.
-    $page->wait(1);
+    // The pages render their content from the API, the loader stays over them
+    // until the last photograph is in, and Font Awesome's kit registers its
+    // faces late and only then fetches the one in use. A fixed pause caught
+    // text under the fading loader, drawn a shade differently, and buttons
+    // without their icons; this waits for the page to settle, then for the fades.
+    $settled = "!document.getElementById('page-loader')"
+        ." && !document.querySelector('.placeholder')"
+        .' && [...document.images].every((image) => image.complete)'
+        .' && [...document.fonts].some((face) => /Font Awesome/.test(face.family))'
+        ." && document.fonts.status === 'loaded'";
+    // Up to fifteen seconds: the icon font comes from Font Awesome's CDN.
+    for ($i = 0; $i < 300 && ! $page->script($settled); $i++) {
+        $page->wait(0.05);
+    }
+    expect($page->script($settled))->toBeTrue("{$name} did not settle");
+    $page->wait(0.5);
 
     $file = "appearance-{$name}-{$label}";
     $page->screenshot(fullPage: true, filename: $file);

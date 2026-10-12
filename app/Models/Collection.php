@@ -48,6 +48,9 @@ class Collection extends Model
                 ->whereNull('i.deleted_at')
                 ->orderByRaw('(SELECT COUNT(*) FROM collection_color_sets shared WHERE shared.color_set_id = cs.color_set_id)')
                 ->orderByDesc('p.created_at')
+                // Pieces made in the same second (a seed, an import) tie on the
+                // timestamp; without this the cover changes from one load to the next.
+                ->orderByDesc('p.id')
                 ->orderBy('i.position')
                 ->orderBy('i.id')
                 ->limit(1)
