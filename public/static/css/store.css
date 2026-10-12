@@ -45,9 +45,9 @@ h3 {
 }
 
 /* ------------------------------------------------------------------
-   The hero: the round box in WebGL (js/store/hero-box.js), over a word
-   hidden in the paper, with an arrow under it until somebody turns it by
-   hand. The photograph underneath is what shows without WebGL.
+   The hero: the round box in WebGL (js/store/hero-box.js), with a hand
+   nudging over it until somebody turns it. The photograph underneath is what
+   shows without WebGL.
    ------------------------------------------------------------------ */
 
 .hero {
@@ -67,37 +67,31 @@ h3 {
     cursor: grabbing;
 }
 
-/* Behind the box, which covers its middle: the box sits in front of the sign. */
-.hero-word {
-    top: 30%;
+/* The prompt 3D viewers show (model-viewer's): a hand that appears after a
+   moment, nudges side to side over the box, and goes once the box is turned. */
+.hero-hand {
+    top: 56%;
     left: 50%;
-    translate: -50% -50%;
-    font-size: clamp(5rem, 26vw, 7.5rem);
-    font-style: italic;
-    letter-spacing: -.02em;
-    line-height: 1;
-    white-space: nowrap;
-    color: var(--ccg-blue-100);
-    pointer-events: none;
-}
-
-.hero-turn {
-    bottom: 2%;
-    left: 50%;
-    width: 38%;
     translate: -50% 0;
-    color: var(--ccg-blue-400);
-    animation: hero-sway 1.8s ease-in-out infinite alternate;
-    transition: opacity .4s ease;
+    z-index: 1;
+    font-size: 2rem;
+    color: var(--ccg-ink);
+    filter: drop-shadow(0 1px 2px rgba(255, 255, 255, .9));
+    pointer-events: none;
+    animation: hero-appear .5s ease 2.5s both, hero-nudge 2s ease-in-out 2.5s infinite;
 }
 
-.hero-stage.is-turned .hero-turn {
-    opacity: 0;
+.hero-stage.is-turned .hero-hand {
+    display: none;
 }
 
-@keyframes hero-sway {
-    from { transform: translateX(-6px); }
-    to { transform: translateX(6px); }
+@keyframes hero-appear {
+    from { opacity: 0; }
+}
+
+@keyframes hero-nudge {
+    0%, 100% { transform: translateX(-16px); }
+    50% { transform: translateX(16px); }
 }
 
 .hero-canvas,
@@ -794,7 +788,7 @@ a.card:hover {
     .variant-option,
     .collection-tile img,
     .tile-scrim,
-    .hero-turn {
+    .hero-hand {
         animation: none;
         transition: none;
     }

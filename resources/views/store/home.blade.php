@@ -29,17 +29,9 @@
 
             <div class="col-lg-6 d-flex flex-column align-items-center py-4">
                 <div class="hero-stage position-relative" data-hero-box data-lid="/static/img/hero-lid.jpg">
-                    <span class="hero-word font-display position-absolute" aria-hidden="true">roda-me</span>
                     <img class="hero-fallback" src="/static/img/hero-lid.jpg"
                          alt="Caixa redonda em madeira branca, a tampa pintada com a filigrana de Viana a dourado">
-                    <svg class="hero-turn position-absolute" viewBox="0 0 160 32" aria-hidden="true">
-                        <defs>
-                            <marker id="hero-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                                <path d="M1 1 L9 5 L1 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </marker>
-                        </defs>
-                        <path d="M14 8 Q80 40 146 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" marker-start="url(#hero-arrowhead)" marker-end="url(#hero-arrowhead)"/>
-                    </svg>
+                    <i class="fa-solid fa-hand-pointer hero-hand position-absolute" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
