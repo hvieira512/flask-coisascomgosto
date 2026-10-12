@@ -21,8 +21,10 @@ async function mount(stage) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-    camera.position.set(0, 2.7, 4.5);
-    camera.lookAt(0, 0, 0);
+    // Aimed above the seam: the lifted lid needs the headroom, or the frame
+    // cuts it off at the top on most angles.
+    camera.position.set(0, 3.05, 4.5);
+    camera.lookAt(0, .35, 0);
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d3e3, .85));
     const key = new THREE.DirectionalLight(0xffffff, 1.5);

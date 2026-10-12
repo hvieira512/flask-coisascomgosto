@@ -70,7 +70,7 @@ h3 {
 /* The prompt 3D viewers show (model-viewer's): a hand that appears after a
    moment, nudges side to side over the box, and goes once the box is turned. */
 .hero-hand {
-    top: 56%;
+    top: 68%;
     left: 50%;
     translate: -50% 0;
     z-index: 1;
