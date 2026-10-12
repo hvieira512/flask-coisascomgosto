@@ -20,12 +20,16 @@ RUN composer dump-autoload --optimize --no-dev \
     && chmod +x docker/entrypoint.sh
 
 # Runs as a non-root user. Only storage/, bootstrap/cache and the photograph
-# folders are written at runtime.
+# folders are written at runtime. The capability is what lets that user bind
+# 80 and 443 in production.
 RUN useradd --create-home --shell /bin/bash app \
-    && chown -R app:app /app/storage /app/bootstrap/cache /app/public/static/img /data /config
+    && chown -R app:app /app/storage /app/bootstrap/cache /app/public/static/img /data /config \
+    && setcap cap_net_bind_service=+ep /usr/local/bin/frankenphp
 USER app
 
-# Plain HTTP on 8000; TLS, when there is any, belongs to whatever sits in front.
+# Plain HTTP on 8000 in development. Production sets SERVER_NAME to the domain
+# (compose.prod.yml), and Caddy then serves it on 80 and 443 with a certificate
+# it fetches and renews itself.
 ENV SERVER_NAME=:8000
 
 # The scripts are ES modules importing each other by plain path, so nothing

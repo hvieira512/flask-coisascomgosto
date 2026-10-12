@@ -138,20 +138,52 @@ docker compose up -d --build web
 
 ### Deploying
 
-The same image serves production; what changes is the environment and one
-volume.
+Production is one small Linux server running the same image as development,
+through `compose.prod.yml`. Everything below is done once. After that, every
+push to `main` that passes the checks goes live on its own, through the
+`deploy` job in `.github/workflows/checks.yml`.
+
+1. **A server.** Any Ubuntu 24.04 machine with 2 GB of memory or more; a Hetzner
+   CX23 does. Create it with your SSH public key (`~/.ssh/id_ed25519.pub`), and
+   turn on the provider's backups: they cover the database and the photographs
+   together. In its firewall allow inbound TCP 22, 80 and 443, and UDP 443.
+2. **DNS.** At the registrar, an `A` record for the domain and one for `www`,
+   both pointing at the server's address.
+3. **Set it up**, from your own machine, in the project folder:
+
+   ```bash
+   ssh root@ADDRESS sh -s coisascomgosto.pt < deploy/setup-server.sh
+   ```
+
+   The script installs Docker, makes a `deploy` user, clones `main` to
+   `/srv/coisascomgosto`, writes a `.env` with freshly generated secrets, starts
+   the stack and prints a key. The site answers over HTTPS within a minute of
+   the DNS reaching the server.
+4. **Let GitHub deploy.** In the repository's *Settings › Secrets and variables ›
+   Actions*, add what the script printed: the variables `DEPLOY_HOST` and
+   `DEPLOY_USER`, and the secret `DEPLOY_SSH_KEY`.
+5. **Accounts** are made on the server, as in development:
+
+   ```bash
+   ssh deploy@ADDRESS
+   cd /srv/coisascomgosto && docker compose -f compose.prod.yml exec web php artisan app:create-user NAME
+   ```
+
+What the production stack does differently, for whoever changes it:
 
 - `APP_ENV=production` and `APP_DEBUG=false`. The entrypoint then runs
   `php artisan optimize`, so config, routes and views are compiled once.
-- `APP_KEY` and a `JWT_SECRET_KEY` of your own, 32 bytes or more. The app refuses
+- `APP_KEY` and a `JWT_SECRET_KEY` of its own, 32 bytes or more. The app refuses
   to serve on the placeholder.
-- **A persistent volume on `public/static/img/products` and
-  `public/static/img/collections`.** Uploaded photographs are written there; in a
-  container without one they are gone at the next deploy.
-- TLS in front (a load balancer or Caddy). The session cookie is `Secure` outside
-  debug, so plain HTTP will not keep anyone signed in. Set `TRUSTED_PROXIES` to
-  that proxy's address: otherwise every visitor arrives from the proxy's address
-  and shares one storefront-events rate limit.
+- **Volumes on `public/static/img/products` and `public/static/img/collections`.**
+  Uploaded photographs are written there; in a container without one they are
+  gone at the next deploy.
+- `SERVER_NAME` holds the domain, and FrankenPHP's Caddy serves it on 80 and
+  443 with a certificate it fetches and renews itself. The session cookie is
+  `Secure` outside debug, so plain HTTP would not keep anyone signed in. Nothing
+  sits in front, so `TRUSTED_PROXIES` stays empty; put a proxy there and it
+  needs that proxy's address, or every visitor shares one storefront-events
+  rate limit.
 
 ### Running outside Docker
 

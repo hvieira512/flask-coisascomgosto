@@ -63,3 +63,27 @@ jobs:
       - run: npm ci && npx playwright install --with-deps chromium
 
       - run: vendor/bin/pest
+
+  # Every push to main that passes goes live: the server pulls main and
+  # rebuilds, so nothing is built or stored here and the only secret is the SSH
+  # key. Skipped until the DEPLOY_HOST variable exists, which
+  # deploy/setup-server.sh tells you to add when the server is ready.
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    runs-on: ubuntu-latest
+    concurrency: deploy
+
+    steps:
+      - run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          ssh-keyscan -H "${{ vars.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - run: >
+          ssh -i ~/.ssh/deploy "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}"
+          'cd /srv/coisascomgosto
+          && git pull -q --ff-only
+          && docker compose -f compose.prod.yml up -d --build --remove-orphans
+          && docker image prune -f'
