@@ -1,0 +1,59 @@
+# Development stack: MySQL plus the Laravel app.
+#
+#   cp .env.example .env               settings for both compose and the app
+#   composer install                   the bind mount below serves ./vendor
+#   docker compose up --build          start both; migrations run on start
+#
+# Every service reads .env. Values listed under `environment:` override it, and
+# are only there for settings that must differ inside a container — the
+# database host.
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # MySQL's own bootstrap variable names happen to match ours, so the
+      # image creates exactly the database and user the app expects.
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      # Exposed so DataGrip can connect to the same database the app uses.
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Runs only when the data directory is first created. Grants the app user
+      # rights over `*_test` schemas so the test suite works with ordinary
+      # developer credentials rather than root.
+      - ./docker/mysql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot",
+             "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # .env says 127.0.0.1, which is right for PHP on the host. Inside the
+      # network the database is the `db` service.
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+    ports:
+      - "${WEB_PORT:-5000}:8000"
+    volumes:
+      # The whole project, so a saved file is served on the next request with
+      # no rebuild. A directory rather than single files: a single-file bind
+      # mount binds the inode, and an editor that saves by renaming a temp file
+      # over the original leaves the container on the old one.
+      - .:/app
+
+volumes:
+  mysql_data:

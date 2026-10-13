@@ -1,0 +1,44 @@
+# FrankenPHP: Caddy and PHP in one process, so one container serves the app,
+# with no separate nginx or PHP-FPM to configure.
+FROM dunglas/frankenphp:1-php8.4
+
+# gd re-encodes uploaded photographs (which is what strips the EXIF a phone
+# writes into them); pdo_mysql is the database; zip is how Composer unpacks.
+RUN install-php-extensions gd pdo_mysql opcache zip
+
+COPY docker/php.ini /usr/local/etc/php/conf.d/app.ini
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Dependencies first: this layer is cached until composer.lock changes.
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
+
+COPY . .
+RUN composer dump-autoload --optimize --no-dev \
+    && chmod +x docker/entrypoint.sh
+
+# Runs as a non-root user. Only storage/, bootstrap/cache and the photograph
+# folders are written at runtime. The capability is what lets that user bind
+# 80 and 443 in production.
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app/storage /app/bootstrap/cache /app/public/static/img /data /config \
+    && setcap cap_net_bind_service=+ep /usr/local/bin/frankenphp
+USER app
+
+# Plain HTTP on 8000 in development. Production sets SERVER_NAME to the domain
+# (compose.prod.yml), and Caddy then serves it on 80 and 443 with a certificate
+# it fetches and renews itself.
+ENV SERVER_NAME=:8000
+
+# The scripts are ES modules importing each other by plain path, so nothing
+# busts their cache: without this a browser kept running last deploy's JS.
+# no-cache still caches, it just asks first — a 304 when nothing changed.
+# ponytail: photographs revalidate too though their names never repeat; give
+# /static/img its own immutable rule if those 304s ever show up.
+ENV CADDY_SERVER_EXTRA_DIRECTIVES='header /static/* Cache-Control "no-cache"'
+EXPOSE 8000
+
+ENTRYPOINT ["docker/entrypoint.sh"]
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
