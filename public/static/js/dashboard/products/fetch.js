@@ -131,6 +131,7 @@ const renderSkeleton = () => {
 // possible at the API's hundred-row limit.
 const PAGE_SIZE = 50;
 let currentPage = 1;
+let latest = 0;
 
 /** How many of the filtered pieces have no photograph, asked of the server. */
 const countMissing = async (total) => {
@@ -146,6 +147,9 @@ const countMissing = async (total) => {
 
 /** Page `page` of the filtered pieces; a filter change asks for page 1, a save for the same page. */
 export const fetchProducts = async (page = currentPage) => {
+    // A filter changed while the previous fetch was still counting: whatever
+    // that fetch still has to say is about a list nobody is looking at anymore.
+    const call = ++latest;
     currentPage = page;
     renderSkeleton();
     try {
@@ -153,13 +157,16 @@ export const fetchProducts = async (page = currentPage) => {
             params: { ...filterParams(), page, limit: PAGE_SIZE },
             fallback: "Erro ao buscar peças.",
         });
+        if (call !== latest) return;
 
         // The last piece of the last page was deleted: show the page before.
         if (!products.length && page > 1) return fetchProducts(Math.max(1, pagination.pages));
 
         renderProducts(products);
         renderPager(pagination);
-        renderCount(pagination.total, await countMissing(pagination.total));
+        const missing = await countMissing(pagination.total);
+        if (call !== latest) return;
+        renderCount(pagination.total, missing);
     } catch (error) {
         productList.classList.remove("is-loading");
         Notify.error("Erro ao buscar peças");
