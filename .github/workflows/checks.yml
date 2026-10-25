@@ -67,9 +67,7 @@ jobs:
       # Laravel's debug page, which reads it, stops warning on every rendered error.
       - run: cp .env.example .env
 
-      # ponytail: the browser tests share the runner's two cores with Chromium and
-      # time out now and then; one rerun, failed tests first, until the cause is found.
-      - run: vendor/bin/pest || vendor/bin/pest --retry
+      - run: vendor/bin/pest
 
       # The plugin screenshots the page a browser test fails on; keep them, they
       # are the only view of what a runner's Chromium was looking at.
