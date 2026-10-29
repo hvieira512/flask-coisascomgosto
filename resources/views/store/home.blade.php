@@ -28,7 +28,8 @@
             </div>
 
             <div class="col-lg-6 d-flex flex-column align-items-center py-4">
-                <div class="hero-stage position-relative" data-hero-box data-lid="/static/img/hero-lid.jpg">
+                <div class="hero-stage position-relative" data-hero-box data-lid="/static/img/hero-lid.jpg"
+                     data-lid-rim="345 400 295 235">
                     <img class="hero-fallback" src="/static/img/hero-lid.jpg"
                          alt="Caixa redonda em madeira branca, a tampa pintada com a filigrana de Viana a dourado">
                     <i class="fa-solid fa-hand-pointer hero-hand position-absolute" aria-hidden="true"></i>

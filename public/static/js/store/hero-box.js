@@ -44,7 +44,7 @@ async function mount(stage) {
        halves are hollow, with the wall a real box has. */
     const R = 1;
     const BASE = .46;
-    const DOME = .6;
+    const DOME = .5;
     const WALL = .08;
     const LIP = .07;
     const CENTRE = (BASE + DOME) / 2;
@@ -144,7 +144,7 @@ async function mount(stage) {
         const out = [];
         for (let i = 0; i <= steps; i += 1) {
             const y = (i / steps) * height;
-            out.push(v2(radius * (1 - (y / height) ** 2.5) ** (1 / 2.5), y));
+            out.push(v2(radius * (1 - (y / height) ** 3) ** (1 / 3), y));
         }
         return out;
     };
@@ -157,9 +157,10 @@ async function mount(stage) {
     }
     const shell = [v2(R - WALL, -LIP), ...rim, v2(R, 0), ...dome(R, DOME).slice(1)];
 
-    // The photograph is of the lid from above, in its setting. Only the painted
-    // lid is wanted: it is composited onto white paint behind a feathered circle,
-    // projected straight down onto the dome, and used again as a bump map so the
+    // The photograph looks down on the lid at a slant, so its rim is an
+    // ellipse; stretched back into the circle it is, the painting lands on the
+    // dome without the squash. The mask stops short of the rim, where the
+    // tree behind the box begins. Then it is used again as a bump map so the
     // gold strokes stand up the way the real puffy paint does.
     const lidCanvas = document.createElement("canvas");
     lidCanvas.width = lidCanvas.height = 1024;
@@ -175,12 +176,16 @@ async function mount(stage) {
     photo.src = stage.dataset.lid;
     photo.decode().then(() => {
         const size = 1024;
-        const drawn = size * 1.06;
+        const [cx, cy, a, b] = stage.dataset.lidRim.split(" ").map(Number);
         const mask = document.createElement("canvas");
         mask.width = mask.height = size;
         const m = mask.getContext("2d");
-        m.drawImage(photo, size / 2 - drawn / 2, size / 2 - drawn * .52, drawn, drawn);
-        const edge = m.createRadialGradient(size / 2, size / 2, size * .29, size / 2, size / 2, size * .35);
+        const sx = size / 2 / a;
+        const sy = size / 2 / b;
+        m.setTransform(sx, 0, 0, sy, size / 2 - cx * sx, size / 2 - cy * sy);
+        m.drawImage(photo, 0, 0);
+        m.resetTransform();
+        const edge = m.createRadialGradient(size / 2, size / 2, size * .43, size / 2, size / 2, size * .48);
         edge.addColorStop(0, "rgba(0,0,0,1)");
         edge.addColorStop(1, "rgba(0,0,0,0)");
         m.globalCompositeOperation = "destination-in";
