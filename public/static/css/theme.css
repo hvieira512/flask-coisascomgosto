@@ -1,0 +1,475 @@
+/*
+ * Design tokens. Loaded after bootstrap.min.css so it can retint Bootstrap
+ * through its own custom properties — no Sass build.
+ *
+ * White and blue, as the logo: a white disc, a thin blue ring, a blue line
+ * drawing. Blue is sampled from the logo: #4472C4 = hsl(218, 52%, 52%). The
+ * gold comes from the photographs of the pieces, never from the stylesheet.
+ */
+
+:root {
+    color-scheme: light;
+
+    --ccg-blue-50: #EFF3FA;
+    --ccg-blue-100: #DCE4F3;
+    --ccg-blue-200: #B9CAE8;
+    --ccg-blue-300: #8AA7DA;
+    --ccg-blue-400: #638ACE;
+    --ccg-blue-500: #4472C4;
+    --ccg-blue-600: #335BA2;
+    --ccg-blue-700: #294A83;
+    --ccg-blue-800: #1F3864;
+    --ccg-blue-900: #162745;
+
+    --ccg-white: #FFFFFF;
+    --ccg-mist: #F5F8FC;
+    --ccg-line: #DCE3EE;
+    --ccg-line-soft: #EAF0F7;
+
+    /* 15.6:1, 6.7:1 and 4.6:1 on white. The faint one is for labels on white
+       only; on the mist it drops under 4.5. */
+    --ccg-ink: #1C2430;
+    --ccg-ink-soft: #525D6B;
+    --ccg-ink-faint: #6B7684;
+
+    /* State, kept apart from the accent blue so a warning never reads as a link. */
+    --ccg-attention: #8F5F15;
+    --ccg-attention-wash: #FBF2DF;
+    --ccg-ready: #3F6B47;
+    --ccg-ready-wash: #E8F1EA;
+    --ccg-critical: #B3282D;
+    --ccg-critical-wash: #FBEAEA;
+
+    /* Headlines and the names of the pieces. A system stack: the project vendors
+       its assets and carries no font file. */
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino,
+        "Book Antiqua", Georgia, serif;
+
+    /* Counts, dates and ids line up in columns. Figures only, never labels. */
+    --font-data: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+
+    --measure: 34rem;
+    --radius: 10px;
+    --radius-lg: 16px;
+
+    /* ------------------------------------------------------------------
+       Bootstrap retint. Everything it derives follows from these.
+       ------------------------------------------------------------------ */
+
+    --bs-body-bg: var(--ccg-white);
+    --bs-body-bg-rgb: 255, 255, 255;
+    --bs-body-color: var(--ccg-ink);
+    --bs-body-color-rgb: 28, 36, 48;
+    --bs-body-line-height: 1.6;
+
+    --bs-heading-color: var(--ccg-blue-800);
+    --bs-emphasis-color: var(--ccg-blue-800);
+    --bs-secondary-color: var(--ccg-ink-soft);
+    --bs-tertiary-color: var(--ccg-ink-faint);
+    --bs-secondary-bg: var(--ccg-mist);
+    --bs-secondary-bg-rgb: 245, 248, 252;
+    --bs-tertiary-bg: var(--ccg-line-soft);
+    --bs-tertiary-bg-rgb: 234, 240, 247;
+
+    --bs-border-color: var(--ccg-line);
+    --bs-border-color-translucent: var(--ccg-line);
+    --bs-border-radius: var(--radius);
+    --bs-border-radius-sm: 6px;
+    --bs-border-radius-lg: var(--radius-lg);
+
+    --bs-link-color: var(--ccg-blue-600);
+    --bs-link-color-rgb: 51, 91, 162;
+    --bs-link-hover-color: var(--ccg-blue-800);
+    --bs-link-hover-color-rgb: 31, 56, 100;
+
+    --bs-primary: var(--ccg-blue-500);
+    --bs-primary-rgb: 68, 114, 196;
+    --bs-dark: var(--ccg-blue-800);
+    --bs-dark-rgb: 31, 56, 100;
+    --bs-danger: var(--ccg-critical);
+    --bs-danger-rgb: 179, 40, 45;
+
+    --bs-focus-ring-width: 3px;
+    --bs-focus-ring-opacity: .15;
+    --bs-focus-ring-color: rgba(68, 114, 196, .15);
+}
+
+/* The one deep band — the contacts at the foot of the landing page — as
+   Bootstrap's own inversion in the logo's navy, so everything inside it is built
+   from bg-body, text-body-secondary and border-top with nothing to override. */
+[data-bs-theme="dark"] {
+    --bs-body-bg: var(--ccg-blue-800);
+    --bs-body-bg-rgb: 31, 56, 100;
+    --bs-body-color: #FFFFFF;
+    --bs-body-color-rgb: 255, 255, 255;
+    --bs-emphasis-color: #FFFFFF;
+    --bs-secondary-color: rgba(255, 255, 255, .74);
+    --bs-tertiary-color: rgba(255, 255, 255, .6);
+    --bs-secondary-bg: var(--ccg-blue-700);
+    --bs-tertiary-bg: var(--ccg-blue-600);
+    --bs-heading-color: #FFFFFF;
+    --bs-border-color: rgba(255, 255, 255, .16);
+    --bs-border-color-translucent: rgba(255, 255, 255, .16);
+    --bs-link-color: var(--ccg-blue-200);
+    --bs-link-color-rgb: 185, 202, 232;
+    --bs-link-hover-color: var(--ccg-blue-100);
+    --bs-link-hover-color-rgb: 220, 228, 243;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+/* Almost nothing here is a link in prose: cards, rows, nav items. Colour carries
+   the affordance; the few links inside prose bring their own rule. */
+a {
+    text-decoration: none;
+}
+
+/* Keyboard focus is a visible ring, not Bootstrap's 15% glow. */
+:focus-visible,
+.btn:focus-visible {
+    outline: 2px solid var(--ccg-blue-500);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* ------------------------------------------------------------------
+   The primitives Bootstrap has no answer for.
+   ------------------------------------------------------------------ */
+
+/* A sized box for a Font Awesome glyph. */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+}
+
+.icon.is-small {
+    width: 1rem;
+    height: 1rem;
+    font-size: .85em;
+}
+
+.btn .icon:not(:only-child):first-child {
+    margin-right: .35rem;
+}
+
+.btn .icon:not(:only-child):last-child {
+    margin-left: .35rem;
+}
+
+/* Vertical rhythm for a full-width band. */
+.section {
+    padding: 3rem 1.5rem;
+}
+
+.section.is-medium {
+    padding: 9rem 1.5rem;
+}
+
+@media screen and (min-width: 992px) {
+    .section {
+        padding: 4rem 3rem;
+    }
+
+    .section.is-medium {
+        padding: 9rem 4.5rem;
+    }
+}
+
+/* Bootstrap's font-size utilities stop at 1rem. */
+.fs-7 {
+    font-size: .875rem;
+}
+
+.measure {
+    max-width: var(--measure);
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+/* The small blue label over a heading, on both halves of the site. */
+.eyebrow {
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ccg-blue-700);
+    margin-bottom: .75rem;
+}
+
+[data-bs-theme="dark"] .eyebrow {
+    color: var(--ccg-blue-300);
+}
+
+/* A circle with its content centred. Callers set only size and colour. */
+.disc {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex: none;
+}
+
+/* The no-photograph tile: the piece's type icon on a wash mixed from its own
+   name. --ph-color / --ph-wash / --ph-circle are set inline per product by
+   js/store/placeholder.js. Shared, because the dashboard's table draws it too. */
+.product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--ph-wash, var(--ccg-blue-50));
+    container-type: inline-size;
+}
+
+.product-placeholder-circle {
+    width: 34%;
+    aspect-ratio: 1 / 1;
+    background: var(--ph-circle, var(--ccg-blue-100));
+    color: var(--ph-color, var(--ccg-blue-500));
+    font-size: clamp(1rem, 8cqw, 2.4rem);
+}
+
+.product-placeholder i {
+    font-size: 1.6em;
+    line-height: 1;
+}
+
+/* ------------------------------------------------------------------
+   Components, retinted through Bootstrap's own per-component variables.
+   ------------------------------------------------------------------ */
+
+.btn {
+    --bs-btn-border-radius: var(--radius);
+    --bs-btn-font-weight: 600;
+}
+
+/* A button that is waiting on a request: keeps the label's width so the footer
+   does not jump, and reuses Bootstrap's spinner animation. */
+.btn.is-loading {
+    color: transparent !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.btn.is-loading::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - .5em);
+    left: calc(50% - .5em);
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentcolor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    color: var(--bs-btn-color);
+    animation: .75s linear infinite spinner-border;
+}
+
+/* The one solid button on a page: navy, like every primary action. */
+.btn-dark {
+    --bs-btn-bg: var(--ccg-blue-800);
+    --bs-btn-border-color: var(--ccg-blue-800);
+    --bs-btn-hover-bg: var(--ccg-blue-900);
+    --bs-btn-hover-border-color: var(--ccg-blue-900);
+    --bs-btn-active-bg: var(--ccg-blue-900);
+    --bs-btn-active-border-color: var(--ccg-blue-900);
+    --bs-btn-disabled-bg: var(--ccg-blue-800);
+    --bs-btn-disabled-border-color: var(--ccg-blue-800);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--ccg-blue-500);
+    --bs-btn-border-color: var(--ccg-blue-500);
+    --bs-btn-hover-bg: var(--ccg-blue-600);
+    --bs-btn-hover-border-color: var(--ccg-blue-600);
+    --bs-btn-active-bg: var(--ccg-blue-700);
+    --bs-btn-active-border-color: var(--ccg-blue-700);
+    --bs-btn-disabled-bg: var(--ccg-blue-500);
+    --bs-btn-disabled-border-color: var(--ccg-blue-500);
+}
+
+.btn-light {
+    --bs-btn-bg: var(--ccg-white);
+    --bs-btn-border-color: var(--ccg-line);
+    --bs-btn-color: var(--ccg-blue-800);
+    --bs-btn-hover-bg: var(--ccg-blue-50);
+    --bs-btn-hover-border-color: var(--ccg-blue-300);
+    --bs-btn-hover-color: var(--ccg-blue-800);
+    --bs-btn-active-bg: var(--ccg-blue-100);
+    --bs-btn-active-border-color: var(--ccg-blue-300);
+    --bs-btn-active-color: var(--ccg-blue-800);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--ccg-ink);
+    --bs-btn-border-color: var(--ccg-line);
+    --bs-btn-hover-bg: var(--ccg-mist);
+    --bs-btn-hover-border-color: var(--ccg-blue-300);
+    --bs-btn-hover-color: var(--ccg-blue-800);
+    --bs-btn-active-bg: var(--ccg-blue-50);
+    --bs-btn-active-border-color: var(--ccg-blue-300);
+    --bs-btn-active-color: var(--ccg-blue-800);
+    --bs-btn-font-weight: 500;
+}
+
+/* A plain text action, keeping a button's padding and hit area. */
+.btn-ghost {
+    --bs-btn-color: var(--ccg-blue-600);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--ccg-blue-800);
+    --bs-btn-hover-bg: var(--ccg-blue-50);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--ccg-blue-800);
+    --bs-btn-active-bg: var(--ccg-blue-100);
+    --bs-btn-active-border-color: transparent;
+}
+
+.btn-danger {
+    --bs-btn-bg: var(--ccg-critical);
+    --bs-btn-border-color: var(--ccg-critical);
+    --bs-btn-hover-bg: #93202A;
+    --bs-btn-hover-border-color: #93202A;
+    --bs-btn-active-bg: #93202A;
+    --bs-btn-active-border-color: #93202A;
+}
+
+.form-control,
+.form-select {
+    border-radius: var(--radius);
+    border-color: var(--ccg-line);
+    color: var(--ccg-ink);
+}
+
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: var(--ccg-blue-300);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--ccg-blue-500);
+    box-shadow: 0 0 0 3px rgba(68, 114, 196, .15);
+}
+
+.form-control::placeholder {
+    color: var(--ccg-ink-faint);
+}
+
+.form-label {
+    color: var(--ccg-ink);
+    font-size: .8125rem;
+    font-weight: 600;
+    margin-bottom: .3rem;
+}
+
+.form-text,
+.help {
+    color: var(--ccg-ink-soft);
+    font-size: .8125rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--ccg-blue-800);
+    border-color: var(--ccg-blue-800);
+}
+
+.card {
+    --bs-card-bg: var(--ccg-white);
+    --bs-card-border-color: var(--ccg-line);
+    --bs-card-border-radius: var(--radius);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.list-group {
+    --bs-list-group-bg: transparent;
+    --bs-list-group-border-color: var(--ccg-line-soft);
+    --bs-list-group-action-hover-bg: var(--ccg-blue-50);
+}
+
+/* ------------------------------------------------------------------
+   The colour-set badge: clipped swatches followed by the set's name, tinted in
+   the set's first colour over a pale wash of the same. The three custom
+   properties are set inline per set by js/store/color-set.js.
+   ------------------------------------------------------------------ */
+
+.color-set-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-width: 0;
+    height: 2em;
+    padding: 0 .75em;
+    font-size: .75rem;
+    line-height: 1.5;
+    border-radius: 999px;
+    background-color: var(--cs-bg);
+    border: 1px solid var(--cs-border);
+    color: var(--cs-fg);
+    font-weight: 500;
+}
+
+.swatch-set {
+    display: inline-flex;
+    flex: none;
+}
+
+.color-set-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.swatch {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    /* A white circle on a pale wash is only its outline, so the ring stays. */
+    border: 1px solid rgba(0, 0, 0, .2);
+    display: block;
+}
+
+.swatch + .swatch {
+    margin-left: -5px;
+}
+
+/* The count of colourways a card has no room to name. */
+.color-set-more {
+    display: inline-flex;
+    align-items: center;
+    height: 2em;
+    padding: 0 .75em;
+    border-radius: 999px;
+    font-size: .75rem;
+    background: var(--ccg-mist);
+    color: var(--ccg-ink-soft);
+    border: 1px solid var(--ccg-line);
+}

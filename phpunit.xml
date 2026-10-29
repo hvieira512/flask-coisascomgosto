@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Browser">
+            <directory>tests/Browser</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <!-- docker/php.ini gives a request 256M for decoding photographs; the
+             whole suite runs in one process, so it gets more. -->
+        <ini name="memory_limit" value="1G"/>
+        <!-- A real MySQL, because the SQL is MySQL's: window functions, INTERVAL
+             arithmetic, TRUNCATE resetting AUTO_INCREMENT. Its name must end in
+             _test; tests/TestCase.php refuses to touch any other. Set
+             MYSQL_DATABASE in the shell to run two suites side by side. -->
+        <env name="MYSQL_DATABASE" value="coisascomgosto_test"/>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_DEBUG" value="true"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="SESSION_DRIVER" value="cookie"/>
+        <env name="JWT_SECRET_KEY" value="test-jwt-secret-key-at-least-32-bytes-long"/>
+    </php>
+</phpunit>

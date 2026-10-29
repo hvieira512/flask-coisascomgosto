@@ -1,0 +1,832 @@
+/*
+ * The dashboard is a workbench, not a shop window.
+ *
+ * It shares the storefront's palette and its two faces, but not its rhythm: the
+ * shop is read, this is operated: the ground is white, the rail and the bar are
+ * white with a hairline, and the accent that does the work — navigation, the
+ * current page, the primary action, a row under the pointer — is the logo blue.
+ * Gold marks "this one" and rules a section heading, and neither is a job this
+ * half of the site has, so there is none of it here.
+ *
+ * Layout, spacing and borders are Bootstrap's utilities, in the markup. What is
+ * here is only what Bootstrap has no vocabulary for: this palette on a dark
+ * surface, the accent states it does not ship, the display face where it belongs,
+ * and the positioning no utility expresses. Where a rule was unavoidable it sets
+ * Bootstrap's own variables, so the component keeps its behaviour and only
+ * changes its paint.
+ */
+
+:root {
+    --dash-border: var(--ccg-line);
+    --dash-sidebar-width: 14.5rem;
+    --dash-navbar-height: 3.25rem;
+}
+
+/* From lg the bar is gone: the account menu lives in the rail. */
+@media screen and (min-width: 992px) {
+    .dashboard-body {
+        --dash-navbar-height: 0px;
+    }
+}
+
+/* Squarer than the shop, which is the difference between a page and a tool. Set
+   as Bootstrap's own radius so every card, button, badge and modal follows. */
+.dashboard-body {
+    --bs-border-radius: 4px;
+    --bs-border-radius-sm: 4px;
+    --bs-border-radius-lg: 8px;
+    --bs-heading-color: var(--ccg-ink);
+    --bs-emphasis-color: var(--ccg-ink);
+    --radius: 4px;
+    --radius-lg: 8px;
+
+    display: grid;
+    grid-template-columns: var(--dash-sidebar-width) 1fr;
+    min-height: 100vh;
+    background: var(--ccg-white);
+}
+
+@media screen and (max-width: 991.98px) {
+    .dashboard-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Bootstrap's display sizes are fixed steps; a page title that answers the
+   viewport needs a clamp, which no utility expresses. The face is .font-display. */
+.dash-title {
+    font-size: clamp(1.625rem, 3vw, 2.25rem);
+    letter-spacing: -.015em;
+}
+
+/* A grid item's min-width is auto, so the bar's own content — the burger, the
+   trail, the name — made this column 0.14px wider than a 390px phone and the
+   whole page scrolled sideways. Bootstrap ships no min-width utility. */
+.dash-work {
+    min-width: 0;
+}
+
+/* ----------------------------------------------------------------
+   The chrome: the rail down the side and the bar over the work
+   ---------------------------------------------------------------- */
+
+/* !important because Bootstrap forces an .offcanvas-lg transparent above its
+   breakpoint, and the rail is a white surface. */
+.dash-sidebar {
+    background: var(--ccg-white) !important;
+    border-right: 1px solid var(--ccg-line);
+}
+
+.dash-sidebar .offcanvas-header {
+    border-bottom: 1px solid var(--ccg-line);
+}
+
+/* The rail runs the whole length of the page and the links stay put inside it.
+   Sticking the <aside> instead made it exactly one viewport tall and left the
+   column under it bare paper. */
+@media screen and (min-width: 992px) {
+    .dash-sidebar .offcanvas-body {
+        position: sticky;
+        top: 0;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+}
+
+.dash-brand {
+    color: var(--ccg-blue-900);
+}
+
+/* The one flourish the wordmark gets, and the whole of the accent's budget on
+   the chrome. */
+.dash-brand span {
+    color: var(--ccg-blue-500);
+}
+
+.dash-rail-link {
+    color: var(--ccg-ink);
+    border-left: 2px solid transparent;
+    transition: color .16s ease, background-color .16s ease;
+}
+
+.dash-rail-link:hover {
+    color: var(--ccg-blue-800);
+    background: var(--ccg-blue-50);
+}
+
+/* A rule and a wash rather than a filled pill: the page you are on is stated
+   twice, quietly, in the colour that carries navigation everywhere else. */
+.dash-rail-link[aria-current] {
+    color: var(--ccg-blue-800);
+    background: var(--ccg-blue-50);
+    border-left-color: var(--ccg-blue-500);
+    font-weight: 600;
+}
+
+.dash-rail-link .count {
+    color: var(--ccg-ink-faint);
+}
+
+.dash-rail-link[aria-current] .count {
+    color: var(--ccg-blue-600);
+}
+
+.dash-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    height: var(--dash-navbar-height);
+    min-height: var(--dash-navbar-height);
+    background: var(--ccg-white);
+    border-bottom: 1px solid var(--ccg-line);
+}
+
+.dash-where b {
+    color: var(--ccg-ink);
+    font-weight: 600;
+}
+
+.dash-where a {
+    color: var(--ccg-ink-soft);
+}
+
+.dash-where a:hover {
+    color: var(--ccg-blue-600);
+}
+
+.dash-user-dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--ccg-blue-500);
+    color: #FFFFFF;
+    font-size: .6875rem;
+    font-weight: 600;
+}
+
+@media screen and (max-width: 991.98px) {
+    /* Enough for a first name, which is what these two owners use. */
+    .dash-user-name {
+        max-width: 7rem;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Work surfaces
+   ---------------------------------------------------------------- */
+
+/* A panel is a hairline, not a card with a shadow: nothing on this surface is
+   floating above anything. */
+.dash-panel {
+    border: 1px solid var(--ccg-line);
+    background: var(--ccg-white);
+    border-radius: 6px;
+}
+
+/* Bootstrap has no colour for the accent, and a sparkline drawn in currentColor
+   would otherwise be ink. The grid, the hairlines and the padding are utilities. */
+.dash-figure svg {
+    color: var(--ccg-blue-700);
+}
+
+/* The action that changes the catalogue is the one solid thing on the page, in
+   the accent that carries every other action: --bs-dark is already the navy, so
+   this only tightens the type and hollows the button out on hover. */
+.dashboard-body .btn-dark,
+.dashboard-body .btn-outline-secondary {
+    font-size: .8125rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.dashboard-body .btn-outline-secondary {
+    --bs-btn-color: var(--ccg-ink);
+    --bs-btn-border-color: var(--ccg-line);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-color: var(--ccg-blue-700);
+    --bs-btn-hover-border-color: var(--ccg-blue-400);
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-color: var(--ccg-blue-700);
+    font-weight: 400;
+}
+
+/* Counts, dates and ids: a column of figures should line up, and should not be
+   mistaken for prose. */
+.data {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: .8125rem;
+    /* A date broken across two lines stops being one value. */
+    white-space: nowrap;
+}
+
+/* State, as a shape and a colour rather than a sentence. Bootstrap's .badge
+   supplies the pill; these supply the meaning, from the semantic tokens in
+   theme.css. */
+.chip {
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.chip.is-attention {
+    background-color: var(--ccg-attention-wash);
+    color: var(--ccg-attention);
+}
+
+.chip.is-ready {
+    background-color: var(--ccg-ready-wash);
+    color: var(--ccg-ready);
+}
+
+.chip.is-quiet {
+    background-color: var(--ccg-mist);
+    color: var(--ccg-ink-soft);
+}
+
+/* A step group sliding in, in the direction of travel: --step-from is set by
+   core/steps.js before the group is un-hidden, and un-hiding is what restarts the
+   animation. Deliberately not a carousel track — the two groups are different
+   heights, and a track tall enough for both leaves the short one floating in
+   whitespace. Sliding each group in over its own height keeps the dialog snug. */
+@keyframes step-in {
+    from {
+        opacity: 0;
+        transform: translateX(var(--step-from, 1.5rem));
+    }
+}
+
+[data-step] {
+    animation: step-in .22s cubic-bezier(.2, .8, .2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-step] {
+        animation: none;
+    }
+}
+
+/* A colour you click to put into the set you are building. The chosen state
+   matches the storefront's variant buttons so the two read alike. */
+/* A bare .badge has no ground of its own — the colour ones bring theirs from the
+   set they show, and this one has to supply it. */
+.color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .6rem;
+    border: 0;
+    background-color: var(--ccg-mist);
+    color: var(--ccg-ink);
+    font-size: .75rem;
+    cursor: pointer;
+}
+
+/* "Click to include", several at a time, wherever that question comes up: the
+   collections a colour set appears in, the materials a piece is made of. Built by
+   js/dashboard/picks.js. */
+.pick-chip {
+    border: 0;
+    padding: .35rem .6rem;
+    font-size: .75rem;
+    cursor: pointer;
+}
+
+.color-chip.is-active,
+.pick-chip.is-active {
+    background-color: var(--ccg-blue-50);
+    color: var(--ccg-blue-800);
+    box-shadow: inset 0 0 0 1px var(--ccg-blue-400);
+}
+
+/* ----------------------------------------------------------------
+   Photographs: the picker, used wherever one is taken
+   ---------------------------------------------------------------- */
+
+.photo-slot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    padding: .4rem;
+    border: 1px dashed var(--ccg-line);
+    border-radius: var(--radius);
+    background: var(--ccg-mist);
+    cursor: pointer;
+    overflow: hidden;
+    text-align: center;
+    /* So the hint can stand down in a slot too narrow to read it. */
+    container-type: inline-size;
+}
+
+/* focus-within, because the input that opens the file dialog is visually hidden —
+   without it a keyboard user has no idea where they are. */
+.photo-slot:hover,
+.photo-slot:focus-within,
+.photo-slot.is-over {
+    border-color: var(--ccg-blue-400);
+    background: var(--ccg-blue-50);
+}
+
+.photo-slot.is-over {
+    border-color: var(--ccg-blue-400);
+}
+
+/* Hidden but still focusable. display: none would take it out of the tab order and
+   the picker would be mouse-only. */
+.photo-slot input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.photo-slot-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    pointer-events: none;
+}
+
+.photo-slot-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--ccg-ink-faint);
+}
+
+.photo-slot-hint {
+    font-size: .68rem;
+    line-height: 1.25;
+    color: var(--ccg-ink-soft);
+}
+
+/* A variant's slots are small. The camera says enough on its own there, and the
+   full sentence would overflow a 100px box. */
+@container (max-width: 8rem) {
+    .photo-slot-hint {
+        display: none;
+    }
+}
+
+.photo-slot.is-filled {
+    padding: 0;
+    border-style: solid;
+    border-color: var(--ccg-line);
+    background: var(--ccg-mist);
+}
+
+.photo-slot.is-filled img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Enough shade for the × to read against a pale photograph. */
+.photo-slot.is-filled:hover::after,
+.photo-slot.is-filled:focus-visible::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(22, 39, 69, .22);
+}
+
+.photo-slot-x {
+    position: absolute;
+    top: .35rem;
+    right: .35rem;
+    width: 26px;
+    height: 26px;
+    background: rgba(22, 39, 69, .78);
+    color: #fff;
+    font-size: .72rem;
+    opacity: 0;
+    transition: opacity .12s;
+    /* Above the scrim, which is the ::after of the same element. */
+    z-index: 1;
+}
+
+.photo-slot.is-filled:hover .photo-slot-x,
+.photo-slot.is-filled:focus-visible .photo-slot-x {
+    opacity: 1;
+}
+
+/* Nothing hovers on a phone, so the way to remove a photograph must be visible. */
+@media (hover: none) {
+    .photo-slot-x {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .photo-slot-x {
+        transition: none;
+    }
+}
+
+/* A colour set the piece will be offered in, chosen in the create wizard. The
+   button is only a wrapper: the badge inside brings its own colours, so selection
+   has to show on the ring around it.
+
+   A border rather than the inset shadow .color-chip uses. The badge fills this
+   button, and an inset shadow paints beneath content — the same way it hid the ring
+   on the storefront's collection cards. Transparent at rest so the 2px never moves
+   anything. */
+/* 3px of gap, not 1: a colour set's badge carries its own 1px border in its own
+   colour, and a blue set's looked exactly like the chosen ring sitting right against
+   it. The gap is what makes the ring read as a ring. */
+.variant-choice {
+    padding: 3px;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    /* The badge is inline; without this the button reserves a descender's worth of
+       space under it and the chips sit unevenly. */
+    line-height: 0;
+}
+
+.variant-choice.is-active {
+    border-color: var(--ccg-blue-400);
+}
+
+/* <input type="color"> only ever needs to be the swatch. Bootstrap's
+   .form-control-color sizes it, but inside an .input-group every .form-control is
+   `flex: 1 1 auto`, which stretched the swatch across the whole row — so it opts
+   out of the growing. */
+.color-swatch-input {
+    flex: 0 0 auto;
+    width: 3rem;
+}
+
+/* ----------------------------------------------------------------
+   The catalogue table
+   ---------------------------------------------------------------- */
+
+/* A wrapper with overflow-x would become the scrollport, and a sticky thead then
+   pins to the top of the container rather than the viewport — which put the
+   header 52px *below* the first row. The page has to be the scrollport for that
+   to work, so horizontal scrolling is only turned on at the widths that actually
+   need it. */
+.dash-table-wrap {
+    min-width: 0;
+}
+
+.dash-table {
+    --bs-table-hover-bg: var(--ccg-blue-50);
+    --bs-table-border-color: var(--ccg-line-soft);
+    --bs-table-bg: transparent;
+    font-size: .875rem;
+    margin-bottom: 0;
+}
+
+/* Rules, not cards. The row's height, one hairline and the photograph carry it,
+   and the name is set in the display face so the eye lands on the piece rather
+   than on the grid. */
+.dash-table .dash-col-name .fw-medium,
+.dash-table .dash-col-name > p:first-child {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+.dash-table tbody tr:hover .dash-col-name .fw-medium,
+.dash-table tbody tr:hover .dash-col-name > p:first-child {
+    color: var(--ccg-blue-700);
+}
+
+.dash-table > :not(caption) > * > * {
+    padding: .625rem .75rem;
+}
+
+/* Only the tables carrying colour chips need a floor: three chips alone want
+   ~25rem, and under auto table layout their intrinsic width beats the percentage
+   column widths, squeezing the name column until it breaks one word per line.
+   Below this such a table scrolls sideways instead, which is the better failure.
+   Applying it to every table pushed the narrow ones out of their column. */
+.dash-table.is-wide {
+    min-width: 56rem;
+}
+
+.dash-table thead th {
+    /* An operating surface gets scrolled past its own header, so the header
+       stays put under the fixed navbar. */
+    position: sticky;
+    top: var(--dash-navbar-height);
+    z-index: 2;
+    background: var(--ccg-white);
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--ccg-ink-faint);
+    white-space: nowrap;
+}
+
+.dash-table tbody tr {
+    cursor: pointer;
+}
+
+/* Rows waiting on a request: still there, a little quieter. */
+.dash-table tbody.is-loading {
+    opacity: .5;
+    transition: opacity .15s ease;
+}
+
+/* The placeholder rows of a first load, in the hairline's colour rather than ink. */
+.dash-table .placeholder {
+    color: var(--ccg-line);
+}
+
+.dash-table td {
+    vertical-align: middle;
+}
+
+/* Every row is the same height whatever it holds, so the eye can run down the
+   column without re-finding the baseline. */
+.dash-table .dash-thumb,
+.dash-table .product-placeholder {
+    width: 42px;
+    height: 52px;
+    object-fit: cover;
+    flex: none;
+    border-radius: 4px;
+    border: 0;
+    background: var(--ccg-mist);
+}
+
+/* The tile's glyph is sized in cqw with a 1rem floor, which a 42px thumbnail has
+   no room for: the circle came out 14px wide and 26px tall — an egg. */
+.dash-table .product-placeholder-circle {
+    width: 62%;
+    font-size: .62rem;
+}
+
+/* Column widths, so the colour chips cannot push the figures to the far edge of
+   a wide screen and break the scan down the column. */
+.dash-col-thumb {
+    width: 42px;
+}
+
+.dash-col-name {
+    width: 30%;
+    /* A percentage alone is only a suggestion to auto table layout. */
+    min-width: 12rem;
+}
+
+.dash-col-photos {
+    width: 9rem;
+}
+
+.dash-col-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+/* Below the sidebar's breakpoint a record is a card, not a row.
+ *
+ * The table was 56rem wide inside a wrapper that scrolled sideways, with no
+ * gradient or shadow to say so, and the actions column started off-screen: on a
+ * 390px phone the only way to reach Apagar was to drag the table and hope. This
+ * is CSS rather than a second renderer in JavaScript, so all five tables — pieces,
+ * conjuntos, tipos, colecções, eventos — become cards from one place, and the
+ * markup stays a table, which is what it is on a real screen.
+ *
+ * A flex row that wraps rather than a grid, because the five tables do not have
+ * the same columns. The thumbnail, the name and the actions share the first line;
+ * everything else takes a full line underneath, in the order the columns are in.
+ */
+@media screen and (max-width: 991.98px) {
+    /* Nothing overflows any more, so the scrollport and the width floor that
+       caused it both go. */
+    .dash-table-wrap {
+        overflow-x: visible;
+    }
+
+    .dash-table.is-wide {
+        min-width: 0;
+    }
+
+    .dash-table,
+    .dash-table > tbody {
+        display: block;
+    }
+
+    /* The column names are on each card instead: a thumbnail, a name and two
+       buttons do not need labelling. */
+    .dash-table > thead {
+        display: none;
+    }
+
+    .dash-table > tbody > tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem .625rem;
+        padding: .75rem;
+        border: 1px solid var(--ccg-line-soft);
+        border-radius: var(--radius);
+    }
+
+    .dash-table > tbody > tr + tr {
+        margin-top: .5rem;
+    }
+
+    /* Bootstrap's striping and hover backgrounds are for rows in a table. On a
+       card they read as one card being selected. */
+    .dash-table > tbody > tr,
+    .dash-table > tbody > tr:hover > td {
+        --bs-table-accent-bg: transparent;
+        background: transparent;
+    }
+
+    .dash-table > tbody > tr > td {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        /* Bootstrap paints the cell, not the row, so without this each cell is a
+           pale panel of its own inside the card. */
+        background: transparent;
+    }
+
+    /* The first line: picture, name, buttons. */
+    .dash-table > tbody > tr > .dash-col-thumb {
+        width: auto;
+        order: 0;
+    }
+
+    .dash-table > tbody > tr > .dash-col-name {
+        flex: 1 1 6rem;
+        width: auto;
+        /* The table's 12rem floor plus the thumbnail plus the buttons is wider
+           than a 390px phone, so the buttons wrapped onto a line of their own
+           with nothing beside them. */
+        min-width: 0;
+        order: 1;
+    }
+
+    .dash-table > tbody > tr > .dash-col-actions {
+        width: auto;
+        order: 2;
+        margin-left: auto;
+    }
+
+    /* Always visible here. They are revealed on hover on a real screen, and a
+       phone has no hover — but @media (hover: none) is about the device, and a
+       narrow window on a laptop still reports a mouse, so it would leave an empty
+       box where the only route to Editar and Apagar should be. */
+    .dash-table > tbody > tr .dash-row-actions {
+        opacity: 1;
+    }
+
+    /* Room for three colour chips across a phone: on one line they truncated to
+       "Branco …", which is not a colour anyone can recognise. */
+    .dash-table > tbody > tr > td > .d-flex {
+        flex-wrap: wrap;
+    }
+
+    /* Everything else, full width, below. */
+    .dash-table > tbody > tr > td:not(.dash-col-thumb, .dash-col-name, .dash-col-actions) {
+        order: 3;
+    }
+
+    /* A count on its own line reads as a stray number; against the label it is a
+       fact about the piece. */
+    .dash-table > tbody > tr > .dash-col-photos::before {
+        content: attr(data-label);
+        color: var(--ccg-ink-faint);
+        font-size: .6875rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-right: .4rem;
+    }
+}
+
+/* Quiet at rest, so a row of icons does not compete with the names; full on
+   hover, to the keyboard, and on touch, where there is no hover. */
+.dash-row-actions {
+    opacity: .6;
+    transition: opacity .12s ease;
+}
+
+/* Any row, not just a table's. The rule used to name .dash-table tbody tr, so the
+   materials list — list items, not table rows — kept its rename and delete
+   buttons at opacity 0 at every mouse position: present, clickable, invisible.
+   The owners could add a material and nothing else. */
+:is(tr, li):hover .dash-row-actions,
+.dash-row-actions:focus-within {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .dash-row-actions {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-row-actions,
+    .dash-sidebar .nav-link {
+        transition: none;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Modals
+   ---------------------------------------------------------------- */
+
+/* Bootstrap's modal, retinted. It brings the backdrop, the focus trap, Escape,
+   the scroll lock, the fade and the scrollable body; what is here is the density
+   and the palette. */
+.dash-modal {
+    --bs-modal-color: var(--ccg-ink);
+    --bs-modal-bg: var(--ccg-white);
+    --bs-modal-border-width: 0;
+    --bs-modal-border-radius: var(--radius-lg);
+    --bs-modal-inner-border-radius: var(--radius-lg);
+    --bs-modal-header-border-color: var(--dash-border);
+    --bs-modal-footer-border-color: var(--dash-border);
+    --bs-modal-footer-bg: var(--ccg-mist);
+    --bs-modal-footer-gap: .5rem;
+    /* Compact head and foot: on a form the words "Editar produto" should not have
+       more room than the fields under them. */
+    --bs-modal-header-padding: .9rem 1rem .9rem 1.25rem;
+    --bs-modal-padding: 1.25rem;
+    --bs-modal-title-line-height: 1.3;
+}
+
+.dash-modal .modal-content {
+    /* Two shadows: a tight one to seat the card, a broad soft one for depth. */
+    box-shadow:
+        0 1px 2px rgba(38, 34, 29, .08),
+        0 24px 48px -12px rgba(23, 22, 26, .28);
+}
+
+.dash-modal .modal-title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ccg-ink);
+}
+
+.dash-modal .modal-footer {
+    padding: .9rem 1.25rem;
+}
+
+/* Ink rather than Bootstrap's near-black, and a touch of blur so the desk behind
+   reads as out of focus rather than merely dark. The backdrop is a sibling of the
+   modal, not a descendant, so this cannot be scoped to .dash-modal. */
+.modal-backdrop {
+    --bs-backdrop-bg: rgba(22, 39, 69, .42);
+    --bs-backdrop-opacity: 1;
+    backdrop-filter: blur(2px);
+}
+
+.dash-thumb {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    border: 1px solid var(--ccg-line);
+}
+
+/* ----------------------------------------------------------------
+   Tipos e materiais
+   ---------------------------------------------------------------- */
+
+.dash-type-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--ccg-mist);
+    color: var(--ccg-ink-soft);
+    font-size: .8rem;
+}
+
+/* Beside the class name in the Tipos table, where it stands for the drawing
+   rather than for the type: small enough to read as a sample. */
+.dash-type-icon.is-small {
+    width: 24px;
+    height: 24px;
+    font-size: .65rem;
+}
+
+/* The wizard's progress bar. Bootstrap's default is 1rem tall, which next to a
+   .eyebrow reads as a second heading. */
+.step-progress {
+    height: .35rem;
+    --bs-progress-bar-bg: var(--ccg-blue-500);
+}
+
+/* The signed-in name at the head of its own menu. Bootstrap's dropdown-header is
+   uppercase-grey small print, which reads as a section label; this is a value. */
+.dash-user-header {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ccg-ink);
+}

@@ -1,0 +1,53 @@
+# Production stack: the same image as development, serving the domain itself.
+#
+#   docker compose -f compose.prod.yml up -d --build
+#
+# Only ports 80 and 443 are reachable from outside. FrankenPHP's Caddy fetches
+# and renews the certificate on its own, so nothing sits in front and
+# TRUSTED_PROXIES stays empty. deploy/setup-server.sh writes the .env this
+# reads (SERVER_NAME included), and the deploy job in .github/workflows/
+# checks.yml reruns the command above on every push to main.
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot",
+             "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # Uploaded photographs outlive the container.
+      - product_photos:/app/public/static/img/products
+      - collection_photos:/app/public/static/img/collections
+      # Caddy's certificates and state.
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  mysql_data:
+  product_photos:
+  collection_photos:
+  caddy_data:
+  caddy_config:

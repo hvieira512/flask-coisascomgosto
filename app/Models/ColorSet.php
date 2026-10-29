@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * A named combination of colours, named once and shared: it may appear in
+ * several collections, or in none.
+ */
+class ColorSet extends Model
+{
+    public $timestamps = false;
+
+    protected $fillable = ['name'];
+
+    public function colors(): BelongsToMany
+    {
+        return $this->belongsToMany(Color::class, 'color_set_colors')
+            ->orderBy('color_set_colors.position');
+    }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class, 'collection_color_sets')->orderBy('collections.name');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * What a response shows: the colours, the collections, and how many pieces
+     * are offered in it — one variant per piece, so counting variants is
+     * counting pieces.
+     */
+    public function scopeWithDetail(Builder $query): void
+    {
+        $query->with(['colors', 'collections'])->withCount('variants as pieces');
+    }
+
+    /** Exactly these colours, in this order. Duplicates keep their first place. */
+    public function setColors(array $colorIds): void
+    {
+        $positions = [];
+        foreach (array_values(array_unique($colorIds)) as $position => $id) {
+            $positions[$id] = ['position' => $position];
+        }
+        $this->colors()->sync($positions);
+    }
+
+    /**
+     * Deleting a set removes every variant offered in it and their photographs'
+     * rows; the files stay for the sweep.
+     */
+    public function remove(): void
+    {
+        DB::transaction(function () {
+            $variantIds = $this->variants()->pluck('id');
+            ProductImage::withTrashed()->whereIn('variant_id', $variantIds)->forceDelete();
+            ProductVariant::whereKey($variantIds)->delete();
+            $this->colors()->detach();
+            $this->collections()->detach();
+            $this->delete();
+        });
+    }
+}

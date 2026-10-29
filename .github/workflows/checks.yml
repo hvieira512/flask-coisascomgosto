@@ -1,0 +1,103 @@
+# The suite, on every push and pull request.
+#
+# The database is a real MySQL, because the suite is: the SQL uses window
+# functions and INTERVAL arithmetic, and the tests rely on TRUNCATE resetting
+# AUTO_INCREMENT. SQLite would pass and prove nothing.
+name: checks
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    services:
+      db:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        # The steps below start as soon as the job does, so waiting for the
+        # server here is what stops the first connection racing the container.
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      # tests/TestCase.php refuses a database whose name does not end in _test.
+      MYSQL_DATABASE: coisascomgosto_test
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 8.4 is what the image ships; testing on anything else tests something
+      # nobody runs.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: gd, pdo_mysql
+
+      - run: composer install --no-interaction --prefer-dist
+
+      # Laravel's own formatter, so a style change never hides inside a diff.
+      - run: vendor/bin/pint --test
+
+      - run: mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE coisascomgosto_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+
+      # Without the browser the browser tests cannot run at all, which is the
+      # point: they fail rather than skip.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npx playwright install --with-deps chromium
+
+      # The settings above come from the environment; the file is only so that
+      # Laravel's debug page, which reads it, stops warning on every rendered error.
+      - run: cp .env.example .env
+
+      - run: vendor/bin/pest
+
+      # The plugin screenshots the page a browser test fails on; keep them, they
+      # are the only view of what a runner's Chromium was looking at.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failures
+          path: tests/Browser/Screenshots
+          if-no-files-found: ignore
+
+  # Every push to main that passes goes live: the server pulls main and
+  # rebuilds, so nothing is built or stored here and the only secret is the SSH
+  # key. Skipped until the DEPLOY_HOST variable exists, which
+  # deploy/setup-server.sh tells you to add when the server is ready.
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    runs-on: ubuntu-latest
+    concurrency: deploy
+
+    steps:
+      - run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          ssh-keyscan -H "${{ vars.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - run: >
+          ssh -i ~/.ssh/deploy "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}"
+          'cd /srv/coisascomgosto
+          && git pull -q --ff-only
+          && docker compose -f compose.prod.yml up -d --build --remove-orphans
+          && docker image prune -f'
